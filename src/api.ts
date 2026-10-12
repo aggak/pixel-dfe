@@ -2,11 +2,20 @@ import type { Projeto, Tarefa } from "./tipos";
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/$/, "");
 
+export class ErroApi extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`Falha ao consultar a API (${status}).`);
+    this.status = status;
+  }
+}
+
 async function ler<T>(caminho: string, signal?: AbortSignal): Promise<T> {
   const resposta = await fetch(`${API_URL}${caminho}`, { signal });
 
   if (!resposta.ok) {
-    throw new Error(`Falha ao consultar a API (${resposta.status}).`);
+    throw new ErroApi(resposta.status);
   }
 
   return (await resposta.json()) as T;
