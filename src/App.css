@@ -10,23 +10,38 @@
 .detalhes-registro dt { font-weight: 600; color: var(--text-h); }
 .detalhes-registro dd { margin: 0.25rem 0 0; white-space: pre-wrap; }
 
-nav {
+.cabecalho-app {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 1.25rem 2rem;
   border-bottom: 1px solid var(--border);
+}
+
+.cabecalho-app__marca { color: var(--text-h); font-size: 1.5rem; font-weight: 700; }
+
+.cabecalho-app nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
   text-align: left;
 }
 
-nav a {
+.cabecalho-app nav a {
   color: var(--text-h);
   font-weight: 600;
   text-decoration: none;
 }
 
-nav a:hover,
-nav a:focus-visible,
+.cabecalho-app nav a.active { text-decoration: underline; text-underline-offset: 0.4em; }
+
+a { color: var(--text-h); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.cabecalho-app nav a:hover,
+.cabecalho-app nav a:focus-visible,
 .cartao-tarefa a:hover,
 .cartao-tarefa a:focus-visible {
   color: var(--accent);
@@ -153,7 +168,7 @@ nav a:focus-visible,
     padding: 2rem 1rem;
   }
 
-  nav {
+  .cabecalho-app {
     padding: 1rem;
   }
 }

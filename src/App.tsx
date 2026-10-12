@@ -1,28 +1,25 @@
 import { Link, Route, Routes } from "react-router";
 import { ListaTarefas } from "./pages/ListaTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
+import { Layout } from "./components/Layout";
 import "./App.css";
 
 function App() {
   return (
-    <>
-      <nav>
-        <Link to="/">Tarefas</Link>
-        {" | "}
-        <Link to="/projetos">Projetos</Link>
-        {" | "}
-        <Link to="/tarefas/1">Detalhes da tarefa</Link>
-        {" | "}
-        <Link to="/projetos/1">Detalhes do projeto</Link>
-      </nav>
-      <Routes>
+    <Routes>
+      <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
         <Route path="/projetos" element={<h1>Projetos</h1>} />
         <Route path="/tarefas/:id" element={<DetalheTarefa />} />
         <Route path="/projetos/:id" element={<h1>Detalhes do projeto</h1>} />
-        <Route path="*" element={<h1>Página não encontrada</h1>} />
-      </Routes>
-    </>
+        <Route path="*" element={
+          <main className="pagina-tarefas">
+            <h1>Página não encontrada</h1>
+            <Link to="/">Voltar para tarefas</Link>
+          </main>
+        } />
+      </Route>
+    </Routes>
   );
 }
 
