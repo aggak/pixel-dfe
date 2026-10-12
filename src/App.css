@@ -1,3 +1,15 @@
+.detalhes-registro {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.detalhes-registro dt { font-weight: 600; color: var(--text-h); }
+.detalhes-registro dd { margin: 0.25rem 0 0; white-space: pre-wrap; }
+
 nav {
   display: flex;
   flex-wrap: wrap;
