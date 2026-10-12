@@ -1,4 +1,5 @@
 import { Link, Route, Routes } from "react-router";
+import { ListaTarefas } from "./pages/ListaTarefas";
 import "./App.css";
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         <Link to="/projetos/1">Detalhes do projeto</Link>
       </nav>
       <Routes>
-        <Route path="/" element={<h1>Tarefas</h1>} />
+        <Route path="/" element={<ListaTarefas />} />
         <Route path="/projetos" element={<h1>Projetos</h1>} />
         <Route path="/tarefas/:id" element={<h1>Detalhes da tarefa</h1>} />
         <Route path="/projetos/:id" element={<h1>Detalhes do projeto</h1>} />
