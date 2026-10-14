@@ -10,6 +10,10 @@ Gerenciador de projetos e tarefas da disciplina **Desenvolvimento Frontend**, UL
 - Euclides Carlos Pilon Neto
 - Linnek Lima de Araujo
 
+## Apresentação do Marco 2
+
+[Slide no Canva](https://canva.link/jjbglwu5r7h0k76)
+
 ## Como rodar
 
 É necessário ter **Node.js 24 ou superior**, com npm instalado.
