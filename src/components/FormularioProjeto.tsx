@@ -60,10 +60,11 @@ export function FormularioProjeto({
     }
 
     // Monta o objeto campo a campo para nunca repassar `id` ou extras.
+    // Nome e disciplina são validados sem espaços nas pontas e gravados da mesma forma.
     const dados: DadosProjeto = {
-      nome,
+      nome: nome.trim(),
       descricao,
-      disciplina,
+      disciplina: disciplina.trim(),
       criadoEm,
     };
 

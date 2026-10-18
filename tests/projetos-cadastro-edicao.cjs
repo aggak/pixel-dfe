@@ -28,15 +28,32 @@ async function conferir(nome, executar) {
   console.log(`OK: ${nome}`);
 }
 
+const portasUsadas = new Set();
+
+// O sistema escolhe uma porta livre; portas já entregues nesta execução não se repetem.
 async function portaLivre() {
-  const servidor = createServer();
-  await new Promise((resolve, reject) => {
-    servidor.once("error", reject);
-    servidor.listen(0, "127.0.0.1", resolve);
-  });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
+  for (;;) {
+    const servidor = createServer();
+    await new Promise((resolve, reject) => {
+      servidor.once("error", reject);
+      servidor.listen(0, "127.0.0.1", resolve);
+    });
+    const { port } = servidor.address();
+    await new Promise((resolve) => servidor.close(resolve));
+    if (!portasUsadas.has(port)) {
+      portasUsadas.add(port);
+      return port;
+    }
+  }
+}
+
+const ativo = (processo) => processo.exitCode === null && processo.signalCode === null;
+
+async function encerrar(processo) {
+  if (!ativo(processo)) return;
+  const fim = new Promise((resolve) => processo.once("exit", resolve));
+  processo.kill();
+  await fim;
 }
 
 async function executar() {
@@ -46,10 +63,6 @@ async function executar() {
   temporario = await mkdtemp(join(tmpdir(), "pixel-projetos-33-"));
   const banco = join(temporario, "db.json");
   await copyFile(join(raiz, "db.seed.json"), banco);
-  const portaApi = await portaLivre();
-  const portaWeb = await portaLivre();
-  const api = `http://127.0.0.1:${portaApi}`;
-  const origem = `http://127.0.0.1:${portaWeb}`;
   function iniciar(arquivo, argumentos, env = process.env) {
     const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
       cwd: raiz, env, windowsHide: true, stdio: "pipe",
@@ -57,15 +70,45 @@ async function executar() {
     processo.stdout.on("data", () => {});
     processo.stderr.on("data", (dado) => process.stderr.write(dado));
     processos.push(processo);
+    return processo;
   }
-  iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
-  for (const url of [`${api}/projetos`, origem]) {
-    await ate(`servidor ${url}`, async () => {
-      if (processos.some((p) => p.exitCode !== null)) throw new Error("Servidor encerrou antes dos testes.");
-      try { return (await fetch(url)).ok; } catch { return false; }
-    });
+  // A porta é liberada antes de o servidor ocupá-la. Se outro processo a tomar nesse
+  // intervalo, o servidor encerra (ou responde outro conteúdo) e a subida é repetida
+  // com uma nova porta. A resposta é conferida para não aceitar um servidor alheio.
+  async function subir(descricao, arquivo, argumentos, env, caminhoTeste, confirmar) {
+    for (let tentativa = 1; tentativa <= 3; tentativa++) {
+      const porta = await portaLivre();
+      const base = `http://127.0.0.1:${porta}`;
+      const processo = iniciar(arquivo, argumentos(porta), env);
+      for (let espera = 0; espera < 150 && ativo(processo); espera++) {
+        try {
+          const resposta = await fetch(`${base}${caminhoTeste}`);
+          if (resposta.ok && (await confirmar(resposta)) && ativo(processo)) return base;
+        } catch {}
+        await dormir(100);
+      }
+      await encerrar(processo);
+      console.warn(`Aviso: ${descricao} não iniciou na porta ${porta} (tentativa ${tentativa}).`);
+    }
+    throw new Error(`Não foi possível iniciar ${descricao}.`);
   }
+  const idsSeed = JSON.stringify(seed.projetos.map((p) => p.id));
+  const api = await subir(
+    "a API temporária",
+    "node_modules/json-server/lib/bin.js",
+    (porta) => [banco, "--host", "127.0.0.1", "--port", String(porta)],
+    process.env,
+    "/projetos",
+    async (resposta) => JSON.stringify((await resposta.json()).map((p) => p.id)) === idsSeed,
+  );
+  const origem = await subir(
+    "a aplicação",
+    "node_modules/vite/bin/vite.js",
+    (porta) => ["--host", "127.0.0.1", "--port", String(porta), "--strictPort"],
+    { ...process.env, VITE_API_URL: api },
+    "/",
+    async (resposta) => (await resposta.text()).includes("/src/main.tsx"),
+  );
   browser = await chromium.launch({ channel: process.env.TEST_BROWSER || "msedge", headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(10000);
@@ -148,7 +191,15 @@ async function executar() {
     );
   });
 
-  await conferir("POST real cadastra projeto sem id no payload, retorna à lista e disponibiliza em tarefas", async () => {
+  async function preencherProjeto(dados) {
+    await campo("Nome").fill(dados.nome);
+    await campo("Descrição").fill(dados.descricao);
+    await campo("Disciplina").fill(dados.disciplina);
+    await campo("Criado em").fill(dados.criadoEm);
+  }
+  const projetosComNome = async (nome) => (await lerBanco()).projetos.filter((p) => p.nome === nome);
+
+  await conferir("POST real grava sem id e sem espaços nas pontas, retorna à lista e disponibiliza em tarefas", async () => {
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
     const novo = {
@@ -157,10 +208,7 @@ async function executar() {
       disciplina: "Desenvolvimento Frontend",
       criadoEm: "2026-10-18",
     };
-    await campo("Nome").fill(novo.nome);
-    await campo("Descrição").fill(novo.descricao);
-    await campo("Disciplina").fill(novo.disciplina);
-    await campo("Criado em").fill(novo.criadoEm);
+    await preencherProjeto({ ...novo, nome: `  ${novo.nome}  `, disciplina: ` ${novo.disciplina}   ` });
     gravacoes.length = 0;
     await salvarNovo().click();
     await ate("retorno à lista de projetos", async () => caminho() === "/projetos");
@@ -175,6 +223,93 @@ async function executar() {
     await ate("novo projeto no seletor de tarefas", async () =>
       campo("Projeto").evaluate((el, nome) => [...el.options].some((o) => o.textContent === nome), novo.nome),
     );
+  });
+
+  await conferir("POST gravado com resposta perdida conclui o cadastro sem duplicar", async () => {
+    const quantidade = (await lerBanco()).projetos.length;
+    const dados = { nome: "Projeto com resposta perdida", descricao: "", disciplina: "Redes", criadoEm: "2026-10-19" };
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    await preencherProjeto(dados);
+    await page.route(`${api}/projetos`, async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      await route.fetch(); // o servidor grava o projeto
+      await route.abort("connectionreset"); // a resposta não chega ao navegador
+    });
+    gravacoes.length = 0;
+    await salvarNovo().click();
+    await ate("retorno à lista após conferir o cadastro", async () => caminho() === "/projetos");
+    await page.getByRole("link", { name: dados.nome, exact: true }).waitFor();
+    await page.unrouteAll();
+    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 1);
+    assert.equal((await lerBanco()).projetos.length, quantidade + 1);
+    assert.equal((await projetosComNome(dados.nome)).length, 1);
+  });
+
+  await conferir("sem confirmação, nova tentativa reaproveita o projeto gravado e aplica a correção", async () => {
+    const quantidade = (await lerBanco()).projetos.length;
+    const dados = { nome: "Projeto sem confirmação", descricao: "Primeira tentativa", disciplina: "Banco de Dados", criadoEm: "2026-10-20" };
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    await preencherProjeto(dados);
+    let falharConsulta = false;
+    await page.route(`${api}/projetos`, async (route) => {
+      if (route.request().method() === "POST") {
+        await route.fetch(); // gravado no servidor
+        falharConsulta = true;
+        return route.abort("connectionreset");
+      }
+      if (falharConsulta) {
+        falharConsulta = false; // a conferência logo após a falha também não responde
+        return route.abort("connectionrefused");
+      }
+      return route.continue();
+    });
+    gravacoes.length = 0;
+    await salvarNovo().click();
+    await page.getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto" }).waitFor();
+    assert.equal(caminho(), "/projetos/novo");
+    assert.equal(await campo("Nome").inputValue(), dados.nome);
+    await page.unrouteAll();
+    const corrigido = { ...dados, nome: "Projeto sem confirmação revisado" };
+    await campo("Nome").fill(corrigido.nome);
+    await ate("envio liberado após falha", () => salvarNovo().isEnabled());
+    await salvarNovo().click();
+    await ate("retorno à lista após reaproveitar o projeto", async () => caminho() === "/projetos");
+    await page.getByRole("link", { name: corrigido.nome, exact: true }).waitFor();
+    const [gravado] = await projetosComNome(corrigido.nome);
+    assert.ok(gravado);
+    assert.deepEqual(gravacoes, [
+      { metodo: "POST", caminho: "/projetos", dados },
+      { metodo: "PATCH", caminho: `/projetos/${gravado.id}`, dados: corrigido },
+    ]);
+    assert.equal((await lerBanco()).projetos.length, quantidade + 1);
+    assert.equal((await projetosComNome(dados.nome)).length, 0);
+    assert.deepEqual(gravado, { id: gravado.id, ...corrigido });
+  });
+
+  await conferir("POST que não chegou ao servidor mantém os dados e a nova tentativa cria um único projeto", async () => {
+    const quantidade = (await lerBanco()).projetos.length;
+    const dados = { nome: "Projeto após queda de conexão", descricao: "Sem gravação na primeira tentativa", disciplina: "Sistemas Operacionais", criadoEm: "2026-10-21" };
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    await preencherProjeto(dados);
+    await page.route(`${api}/projetos`, (route) =>
+      route.request().method() === "POST" ? route.abort("connectionrefused") : route.continue(),
+    );
+    gravacoes.length = 0;
+    await salvarNovo().click();
+    await page.getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto" }).waitFor();
+    assert.equal((await lerBanco()).projetos.length, quantidade);
+    assert.equal(await campo("Disciplina").inputValue(), dados.disciplina);
+    await page.unrouteAll();
+    await ate("envio liberado após falha", () => salvarNovo().isEnabled());
+    await salvarNovo().click();
+    await ate("retorno à lista após nova tentativa", async () => caminho() === "/projetos");
+    await page.getByRole("link", { name: dados.nome, exact: true }).waitFor();
+    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 2);
+    assert.equal((await lerBanco()).projetos.length, quantidade + 1);
+    assert.equal((await projetosComNome(dados.nome)).length, 1);
   });
 
   await conferir("cancelar e voltar na criação retornam à lista sem gravar", async () => {
@@ -213,9 +348,9 @@ async function executar() {
       disciplina: "Engenharia de Software",
       criadoEm: "2026-10-15",
     };
-    await campo("Nome").fill(dados.nome);
+    await campo("Nome").fill(`   ${dados.nome} `);
     await campo("Descrição").fill(dados.descricao);
-    await campo("Disciplina").fill(dados.disciplina);
+    await campo("Disciplina").fill(`  ${dados.disciplina}  `);
     await campo("Criado em").fill(dados.criadoEm);
     gravacoes.length = 0;
     await salvarEdicao().click();
@@ -348,12 +483,6 @@ async function executar() {
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
   await browser?.close().catch(() => {});
-  for (const processo of processos) {
-    if (processo.exitCode === null) {
-      const fim = new Promise((resolve) => processo.once("exit", resolve));
-      processo.kill();
-      await fim;
-    }
-  }
+  for (const processo of processos) await encerrar(processo);
   if (temporario) await rm(temporario, { recursive: true, force: true });
 });
