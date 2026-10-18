@@ -1,49 +1,20 @@
-# Pixel
+# Pixel · Design
 
-Gerenciador de projetos e tarefas da disciplina **Desenvolvimento Frontend**, ULBRA — 2026.2.
+Prévia de design separada da aplicação da equipe, para experimentar telas e fluxos.
 
-**Framework:** React com TypeScript.
+Requisitos: **Node.js 24+**, npm e internet para carregar fontes e ícones.
 
-## Integrantes
-
-- Gabriela de Araújo Reis
-- Euclides Carlos Pilon Neto
-- Linnek Lima de Araujo
-
-## Apresentação do Marco 2
-
-[Slide no Canva](https://canva.link/jjbglwu5r7h0k76)
-
-## Como rodar
-
-É necessário ter **Node.js 24 ou superior**, com npm instalado.
-
-Na pasta do projeto, instale as dependências:
-
-```bash
+```sh
+git clone --branch teste-design https://github.com/aggak/pixel-dfe.git pixel-design
+cd pixel-design
 npm ci
-```
-
-Inicie a API em um terminal:
-
-```bash
-npx json-server db.json
-```
-
-A API fica em `http://localhost:3000`.
-
-Em outro terminal, na mesma pasta, inicie a aplicação:
-
-```bash
 npm run dev
 ```
 
-Abra o endereço mostrado pelo Vite, normalmente `http://localhost:5173`. Mantenha os dois terminais abertos.
+Abra [http://localhost:5173/design/index.html](http://localhost:5173/design/index.html). Se o Vite indicar outra porta, ajuste o endereço.
 
-## Build
+Explore **Tarefas/Projetos** e **Lista/Quadro**. No rodapé, **Testar design** permite comparar seis paletas, Claro/Escuro e situações; **Restaurar padrão** retorna ao início.
 
-Para verificar o TypeScript e gerar os arquivos de produção em `dist/`:
+Não é necessário iniciar a API. Os dados ficam na memória da prévia; recarregar restaura os dados demonstrativos. Esta versão não integra o design à aplicação.
 
-```bash
-npm run build
-```
+Se já possui o repositório: `git fetch origin` e `git switch teste-design`.
