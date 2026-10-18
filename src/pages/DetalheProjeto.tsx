@@ -39,6 +39,7 @@ export function DetalheProjeto() {
           </dl>
           <section aria-label="Tarefas do projeto">
             <h2>Tarefas do projeto</h2>
+            <Link to={`/tarefas/nova?projetoId=${encodeURIComponent(dados.projeto.id)}`}>Nova tarefa</Link>
             {dados.tarefas.length === 0 ? <p>Nenhuma tarefa neste projeto.</p> : (
               <div className="pagina-tarefas__grade">
                 {dados.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} />)}

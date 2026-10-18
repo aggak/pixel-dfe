@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { listarTarefas } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import type { Tarefa } from "../tipos";
@@ -29,6 +30,7 @@ export function ListaTarefas() {
         <p className="pagina-tarefas__legenda">Equipe Pixel · Desenvolvimento Frontend</p>
         <h1>Tarefas</h1>
         <p>Acompanhe as atividades dos projetos da equipe.</p>
+        <Link to="/tarefas/nova">Nova tarefa</Link>
       </header>
 
       {carregando && <p role="status">Carregando tarefas...</p>}
