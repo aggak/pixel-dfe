@@ -1,0 +1,106 @@
+# Relatório de execução — Marco 3 / Issue #33 / Euclidespilon-Neto
+
+Data da execução: 18/10/2026.
+
+## Escopo e ponto de partida
+
+Implementei a issue [#33 — Criar cadastro e edição de projeto](https://github.com/aggak/pixel-dfe/issues/33), atribuída ao meu usuário. Parti da `main` no commit `72fe536`, após a integração das issues #27 a #32 do Marco 3.
+
+Consultei o contrato de dados, o enunciado dos marcos e a estrutura consolidada na `main` para tarefas (`FormularioTarefa`, `NovaTarefa` e `EditarTarefa`). Mantive a divisão existente entre `pages`, `components`, `hooks`, `api.ts`, `tests` e `docs`, sem alterar arquivos fora do escopo da issue #33.
+
+## Registro de execução
+
+1. Conferi a atribuição da issue #33 e o estado atualizado da `main`, que já dispunha de `criarProjeto`, `atualizarProjeto` e `buscarProjeto` em `src/api.ts`, além dos estilos de formulário em `src/components/FormularioTarefa.css`.
+2. Criei o componente reutilizável `src/components/FormularioProjeto.tsx` seguindo o mesmo fluxo, estilo visual, validação de campos obrigatórios (`nome`, `disciplina` e `criadoEm`) e recursos de acessibilidade (`label` associado por `useId`, `aria-invalid`, `aria-describedby`, `role="alert"`, foco automático no primeiro campo inválido e bloqueio de envios duplicados) aplicados no formulário de tarefas.
+3. Implementei `src/pages/NovoProjeto.tsx` para a rota `/projetos/novo`, gravando o novo registro via `criarProjeto` (`POST /projetos`) sem enviar `id` e redirecionando para `/projetos` após o sucesso, com cancelamento por `AbortController` caso o usuário saia da tela durante o envio.
+4. Implementei `src/pages/EditarProjeto.tsx` para a rota `/projetos/:id/editar`, consultando o projeto atual com `useConsulta` e `buscarProjeto`, preenchendo o `FormularioProjeto` com os dados carregados e gravando as alterações via `atualizarProjeto` (`PATCH /projetos/:id`), retornando ao detalhe `/projetos/:id` após salvar.
+5. Registrei `/projetos/novo` e `/projetos/:id/editar` antes de `/projetos/:id` em `src/App.tsx` (evitando que `novo` seja interpretado como um ID) e adicionei os links de acesso em `src/pages/ListaProjetos.tsx` (**Novo projeto**) e `src/pages/DetalheProjeto.tsx` (**Editar projeto**).
+6. Criei a suíte `tests/projetos-cadastro-edicao.cjs` com API real e banco temporário, validando os fluxos de criação e edição de projetos, estados de erro e regressão completa ao lado das suítes existentes. Registrei a implementação e a suíte no commit `26bdeee`.
+
+## Estrutura utilizada
+
+| Arquivo | Alteração |
+| --- | --- |
+| `src/components/FormularioProjeto.tsx` | Formulário reutilizável para cadastro e edição de projetos, com validação, acessibilidade e preservação de dados em falha de envio. |
+| `src/pages/NovoProjeto.tsx` | Página da rota `/projetos/novo` que grava o projeto na API e retorna à listagem de projetos. |
+| `src/pages/EditarProjeto.tsx` | Página da rota `/projetos/:id/editar` que carrega o projeto atual, preenche o formulário, salva via API e retorna ao detalhe. |
+| `src/App.tsx` | Registro das rotas `/projetos/novo` e `/projetos/:id/editar` dentro do `Layout` compartilhado. |
+| `src/pages/ListaProjetos.tsx` | Inclusão do link **Novo projeto** no cabeçalho da listagem. |
+| `src/pages/DetalheProjeto.tsx` | Inclusão do link **Editar projeto** no cabeçalho quando os dados do projeto estão carregados. |
+| `tests/projetos-cadastro-edicao.cjs` | Suíte de integração de cadastro e edição de projetos com servidores próprios e banco temporário. |
+| `docs/RELATORIO_MARCO_3_ISSUE_33.md` | Registro do processo, decisões e resultados da issue #33. |
+
+Mantive React, TypeScript, React Router e json-server, sem acrescentar dependências ao projeto e sem modificar `src/tipos.ts`, `src/api.ts`, `db.json` ou `db.seed.json`.
+
+## Critérios da issue
+
+| Critério | Resultado |
+| --- | --- |
+| Criar a rota `/projetos/novo`, sem interpretar `novo` como um ID | Validado por navegação a partir de `/projetos`, abertura direta e recarga da página, confirmando que nenhuma requisição `GET /projetos/novo` é disparada à API e que `/projetos/1` continua abrindo o detalhe. |
+| Criar a rota `/projetos/:id/editar`, carregando os dados atuais | Validado pelo link **Editar projeto**, acesso direto, recarga e troca de parâmetro de rota. Os quatro campos (`Nome`, `Descrição`, `Disciplina` e `Criado em`) são preenchidos com os valores atuais e IDs inexistentes exibem mensagem de erro sem abrir o formulário. |
+| Gravar o cadastro e as alterações na API, respeitando o contrato de Projeto | Validado com `POST /projetos` (sem `id` no payload, gerando `id` na API e disponibilizando o projeto no seletor de tarefas) e `PATCH /projetos/:id` (preservando `id` e tarefas vinculadas via `_embed=tarefas`). |
+
+## Validação
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run build` | Aprovado. Verificação TypeScript por `tsc -b` e geração do pacote de produção. |
+| `npm run lint` | Aprovado, sem avisos ou erros em 24 arquivos. |
+| `node tests/projetos-cadastro-edicao.cjs` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/editar-tarefa.cjs` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/nova-tarefa.cjs` | 14 cenários aprovados no Google Chrome. |
+| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados no Google Chrome. |
+| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
+| `node tests/marco-2.cjs` | 12 cenários aprovados no Microsoft Edge. |
+| `git diff --check` | Aprovado, sem problemas de formatação ou espaços no diff. |
+
+**Resultado final: 79 cenários de integração aprovados.** As suítes não registraram erros JavaScript não tratados, e `db.json` e `db.seed.json` permaneceram idênticos ao estado original.
+
+Na suíte `tests/projetos-cadastro-edicao.cjs`, verifiquei:
+
+1. Acesso a `/projetos/novo` pela lista, abertura direta e recarga sem requisitar `GET /projetos/novo` na API, preservando `/projetos/1` como detalhe.
+2. Validação de campos obrigatórios (`Nome`, `Disciplina` e `Criado em`), recusa de valores preenchidos apenas com espaços, atributos `aria-invalid` e `aria-describedby` e foco automático no primeiro campo com erro.
+3. `POST /projetos` real sem `id` no corpo, persistência no banco temporário, retorno a `/projetos` com o novo projeto listado e presença imediata no seletor de projetos em `/tarefas/nova`.
+4. Cancelamento e link de retorno em `/projetos/novo` voltando para `/projetos` sem gravar dados.
+5. Link **Editar projeto** no detalhe, acesso direto e recarga em `/projetos/1/editar` com todos os campos preenchidos.
+6. `PATCH /projetos/1` real preservando `id` e as tarefas vinculadas ao projeto (`_embed=tarefas`), persistindo no banco e retornando ao detalhe atualizado.
+7. Cancelamento e link de retorno em `/projetos/1/editar` voltando ao detalhe sem gravar alterações.
+8. Projeto inexistente (`/projetos/999/editar`) encerrando o carregamento e exibindo `Projeto não encontrado.` sem renderizar o formulário.
+9. Falha de leitura da API exibindo mensagem de erro e encerrando o carregamento sem renderizar o formulário.
+10. Troca de ID (`/projetos/1/editar` para `/projetos/2/editar`) reiniciando os campos e ignorando respostas atrasadas do ID anterior.
+11. Falha HTTP 500 na gravação preservando os valores digitados e permitindo nova tentativa, bloqueio contra envio duplicado e cancelamento de redirecionamento ao sair da página durante a gravação.
+12. Layout sem transbordamento horizontal em largura de 320 px, foco visível, envio por teclado (`Enter`), ausência de erros JavaScript e preservação de `db.json` e `db.seed.json`.
+
+## Como repetir as verificações
+
+Com Node.js 24 ou superior e as dependências instaladas:
+
+```powershell
+npm ci
+npm run build
+npm run lint
+node tests/projetos-cadastro-edicao.cjs
+node tests/editar-tarefa.cjs
+node tests/nova-tarefa.cjs
+node tests/formulario-tarefa.cjs
+node tests/api-escrita.mjs
+node tests/marco-2.cjs
+```
+
+As suítes de navegador requerem `playwright` resolvível pelo Node, Microsoft Edge e Google Chrome instalados. Caso `playwright` não esteja instalado no ambiente, pode ser disponibilizado apenas para validação (por exemplo, em pasta temporária via `NODE_PATH` ou com `npm install --no-save --package-lock=false playwright`), sem alterar `package.json` nem `package-lock.json`.
+
+Para conferir manualmente, seguir o README: iniciar `npx json-server db.json` e `npm run dev` em terminais separados, acessar **Projetos**, testar **Novo projeto** em `/projetos/novo` e, ao abrir um projeto, clicar em **Editar projeto** (`/projetos/:id/editar`).
+
+## Limites da entrega
+
+- O escopo desta entrega restringe-se à issue #33 (cadastro e edição de projetos).
+- O cancelamento de requisição ao desmontar ou trocar de rota evita redirecionamentos tardios na interface, mas não reverte uma escrita já processada pelo servidor.
+- Os testes automatizados de navegador rodam sobre o servidor de desenvolvimento e banco temporário; a publicação e configuração de fallback em produção pertencem ao Marco 6.
+
+## Referências
+
+- [Contrato de dados da Aula 09](https://drive.google.com/file/d/1LPl629xMFfWcYNTlkdNQPEUP36wzjnoi/view).
+- [Enunciado dos Marcos 1 a 6](https://drive.google.com/file/d/1--NFqpZ0oyum4XS_J-1NKZLWn50uQ-Gt/view).
+- [Fluxograma de produção do Marco 3](https://drive.google.com/file/d/1J4DEG6lJvQUCd1Na6AuvMdHJBrTWw5od/view).
+- [Relatório da Issue #30 de Euclides](https://github.com/aggak/pixel-dfe/blob/main/docs/RELATORIO_MARCO_3_EUCLIDES.md).
+- [README do projeto](https://github.com/aggak/pixel-dfe/blob/main/README.md).
