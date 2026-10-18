@@ -58,6 +58,7 @@ export function FormularioTarefa({
   const projetoDesconhecido =
     projetoId !== "" && projetosDisponiveis && !listaProjetos.some((p) => p.id === projetoId);
   const podeSalvar = projetosDisponiveis && !projetoDesconhecido;
+  const avisoProjeto = !podeSalvar || projetoDesconhecido ? `${id}-projeto-aviso` : undefined;
 
   function limparErro(campo: CampoObrigatorio) {
     setErros((atuais) => {
@@ -79,7 +80,12 @@ export function FormularioTarefa({
     if (!responsavel.trim()) novosErros.responsavel = "Informe o responsável.";
     if (!prazo) novosErros.prazo = "Informe o prazo.";
     setErros(novosErros);
-    if (Object.keys(novosErros).length > 0) return;
+    const primeiroErro = Object.keys(novosErros)[0] as CampoObrigatorio | undefined;
+    if (primeiroErro) {
+      const formulario = evento.currentTarget;
+      window.setTimeout(() => formulario.querySelector<HTMLElement>(`[name="${primeiroErro}"]`)?.focus(), 0);
+      return;
+    }
 
     // Monta o objeto campo a campo para nunca repassar `id` ou extras.
     const dados: NovaTarefa = {
@@ -116,7 +122,8 @@ export function FormularioTarefa({
           value={projetoId}
           onChange={(e) => { setProjetoId(e.target.value); limparErro("projetoId"); }}
           disabled={!projetosDisponiveis}
-          aria-describedby={podeSalvar ? undefined : `${id}-projeto-aviso`}
+          aria-invalid={Boolean(erros.projetoId || projetoDesconhecido)}
+          aria-describedby={[avisoProjeto, erros.projetoId && `${id}-projeto-erro`].filter(Boolean).join(" ") || undefined}
         >
           <option value="" disabled>
             Selecione um projeto
@@ -132,7 +139,7 @@ export function FormularioTarefa({
             </option>
           ))}
         </select>
-        {erros.projetoId && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.projetoId}</p>}
+        {erros.projetoId && <p id={`${id}-projeto-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.projetoId}</p>}
         {projetoDesconhecido && (
           <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
             O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.
@@ -166,10 +173,12 @@ export function FormularioTarefa({
           name="titulo"
           type="text"
           required
+          aria-invalid={Boolean(erros.titulo)}
+          aria-describedby={erros.titulo ? `${id}-titulo-erro` : undefined}
           value={titulo}
           onChange={(e) => { setTitulo(e.target.value); limparErro("titulo"); }}
         />
-        {erros.titulo && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.titulo}</p>}
+        {erros.titulo && <p id={`${id}-titulo-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.titulo}</p>}
       </div>
 
       <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
@@ -222,10 +231,12 @@ export function FormularioTarefa({
           name="responsavel"
           type="text"
           required
+          aria-invalid={Boolean(erros.responsavel)}
+          aria-describedby={erros.responsavel ? `${id}-responsavel-erro` : undefined}
           value={responsavel}
           onChange={(e) => { setResponsavel(e.target.value); limparErro("responsavel"); }}
         />
-        {erros.responsavel && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.responsavel}</p>}
+        {erros.responsavel && <p id={`${id}-responsavel-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.responsavel}</p>}
       </div>
 
       <div className="formulario-tarefa__campo">
@@ -235,10 +246,12 @@ export function FormularioTarefa({
           name="prazo"
           type="date"
           required
+          aria-invalid={Boolean(erros.prazo)}
+          aria-describedby={erros.prazo ? `${id}-prazo-erro` : undefined}
           value={prazo}
           onChange={(e) => { setPrazo(e.target.value); limparErro("prazo"); }}
         />
-        {erros.prazo && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.prazo}</p>}
+        {erros.prazo && <p id={`${id}-prazo-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.prazo}</p>}
       </div>
 
       {erroEnvio && (
