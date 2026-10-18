@@ -18,6 +18,9 @@ const opcoesPrioridade: { valor: Prioridade; texto: string }[] = [
   { valor: "alta", texto: "Alta" },
 ];
 
+type CampoObrigatorio = "projetoId" | "titulo" | "responsavel" | "prazo";
+type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
+
 interface FormularioTarefaProps {
   /** Lido apenas na montagem; use `key` no pai para trocar a tarefa editada. */
   valoresIniciais?: Partial<NovaTarefa>;
@@ -47,6 +50,7 @@ export function FormularioTarefa({
 
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState(false);
+  const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
 
   const listaProjetos = projetos.dados ?? [];
@@ -55,9 +59,27 @@ export function FormularioTarefa({
     projetoId !== "" && projetosDisponiveis && !listaProjetos.some((p) => p.id === projetoId);
   const podeSalvar = projetosDisponiveis && !projetoDesconhecido;
 
+  function limparErro(campo: CampoObrigatorio) {
+    setErros((atuais) => {
+      if (!atuais[campo]) return atuais;
+      const seguintes = { ...atuais };
+      delete seguintes[campo];
+      return seguintes;
+    });
+  }
+
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     if (enviandoRef.current || !podeSalvar) return;
+
+    const novosErros: ErrosCampos = {};
+    if (!projetoId) novosErros.projetoId = "Selecione um projeto.";
+    else if (projetoDesconhecido) novosErros.projetoId = "Escolha um projeto disponível.";
+    if (!titulo.trim()) novosErros.titulo = "Informe o título da tarefa.";
+    if (!responsavel.trim()) novosErros.responsavel = "Informe o responsável.";
+    if (!prazo) novosErros.prazo = "Informe o prazo.";
+    setErros(novosErros);
+    if (Object.keys(novosErros).length > 0) return;
 
     // Monta o objeto campo a campo para nunca repassar `id` ou extras.
     const dados: NovaTarefa = {
@@ -84,7 +106,7 @@ export function FormularioTarefa({
   }
 
   return (
-    <form className="formulario-tarefa" onSubmit={enviar} aria-busy={enviando}>
+    <form className="formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
       <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
         <label htmlFor={`${id}-projeto`}>Projeto</label>
         <select
@@ -92,7 +114,7 @@ export function FormularioTarefa({
           name="projetoId"
           required
           value={projetoId}
-          onChange={(e) => setProjetoId(e.target.value)}
+          onChange={(e) => { setProjetoId(e.target.value); limparErro("projetoId"); }}
           disabled={!projetosDisponiveis}
           aria-describedby={podeSalvar ? undefined : `${id}-projeto-aviso`}
         >
@@ -110,6 +132,7 @@ export function FormularioTarefa({
             </option>
           ))}
         </select>
+        {erros.projetoId && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.projetoId}</p>}
         {projetoDesconhecido && (
           <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
             O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.
@@ -144,8 +167,9 @@ export function FormularioTarefa({
           type="text"
           required
           value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
+          onChange={(e) => { setTitulo(e.target.value); limparErro("titulo"); }}
         />
+        {erros.titulo && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.titulo}</p>}
       </div>
 
       <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
@@ -199,8 +223,9 @@ export function FormularioTarefa({
           type="text"
           required
           value={responsavel}
-          onChange={(e) => setResponsavel(e.target.value)}
+          onChange={(e) => { setResponsavel(e.target.value); limparErro("responsavel"); }}
         />
+        {erros.responsavel && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.responsavel}</p>}
       </div>
 
       <div className="formulario-tarefa__campo">
@@ -211,8 +236,9 @@ export function FormularioTarefa({
           type="date"
           required
           value={prazo}
-          onChange={(e) => setPrazo(e.target.value)}
+          onChange={(e) => { setPrazo(e.target.value); limparErro("prazo"); }}
         />
+        {erros.prazo && <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro">{erros.prazo}</p>}
       </div>
 
       {erroEnvio && (
