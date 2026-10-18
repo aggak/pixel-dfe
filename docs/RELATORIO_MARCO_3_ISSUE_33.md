@@ -70,37 +70,3 @@ Na suíte `tests/projetos-cadastro-edicao.cjs`, verifiquei:
 10. Troca de ID (`/projetos/1/editar` para `/projetos/2/editar`) reiniciando os campos e ignorando respostas atrasadas do ID anterior.
 11. Falha HTTP 500 na gravação preservando os valores digitados e permitindo nova tentativa, bloqueio contra envio duplicado e cancelamento de redirecionamento ao sair da página durante a gravação.
 12. Layout sem transbordamento horizontal em largura de 320 px, foco visível, envio por teclado (`Enter`), ausência de erros JavaScript e preservação de `db.json` e `db.seed.json`.
-
-## Como repetir as verificações
-
-Com Node.js 24 ou superior e as dependências instaladas:
-
-```powershell
-npm ci
-npm run build
-npm run lint
-node tests/projetos-cadastro-edicao.cjs
-node tests/editar-tarefa.cjs
-node tests/nova-tarefa.cjs
-node tests/formulario-tarefa.cjs
-node tests/api-escrita.mjs
-node tests/marco-2.cjs
-```
-
-As suítes de navegador requerem `playwright` resolvível pelo Node, Microsoft Edge e Google Chrome instalados. Caso `playwright` não esteja instalado no ambiente, pode ser disponibilizado apenas para validação (por exemplo, em pasta temporária via `NODE_PATH` ou com `npm install --no-save --package-lock=false playwright`), sem alterar `package.json` nem `package-lock.json`.
-
-Para conferir manualmente, seguir o README: iniciar `npx json-server db.json` e `npm run dev` em terminais separados, acessar **Projetos**, testar **Novo projeto** em `/projetos/novo` e, ao abrir um projeto, clicar em **Editar projeto** (`/projetos/:id/editar`).
-
-## Limites da entrega
-
-- O escopo desta entrega restringe-se à issue #33 (cadastro e edição de projetos).
-- O cancelamento de requisição ao desmontar ou trocar de rota evita redirecionamentos tardios na interface, mas não reverte uma escrita já processada pelo servidor.
-- Os testes automatizados de navegador rodam sobre o servidor de desenvolvimento e banco temporário; a publicação e configuração de fallback em produção pertencem ao Marco 6.
-
-## Referências
-
-- [Contrato de dados da Aula 09](https://drive.google.com/file/d/1LPl629xMFfWcYNTlkdNQPEUP36wzjnoi/view).
-- [Enunciado dos Marcos 1 a 6](https://drive.google.com/file/d/1--NFqpZ0oyum4XS_J-1NKZLWn50uQ-Gt/view).
-- [Fluxograma de produção do Marco 3](https://drive.google.com/file/d/1J4DEG6lJvQUCd1Na6AuvMdHJBrTWw5od/view).
-- [Relatório da Issue #30 de Euclides](https://github.com/aggak/pixel-dfe/blob/main/docs/RELATORIO_MARCO_3_EUCLIDES.md).
-- [README do projeto](https://github.com/aggak/pixel-dfe/blob/main/README.md).
