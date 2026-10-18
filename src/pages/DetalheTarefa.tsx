@@ -14,6 +14,7 @@ export function DetalheTarefa() {
       <header className="pagina-tarefas__cabecalho">
         <Link to="/">Voltar para tarefas</Link>
         <h1>Detalhes da tarefa</h1>
+        {tarefa && <Link to={`/tarefas/${encodeURIComponent(tarefa.id)}/editar`}>Editar tarefa</Link>}
       </header>
       {carregando && <p role="status">Carregando tarefa...</p>}
       {erro !== undefined && (
