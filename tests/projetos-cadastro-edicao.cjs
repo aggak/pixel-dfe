@@ -225,91 +225,113 @@ async function executar() {
     );
   });
 
-  await conferir("POST gravado com resposta perdida conclui o cadastro sem duplicar", async () => {
+  await conferir("falha 500 ou de conexão no POST mantém os dados e a nova tentativa cria um único projeto", async () => {
     const quantidade = (await lerBanco()).projetos.length;
-    const dados = { nome: "Projeto com resposta perdida", descricao: "", disciplina: "Redes", criadoEm: "2026-10-19" };
+    const dados = { nome: "Projeto após falha de envio", descricao: "Sem gravação na falha", disciplina: "Sistemas Operacionais", criadoEm: "2026-10-19" };
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
     await preencherProjeto(dados);
-    await page.route(`${api}/projetos`, async (route) => {
-      if (route.request().method() !== "POST") return route.continue();
-      await route.fetch(); // o servidor grava o projeto
-      await route.abort("connectionreset"); // a resposta não chega ao navegador
-    });
-    gravacoes.length = 0;
-    await salvarNovo().click();
-    await ate("retorno à lista após conferir o cadastro", async () => caminho() === "/projetos");
-    await page.getByRole("link", { name: dados.nome, exact: true }).waitFor();
-    await page.unrouteAll();
-    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 1);
-    assert.equal((await lerBanco()).projetos.length, quantidade + 1);
-    assert.equal((await projetosComNome(dados.nome)).length, 1);
-  });
-
-  await conferir("sem confirmação, nova tentativa reaproveita o projeto gravado e aplica a correção", async () => {
-    const quantidade = (await lerBanco()).projetos.length;
-    const dados = { nome: "Projeto sem confirmação", descricao: "Primeira tentativa", disciplina: "Banco de Dados", criadoEm: "2026-10-20" };
-    await page.goto(`${origem}/projetos/novo`);
-    await page.locator("form").waitFor();
-    await preencherProjeto(dados);
-    let falharConsulta = false;
-    await page.route(`${api}/projetos`, async (route) => {
-      if (route.request().method() === "POST") {
-        await route.fetch(); // gravado no servidor
-        falharConsulta = true;
-        return route.abort("connectionreset");
-      }
-      if (falharConsulta) {
-        falharConsulta = false; // a conferência logo após a falha também não responde
-        return route.abort("connectionrefused");
-      }
-      return route.continue();
-    });
+    await page.route(`${api}/projetos`, (route) =>
+      route.request().method() === "POST" ? route.fulfill({ status: 500, json: {} }) : route.continue(),
+    );
     gravacoes.length = 0;
     await salvarNovo().click();
     await page.getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto" }).waitFor();
     assert.equal(caminho(), "/projetos/novo");
     assert.equal(await campo("Nome").inputValue(), dados.nome);
+    assert.equal((await lerBanco()).projetos.length, quantidade);
     await page.unrouteAll();
-    const corrigido = { ...dados, nome: "Projeto sem confirmação revisado" };
-    await campo("Nome").fill(corrigido.nome);
-    await ate("envio liberado após falha", () => salvarNovo().isEnabled());
+
+    await page.route(`${api}/projetos`, (route) =>
+      route.request().method() === "POST" ? route.abort("connectionrefused") : route.continue(),
+    );
+    await ate("envio liberado após erro 500", () => salvarNovo().isEnabled());
     await salvarNovo().click();
-    await ate("retorno à lista após reaproveitar o projeto", async () => caminho() === "/projetos");
-    await page.getByRole("link", { name: corrigido.nome, exact: true }).waitFor();
-    const [gravado] = await projetosComNome(corrigido.nome);
-    assert.ok(gravado);
-    assert.deepEqual(gravacoes, [
-      { metodo: "POST", caminho: "/projetos", dados },
-      { metodo: "PATCH", caminho: `/projetos/${gravado.id}`, dados: corrigido },
-    ]);
+    await page.getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto" }).waitFor();
+    assert.equal((await lerBanco()).projetos.length, quantidade);
+    assert.equal(await campo("Disciplina").inputValue(), dados.disciplina);
+    await page.unrouteAll();
+
+    await ate("envio liberado após falha de rede", () => salvarNovo().isEnabled());
+    await salvarNovo().click();
+    await ate("retorno à lista após nova tentativa", async () => caminho() === "/projetos");
+    await page.getByRole("link", { name: dados.nome, exact: true }).waitFor();
+    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 3);
     assert.equal((await lerBanco()).projetos.length, quantidade + 1);
-    assert.equal((await projetosComNome(dados.nome)).length, 0);
-    assert.deepEqual(gravado, { id: gravado.id, ...corrigido });
+    assert.equal((await projetosComNome(dados.nome)).length, 1);
   });
 
-  await conferir("POST que não chegou ao servidor mantém os dados e a nova tentativa cria um único projeto", async () => {
+  await conferir("nova tentativa após falha de POST não sobrescreve projeto com mesmos campos criado em outra aba", async () => {
     const quantidade = (await lerBanco()).projetos.length;
-    const dados = { nome: "Projeto após queda de conexão", descricao: "Sem gravação na primeira tentativa", disciplina: "Sistemas Operacionais", criadoEm: "2026-10-21" };
+    const dadosIniciais = { nome: "Projeto Concorrente", descricao: "Mesmos campos iniciais", disciplina: "Banco de Dados", criadoEm: "2026-10-20" };
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
-    await preencherProjeto(dados);
+    await preencherProjeto(dadosIniciais);
     await page.route(`${api}/projetos`, (route) =>
       route.request().method() === "POST" ? route.abort("connectionrefused") : route.continue(),
     );
     gravacoes.length = 0;
     await salvarNovo().click();
     await page.getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto" }).waitFor();
-    assert.equal((await lerBanco()).projetos.length, quantidade);
-    assert.equal(await campo("Disciplina").inputValue(), dados.disciplina);
     await page.unrouteAll();
+
+    // Outra aba cria um projeto com exatamente os mesmos campos enquanto o formulário segue aberto.
+    const respOutraAba = await fetch(`${api}/projetos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dadosIniciais),
+    });
+    assert.equal(respOutraAba.ok, true);
+    const criadoOutraAba = await respOutraAba.json();
+
+    const dadosRenomeados = { ...dadosIniciais, nome: "Projeto Renomeado na Primeira Aba" };
+    await campo("Nome").fill(dadosRenomeados.nome);
     await ate("envio liberado após falha", () => salvarNovo().isEnabled());
     await salvarNovo().click();
-    await ate("retorno à lista após nova tentativa", async () => caminho() === "/projetos");
-    await page.getByRole("link", { name: dados.nome, exact: true }).waitFor();
-    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 2);
-    assert.equal((await lerBanco()).projetos.length, quantidade + 1);
-    assert.equal((await projetosComNome(dados.nome)).length, 1);
+    await ate("retorno à lista após criar novo projeto", async () => caminho() === "/projetos");
+    await page.getByRole("link", { name: dadosRenomeados.nome, exact: true }).waitFor();
+    await page.getByRole("link", { name: dadosIniciais.nome, exact: true }).waitFor();
+
+    assert.equal(gravacoes.filter((g) => g.metodo === "PATCH").length, 0);
+    const db = await lerBanco();
+    assert.equal(db.projetos.length, quantidade + 2);
+    assert.deepEqual(db.projetos.find((p) => p.id === criadoOutraAba.id), criadoOutraAba);
+    assert.equal((await projetosComNome(dadosRenomeados.nome)).length, 1);
+  });
+
+  await conferir("POST pendente no cadastro bloqueia duplicidade e ignora resposta após saída pelo menu", async () => {
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    const dados = { nome: "Projeto com envio lento", descricao: "Teste de bloqueio", disciplina: "Redes", criadoEm: "2026-10-21" };
+    await preencherProjeto(dados);
+    await page.route(`${api}/projetos`, async (route) => {
+      if (route.request().method() === "POST") await dormir(800);
+      try { await route.continue(); } catch {}
+    });
+    gravacoes.length = 0;
+    await salvarNovo().click();
+    await ate("botão bloqueado no POST", () => page.locator('form button[type="submit"]').isDisabled());
+    await page.evaluate(() => document.querySelector("form").requestSubmit());
+    assert.equal(caminho(), "/projetos/novo");
+    await ate("lista após POST lento", async () => caminho() === "/projetos");
+    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 1);
+    await page.unrouteAll();
+
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    await preencherProjeto({ ...dados, nome: "Projeto abandonado no menu" });
+    await page.route(`${api}/projetos`, async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      await dormir(800);
+      try { await route.fulfill({ status: 201, json: { id: "simulado", ...dados } }); } catch {}
+    });
+    await salvarNovo().click();
+    await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
+    await page.getByRole("navigation").getByRole("link", { name: "Tarefas", exact: true }).click();
+    await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor();
+    await dormir(1000);
+    assert.equal(caminho(), "/");
+    await page.unrouteAll();
   });
 
   await conferir("cancelar e voltar na criação retornam à lista sem gravar", async () => {
