@@ -11,6 +11,7 @@ export function ListaProjetos() {
         <p className="pagina-tarefas__legenda">Equipe Pixel · Desenvolvimento Frontend</p>
         <h1>Projetos</h1>
         <p>Conheça os projetos e acompanhe suas tarefas.</p>
+        <Link to="/projetos/novo">Novo projeto</Link>
       </header>
       {carregando && <p role="status">Carregando projetos...</p>}
       {erro !== undefined && <p role="alert">Não foi possível carregar os projetos. Confira se a API está em execução.</p>}

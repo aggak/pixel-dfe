@@ -6,6 +6,8 @@ import { EditarTarefa } from "./pages/EditarTarefa";
 import { Layout } from "./components/Layout";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
+import { NovoProjeto } from "./pages/NovoProjeto";
+import { EditarProjeto } from "./pages/EditarProjeto";
 import "./App.css";
 
 function App() {
@@ -14,6 +16,8 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
+        <Route path="/projetos/novo" element={<NovoProjeto />} />
+        <Route path="/projetos/:id/editar" element={<EditarProjeto />} />
         <Route path="/tarefas/nova" element={<NovaTarefa />} />
         <Route path="/tarefas/:id/editar" element={<EditarTarefa />} />
         <Route path="/tarefas/:id" element={<DetalheTarefa />} />

@@ -20,6 +20,7 @@ export function DetalheProjeto() {
       <header className="pagina-tarefas__cabecalho">
         <Link to="/projetos">Voltar para projetos</Link>
         <h1>{dados ? dados.projeto.nome : "Detalhes do projeto"}</h1>
+        {dados && <Link to={`/projetos/${encodeURIComponent(dados.projeto.id)}/editar`}>Editar projeto</Link>}
       </header>
       {carregando && <p role="status">Carregando projeto...</p>}
       {erro !== undefined && (
