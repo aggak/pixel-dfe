@@ -59,6 +59,7 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
 .pagina-tarefas__cabecalho h1 {
   margin: 0.5rem 0;
+  line-height: 1.2;
 }
 
 .pagina-tarefas__legenda {
