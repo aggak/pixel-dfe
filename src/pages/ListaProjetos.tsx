@@ -1,32 +1,18 @@
-import { Link } from "react-router";
+import { useLocation, useNavigate, Link } from "react-router";
+import { Button } from "@/components/base/buttons/button";
 import { listarProjetos } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
+import { Carregando, EstadoVazio } from "../components/Layout";
+import { FolderIcon, Icon, PlusIcon } from "../design/icon";
 
 export function ListaProjetos() {
   const { dados: projetos, erro, carregando } = useConsulta(listarProjetos);
-
-  return (
-    <main className="pagina-tarefas">
-      <header className="pagina-tarefas__cabecalho">
-        <p className="pagina-tarefas__legenda">Equipe Pixel · Desenvolvimento Frontend</p>
-        <h1>Projetos</h1>
-        <p>Conheça os projetos e acompanhe suas tarefas.</p>
-        <Link to="/projetos/novo">Novo projeto</Link>
-      </header>
-      {carregando && <p role="status">Carregando projetos...</p>}
-      {erro !== undefined && <p role="alert">Não foi possível carregar os projetos. Confira se a API está em execução.</p>}
-      {projetos?.length === 0 && <p>Nenhum projeto cadastrado.</p>}
-      {projetos && projetos.length > 0 && (
-        <section aria-label="Lista de projetos" className="pagina-tarefas__grade">
-          {projetos.map((projeto) => (
-            <article key={projeto.id} className="cartao-tarefa">
-              <h2><Link to={`/projetos/${encodeURIComponent(projeto.id)}`}>{projeto.nome}</Link></h2>
-              <p>{projeto.descricao}</p>
-              <p><strong>Disciplina:</strong> {projeto.disciplina}</p>
-            </article>
-          ))}
-        </section>
-      )}
-    </main>
-  );
+  const location = useLocation();
+  const navigate = useNavigate();
+  return <main className="e-projects"><header className="e-page-heading"><div><h1 tabIndex={-1}>Projetos</h1><p>Um lugar para cada frente de trabalho.</p></div><Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-project" onClick={() => navigate("/projetos/novo", { state: { fundo: location } })}>Novo projeto</Button></header>
+    {carregando && <Carregando>Carregando projetos…</Carregando>}
+    {erro !== undefined && <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>Os projetos não carregaram</h2><p>Confira se a API está em execução.</p></div>}
+    {projetos?.length === 0 && <EstadoVazio titulo="Nenhum projeto por aqui" descricao="Crie um projeto para reunir suas tarefas." destino="/projetos/novo" acao="Criar projeto" />}
+    {projetos && projetos.length > 0 && <section className="e-project-grid" aria-label="Lista de projetos">{projetos.map((projeto) => <article className="e-project-card" key={projeto.id} data-project-id={projeto.id}><div className="e-project-icon"><FolderIcon /></div><h2><Link to={`/projetos/${encodeURIComponent(projeto.id)}`}>{projeto.nome}</Link></h2><p>{projeto.descricao}</p><div className="e-project-foot"><span className="e-project-discipline">{projeto.disciplina}</span><div className="e-project-card-actions"><Button color="tertiary" size="sm" className="e-edit-project" aria-label={`Editar projeto ${projeto.nome}`} onClick={() => navigate(`/projetos/${encodeURIComponent(projeto.id)}/editar`, { state: { fundo: location } })}>Editar</Button><Button color="secondary" size="sm" onClick={() => navigate(`/projetos/${encodeURIComponent(projeto.id)}`)}>Abrir projeto</Button></div></div></article>)}</section>}
+  </main>;
 }

@@ -1,52 +1,20 @@
-import { Link } from "react-router";
-import type { Prioridade, Status, Tarefa } from "../tipos";
+import { Link, useLocation, useNavigate } from "react-router";
+import { Badge, BadgeWithDot } from "@/components/base/badges/badges";
+import { Button } from "@/components/base/buttons/button";
+import { Dropdown } from "@/components/base/dropdown/dropdown";
+import type { Tarefa } from "../tipos";
+import { Icon, EditIcon, FolderIcon } from "../design/icon";
+import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
 
-const statusTexto: Record<Status, string> = {
-  "a-fazer": "A fazer",
-  "em-andamento": "Em andamento",
-  "em-revisao": "Em revisão",
-  concluida: "Concluída",
-};
-
-const prioridadeTexto: Record<Prioridade, string> = {
-  baixa: "Baixa",
-  media: "Média",
-  alta: "Alta",
-};
-
-interface CartaoTarefaProps {
-  tarefa: Tarefa;
-}
-
-export function CartaoTarefa({ tarefa }: CartaoTarefaProps) {
-  const prazo = new Date(`${tarefa.prazo}T00:00:00`);
-  const prazoTexto = Number.isNaN(prazo.getTime())
-    ? tarefa.prazo
-    : prazo.toLocaleDateString("pt-BR");
-
-  return (
-    <article className="cartao-tarefa">
-      <div className="cartao-tarefa__topo">
-        <span className={`cartao-tarefa__status cartao-tarefa__status--${tarefa.status}`}>
-          {statusTexto[tarefa.status]}
-        </span>
-        <span className={`cartao-tarefa__prioridade cartao-tarefa__prioridade--${tarefa.prioridade}`}>
-          Prioridade {prioridadeTexto[tarefa.prioridade].toLowerCase()}
-        </span>
-      </div>
-      <h2>
-        <Link to={`/tarefas/${encodeURIComponent(tarefa.id)}`}>{tarefa.titulo}</Link>
-      </h2>
-      <dl className="cartao-tarefa__detalhes">
-        <div>
-          <dt>Responsável</dt>
-          <dd>{tarefa.responsavel}</dd>
-        </div>
-        <div>
-          <dt>Prazo</dt>
-          <dd>{prazoTexto}</dd>
-        </div>
-      </dl>
-    </article>
-  );
+export function CartaoTarefa({ tarefa, nomeProjeto }: { tarefa: Tarefa; nomeProjeto?: string }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const caminho = `/tarefas/${encodeURIComponent(tarefa.id)}`;
+  const estado = { fundo: location };
+  return <article className="e-task e-row" data-task-id={tarefa.id}>
+    <div className="e-task-main"><div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
+      <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
+    </div>{nomeProjeto && <span className="e-task-project"><FolderIcon />{nomeProjeto}</span>}<div className="e-task-meta"><span><Icon name="user" />{tarefa.responsavel}</span><span><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo)}</time></span></div></div>
+    <div className="e-task-tags"><BadgeWithDot type="pill-color" size="sm" color={tarefa.status === "concluida" ? "success" : tarefa.status === "a-fazer" ? "gray" : "brand"} className={`e-status e-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</BadgeWithDot><Badge type="modern" size="sm" color="gray" className={`e-priority e-priority-${tarefa.prioridade}`}><Icon name={tarefa.prioridade === "alta" ? "angle-double-small-up" : tarefa.prioridade === "baixa" ? "arrow-small-down" : "minus-small"} />{prioridadeTexto[tarefa.prioridade]}</Badge></div>
+  </article>;
 }

@@ -5,7 +5,7 @@ const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { chromium } = require("playwright");
+const { criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
 
 const raiz = join(__dirname, "..");
 const processos = [];
@@ -109,7 +109,7 @@ async function executar() {
     "/",
     async (resposta) => (await resposta.text()).includes("/src/main.tsx"),
   );
-  browser = await chromium.launch({ channel: process.env.TEST_BROWSER || "msedge", headless: true });
+  browser = await lancarNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
@@ -125,7 +125,8 @@ async function executar() {
       }
     }
   });
-  const campo = (nome) => page.getByLabel(nome, { exact: true });
+  const ui = criarUi(page);
+  const campo = ui.campo;
   const salvarNovo = () => page.getByRole("button", { name: "Salvar projeto", exact: true });
   const salvarEdicao = () => page.getByRole("button", { name: "Salvar alterações", exact: true });
   const caminho = () => new URL(page.url()).pathname;
@@ -151,9 +152,10 @@ async function executar() {
     await page.goto(`${origem}/projetos`);
     await page.getByRole("link", { name: seed.projetos[0].nome, exact: true }).waitFor();
     requisicoesApi.length = 0;
-    await page.getByRole("link", { name: "Novo projeto", exact: true }).click();
+    await page.getByRole("button", { name: "Novo projeto", exact: true }).click();
     await page.locator("form").waitFor();
     assert.equal(caminho(), "/projetos/novo");
+    assert.equal(await page.getByRole("dialog", { name: "Novo projeto", exact: true }).count(), 1);
     assert.equal(await page.getByRole("heading", { name: "Novo projeto", exact: true }).count(), 1);
     for (const rotulo of ["Nome", "Descrição", "Disciplina", "Criado em"]) {
       assert.equal(await campo(rotulo).count(), 1, rotulo);
@@ -176,6 +178,9 @@ async function executar() {
     await campo("Disciplina").fill("   ");
     await salvarNovo().click();
     assert.equal(gravacoes.length, 0);
+    for (const rotulo of ["Nome", "Disciplina", "Criado em"]) {
+      assert.equal(await campo(rotulo).getAttribute("aria-required"), "true", rotulo);
+    }
     for (const [rotulo, msg] of [
       ["Nome", "Informe o nome do projeto."],
       ["Disciplina", "Informe a disciplina."],
@@ -220,9 +225,14 @@ async function executar() {
     assert.ok(criado && typeof criado.id === "string" && criado.id.length > 0);
     assert.deepEqual(criado, { id: criado.id, ...novo });
     await page.goto(`${origem}/tarefas/nova`);
+    await page.locator("form").waitFor();
     await ate("novo projeto no seletor de tarefas", async () =>
-      campo("Projeto").evaluate((el, nome) => [...el.options].some((o) => o.textContent === nome), novo.nome),
+      (await criarUi(page).opcoes("Projeto")).some((o) => o.texto === novo.nome && o.value === criado.id),
     );
+    // A opção também aparece no seletor visível.
+    await criarUi(page).seletor("Projeto").click();
+    await page.getByRole("option", { name: novo.nome, exact: true }).waitFor();
+    await page.keyboard.press("Escape");
   });
 
   await conferir("falha 500 ou de conexão no POST mantém os dados e a nova tentativa cria um único projeto", async () => {
@@ -299,7 +309,7 @@ async function executar() {
     assert.equal((await projetosComNome(dadosRenomeados.nome)).length, 1);
   });
 
-  await conferir("POST pendente no cadastro bloqueia duplicidade e ignora resposta após saída pelo menu", async () => {
+  await conferir("POST pendente no cadastro bloqueia duplicidade e ignora resposta após saída pelo histórico", async () => {
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
     const dados = { nome: "Projeto com envio lento", descricao: "Teste de bloqueio", disciplina: "Redes", criadoEm: "2026-10-21" };
@@ -327,30 +337,36 @@ async function executar() {
     });
     await salvarNovo().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
-    await page.getByRole("navigation").getByRole("link", { name: "Tarefas", exact: true }).click();
+    // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
+    await trocarRota("/");
     await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor();
+    await page.locator('[role="dialog"]').waitFor({ state: "detached" });
+    assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
     await dormir(1000);
     assert.equal(caminho(), "/");
     await page.unrouteAll();
   });
 
-  await conferir("cancelar e voltar na criação retornam à lista sem gravar", async () => {
+  await conferir("cancelar e fechar na criação retornam à lista sem gravar", async () => {
     const antes = await lerBanco();
     gravacoes.length = 0;
-    for (const acao of ["Cancelar", "Voltar para projetos"]) {
+    for (const acao of ["Cancelar", "Fechar novo projeto"]) {
       await page.goto(`${origem}/projetos/novo`);
       await page.locator("form").waitFor();
       await campo("Nome").fill("Projeto descartado");
-      await page.getByRole(acao === "Cancelar" ? "button" : "link", { name: acao, exact: true }).click();
+      await page.getByRole("button", { name: acao, exact: true }).click();
       await ate(`lista após ${acao}`, async () => caminho() === "/projetos");
     }
     assert.equal(gravacoes.length, 0);
     assert.deepEqual(await lerBanco(), antes);
   });
 
-  await conferir("link de edição, acesso direto e recarga em /projetos/:id/editar com dados atuais", async () => {
+  await conferir("botão de edição, acesso direto e recarga em /projetos/:id/editar com dados atuais", async () => {
     await page.goto(`${origem}/projetos/1`);
-    await page.getByRole("link", { name: "Editar projeto", exact: true }).click();
+    await page.getByRole("heading", { name: seed.projetos[0].nome, exact: true }).waitFor();
+    await page.getByRole("button", { name: "Detalhes do projeto", exact: true }).click();
+    await page.getByRole("button", { name: "Editar projeto", exact: true }).click();
+    await page.getByRole("dialog", { name: "Editar projeto", exact: true }).waitFor();
     assert.equal(caminho(), "/projetos/1/editar");
     const projeto = await esperarEdicao("1");
     const campos = { Nome: "nome", Descrição: "descricao", Disciplina: "disciplina", "Criado em": "criadoEm" };
@@ -387,13 +403,13 @@ async function executar() {
     assert.equal(await page.locator("article").count(), 4);
   });
 
-  await conferir("cancelar e voltar ao detalhe na edição não gravam alterações", async () => {
+  await conferir("cancelar e fechar na edição retornam ao detalhe sem gravar", async () => {
     const antes = await lerBanco();
     gravacoes.length = 0;
-    for (const acao of ["Cancelar", "Voltar para o projeto"]) {
+    for (const acao of ["Cancelar", "Fechar editar projeto"]) {
       await abrirEdicao("1");
       await campo("Nome").fill("Alteração cancelada");
-      await page.getByRole(acao === "Cancelar" ? "button" : "link", { name: acao, exact: true }).click();
+      await page.getByRole("button", { name: acao, exact: true }).click();
       await ate(`detalhe após ${acao}`, async () => caminho() === "/projetos/1");
     }
     assert.equal(gravacoes.length, 0);
@@ -473,8 +489,11 @@ async function executar() {
     });
     await salvarEdicao().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
-    await page.getByRole("navigation").getByRole("link", { name: "Tarefas", exact: true }).click();
+    // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
+    await trocarRota("/");
     await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor();
+    await page.locator('[role="dialog"]').waitFor({ state: "detached" });
+    assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
     await dormir(1000);
     assert.equal(caminho(), "/");
     await page.unrouteAll();
@@ -484,10 +503,15 @@ async function executar() {
     await page.setViewportSize({ width: 320, height: 800 });
     await abrirEdicao("1");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    // Na ficha a ordem é Nome, Disciplina, Criado em e Descrição; o Tab segue essa ordem.
     await campo("Nome").focus();
+    assert.equal(await focoVisivel(campo("Nome")), true);
     await page.keyboard.press("Tab");
+    assert.equal(await campo("Disciplina").evaluate((el) => el === document.activeElement), true);
+    assert.equal(await focoVisivel(campo("Disciplina")), true);
+    await campo("Descrição").focus();
     assert.equal(await campo("Descrição").evaluate((el) => el === document.activeElement), true);
-    assert.notEqual(await campo("Descrição").evaluate((el) => getComputedStyle(el).outlineStyle), "none");
+    assert.equal(await focoVisivel(campo("Descrição")), true);
     if (process.env.PROJETOS_EVIDENCIAS) {
       await mkdir(process.env.PROJETOS_EVIDENCIAS, { recursive: true });
       await page.screenshot({ path: join(process.env.PROJETOS_EVIDENCIAS, "editar-projeto-320.png"), fullPage: true });

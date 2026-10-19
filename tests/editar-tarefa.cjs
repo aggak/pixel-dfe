@@ -5,7 +5,7 @@ const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { chromium } = require("playwright");
+const { comTextos, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
 
 const raiz = join(__dirname, "..");
 const processos = [];
@@ -66,7 +66,7 @@ async function executar() {
       try { return (await fetch(url)).ok; } catch { return false; }
     });
   }
-  browser = await chromium.launch({ channel: process.env.TEST_BROWSER || "msedge", headless: true });
+  browser = await lancarNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
@@ -77,7 +77,8 @@ async function executar() {
       gravacoes.push({ metodo: req.method(), caminho: new URL(req.url()).pathname, dados: req.postDataJSON() });
     }
   });
-  const campo = (nome) => page.getByLabel(nome, { exact: true });
+  const ui = criarUi(page);
+  const campo = ui.campo;
   const salvar = () => page.getByRole("button", { name: "Salvar alterações", exact: true });
   const caminho = () => new URL(page.url()).pathname;
   const lerBanco = async () => JSON.parse(await readFile(banco, "utf8"));
@@ -85,7 +86,7 @@ async function executar() {
     const dados = (await lerBanco()).tarefas.find((t) => t.id === id);
     await page.locator("form").waitFor();
     await ate(`valores da tarefa ${id}`, async () => (await campo("Título").inputValue()) === dados.titulo);
-    await ate("projetos carregados", async () => (await campo("Projeto").evaluate((el) => el.options.length)) >= seed.projetos.length + 1);
+    await ate("projetos carregados", () => ui.projetosCarregados(seed.projetos.length));
     return dados;
   }
   async function abrir(id = "1") {
@@ -99,48 +100,72 @@ async function executar() {
     }, rota);
   }
 
-  await conferir("link de edição, acesso direto e recarga com todos os campos preenchidos", async () => {
+  await conferir("botão de edição, acesso direto e recarga com todos os campos preenchidos", async () => {
     await page.goto(`${origem}/tarefas/1`);
-    await page.getByRole("link", { name: "Editar tarefa", exact: true }).click();
+    await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Editar tarefa", exact: true }).click();
+    await page.getByRole("dialog", { name: "Editar tarefa", exact: true }).waitFor();
     assert.equal(caminho(), "/tarefas/1/editar");
     const tarefa = await esperarFormulario("1");
     const campos = { Projeto: "projetoId", Título: "titulo", Descrição: "descricao", Status: "status", Prioridade: "prioridade", Responsável: "responsavel", Prazo: "prazo" };
-    for (const [rotulo, atributo] of Object.entries(campos)) assert.equal(await campo(rotulo).inputValue(), tarefa[atributo]);
+    // A descrição já preenchida começa aberta; fechar e reabrir mantém o texto.
+    assert.equal(await ui.alternarDescricao().getAttribute("aria-expanded"), "true");
+    for (const [rotulo, atributo] of Object.entries(campos)) assert.equal(await ui.valor(rotulo), tarefa[atributo], rotulo);
+    await ui.fecharDescricao();
+    await ui.abrirDescricao();
+    assert.equal(await campo("Descrição").inputValue(), tarefa.descricao);
     await page.reload();
     await esperarFormulario("1");
     assert.equal(await campo("Prazo").inputValue(), tarefa.prazo);
+    // O menu de ações do cartão na lista leva ao mesmo formulário.
+    await page.goto(`${origem}/`);
+    await page.getByRole("link", { name: tarefa.titulo, exact: true }).waitFor();
+    await page.getByRole("button", { name: `Ações de ${tarefa.titulo}`, exact: true }).click();
+    await page.getByRole("menuitem", { name: "Editar tarefa", exact: true }).click();
+    await page.getByRole("dialog", { name: "Editar tarefa", exact: true }).waitFor();
+    assert.equal(caminho(), "/tarefas/1/editar");
+    await esperarFormulario("1");
   });
 
   await conferir("PATCH real mantém ID e quantidade, persiste os sete campos e retorna ao detalhe", async () => {
     await abrir();
     const dados = { projetoId: "2", titulo: "Tarefa editada na integração", descricao: "Descrição atualizada\ncom segunda linha", status: "em-revisao", prioridade: "baixa", responsavel: "Euclides", prazo: "2026-10-20" };
-    for (const [rotulo, valor] of [["Projeto", dados.projetoId], ["Status", dados.status], ["Prioridade", dados.prioridade]]) await campo(rotulo).selectOption(valor);
+    const textos = comTextos(dados, seed.projetos);
+    for (const [rotulo, texto] of [["Projeto", textos.nomeProjeto], ["Status", textos.nomeStatus], ["Prioridade", textos.nomePrioridade]]) await ui.escolher(rotulo, texto);
+    await ui.abrirDescricao();
     for (const [rotulo, valor] of [["Título", dados.titulo], ["Descrição", dados.descricao], ["Responsável", dados.responsavel], ["Prazo", dados.prazo]]) await campo(rotulo).fill(valor);
+    for (const rotulo of ["Projeto", "Status", "Prioridade"]) assert.equal(await ui.valor(rotulo), dados[{ Projeto: "projetoId", Status: "status", Prioridade: "prioridade" }[rotulo]], rotulo);
     gravacoes.length = 0;
     await salvar().click();
     await ate("retorno ao detalhe", async () => caminho() === "/tarefas/1");
-    await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+    await page.getByRole("heading", { name: dados.titulo, exact: true }).waitFor();
     assert.deepEqual(gravacoes, [{ metodo: "PATCH", caminho: "/tarefas/1", dados }]);
     const db = await lerBanco();
     assert.equal(db.tarefas.length, seed.tarefas.length);
     assert.deepEqual(db.tarefas.find((t) => t.id === "1"), { id: "1", ...dados });
     assert.deepEqual(db.tarefas.filter((t) => t.id !== "1"), seed.tarefas.filter((t) => t.id !== "1"));
     await page.reload();
-    await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+    await page.getByRole("heading", { name: dados.titulo, exact: true }).waitFor();
     await abrir();
-    assert.equal(await campo("Projeto").inputValue(), "2");
-    assert.equal(await campo("Descrição").inputValue(), dados.descricao);
+    assert.equal(await ui.valor("Projeto"), "2");
+    assert.equal(await ui.valor("Descrição"), dados.descricao);
   });
 
-  await conferir("cancelar e voltar ao detalhe não gravam alterações", async () => {
+  await conferir("cancelar e fechar retornam ao detalhe sem gravar", async () => {
     const antes = await lerBanco();
     gravacoes.length = 0;
-    for (const acao of ["Cancelar", "Voltar para a tarefa"]) {
+    for (const acao of ["Cancelar", "Fechar editar tarefa", "Escape"]) {
       await abrir();
       await campo("Título").fill("Alteração cancelada");
-      await page.getByRole(acao === "Cancelar" ? "button" : "link", { name: acao, exact: true }).click();
+      if (acao === "Escape") await page.keyboard.press("Escape");
+      else await page.getByRole("button", { name: acao, exact: true }).click();
       await ate(`detalhe após ${acao}`, async () => caminho() === "/tarefas/1");
+      // Cancelar volta à leitura; só um segundo Escape fecha a ficha.
+      await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
+      assert.equal(await page.locator("form").count(), 0);
     }
+    await page.keyboard.press("Escape");
+    await ate("lista após segundo Escape", async () => caminho() === "/");
     assert.equal(gravacoes.length, 0);
     assert.deepEqual(await lerBanco(), antes);
   });
@@ -195,7 +220,7 @@ async function executar() {
     await page.unrouteAll();
     await salvar().click();
     await ate("detalhe após nova tentativa", async () => caminho() === "/tarefas/2");
-    await page.getByRole("link", { name: "Título preservado após falha", exact: true }).waitFor();
+    await page.getByRole("heading", { name: "Título preservado após falha", exact: true }).waitFor();
   });
 
   await conferir("envio pendente bloqueia duplicação e só navega após a resposta", async () => {
@@ -224,8 +249,11 @@ async function executar() {
     });
     await salvar().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
-    await page.getByRole("navigation").getByRole("link", { name: "Projetos", exact: true }).click();
+    // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
+    await trocarRota("/projetos");
     await page.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
+    await page.locator('[role="dialog"]').waitFor({ state: "detached" });
+    assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
     await dormir(1000);
     assert.equal(caminho(), "/projetos");
     await page.unrouteAll();
@@ -254,10 +282,16 @@ async function executar() {
     await page.setViewportSize({ width: 320, height: 800 });
     await abrir();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    // Na ficha a ordem é Título, Projeto (select real), Responsável, Prazo, Status, Prioridade e Descrição.
     await campo("Título").focus();
+    assert.equal(await focoVisivel(campo("Título")), true);
     await page.keyboard.press("Tab");
+    assert.equal(await ui.seletor("Projeto").evaluate((el) => el === document.activeElement), true);
+    assert.equal(await focoVisivel(ui.seletor("Projeto")), true);
+    await ui.abrirDescricao();
+    await campo("Descrição").focus();
     assert.equal(await campo("Descrição").evaluate((el) => el === document.activeElement), true);
-    assert.notEqual(await campo("Descrição").evaluate((el) => getComputedStyle(el).outlineStyle), "none");
+    assert.equal(await focoVisivel(campo("Descrição")), true);
     if (process.env.EDITAR_TAREFA_EVIDENCIAS) {
       await mkdir(process.env.EDITAR_TAREFA_EVIDENCIAS, { recursive: true });
       await page.screenshot({ path: join(process.env.EDITAR_TAREFA_EVIDENCIAS, "editar-tarefa-320.png"), fullPage: true });

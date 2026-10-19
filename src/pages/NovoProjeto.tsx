@@ -1,11 +1,11 @@
 import { useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router";
+import { useFicha } from "../components/ficha-contexto";
 import { criarProjeto } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
 import type { DadosProjeto } from "../components/FormularioProjeto";
 
 export function NovoProjeto() {
-  const navigate = useNavigate();
+  const { navegar, fechar, setOcupada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
 
   // Ao sair da página, o envio pendente é cancelado e a resposta tardia não redireciona.
@@ -19,19 +19,14 @@ export function NovoProjeto() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     await criarProjeto(dados, controller.signal);
-    if (!controller.signal.aborted) navigate("/projetos");
+    if (!controller.signal.aborted) navegar("/projetos", true);
   }
 
   return (
-    <main className="pagina-tarefas">
-      <header className="pagina-tarefas__cabecalho">
-        <Link to="/projetos">Voltar para projetos</Link>
-        <h1>Novo projeto</h1>
-      </header>
       <FormularioProjeto
         onSalvar={salvar}
-        onCancelar={() => navigate("/projetos")}
+        onCancelar={fechar}
+        onEstadoEnvio={setOcupada}
       />
-    </main>
   );
 }

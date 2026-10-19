@@ -1,0 +1,7 @@
+Untitled UI React public components
+Repository: https://github.com/untitleduico/react
+Commit: 1d410cb8facde8d50869e7bbb5f3d048e2267466
+License: MIT; see UNTITLED_UI_LICENSE.txt.
+Components are vendored unmodified under vendor/. UI composition and Uicons adapters are local to this preview.
+Icons use Uicons Regular Rounded by Flaticon; https://www.flaticon.com/uicons
+React, React DOM, React Aria Components, and Tailwind Merge are dependencies with their licenses in package distributions.

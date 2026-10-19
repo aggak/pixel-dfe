@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
+import { useFicha } from "../components/ficha-contexto";
 import { criarTarefa } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import type { NovaTarefa as DadosNovaTarefa } from "../tipos";
 
 export function NovaTarefa() {
-  const navigate = useNavigate();
+  const { navegar, fechar, setOcupada } = useFicha();
   const [busca] = useSearchParams();
   const projetoId = busca.get("projetoId") ?? "";
   const controllerRef = useRef<AbortController | null>(null);
@@ -18,26 +19,20 @@ export function NovaTarefa() {
     return () => controller.abort();
   }, [projetoId]);
 
-  const voltarPara = projetoId ? `/projetos/${encodeURIComponent(projetoId)}` : "/";
 
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
     await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted) navigate("/");
+    if (!controller?.signal.aborted) navegar("/", true);
   }
 
   return (
-    <main className="pagina-tarefas">
-      <header className="pagina-tarefas__cabecalho">
-        <Link to={voltarPara}>{projetoId ? "Voltar para o projeto" : "Voltar para tarefas"}</Link>
-        <h1>Nova tarefa</h1>
-      </header>
       <FormularioTarefa
         key={projetoId}
         valoresIniciais={{ projetoId }}
         onSalvar={salvar}
-        onCancelar={() => navigate(voltarPara)}
+        onCancelar={fechar}
+        onEstadoEnvio={setOcupada}
       />
-    </main>
   );
 }

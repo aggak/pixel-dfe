@@ -1,5 +1,9 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/base/input/input";
+import { TextArea } from "@/components/base/textarea/textarea";
+import { Icon } from "../design/icon";
 import type { Projeto } from "../tipos";
 import "./FormularioTarefa.css";
 
@@ -14,6 +18,8 @@ interface FormularioProjetoProps {
   onSalvar: (dados: DadosProjeto) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
+  /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
+  onEstadoEnvio?: (ocupada: boolean) => void;
 }
 
 export function FormularioProjeto({
@@ -21,9 +27,8 @@ export function FormularioProjeto({
   onSalvar,
   onCancelar,
   textoSalvar = "Salvar projeto",
+  onEstadoEnvio,
 }: FormularioProjetoProps) {
-  const id = useId();
-
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
   const [disciplina, setDisciplina] = useState(valoresIniciais?.disciplina ?? "");
@@ -33,6 +38,27 @@ export function FormularioProjeto({
   const [erroEnvio, setErroEnvio] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
+
+  const onEstadoEnvioRef = useRef(onEstadoEnvio);
+  const notificadoRef = useRef(false);
+  useEffect(() => {
+    onEstadoEnvioRef.current = onEstadoEnvio;
+  });
+  // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
+  useEffect(
+    () => () => {
+      if (!notificadoRef.current) return;
+      notificadoRef.current = false;
+      onEstadoEnvioRef.current?.(false);
+    },
+    [],
+  );
+
+  function notificarEnvio(ocupada: boolean) {
+    if (notificadoRef.current === ocupada) return;
+    notificadoRef.current = ocupada;
+    onEstadoEnvioRef.current?.(ocupada);
+  }
 
   function limparErro(campo: CampoObrigatorio) {
     setErros((atuais) => {
@@ -52,6 +78,7 @@ export function FormularioProjeto({
     if (!disciplina.trim()) novosErros.disciplina = "Informe a disciplina.";
     if (!criadoEm) novosErros.criadoEm = "Informe a data de criação.";
     setErros(novosErros);
+    // A ordem de inserção acima é a ordem dos campos na ficha (nome, disciplina, criado em).
     const primeiroErro = Object.keys(novosErros)[0] as CampoObrigatorio | undefined;
     if (primeiroErro) {
       const formulario = evento.currentTarget;
@@ -71,6 +98,7 @@ export function FormularioProjeto({
     enviandoRef.current = true;
     setEnviando(true);
     setErroEnvio(false);
+    notificarEnvio(true);
     try {
       await onSalvar(dados);
     } catch {
@@ -78,103 +106,84 @@ export function FormularioProjeto({
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
+      notificarEnvio(false);
     }
   }
 
   return (
-    <form className="formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
-      <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
-        <label htmlFor={`${id}-nome`}>Nome</label>
-        <input
-          id={`${id}-nome`}
-          name="nome"
-          type="text"
-          required
-          aria-invalid={Boolean(erros.nome)}
-          aria-describedby={erros.nome ? `${id}-nome-erro` : undefined}
-          value={nome}
-          onChange={(e) => { setNome(e.target.value); limparErro("nome"); }}
-        />
-        {erros.nome && (
-          <p id={`${id}-nome-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">
-            {erros.nome}
-          </p>
-        )}
-      </div>
+    <form className="e-project-form formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
+      <div className="e-panel-scroll">
+        <div className="e-project-fields">
+          <Input
+            name="nome"
+            label="Nome"
+            placeholder="Nome do projeto"
+            autoFocus
+            isRequired
+            validationBehavior="aria"
+            size="sm"
+            value={nome}
+            onChange={(valor) => { setNome(valor); limparErro("nome"); }}
+            isInvalid={Boolean(erros.nome)}
+            hint={erros.nome ? <span role="alert">{erros.nome}</span> : undefined}
+          />
 
-      <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
-        <label htmlFor={`${id}-descricao`}>Descrição</label>
-        <textarea
-          id={`${id}-descricao`}
-          name="descricao"
-          rows={4}
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-        />
-      </div>
+          <div className="e-form-two">
+            <Input
+              name="disciplina"
+              label="Disciplina"
+              placeholder="Disciplina"
+              isRequired
+              validationBehavior="aria"
+              size="sm"
+              value={disciplina}
+              onChange={(valor) => { setDisciplina(valor); limparErro("disciplina"); }}
+              isInvalid={Boolean(erros.disciplina)}
+              hint={erros.disciplina ? <span role="alert">{erros.disciplina}</span> : undefined}
+            />
+            {/* Mantido visível, editável e obrigatório: faz parte dos dados do projeto. */}
+            <Input
+              name="criadoEm"
+              label="Criado em"
+              type="date"
+              isRequired
+              validationBehavior="aria"
+              size="sm"
+              value={criadoEm}
+              onChange={(valor) => { setCriadoEm(valor); limparErro("criadoEm"); }}
+              isInvalid={Boolean(erros.criadoEm)}
+              hint={erros.criadoEm ? <span role="alert">{erros.criadoEm}</span> : undefined}
+            />
+          </div>
 
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-disciplina`}>Disciplina</label>
-        <input
-          id={`${id}-disciplina`}
-          name="disciplina"
-          type="text"
-          required
-          aria-invalid={Boolean(erros.disciplina)}
-          aria-describedby={erros.disciplina ? `${id}-disciplina-erro` : undefined}
-          value={disciplina}
-          onChange={(e) => { setDisciplina(e.target.value); limparErro("disciplina"); }}
-        />
-        {erros.disciplina && (
-          <p id={`${id}-disciplina-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">
-            {erros.disciplina}
-          </p>
-        )}
-      </div>
-
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-criadoEm`}>Criado em</label>
-        <input
-          id={`${id}-criadoEm`}
-          name="criadoEm"
-          type="date"
-          required
-          aria-invalid={Boolean(erros.criadoEm)}
-          aria-describedby={erros.criadoEm ? `${id}-criadoEm-erro` : undefined}
-          value={criadoEm}
-          onChange={(e) => { setCriadoEm(e.target.value); limparErro("criadoEm"); }}
-        />
-        {erros.criadoEm && (
-          <p id={`${id}-criadoEm-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">
-            {erros.criadoEm}
-          </p>
-        )}
+          <TextArea
+            name="descricao"
+            label="Descrição"
+            placeholder="O que este projeto reúne?"
+            rows={3}
+            size="sm"
+            value={descricao}
+            onChange={setDescricao}
+          />
+        </div>
       </div>
 
       {erroEnvio && (
-        <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">
+        <div className="e-form-error" role="alert">
+          <Icon name="exclamation" />
           Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente.
-        </p>
+        </div>
       )}
 
-      <div className="formulario-tarefa__acoes">
-        <button
-          type="submit"
-          className="formulario-tarefa__botao formulario-tarefa__botao--principal"
-          disabled={enviando}
-        >
-          {enviando ? "Salvando…" : textoSalvar}
-        </button>
+      <div className="e-form-footer">
         {onCancelar && (
-          <button
-            type="button"
-            className="formulario-tarefa__botao"
-            onClick={onCancelar}
-            disabled={enviando}
-          >
+          <Button type="button" color="tertiary" size="sm" onClick={onCancelar} isDisabled={enviando}>
             Cancelar
-          </button>
+          </Button>
         )}
+        <Button type="submit" color="primary" size="sm" isDisabled={enviando}>
+          {enviando ? "Salvando…" : textoSalvar}
+        </Button>
       </div>
     </form>
   );

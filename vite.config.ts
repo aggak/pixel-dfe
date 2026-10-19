@@ -1,7 +1,13 @@
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
+import { fileURLToPath, URL } from 'node:url'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: { alias: {
+    '@untitledui/icons': fileURLToPath(new URL('./src/design/uicons.tsx', import.meta.url)),
+    '@untitledui/file-icons': fileURLToPath(new URL('./src/design/file-icon.tsx', import.meta.url)),
+    '@': fileURLToPath(new URL('./src/design/vendor', import.meta.url)),
+  } },
 })

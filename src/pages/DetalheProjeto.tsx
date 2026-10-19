@@ -1,54 +1,27 @@
-import { useCallback } from "react";
-import { Link, useParams } from "react-router";
+import { useCallback, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
+import { Button } from "@/components/base/buttons/button";
 import { buscarProjeto, listarTarefasDoProjeto, ErroApi } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
+import { AbasProjetos, Carregando, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
+import { EditIcon, FolderIcon, Icon, PlusIcon } from "../design/icon";
+import { formatarData } from "../design/formatos";
 
 export function DetalheProjeto() {
   const { id = "" } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [detalhes, setDetalhes] = useState(false);
   const consultar = useCallback(async (signal: AbortSignal) => {
-    const [projeto, tarefas] = await Promise.all([
-      buscarProjeto(id, signal),
-      listarTarefasDoProjeto(id, signal),
-    ]);
+    const [projeto, tarefas] = await Promise.all([buscarProjeto(id, signal), listarTarefasDoProjeto(id, signal)]);
     return { projeto, tarefas };
   }, [id]);
   const { dados, erro, carregando } = useConsulta(consultar);
-
-  return (
-    <main className="pagina-tarefas">
-      <header className="pagina-tarefas__cabecalho">
-        <Link to="/projetos">Voltar para projetos</Link>
-        <h1>{dados ? dados.projeto.nome : "Detalhes do projeto"}</h1>
-        {dados && <Link to={`/projetos/${encodeURIComponent(dados.projeto.id)}/editar`}>Editar projeto</Link>}
-      </header>
-      {carregando && <p role="status">Carregando projeto...</p>}
-      {erro !== undefined && (
-        <p role="alert">
-          {erro instanceof ErroApi && erro.status === 404
-            ? "Projeto não encontrado."
-            : "Não foi possível carregar o projeto. Confira se a API está em execução."}
-        </p>
-      )}
-      {dados && (
-        <>
-          <dl className="detalhes-registro">
-            <div><dt>Identificador</dt><dd>{dados.projeto.id}</dd></div>
-            <div><dt>Descrição</dt><dd>{dados.projeto.descricao}</dd></div>
-            <div><dt>Disciplina</dt><dd>{dados.projeto.disciplina}</dd></div>
-            <div><dt>Criado em</dt><dd><time dateTime={dados.projeto.criadoEm}>{dados.projeto.criadoEm.split("-").reverse().join("/")}</time></dd></div>
-          </dl>
-          <section aria-label="Tarefas do projeto">
-            <h2>Tarefas do projeto</h2>
-            <Link to={`/tarefas/nova?projetoId=${encodeURIComponent(dados.projeto.id)}`}>Nova tarefa</Link>
-            {dados.tarefas.length === 0 ? <p>Nenhuma tarefa neste projeto.</p> : (
-              <div className="pagina-tarefas__grade">
-                {dados.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} />)}
-              </div>
-            )}
-          </section>
-        </>
-      )}
-    </main>
-  );
+  const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;
+  return <><AbasProjetos atual={id} /><main className="e-sheet"><header className="e-tools"><h1 tabIndex={-1}>{dados?.projeto.nome ?? "Projeto"}</h1><div className="e-toolbar-right">{dados && <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate(novaTarefa, { state: { fundo: location } })}>Nova tarefa</Button>}</div></header>
+    {dados && <div className={`e-project-details ${detalhes ? "is-open" : ""}`}><button className="e-details-trigger" aria-expanded={detalhes} aria-controls="project-details" onClick={() => setDetalhes(!detalhes)}><FolderIcon /><span>Detalhes do projeto</span><Icon name={detalhes ? "angle-small-up" : "angle-small-down"} /></button>{detalhes && <div id="project-details" className="e-details-content"><h2 className="e-project-name">{dados.projeto.nome}</h2><p>{dados.projeto.descricao}</p><dl><div><dt>Identificador</dt><dd>{dados.projeto.id}</dd></div><div><dt>Disciplina</dt><dd>{dados.projeto.disciplina}</dd></div><div><dt>Criado em</dt><dd><time dateTime={dados.projeto.criadoEm}>{formatarData(dados.projeto.criadoEm, true)}</time></dd></div></dl><Button color="link-color" size="sm" className="e-edit-project-details" iconLeading={EditIcon} onClick={() => navigate(`/projetos/${encodeURIComponent(id)}/editar`, { state: { fundo: location } })}>Editar projeto</Button></div>}</div>}
+    <div className="e-content">{carregando && <Carregando>Carregando projeto…</Carregando>}{erro !== undefined && <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>{erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : "O projeto não carregou"}</h2><p>{erro instanceof ErroApi && erro.status === 404 ? "Este projeto não está disponível." : "Confira se a API está em execução."}</p><Link to="/projetos">Voltar para projetos</Link></div>}{dados && <section aria-label="Tarefas do projeto">{dados.tarefas.length === 0 ? <EstadoVazio titulo="Espaço para o próximo passo" descricao={`Crie a primeira tarefa de ${dados.projeto.nome}.`} destino={novaTarefa} acao="Criar tarefa" /> : <div className="e-list">{dados.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} />)}</div>}</section>}</div>
+    {dados && <footer className="e-sheet-footer">{dados.tarefas.length} {dados.tarefas.length === 1 ? "tarefa" : "tarefas"}</footer>}
+  </main></>;
 }

@@ -1,50 +1,28 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import { listarTarefas } from "../api";
+import { useLocation, useNavigate } from "react-router";
+import { Button } from "@/components/base/buttons/button";
+import { listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
+import { AbasProjetos, Carregando, EstadoVazio } from "../components/Layout";
+import { useConsulta } from "../hooks/useConsulta";
+import { Icon, PlusIcon } from "../design/icon";
 import type { Tarefa } from "../tipos";
 
 export function ListaTarefas() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
-
+  const { dados: projetos } = useConsulta(listarProjetos);
+  const location = useLocation();
+  const navigate = useNavigate();
   useEffect(() => {
     const controller = new AbortController();
-
-    listarTarefas(controller.signal)
-      .then((dados) => setTarefas(dados))
-      .catch(() => {
-        if (!controller.signal.aborted) setErro(true);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setCarregando(false);
-      });
-
+    listarTarefas(controller.signal).then(setTarefas).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) setCarregando(false); });
     return () => controller.abort();
   }, []);
-
-  return (
-    <main className="pagina-tarefas">
-      <header className="pagina-tarefas__cabecalho">
-        <p className="pagina-tarefas__legenda">Equipe Pixel · Desenvolvimento Frontend</p>
-        <h1>Tarefas</h1>
-        <p>Acompanhe as atividades dos projetos da equipe.</p>
-        <Link to="/tarefas/nova">Nova tarefa</Link>
-      </header>
-
-      {carregando && <p role="status">Carregando tarefas...</p>}
-      {erro && <p role="alert">Não foi possível carregar as tarefas. Confira se a API está em execução.</p>}
-      {!carregando && !erro && tarefas.length === 0 && (
-        <p>Nenhuma tarefa cadastrada.</p>
-      )}
-      {!carregando && !erro && tarefas.length > 0 && (
-        <section aria-label="Lista de tarefas" className="pagina-tarefas__grade">
-          {tarefas.map((tarefa) => (
-            <CartaoTarefa key={tarefa.id} tarefa={tarefa} />
-          ))}
-        </section>
-      )}
-    </main>
-  );
+  return <><AbasProjetos /><main className="e-sheet"><header className="e-tools"><h1 tabIndex={-1}>Tarefas</h1><div className="e-toolbar-right"><Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button></div></header><div className="e-content">
+    {carregando && <Carregando>Carregando tarefas…</Carregando>}
+    {erro && <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>As tarefas não carregaram</h2><p>Confira se a API está em execução.</p></div>}
+    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio titulo="Espaço para o próximo passo" descricao="Organize seu trabalho criando uma tarefa." destino="/tarefas/nova" acao="Criar tarefa" /> : <section className="e-list" aria-label="Lista de tarefas">{tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}
+  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefas.length} {tarefas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
 }

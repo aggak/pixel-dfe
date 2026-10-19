@@ -8,8 +8,7 @@ const { createServer: servidorNet } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 
-let chromium;
-try { ({ chromium } = require("playwright")); } catch { chromium = null; }
+const { associacoes, comTextos, contraste, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
 const repo = join(__dirname, "..");
 const evidencias = process.env.FORMULARIO_EVIDENCIAS || "";
 const ROTULOS = ["Projeto", "Título", "Descrição", "Status", "Prioridade", "Responsável", "Prazo"];
@@ -52,6 +51,8 @@ const FIXTURE_HTML = `<!doctype html>
 <body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>`;
 const FIXTURE_TSX = `import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { I18nProvider } from "react-aria-components";
+import { Aparencia } from "../src/components/Aparencia";
 import { FormularioTarefa } from "../src/components/FormularioTarefa";
 import { atualizarTarefa, criarTarefa } from "../src/api";
 import type { NovaTarefa, Tarefa } from "../src/tipos";
@@ -79,9 +80,8 @@ function Pagina() {
   if (modo === "sem-cancelar") formulario = <FormularioTarefa onSalvar={registrar} />;
   return <main><h1>Formulário de tarefa</h1>{formulario}<p data-testid="resultado">{resultado}</p><p data-testid="envios" hidden>{envios}</p></main>;
 }
-createRoot(document.getElementById("root")!).render(<StrictMode><Pagina /></StrictMode>);`;
+createRoot(document.getElementById("root")!).render(<StrictMode><Aparencia><I18nProvider locale="pt-BR"><Pagina /></I18nProvider></Aparencia></StrictMode>);`;
 async function executar() {
-  if (!chromium) throw new Error("Pacote 'playwright' não encontrado. Execute com NODE_PATH apontando para o pacote de testes.");
   try { await access(join(repo, "src/components/FormularioTarefa.tsx")); } catch { throw new Error("Componente ausente: src/components/FormularioTarefa.tsx"); }
   const bancoRealAntes = await readFile(join(repo, "db.json"), "utf8");
   const seedAntes = await readFile(join(repo, "db.seed.json"), "utf8");
@@ -110,13 +110,25 @@ async function executar() {
   } finally {
     if (apiAnterior === undefined) delete process.env.VITE_API_URL; else process.env.VITE_API_URL = apiAnterior;
   }
-  try { browser = await chromium.launch({ channel: "chrome", headless: true }); }
-  catch (erro) { throw new Error(`Não foi possível abrir o Chrome (channel "chrome"): ${erro.message}`); }
+  try { browser = await lancarNavegador(); }
+  catch (erro) { throw new Error(`Não foi possível abrir o navegador (${process.env.TEST_BROWSER || "chrome"}): ${erro.message}`); }
   const page = await browser.newPage();
+  page.setDefaultTimeout(10000);
   const errosPagina = [];
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
-  const campo = (nome) => page.getByLabel(nome, { exact: true });
-  const opcoes = (nome) => campo(nome).evaluate((el) => [...el.options].map((o) => ({ value: o.value, texto: (o.textContent || "").trim() })));
+  const ui = criarUi(page);
+  const campo = ui.campo;
+  const opcoes = ui.opcoes;
+  const controle = (rotulo) => (["Projeto", "Status", "Prioridade"].includes(rotulo) ? ui.seletor(rotulo) : campo(rotulo));
+  // Opções do select real, lidas na lista visível aberta pelo botão.
+  async function opcoesVisiveis(nome) {
+    await ui.seletor(nome).click();
+    await page.getByRole("listbox").waitFor();
+    const textos = await page.getByRole("option").evaluateAll((els) => els.map((el) => (el.textContent || "").trim()));
+    await page.keyboard.press("Escape");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    return textos;
+  }
   const payloads = () => page.evaluate(() => window.__payloads || []);
   const envios = async () => Number(await page.getByTestId("envios").innerText());
   const resultado = () => page.getByTestId("resultado").innerText();
@@ -126,29 +138,26 @@ async function executar() {
   async function abrir(modo, aguardar = true) {
     await page.goto(`${origem}/?modo=${modo}`);
     await page.locator("form").waitFor();
-    if (aguardar) await ate("projetos carregados", async () => (await opcoes("Projeto")).filter((o) => o.value).length >= seed.projetos.length);
+    if (aguardar) await ate("projetos carregados", () => ui.projetosCarregados(seed.projetos.length));
   }
-  async function preencher(dados) {
-    await campo("Projeto").selectOption(dados.projetoId);
-    await campo("Título").fill(dados.titulo);
-    await campo("Descrição").fill(dados.descricao);
-    await campo("Status").selectOption(dados.status);
-    await campo("Prioridade").selectOption(dados.prioridade);
-    await campo("Responsável").fill(dados.responsavel);
-    await campo("Prazo").fill(dados.prazo);
-  }
+  const preencher = (dados) => ui.preencherTarefa(comTextos(dados, seed.projetos));
   const valido = { projetoId: "2", titulo: "Organizar referências", descricao: "Separar materiais por disciplina", status: "em-andamento", prioridade: "alta", responsavel: "Bruno", prazo: "2027-02-10" };
   await conferir("sete campos com rótulos exatos, enums, required e ids únicos", async () => {
     await abrir("novo");
     assert.equal(await page.locator("form").count(), 1);
-    for (const rotulo of ROTULOS) assert.equal(await campo(rotulo).count(), 1, rotulo);
-    const pares = await page.evaluate(() => [...document.querySelectorAll("label")].map((l) => ({ texto: (l.textContent || "").trim(), para: l.htmlFor })));
-    for (const rotulo of ROTULOS) {
-      const par = pares.find((p) => p.texto === rotulo);
-      assert.ok(par && par.para, `rótulo sem controle associado: ${rotulo}`);
-      assert.equal(await page.locator(`[id="${par.para}"]`).count(), 1, rotulo);
+    // A descrição é opcional e começa recolhida; só depois de aberta o campo existe.
+    assert.equal(await campo("Descrição").count(), 0);
+    await ui.abrirDescricao();
+    for (const rotulo of ROTULOS) assert.equal(await controle(rotulo).count(), 1, rotulo);
+    const ligacoes = await associacoes(page);
+    assert.deepEqual(ligacoes.map((l) => l.texto).sort(), [...ROTULOS].sort());
+    for (const ligacao of ligacoes) {
+      assert.equal(ligacao.controles.length, 1, `rótulo sem um único controle associado: ${ligacao.texto}`);
+      assert.ok(ligacao.controles[0].id, ligacao.texto);
+      if (ligacao.para) assert.equal(ligacao.para, ligacao.controles[0].id, ligacao.texto);
+      assert.equal(await page.locator(`[id="${ligacao.controles[0].id}"]`).count(), 1, ligacao.texto);
     }
-    for (const rotulo of OBRIGATORIOS) assert.equal(await campo(rotulo).evaluate((el) => el.required), true, rotulo);
+    for (const rotulo of OBRIGATORIOS) assert.equal(await ui.obrigatorio(rotulo), true, rotulo);
     const ids = await page.evaluate(() => [...document.querySelectorAll("[id]")].map((e) => e.id).filter(Boolean));
     assert.equal(new Set(ids).size, ids.length, "ids duplicados na página");
     assert.deepEqual(await opcoes("Status"), [
@@ -158,7 +167,11 @@ async function executar() {
     assert.deepEqual(await opcoes("Prioridade"), [
       { value: "baixa", texto: "Baixa" }, { value: "media", texto: "Média" }, { value: "alta", texto: "Alta" },
     ]);
-    assert.deepEqual((await opcoes("Projeto")).filter((o) => o.value), seed.projetos.map((p) => ({ value: String(p.id), texto: p.nome })));
+    assert.deepEqual(await opcoes("Projeto"), seed.projetos.map((p) => ({ value: String(p.id), texto: p.nome })));
+    // As mesmas opções aparecem, na mesma ordem, na lista visível de cada select.
+    assert.deepEqual(await opcoesVisiveis("Status"), ["A fazer", "Em andamento", "Em revisão", "Concluída"]);
+    assert.deepEqual(await opcoesVisiveis("Prioridade"), ["Baixa", "Média", "Alta"]);
+    assert.deepEqual(await opcoesVisiveis("Projeto"), seed.projetos.map((p) => p.nome));
   });
   await conferir("projetos vêm da API e não de lista fixa", async () => {
     const custom = [{ id: "custom-1", nome: "Projeto Vindo da API", descricao: "x", disciplina: "y", criadoEm: "2026-01-01" }, { id: "custom-2", nome: "Outro Projeto da API", descricao: "x", disciplina: "y", criadoEm: "2026-01-02" }];
@@ -166,31 +179,39 @@ async function executar() {
     try {
       await abrir("novo", false);
       await ate("projetos personalizados", async () => (await opcoes("Projeto")).some((o) => o.value === "custom-1"));
-      assert.deepEqual((await opcoes("Projeto")).filter((o) => o.value), custom.map((p) => ({ value: p.id, texto: p.nome })));
+      assert.deepEqual(await opcoes("Projeto"), custom.map((p) => ({ value: p.id, texto: p.nome })));
+      assert.deepEqual(await opcoesVisiveis("Projeto"), custom.map((p) => p.nome));
     } finally { await page.unrouteAll(); }
   });
-  await conferir("valores padrão no cadastro e envio vazio bloqueado pelo navegador", async () => {
+  await conferir("valores padrão no cadastro e envio vazio bloqueado pela validação", async () => {
     await abrir("novo");
     assert.equal(await campo("Título").inputValue(), "");
-    assert.equal(await campo("Descrição").inputValue(), "");
+    assert.equal(await ui.valor("Descrição"), "");
     assert.equal(await campo("Responsável").inputValue(), "");
     assert.equal(await campo("Prazo").inputValue(), "");
-    assert.equal(await campo("Status").inputValue(), "a-fazer");
-    assert.equal(await campo("Prioridade").inputValue(), "media");
-    assert.equal(await campo("Projeto").inputValue(), "", "cadastro não escolhe um projeto silenciosamente");
+    assert.equal(await ui.valor("Status"), "a-fazer");
+    assert.equal(await ui.valor("Prioridade"), "media");
+    assert.ok((await ui.seletor("Status").innerText()).includes("A fazer"));
+    assert.ok((await ui.seletor("Prioridade").innerText()).includes("Média"));
+    assert.equal(await ui.valor("Projeto"), "", "cadastro não escolhe um projeto silenciosamente");
     assert.equal(await botaoSalvar().isEnabled(), true);
     await botaoSalvar().click();
     assert.equal((await payloads()).length, 0);
+    for (const mensagem of ["Informe o título da tarefa.", "Selecione um projeto.", "Informe o responsável.", "Informe o prazo."]) await page.getByText(mensagem, { exact: true }).waitFor();
     if (evidencias) { await mkdir(evidencias, { recursive: true }); await page.screenshot({ path: join(evidencias, "formulario-novo.png") }); }
   });
   await conferir("edição preenche todos os campos no mesmo componente", async () => {
     await abrir("editar");
     assert.equal(await page.locator("form").count(), 1);
-    assert.equal(await campo("Projeto").inputValue(), "2");
+    assert.equal(await ui.valor("Projeto"), "2");
     assert.equal(await campo("Título").inputValue(), "Revisar modelagem");
+    // A descrição preenchida começa aberta; fechar e reabrir mantém o texto.
+    assert.equal(await ui.alternarDescricao().getAttribute("aria-expanded"), "true");
     assert.equal(await campo("Descrição").inputValue(), "Conferir entidades e relacionamentos");
-    assert.equal(await campo("Status").inputValue(), "em-revisao");
-    assert.equal(await campo("Prioridade").inputValue(), "alta");
+    await ui.fecharDescricao();
+    assert.equal(await ui.valor("Descrição"), "Conferir entidades e relacionamentos");
+    assert.equal(await ui.valor("Status"), "em-revisao");
+    assert.equal(await ui.valor("Prioridade"), "alta");
     assert.equal(await campo("Responsável").inputValue(), "Carla");
     assert.equal(await campo("Prazo").inputValue(), "2026-12-01");
     assert.equal(await botaoSalvar("Atualizar tarefa").count(), 1);
@@ -230,7 +251,8 @@ async function executar() {
     await botaoSalvar().click();
     await ate("callback rejeitado executado", async () => (await envios()) === 1);
     assert.equal(await campo("Título").inputValue(), valido.titulo);
-    assert.equal(await campo("Descrição").inputValue(), valido.descricao);
+    assert.equal(await ui.valor("Descrição"), valido.descricao);
+    for (const [rotulo, atributo] of [["Projeto", "projetoId"], ["Status", "status"], ["Prioridade", "prioridade"]]) assert.equal(await ui.valor(rotulo), valido[atributo], rotulo);
     assert.equal(await campo("Responsável").inputValue(), valido.responsavel);
     assert.equal(await campo("Prazo").inputValue(), valido.prazo);
     await ate("botão reabilitado", () => botaoEnvio().isEnabled());
@@ -279,7 +301,7 @@ async function executar() {
     await abrir("editar-real");
     assert.equal(await campo("Título").inputValue(), "Criar o repositório");
     await campo("Título").fill("Repositório atualizado pela suíte");
-    await campo("Status").selectOption("em-andamento");
+    await ui.escolher("Status", "Em andamento");
     await botaoSalvar("Atualizar tarefa").click();
     await ate("confirmação da atualização", async () => (await resultado()) === "Atualizada: 1");
     const atual = await (await fetch(`${apiUrl}/tarefas/1`)).json();
@@ -291,17 +313,33 @@ async function executar() {
   });
   await conferir("projeto inicial isolado e duas instâncias sem conflito de rótulos", async () => {
     await abrir("contexto");
-    assert.equal(await campo("Projeto").inputValue(), "2");
+    assert.equal(await ui.valor("Projeto"), "2");
     assert.equal(await campo("Título").inputValue(), "");
     await page.goto(`${origem}/?modo=duplo`);
     await ate("duas instâncias", async () => await page.locator("form").count() === 2);
     await ate("projetos nas duas instâncias", async () => await page.locator('form select[name="projetoId"] option[value="1"]').count() === 2);
-    const ids = await page.locator("form [id]").evaluateAll((els) => els.map((el) => el.id));
-    assert.equal(ids.length, 14);
-    assert.equal(new Set(ids).size, 14);
-    const labels = await page.locator("form label").evaluateAll((els) => els.map((el) => document.getElementById(el.htmlFor)?.tagName));
-    assert.equal(labels.length, 14);
-    assert.ok(labels.every(Boolean));
+    const instancias = [0, 1].map((n) => criarUi(page, () => page.locator("form").nth(n)));
+    for (const instancia of instancias) await instancia.abrirDescricao();
+    // Cada instância tem os sete campos, com rótulos e controles próprios e ids únicos em toda a página.
+    const porInstancia = [await associacoes(page, 0), await associacoes(page, 1)];
+    for (const ligacoes of porInstancia) {
+      assert.deepEqual(ligacoes.map((l) => l.texto).sort(), [...ROTULOS].sort());
+      for (const ligacao of ligacoes) {
+        assert.equal(ligacao.controles.length, 1, ligacao.texto);
+        if (ligacao.para) assert.equal(ligacao.para, ligacao.controles[0].id, ligacao.texto);
+      }
+    }
+    const idsControles = porInstancia.flatMap((ligacoes) => ligacoes.flatMap((l) => [l.id, l.controles[0].id]));
+    assert.equal(idsControles.length, 28);
+    assert.equal(new Set(idsControles).size, idsControles.length, "rótulos e controles compartilham ids entre instâncias");
+    const todosIds = await page.locator("[id]").evaluateAll((els) => els.map((el) => el.id).filter(Boolean));
+    assert.equal(new Set(todosIds).size, todosIds.length, "ids duplicados na página");
+    for (const rotulo of ROTULOS) for (const instancia of instancias) {
+      assert.equal(await (["Projeto", "Status", "Prioridade"].includes(rotulo) ? instancia.seletor(rotulo) : instancia.campo(rotulo)).count(), 1, rotulo);
+    }
+    // Digitar em uma instância não altera a outra.
+    await instancias[0].campo("Título").fill("Somente na primeira");
+    assert.equal(await instancias[1].campo("Título").inputValue(), "");
   });
 
   await conferir("projeto removido da API impede salvar até escolher outro", async () => {
@@ -312,7 +350,8 @@ async function executar() {
       assert.equal(await botaoEnvio().isDisabled(), true);
       await page.locator("form").evaluate((f) => f.requestSubmit());
       assert.equal((await payloads()).length, 0);
-      await campo("Projeto").selectOption("1");
+      await ui.escolher("Projeto", seed.projetos[0].nome);
+      assert.equal(await ui.valor("Projeto"), "1");
       await botaoEnvio().click();
       await ate("envio com projeto disponível", async () => (await payloads()).length === 1);
       assert.equal((await payloads())[0].projetoId, "1");
@@ -320,17 +359,25 @@ async function executar() {
   });
 
   await conferir("botão legível nos temas claro e escuro", async () => {
-    const luminancia = (rgb) => rgb.match(/[\d.]+/g).slice(0, 3).map(Number).map((n) => n / 255).map((n) => n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4).reduce((s, n, i) => s + n * [0.2126, 0.7152, 0.0722][i], 0);
     await page.setViewportSize({ width: 1024, height: 900 });
+    const fundos = {};
+    const classesTema = () => page.evaluate(() => ({ dark: document.documentElement.classList.contains("dark"), darkMode: document.documentElement.classList.contains("dark-mode") }));
     for (const tema of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme: tema });
       await abrir("editar");
+      // Os provedores de produção alternam as classes de tema de verdade.
+      assert.deepEqual(await classesTema(), { dark: tema === "dark", darkMode: tema === "dark" }, tema);
+      // As cores têm transição: só se mede depois que nenhuma animação CSS está em curso.
+      await page.waitForFunction(() => document.getAnimations().length === 0);
       const cores = await botaoEnvio().evaluate((el) => ({ texto: getComputedStyle(el).color, fundo: getComputedStyle(el).backgroundColor }));
-      const [menor, maior] = [luminancia(cores.texto), luminancia(cores.fundo)].sort((a, b) => a - b);
-      assert.ok((maior + 0.05) / (menor + 0.05) >= 4.5);
+      fundos[tema] = await campo("Título").evaluate((el) => `${getComputedStyle(el).color} | ${getComputedStyle(document.body).backgroundColor} | ${getComputedStyle(el.closest("form")).color}`);
+      assert.ok(contraste(cores.texto, cores.fundo) >= 4.5, `${tema}: ${cores.texto} sobre ${cores.fundo}`);
       if (evidencias) await page.screenshot({ path: join(evidencias, `formulario-${tema}.png`), fullPage: true });
     }
+    assert.notEqual(fundos.light, fundos.dark, "o tema escuro deve mudar as cores do texto e do fundo");
+    // A troca de preferência em tempo de execução também é refletida sem recarregar.
     await page.emulateMedia({ colorScheme: "light" });
+    await ate("tema claro restaurado", async () => (await classesTema()).dark === false);
   });
 
   await conferir("largura de 320px sem overflow e navegação por teclado", async () => {
@@ -338,12 +385,13 @@ async function executar() {
     await abrir("novo");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     assert.equal(await page.evaluate(() => document.body.scrollWidth <= window.innerWidth), true);
-    await page.getByText("Responsável", { exact: true }).first().click();
+    await page.locator("form label", { hasText: "Responsável" }).click();
     assert.equal(await page.evaluate(() => document.activeElement && document.activeElement.id), await campo("Responsável").evaluate((el) => el.id));
+    assert.equal(await focoVisivel(campo("Responsável")), true);
     let alcancouBotao = false;
     for (let i = 0; i < 8 && !alcancouBotao; i++) {
       await page.keyboard.press("Tab");
-      alcancouBotao = await page.evaluate(() => document.activeElement instanceof HTMLButtonElement);
+      alcancouBotao = await page.evaluate(() => document.activeElement instanceof HTMLButtonElement && document.activeElement.closest("form") !== null);
     }
     assert.equal(alcancouBotao, true, "Tab deve alcançar um botão do formulário");
     if (evidencias) { await mkdir(evidencias, { recursive: true }); await page.screenshot({ path: join(evidencias, "formulario-320.png"), fullPage: true }); }

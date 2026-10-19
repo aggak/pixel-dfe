@@ -1,6 +1,11 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/base/input/input";
+import { Select } from "@/components/base/select/select";
+import { TextArea } from "@/components/base/textarea/textarea";
 import { listarProjetos } from "../api";
+import { FolderIcon, Icon } from "../design/icon";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa, Prioridade, Status } from "../tipos";
 import "./FormularioTarefa.css";
@@ -21,12 +26,17 @@ const opcoesPrioridade: { valor: Prioridade; texto: string }[] = [
 type CampoObrigatorio = "projetoId" | "titulo" | "responsavel" | "prazo";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
 
+// Ordem em que os campos aparecem na ficha: o foco de erro vai para o primeiro inválido nesta ordem.
+const ordemCampos: CampoObrigatorio[] = ["titulo", "projetoId", "responsavel", "prazo"];
+
 interface FormularioTarefaProps {
   /** Lido apenas na montagem; use `key` no pai para trocar a tarefa editada. */
   valoresIniciais?: Partial<NovaTarefa>;
   onSalvar: (dados: NovaTarefa) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
+  /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
+  onEstadoEnvio?: (ocupada: boolean) => void;
 }
 
 export function FormularioTarefa({
@@ -34,6 +44,7 @@ export function FormularioTarefa({
   onSalvar,
   onCancelar,
   textoSalvar = "Salvar tarefa",
+  onEstadoEnvio,
 }: FormularioTarefaProps) {
   const id = useId();
   const projetos = useConsulta(listarProjetos);
@@ -47,11 +58,35 @@ export function FormularioTarefa({
   );
   const [responsavel, setResponsavel] = useState(valoresIniciais?.responsavel ?? "");
   const [prazo, setPrazo] = useState(valoresIniciais?.prazo ?? "");
+  // A descrição já preenchida começa visível; recolher apenas esconde o campo, o valor fica no estado.
+  const [descricaoAberta, setDescricaoAberta] = useState(Boolean(valoresIniciais?.descricao));
 
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
+  const seletorProjetoRef = useRef<HTMLDivElement>(null);
+
+  const onEstadoEnvioRef = useRef(onEstadoEnvio);
+  const notificadoRef = useRef(false);
+  useEffect(() => {
+    onEstadoEnvioRef.current = onEstadoEnvio;
+  });
+  // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
+  useEffect(
+    () => () => {
+      if (!notificadoRef.current) return;
+      notificadoRef.current = false;
+      onEstadoEnvioRef.current?.(false);
+    },
+    [],
+  );
+
+  function notificarEnvio(ocupada: boolean) {
+    if (notificadoRef.current === ocupada) return;
+    notificadoRef.current = ocupada;
+    onEstadoEnvioRef.current?.(ocupada);
+  }
 
   const listaProjetos = projetos.dados ?? [];
   const projetosDisponiveis = listaProjetos.length > 0;
@@ -59,6 +94,13 @@ export function FormularioTarefa({
     projetoId !== "" && projetosDisponiveis && !listaProjetos.some((p) => p.id === projetoId);
   const podeSalvar = projetosDisponiveis && !projetoDesconhecido;
   const avisoProjeto = !podeSalvar || projetoDesconhecido ? `${id}-projeto-aviso` : undefined;
+
+  const itensProjeto = [
+    ...(projetoDesconhecido ? [{ id: projetoId, label: "Projeto não encontrado" }] : []),
+    ...listaProjetos.map((projeto) => ({ id: projeto.id, label: projeto.nome })),
+  ];
+  const itensStatus = opcoesStatus.map((opcao) => ({ id: opcao.valor, label: opcao.texto }));
+  const itensPrioridade = opcoesPrioridade.map((opcao) => ({ id: opcao.valor, label: opcao.texto }));
 
   function limparErro(campo: CampoObrigatorio) {
     setErros((atuais) => {
@@ -80,10 +122,17 @@ export function FormularioTarefa({
     if (!responsavel.trim()) novosErros.responsavel = "Informe o responsável.";
     if (!prazo) novosErros.prazo = "Informe o prazo.";
     setErros(novosErros);
-    const primeiroErro = Object.keys(novosErros)[0] as CampoObrigatorio | undefined;
+    const primeiroErro = ordemCampos.find((campo) => novosErros[campo]);
     if (primeiroErro) {
       const formulario = evento.currentTarget;
-      window.setTimeout(() => formulario.querySelector<HTMLElement>(`[name="${primeiroErro}"]`)?.focus(), 0);
+      window.setTimeout(() => {
+        // O `name` do Select real fica no <select> oculto; o foco vai para o botão do combobox.
+        const alvo =
+          primeiroErro === "projetoId"
+            ? seletorProjetoRef.current?.querySelector<HTMLElement>("button")
+            : formulario.querySelector<HTMLElement>(`[name="${primeiroErro}"]`);
+        alvo?.focus();
+      }, 0);
       return;
     }
 
@@ -101,6 +150,7 @@ export function FormularioTarefa({
     enviandoRef.current = true;
     setEnviando(true);
     setErroEnvio(false);
+    notificarEnvio(true);
     try {
       await onSalvar(dados);
     } catch {
@@ -108,176 +158,197 @@ export function FormularioTarefa({
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
+      notificarEnvio(false);
     }
   }
 
   return (
-    <form className="formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
-      <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
-        <label htmlFor={`${id}-projeto`}>Projeto</label>
-        <select
-          id={`${id}-projeto`}
-          name="projetoId"
-          required
-          value={projetoId}
-          onChange={(e) => { setProjetoId(e.target.value); limparErro("projetoId"); }}
-          disabled={!projetosDisponiveis}
-          aria-invalid={Boolean(erros.projetoId || projetoDesconhecido)}
-          aria-describedby={[avisoProjeto, erros.projetoId && `${id}-projeto-erro`].filter(Boolean).join(" ") || undefined}
-        >
-          <option value="" disabled>
-            Selecione um projeto
-          </option>
-          {projetoDesconhecido && (
-            <option value={projetoId} disabled>
-              Projeto não encontrado
-            </option>
-          )}
-          {listaProjetos.map((projeto) => (
-            <option key={projeto.id} value={projeto.id}>
-              {projeto.nome}
-            </option>
-          ))}
-        </select>
-        {erros.projetoId && <p id={`${id}-projeto-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.projetoId}</p>}
-        {projetoDesconhecido && (
-          <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
-            O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.
-          </p>
-        )}
-        {projetos.carregando && (
-          <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
-            Carregando projetos…
-          </p>
-        )}
-        {projetos.erro !== undefined && (
-          <p
-            id={`${id}-projeto-aviso`}
-            className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
-            role="alert"
+    <form className="e-task-form formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
+      <div className="e-panel-scroll">
+        <div className="e-title-field">
+          <Input
+            name="titulo"
+            label="Título"
+            placeholder="O que precisa ser feito?"
+            autoFocus
+            isRequired
+            validationBehavior="aria"
+            size="md"
+            value={titulo}
+            onChange={(valor) => { setTitulo(valor); limparErro("titulo"); }}
+            isInvalid={Boolean(erros.titulo)}
+            hint={erros.titulo ? <span role="alert">{erros.titulo}</span> : undefined}
+          />
+        </div>
+
+        <div className="e-properties">
+          <div className="formulario-tarefa__projeto">
+            <Select
+              ref={seletorProjetoRef}
+              name="projetoId"
+              label="Projeto"
+              icon={FolderIcon}
+              placeholder="Selecione um projeto"
+              size="sm"
+              isRequired
+              validationBehavior="aria"
+              items={itensProjeto}
+              selectedKey={projetoId || null}
+              disabledKeys={projetoDesconhecido ? [projetoId] : undefined}
+              onSelectionChange={(chave) => {
+                setProjetoId(chave === null ? "" : String(chave));
+                limparErro("projetoId");
+              }}
+              isDisabled={!projetosDisponiveis}
+              isInvalid={Boolean(erros.projetoId || projetoDesconhecido)}
+              aria-describedby={[avisoProjeto, erros.projetoId && `${id}-projeto-erro`].filter(Boolean).join(" ") || undefined}
+            >
+              {(item) => (
+                <Select.Item id={item.id} textValue={item.label}>
+                  {item.label}
+                </Select.Item>
+              )}
+            </Select>
+            {erros.projetoId && <p id={`${id}-projeto-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.projetoId}</p>}
+            {projetoDesconhecido && (
+              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
+                O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.
+              </p>
+            )}
+            {projetos.carregando && (
+              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
+                Carregando projetos…
+              </p>
+            )}
+            {projetos.erro !== undefined && (
+              <p
+                id={`${id}-projeto-aviso`}
+                className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
+                role="alert"
+              >
+                Não foi possível carregar os projetos. Recarregue a página para tentar novamente.
+              </p>
+            )}
+            {projetos.dados && !projetosDisponiveis && (
+              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
+                Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.
+              </p>
+            )}
+          </div>
+
+          <div className="e-form-two e-person-date">
+            <Input
+              name="responsavel"
+              label="Responsável"
+              placeholder="Nome"
+              size="sm"
+              isRequired
+              validationBehavior="aria"
+              value={responsavel}
+              onChange={(valor) => { setResponsavel(valor); limparErro("responsavel"); }}
+              isInvalid={Boolean(erros.responsavel)}
+              hint={erros.responsavel ? <span role="alert">{erros.responsavel}</span> : undefined}
+            />
+            <Input
+              name="prazo"
+              label="Prazo"
+              type="date"
+              size="sm"
+              isRequired
+              validationBehavior="aria"
+              value={prazo}
+              onChange={(valor) => { setPrazo(valor); limparErro("prazo"); }}
+              isInvalid={Boolean(erros.prazo)}
+              hint={erros.prazo ? <span role="alert">{erros.prazo}</span> : undefined}
+            />
+          </div>
+
+          <div className="e-form-two">
+            <Select
+              name="status"
+              label="Status"
+              isRequired
+              validationBehavior="aria"
+              size="sm"
+              items={itensStatus}
+              selectedKey={status}
+              onSelectionChange={(chave) => {
+                const opcao = opcoesStatus.find((o) => o.valor === chave);
+                if (opcao) setStatus(opcao.valor);
+              }}
+            >
+              {(item) => (
+                <Select.Item id={item.id} textValue={item.label}>
+                  {item.label}
+                </Select.Item>
+              )}
+            </Select>
+            <Select
+              name="prioridade"
+              label="Prioridade"
+              isRequired
+              validationBehavior="aria"
+              size="sm"
+              items={itensPrioridade}
+              selectedKey={prioridade}
+              onSelectionChange={(chave) => {
+                const opcao = opcoesPrioridade.find((o) => o.valor === chave);
+                if (opcao) setPrioridade(opcao.valor);
+              }}
+            >
+              {(item) => (
+                <Select.Item id={item.id} textValue={item.label}>
+                  {item.label}
+                </Select.Item>
+              )}
+            </Select>
+          </div>
+        </div>
+
+        <div className="e-description">
+          <button
+            type="button"
+            className="e-description-toggle"
+            aria-expanded={descricaoAberta}
+            aria-controls={descricaoAberta ? `${id}-descricao` : undefined}
+            onClick={() => setDescricaoAberta((aberta) => !aberta)}
           >
-            Não foi possível carregar os projetos. Recarregue a página para tentar novamente.
-          </p>
-        )}
-        {projetos.dados && !projetosDisponiveis && (
-          <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
-            Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.
-          </p>
-        )}
-      </div>
-
-      <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
-        <label htmlFor={`${id}-titulo`}>Título</label>
-        <input
-          id={`${id}-titulo`}
-          name="titulo"
-          type="text"
-          required
-          aria-invalid={Boolean(erros.titulo)}
-          aria-describedby={erros.titulo ? `${id}-titulo-erro` : undefined}
-          value={titulo}
-          onChange={(e) => { setTitulo(e.target.value); limparErro("titulo"); }}
-        />
-        {erros.titulo && <p id={`${id}-titulo-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.titulo}</p>}
-      </div>
-
-      <div className="formulario-tarefa__campo formulario-tarefa__campo--largo">
-        <label htmlFor={`${id}-descricao`}>Descrição</label>
-        <textarea
-          id={`${id}-descricao`}
-          name="descricao"
-          rows={4}
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-        />
-      </div>
-
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-status`}>Status</label>
-        <select
-          id={`${id}-status`}
-          name="status"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as Status)}
-        >
-          {opcoesStatus.map((opcao) => (
-            <option key={opcao.valor} value={opcao.valor}>
-              {opcao.texto}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-prioridade`}>Prioridade</label>
-        <select
-          id={`${id}-prioridade`}
-          name="prioridade"
-          value={prioridade}
-          onChange={(e) => setPrioridade(e.target.value as Prioridade)}
-        >
-          {opcoesPrioridade.map((opcao) => (
-            <option key={opcao.valor} value={opcao.valor}>
-              {opcao.texto}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-responsavel`}>Responsável</label>
-        <input
-          id={`${id}-responsavel`}
-          name="responsavel"
-          type="text"
-          required
-          aria-invalid={Boolean(erros.responsavel)}
-          aria-describedby={erros.responsavel ? `${id}-responsavel-erro` : undefined}
-          value={responsavel}
-          onChange={(e) => { setResponsavel(e.target.value); limparErro("responsavel"); }}
-        />
-        {erros.responsavel && <p id={`${id}-responsavel-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.responsavel}</p>}
-      </div>
-
-      <div className="formulario-tarefa__campo">
-        <label htmlFor={`${id}-prazo`}>Prazo</label>
-        <input
-          id={`${id}-prazo`}
-          name="prazo"
-          type="date"
-          required
-          aria-invalid={Boolean(erros.prazo)}
-          aria-describedby={erros.prazo ? `${id}-prazo-erro` : undefined}
-          value={prazo}
-          onChange={(e) => { setPrazo(e.target.value); limparErro("prazo"); }}
-        />
-        {erros.prazo && <p id={`${id}-prazo-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.prazo}</p>}
+            <Icon name={descricaoAberta ? "minus-small" : "plus-small"} />
+            {descricaoAberta ? "Descrição" : "Adicionar descrição"}
+            <span>opcional</span>
+          </button>
+          {descricaoAberta && (
+            <div id={`${id}-descricao`} className="e-description-body">
+              <TextArea
+                name="descricao"
+                label="Descrição"
+                placeholder="Contexto, referências ou o que precisa ser entregue…"
+                rows={3}
+                size="sm"
+                value={descricao}
+                onChange={setDescricao}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {erroEnvio && (
-        <p className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">
+        <div className="e-form-error" role="alert">
+          <Icon name="exclamation" />
           Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente.
-        </p>
+        </div>
       )}
 
-      <div className="formulario-tarefa__acoes">
-        <button
-          type="submit"
-          className="formulario-tarefa__botao formulario-tarefa__botao--principal"
-          disabled={enviando || !podeSalvar}
-        >
-          {enviando ? "Salvando…" : textoSalvar}
-        </button>
+      <div className="e-form-footer">
         {onCancelar && (
-          <button
-            type="button"
-            className="formulario-tarefa__botao"
-            onClick={onCancelar}
-            disabled={enviando}
-          >
+          <Button type="button" color="tertiary" size="sm" onClick={onCancelar} isDisabled={enviando}>
             Cancelar
-          </button>
+          </Button>
         )}
+        <Button type="submit" color="primary" size="sm" isDisabled={enviando || !podeSalvar}>
+          {enviando ? "Salvando…" : textoSalvar}
+        </Button>
       </div>
     </form>
   );
