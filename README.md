@@ -2,6 +2,9 @@
 
 Organize projetos e tarefas em um só lugar. Crie, edite e acompanhe status, prioridades, responsáveis e prazos.
 
+[Interface no GitHub Pages](https://aggak.github.io/pixel-dfe/)
+Publicação somente da interface; os dados dependem da API local. A API pública fica para o Marco 6.
+
 ![Lista de tarefas da Pixel no tema claro, com projetos, responsáveis, prazos, status e prioridades](docs/images/pixel-tarefas.png)
 
 <details>
