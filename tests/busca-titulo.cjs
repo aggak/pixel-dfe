@@ -64,6 +64,29 @@ async function executar() {
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
     assert.equal(await busca.inputValue(), "");
 
+    const selecionar = async (nome, opcao) => {
+      await page.getByRole("button", { name: new RegExp(nome) }).click();
+      await page.getByRole("option", { name: opcao, exact: true }).click();
+    };
+    await selecionar("Status", "A fazer");
+    assert.equal(await lista.getByRole("article").count(), 2);
+    await selecionar("Prioridade", "Média");
+    assert.equal(await lista.getByRole("article").count(), 1);
+    await lista.getByRole("link", { name: "Listar as tarefas na tela" }).waitFor();
+
+    await busca.fill("LISTAR");
+    assert.equal(await lista.getByRole("article").count(), 1);
+    await busca.fill("json");
+    await page.getByText("Nenhuma tarefa encontrada.").waitFor();
+    await busca.fill("");
+    await lista.getByRole("link", { name: "Listar as tarefas na tela" }).waitFor();
+    assert.equal(await lista.getByRole("article").count(), 1);
+
+    await selecionar("Status", "Todos os status");
+    assert.equal(await lista.getByRole("article").count(), 2);
+    await selecionar("Prioridade", "Todas as prioridades");
+    assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
+
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Gerenciador de Tarefas" }).click();
     const projeto = page.getByRole("region", { name: "Tarefas do projeto" });
     await projeto.getByRole("article").first().waitFor();
@@ -71,7 +94,7 @@ async function executar() {
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Todas" }).click();
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
-    console.log("OK: busca por título, sem resultado, limpeza e abas de projeto");
+    console.log("OK: busca, filtros combinados, limpeza e abas de projeto");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();
