@@ -370,3 +370,26 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:360px) {
   .e-project-fields>.e-form-two { grid-template-columns:minmax(0,1fr); }
 }
+
+/* Visão de quadro: uma coluna por status; cartões reutilizam CartaoTarefa na variante "coluna". */
+.e-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding-top:14px;align-items:start}
+.e-board-column{background:var(--e-back);border:1px solid var(--e-line);border-radius:10px;padding:10px;min-width:0}
+.e-board-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 4px 10px}
+.e-board-heading h2{margin:0;font-size:13px;font-weight:500;color:var(--e-ink)}
+.e-board-count{min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:var(--e-sheet);border:1px solid var(--e-line);color:var(--e-muted);font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+.e-board-cards{display:grid;gap:8px}
+.e-board-empty{margin:0;padding:18px 4px;color:var(--e-muted);font-size:12px;text-align:center;border:1px dashed var(--e-line);border-radius:8px}
+.e-card{background:var(--e-sheet);border:1px solid var(--e-line);border-radius:8px;padding:10px 40px 11px 12px}
+.e-card .e-task-title{font-size:14px}
+.e-card .e-task-menu{top:6px;right:4px}
+.e-card .e-task-meta{gap:14px;flex-wrap:wrap;margin-top:7px}
+.e-card .e-task-tags{justify-content:start;margin-top:8px}
+@media(max-width:1000px){
+.e-board{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+.e-board{grid-template-columns:minmax(0,1fr);gap:12px;padding-top:10px}
+.e-card{padding-right:52px}
+.e-card .e-task-menu{top:2px;right:2px}
+.e-card .e-task-title{font-size:15px}
+}
