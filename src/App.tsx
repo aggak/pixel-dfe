@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Link, Route, Routes, useLocation, type Location } from "react-router";
 import { ListaTarefas } from "./pages/ListaTarefas";
+import { QuadroTarefas } from "./pages/QuadroTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
 import { Layout } from "./components/Layout";
 import { Ficha } from "./components/Ficha";
@@ -26,7 +27,7 @@ function App() {
   const projetoOrigem = new URLSearchParams(location.search).get("projetoId");
   const fallback = projetoNovo ? "/projetos" : projeto ? caminho.replace(/\/editar$/, "") : tarefaNova && projetoOrigem ? `/projetos/${encodeURIComponent(projetoOrigem)}` : "/";
   const candidato = estado?.fundo;
-  const fundo: Location = ficha && candidato && typeof candidato.pathname === "string" && !ehRotaFicha(candidato.pathname) && (candidato.pathname === "/" || candidato.pathname === "/projetos" || /^\/projetos\/[^/]+$/.test(candidato.pathname))
+  const fundo: Location = ficha && candidato && typeof candidato.pathname === "string" && !ehRotaFicha(candidato.pathname) && (candidato.pathname === "/" || candidato.pathname === "/quadro" || candidato.pathname === "/projetos" || /^\/projetos\/[^/]+$/.test(candidato.pathname))
     ? candidato : ficha ? { pathname: fallback, search: "", hash: "", state: null, key: `fundo:${fallback}` } : location;
   const titulo = projetoNovo ? "Novo projeto" : tarefaNova ? "Nova tarefa" : editando ? projeto ? "Editar projeto" : "Editar tarefa" : "Detalhes da tarefa";
   const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
@@ -34,6 +35,7 @@ function App() {
     <Routes location={fundo} key={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
+        <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />
         <Route path="*" element={<main className="e-sheet e-not-found"><h1 tabIndex={-1}>Página não encontrada</h1><Link to="/">Voltar para tarefas</Link></main>} />
