@@ -41,7 +41,15 @@ export function ListaTarefas() {
     (status === "todos" || tarefa.status === status) &&
     (prioridade === "todas" || tarefa.prioridade === prioridade),
   );
-  return <><AbasProjetos /><main className="e-sheet"><header className="e-tools"><h1 tabIndex={-1}>Tarefas</h1><div className="e-toolbar-right"><Input className="e-task-search" size="sm" type="search" label="Buscar por título" placeholder="Buscar tarefas" icon={SearchIcon} value={busca} onChange={setBusca} /><Select className="e-task-filter" label="Status" size="sm" items={opcoesStatus} selectedKey={status} onSelectionChange={(chave) => setStatus((chave ?? "todos") as Status | "todos")}>{(item) => <Select.Item id={item.id} textValue={item.label}>{item.label}</Select.Item>}</Select><Select className="e-task-filter" label="Prioridade" size="sm" items={opcoesPrioridade} selectedKey={prioridade} onSelectionChange={(chave) => setPrioridade((chave ?? "todas") as Prioridade | "todas")}>{(item) => <Select.Item id={item.id} textValue={item.label}>{item.label}</Select.Item>}</Select><Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button></div></header><div className="e-content">
+  return <><AbasProjetos /><main className="e-sheet"><header className="e-tools e-task-tools">
+    <h1 className="e-task-page-title" tabIndex={-1}>Tarefas</h1>
+    <Input className="e-task-search" size="sm" type="search" label="Buscar por título" placeholder="Buscar tarefas" icon={SearchIcon} value={busca} onChange={setBusca} />
+    <div className="e-task-filters">
+      <Select className="e-task-filter" label="Status" size="sm" items={opcoesStatus} selectedKey={status} onSelectionChange={(chave) => setStatus((chave ?? "todos") as Status | "todos")}>{(item) => <Select.Item id={item.id} textValue={item.label}>{item.label}</Select.Item>}</Select>
+      <Select className="e-task-filter" label="Prioridade" size="sm" items={opcoesPrioridade} selectedKey={prioridade} onSelectionChange={(chave) => setPrioridade((chave ?? "todas") as Prioridade | "todas")}>{(item) => <Select.Item id={item.id} textValue={item.label}>{item.label}</Select.Item>}</Select>
+    </div>
+    <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
+  </header><div className="e-content">
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>As tarefas não carregaram</h2><p>Confira se a API está em execução.</p></div>}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio titulo="Espaço para o próximo passo" descricao="Organize seu trabalho criando uma tarefa." destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <p className="e-search-empty">Nenhuma tarefa encontrada.</p> : <section className="e-list" aria-label="Lista de tarefas">{tarefasExibidas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}
