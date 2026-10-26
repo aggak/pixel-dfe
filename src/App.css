@@ -371,3 +371,34 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:360px) {
   .e-project-fields>.e-form-two { grid-template-columns:minmax(0,1fr); }
 }
+.e-board-content{padding-top:22px}
+.e-board-empty{padding:0 0 18px}
+.e-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.e-column{min-width:0}
+.e-column>h2{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--e-line);font-size:13px;font-weight:500}
+.e-column>h2>span:last-child{background:var(--e-back);box-shadow:none;--tw-ring-color:transparent;padding:1px 6px;font-size:11px;line-height:16px}
+.e-column-name{display:flex;align-items:center;gap:8px;min-width:0}
+.e-column-name>.e-uicon{width:14px;height:14px;color:var(--e-muted);font-size:14px}
+.e-column-empty{margin:0;padding:5px 2px;color:var(--e-muted);font-size:12px}
+.e-card{position:relative;background:var(--e-sheet);border:1px solid var(--e-line);border-radius:9px;margin-bottom:12px;padding:13px 14px;box-shadow:0 2px 2px #49334b08}
+.e-card .e-task-heading{gap:6px;padding-right:26px}
+.e-card .e-task-menu{position:absolute;top:9px;right:8px}
+.e-card .e-task-title{font-size:15px}
+.e-card .e-task-meta{flex-wrap:wrap;gap:16px;row-gap:9px;margin-top:12px}
+.e-card .e-task-tags{flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:20px}
+.e-card-high{box-shadow:inset 3px 0 0 var(--e-error),0 2px 2px #49334b08}
+.e-card-done{background:color-mix(in srgb,var(--e-back) 35%,var(--e-sheet));box-shadow:none}
+.e-card-done .e-task-title{color:var(--e-muted)}
+.e-card-done .e-priority{color:var(--e-muted)!important;background:transparent!important}
+@media(min-width:1600px){.e-board{gap:22px}}
+@media(max-width:850px){.e-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}}
+@media(max-width:650px){
+.e-board-content{padding-top:17px}
+.e-board{grid-template-columns:1fr;gap:20px}
+.e-column>h2{margin-bottom:10px;padding-bottom:9px}
+.e-column-empty{padding:0 2px 4px}
+.e-card{padding:12px 13px}
+.e-card .e-task-heading{padding-right:42px}
+.e-card .e-task-meta{margin-top:6px}
+.e-card .e-task-tags{margin-top:17px}
+}

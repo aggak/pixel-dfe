@@ -18,3 +18,15 @@ export function filtrarTarefas(tarefas: Tarefa[], f: Filtros): Tarefa[] {
       (f.prioridade === "todas" || t.prioridade === f.prioridade),
   );
 }
+
+// Lista fixa na ordem do contrato: o quadro mantém as quatro colunas mesmo vazias (Object.groupBy as perderia).
+export const STATUS: Status[] = ["a-fazer", "em-andamento", "em-revisao", "concluida"];
+
+export interface ColunaStatus {
+  status: Status;
+  tarefas: Tarefa[];
+}
+
+export function agruparPorStatus(tarefas: Tarefa[]): ColunaStatus[] {
+  return STATUS.map((status) => ({ status, tarefas: tarefas.filter((t) => t.status === status) }));
+}
