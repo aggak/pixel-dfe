@@ -6,7 +6,7 @@ import { listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
-import { AbasProjetos, Carregando, EstadoVazio } from "../components/Layout";
+import { AbasProjetos, AlternarVisao, Carregando, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
 import { agruparPorStatus, filtrarTarefas } from "../derivar";
 import { statusTexto } from "../design/formatos";
@@ -34,6 +34,7 @@ export function QuadroTarefas() {
   return <><AbasProjetos /><main className="e-sheet"><header className="e-tools e-task-tools">
     <h1 className="e-task-page-title" tabIndex={-1}>Quadro</h1>
     <FiltrosTarefas />
+    <AlternarVisao />
     <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
   </header><div className="e-content e-board-content">
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
