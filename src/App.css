@@ -66,7 +66,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .dark .e-status-em-andamento{background:#253246!important;color:#a7bedb!important;--tw-ring-color:#415771!important}
 .e-status-em-revisao{background:var(--e-mark)!important;color:var(--e-action)!important;--tw-ring-color:#d8c4df!important}
 .dark .e-status-em-revisao{--tw-ring-color:#6b5178!important}
-.e-status-em-andamento svg,.e-status-em-revisao svg{color:inherit!important}
+.e-status-em-andamento svg,.e-status-em-revisao svg,.e-status-concluida svg{color:inherit!important}
 .e-status-concluida{background:#edf4ef!important;color:#40684d!important;--tw-ring-color:#c9ddce!important}
 .dark .e-status-concluida{background:#24382e!important;color:#a6c8b1!important;--tw-ring-color:#456451!important}
 .e-status-a-fazer{background:var(--e-sheet)!important;color:var(--e-muted)!important;--tw-ring-color:var(--e-line)!important}
@@ -247,8 +247,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-form-two input[type=date]{font-size:16px!important}
 }
 @media(max-width:650px),(pointer:coarse){
-[data-rac][role=option],[data-rac][role=menuitem]{min-height:44px;display:flex;align-items:center}
-[data-rac][role=menuitem]>div{width:100%}
+[data-rac][role=option],[data-rac][role^=menuitem]{min-height:44px;display:flex;align-items:center}
+[data-rac][role^=menuitem]>div{width:100%}
 .e-notice button{min-width:44px;min-height:44px}
 }
 @layer base{
@@ -283,7 +283,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-row{padding-right:56px}
 }
 .e-row .e-task-tags{display:grid;grid-template-columns:120px 64px;column-gap:14px;align-items:center;justify-content:start;flex:0 0 auto;width:198px}
-.e-row .e-task-tags>.e-status,.e-row .e-task-tags>.e-priority{justify-self:start}
+.e-row .e-task-tags>.e-status,.e-row .e-task-tags>.e-priority,.e-row .e-task-tags>.e-status-trigger{justify-self:start}
 .e-projects .e-page-heading{display:flex;align-items:start;justify-content:space-between;gap:18px}
 .e-projects .e-page-heading>button{flex-shrink:0}
 .e-project-card h2{overflow-wrap:anywhere}
@@ -415,3 +415,14 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:650px),(pointer:coarse){.e-view-switch a{min-height:38px}}
 @media(max-width:650px){.e-view-switch a{padding:0 11px}.e-task-tools>button{min-height:44px}}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
+/* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
+.e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
+.e-status-trigger:hover .e-status,.e-status-trigger[aria-expanded=true] .e-status{filter:brightness(.95)}
+.dark .e-status-trigger:hover .e-status,.dark .e-status-trigger[aria-expanded=true] .e-status{filter:brightness(1.15)}
+.e-status-trigger:hover>.e-uicon,.e-status-trigger[aria-expanded=true]>.e-uicon{color:var(--e-ink)}
+.e-status-trigger:focus-visible{outline:2px solid var(--e-action);outline-offset:2px}
+.e-status-trigger[data-pending]{cursor:wait;opacity:.6}
+.e-status-trigger>.e-uicon{width:14px;height:14px;font-size:14px}
+.e-task-error{margin:10px 0 0;color:var(--e-error);font-size:12px}
+/* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
+@media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
