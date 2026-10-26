@@ -10,4 +10,6 @@ export default defineConfig({
     '@untitledui/file-icons': fileURLToPath(new URL('./src/design/file-icon.tsx', import.meta.url)),
     '@': fileURLToPath(new URL('./src/design/vendor', import.meta.url)),
   } },
+  // O json-server grava no db.json a cada salvamento; sem isso o Vite recarrega a página inteira.
+  server: { watch: { ignored: ['**/db.json'] } },
 })
