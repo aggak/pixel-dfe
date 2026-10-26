@@ -5,6 +5,7 @@ import { BrowserRouter, HashRouter } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
 import { Aparencia } from "./components/Aparencia";
+import { FiltrosProvider } from "./components/FiltrosProvider";
 
 const Router = import.meta.env.PROD && import.meta.env.VITE_GITHUB_PAGES === "true" ? HashRouter : BrowserRouter;
 
@@ -12,7 +13,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Aparencia><I18nProvider locale="pt-BR">
     <Router>
-      <App />
+      <FiltrosProvider>
+        <App />
+      </FiltrosProvider>
     </Router>
     </I18nProvider></Aparencia>
   </StrictMode>,

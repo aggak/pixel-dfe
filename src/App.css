@@ -29,6 +29,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-filters{display:flex;gap:10px;align-items:end}
 .e-task-filter{width:165px}
 .e-search-empty{padding:32px 0;color:var(--e-muted)}
+.e-search-empty>p{margin:0 0 6px}
 .e-project-details{border-bottom:1px solid var(--e-line);padding:0 20px}
 .e-details-trigger{display:flex;gap:8px;align-items:center;background:transparent;border:0;color:var(--e-muted);font-size:12px;min-height:42px}
 .e-details-trigger>i:last-child{margin-left:2px}
