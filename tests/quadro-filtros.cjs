@@ -60,8 +60,8 @@ async function executar() {
       await item.click();
       await item.waitFor({ state: "detached" });
     };
-    // O link entre as visões é da issue #39; aqui a troca usa o histórico do roteador, sem recarregar o documento.
-    const irPara = (caminho) => page.evaluate((destino) => { history.pushState(null, "", destino); dispatchEvent(new PopStateEvent("popstate")); }, caminho);
+    // A troca usa o controle Lista/Quadro da faixa de ações (#39), como a pessoa usuária faria.
+    const irPara = (caminho) => page.getByRole("navigation", { name: "Visualização das tarefas" }).getByRole("link", { name: caminho === "/quadro" ? "Quadro" : "Lista", exact: true }).click();
     const lerBanco = async () => (await fetch(`${api}/tarefas`)).json();
 
     await page.goto(`${web}/quadro`);
@@ -121,7 +121,8 @@ async function executar() {
     assert.equal(await quadro.count(), 1);
     await detalhe.getByRole("button", { name: /^Fechar/ }).click();
     await detalhe.waitFor({ state: "detached" });
-    assert.equal(new URL(page.url()).pathname, "/quadro");
+    // O dialog sai do DOM antes do history.back() terminar; espera a URL em vez de lê-la na hora.
+    await page.waitForURL((url) => url.pathname === "/quadro");
     await coluna("a-fazer").getByRole("button", { name: `Ações de ${alvo.titulo}` }).click();
     await page.getByRole("menuitem", { name: "Editar tarefa" }).click();
     const edicao = page.getByRole("dialog", { name: "Editar tarefa", exact: true });
@@ -134,7 +135,7 @@ async function executar() {
     assert.equal((await lerBanco()).find((t) => t.id === alvo.id).status, "em-revisao");
     await detalhe.getByRole("button", { name: /^Fechar/ }).click();
     await detalhe.waitFor({ state: "detached" });
-    assert.equal(new URL(page.url()).pathname, "/quadro");
+    await page.waitForURL((url) => url.pathname === "/quadro");
     console.log("OK: editar o status na ficha muda o cartão de coluna e mantém /quadro");
 
     await page.locator('[data-action="new-task"]').click();
@@ -142,13 +143,13 @@ async function executar() {
     await nova.waitFor();
     await nova.getByRole("button", { name: /^Fechar/ }).click();
     await nova.waitFor({ state: "detached" });
-    assert.equal(new URL(page.url()).pathname, "/quadro");
+    await page.waitForURL((url) => url.pathname === "/quadro");
     await page.locator('[data-action="new-task"]').click();
     await nova.waitFor();
     await ui.preencherTarefa(comTextos({ projetoId: "2", titulo: "Revisar o quadro por status", descricao: "Conferir colunas e cartões.", status: "concluida", prioridade: "baixa", responsavel: "Euclides", prazo: "2026-10-27" }, seed.projetos));
     await nova.getByRole("button", { name: "Salvar tarefa", exact: true }).click();
     await nova.waitFor({ state: "detached" });
-    assert.equal(new URL(page.url()).pathname, "/quadro");
+    await page.waitForURL((url) => url.pathname === "/quadro");
     await coluna("concluida").getByRole("link", { name: "Revisar o quadro por status" }).waitFor();
     assert.equal((await lerBanco()).length, seed.tarefas.length + 1);
     console.log("OK: nova tarefa criada no quadro volta para ele, na coluna do status");
