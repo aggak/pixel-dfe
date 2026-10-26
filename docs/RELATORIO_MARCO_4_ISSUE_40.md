@@ -87,6 +87,7 @@ Os quatro pediram mudanças, e apliquei todas.
 - O menu do React Aria recebe o nome do botão que o abre, não o `aria-label` próprio. Removi esse rótulo e ajustei a suíte.
 - Na primeira versão do cenário de resposta atrasada, a suíte digitava "Li" na busca, e isso tirava da tela o próprio cartão testado. Troquei por "Des".
 - A suíte falhava em 3 de 5 execuções, em 850 px: o menu da escolha anterior ainda saía com animação perto da borda e gerava rolagem horizontal momentânea. A suíte agora espera o menu sair antes de medir; depois disso, 8 de 8 execuções passaram.
+- Ao testar com `npx json-server db.json`, cada mudança de status fazia a página piscar e perder busca e filtros. Era o Vite recarregando a página toda vez que o json-server gravava o `db.json`, o que já acontecia antes em qualquer gravação. Em um commit separado, o `vite.config.ts` passou a ignorar o `db.json`. É um ajuste do ambiente de desenvolvimento, sem mudança de funcionalidade.
 - Para confirmar que a suíte detecta os bugs corrigidos, desliguei temporariamente a sincronização entre páginas e a proteção do foco. A suíte falhou nos dois casos e voltou a passar com o código restaurado.
 
 ## Validação
