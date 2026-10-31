@@ -3,7 +3,7 @@ import { NavLink, Outlet, Link, useLocation, useNavigate } from "react-router";
 import { listarProjetos } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
-import { BoardIcon, FolderIcon, ListIcon } from "../design/icon";
+import { BoardIcon, FolderIcon, Icon, ListIcon } from "../design/icon";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -39,6 +39,9 @@ export function AlternarVisao() {
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
+}
+export function ErroCarregamento({ titulo, onTentarDeNovo }: { titulo: string; onTentarDeNovo: () => void }) {
+  return <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>{titulo}</h2><p>Confira se a API está em execução.</p><Button color="secondary" size="sm" onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();

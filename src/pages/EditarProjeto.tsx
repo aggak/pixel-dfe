@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router";
+import { Button } from "@/components/base/buttons/button";
 import { useFicha } from "../components/ficha-contexto";
 import { atualizarProjeto, buscarProjeto, ErroApi } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
@@ -10,7 +11,7 @@ export function EditarProjeto() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
-  const { dados: projeto, erro, carregando } = useConsulta(consultar);
+  const { dados: projeto, erro, carregando, tentarDeNovo } = useConsulta(consultar);
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/projetos/${encodeURIComponent(id)}`;
 
@@ -37,6 +38,11 @@ export function EditarProjeto() {
             ? "Projeto não encontrado."
             : "Não foi possível carregar o projeto. Confira se a API está em execução."}
         </p>
+      )}
+      {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
+        <Button color="secondary" size="sm" className="e-ficha-retry" onClick={tentarDeNovo}>
+          Tentar de novo
+        </Button>
       )}
       {projeto && (
         <FormularioProjeto

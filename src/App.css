@@ -354,6 +354,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-ficha-content>.e-task-form,.e-ficha-content>.e-project-form,.e-ficha-content>.e-read-task { flex:1 1 auto; }
 .e-tools h1 { font-size:16px; font-weight:500; letter-spacing:-.2px; }
 .e-ficha-state { padding:22px 18px 26px; font-size:14px; line-height:1.6; color:var(--e-muted); }
+.e-ficha-retry { margin:0 18px 22px; }
 .e-read-identifiers { margin:18px 0 0; display:flex; gap:18px; flex-wrap:wrap; color:var(--e-muted); font-size:11px; }
 .e-read-identifiers>div { display:flex; gap:5px; }
 .e-tools .e-toolbar-right { margin-left:auto; }
@@ -361,6 +362,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
  .e-tools { display:flex; flex-wrap:wrap; justify-content:space-between; }
  .e-tools .e-toolbar-right { margin-left:auto; }
  .e-ficha-state { padding:20px 13px; }
+ .e-ficha-retry { margin:0 13px 20px; }
 }
 
 /* Normalização de data restrita aos campos da ficha, sem reset global. */

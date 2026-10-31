@@ -226,7 +226,10 @@ export function FormularioTarefa({
                 className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
                 role="alert"
               >
-                Não foi possível carregar os projetos. Recarregue a página para tentar novamente.
+                Não foi possível carregar os projetos.{" "}
+                <Button type="button" color="link-color" size="sm" onClick={projetos.tentarDeNovo}>
+                  Tentar de novo
+                </Button>
               </p>
             )}
             {projetos.dados && !projetosDisponiveis && (

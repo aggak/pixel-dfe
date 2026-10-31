@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router";
+import { Button } from "@/components/base/buttons/button";
 import { useFicha } from "../components/ficha-contexto";
 import { atualizarTarefa, buscarTarefa, ErroApi } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
@@ -10,7 +11,7 @@ export function EditarTarefa() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
-  const { dados: tarefa, erro, carregando } = useConsulta(consultar);
+  const { dados: tarefa, erro, carregando, tentarDeNovo } = useConsulta(consultar);
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 
@@ -37,6 +38,11 @@ export function EditarTarefa() {
             ? "Tarefa não encontrada."
             : "Não foi possível carregar a tarefa. Confira se a API está em execução."}
         </p>
+      )}
+      {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
+        <Button color="secondary" size="sm" className="e-ficha-retry" onClick={tentarDeNovo}>
+          Tentar de novo
+        </Button>
       )}
       {tarefa && (
         <FormularioTarefa
