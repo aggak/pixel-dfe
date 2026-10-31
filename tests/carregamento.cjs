@@ -67,7 +67,12 @@ async function executar() {
         iniciou();
         await bloqueio;
       }
-      await rota.continue();
+      try {
+        await rota.continue();
+      } catch (erro) {
+        // A navegação pode cancelar uma consulta ainda retida pelo teste.
+        if (!String(erro).includes("Route is already handled")) throw erro;
+      }
     };
     await page.route(`${api}/**`, interceptar);
     try {
@@ -91,7 +96,7 @@ async function executar() {
   await conferirRota("quadro mostra e retira carregamento das tarefas", "/quadro", (url) => url.pathname === "/tarefas", () => status("Carregando tarefas"));
   await conferirRota("lista mostra e retira carregamento dos projetos nas abas", "/", (url) => url.pathname === "/projetos", () => page.getByRole("navigation", { name: "Projetos" }).getByRole("status"));
   await conferirRota("lista de projetos mostra e retira carregamento", "/projetos", (url) => url.pathname === "/projetos", () => status("Carregando projetos"));
-  await conferirRota("página do projeto mostra e retira carregamento", "/projetos/1", (url) => url.pathname === "/projetos/1", () => status("Carregando projeto"));
+  await conferirRota("página do projeto mostra e retira carregamento", "/projetos/1", (url) => url.pathname === "/projetos/1", () => page.locator(".e-content").getByRole("status"));
   await conferirRota("detalhes da tarefa mostram e retiram carregamento", "/tarefas/1", (url) => url.pathname === "/tarefas/1", () => statusFicha("Carregando tarefa"));
   await conferirRota("nome do projeto na ficha mostra e retira carregamento", "/tarefas/1", (url) => url.pathname === "/projetos", () => page.getByRole("dialog").locator(".e-read-project [role=status]"));
   await conferirRota("edição da tarefa mostra e retira carregamento", "/tarefas/1/editar", (url) => url.pathname === "/tarefas/1", () => statusFicha("Carregando tarefa"));
