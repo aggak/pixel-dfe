@@ -78,7 +78,7 @@ async function executar() {
   process.env.VITE_API_URL = apiUrl;
   vite = await createServer({ root: raiz, cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } });
   const api = await vite.ssrLoadModule("/src/api.ts");
-  for (const nome of ["criarTarefa", "atualizarTarefa", "criarProjeto", "atualizarProjeto"]) {
+  for (const nome of ["criarTarefa", "atualizarTarefa", "excluirTarefa", "criarProjeto", "atualizarProjeto"]) {
     if (typeof api[nome] !== "function") throw new Error(`Função ausente em src/api.ts: ${nome}`);
   }
 
@@ -157,6 +157,7 @@ async function executar() {
     const eh404 = (erro) => erro instanceof api.ErroApi && erro.status === 404;
     await assert.rejects(api.atualizarTarefa("inexistente-404", { titulo: "Sem destino" }), eh404);
     await assert.rejects(api.atualizarProjeto("inexistente-404", { nome: "Sem destino" }), eh404);
+    await assert.rejects(api.excluirTarefa("inexistente-404"), eh404);
   });
 
   await conferir("métodos e ID especial são codificados na URL (fetch controlado)", async () => {
@@ -169,6 +170,7 @@ async function executar() {
     try {
       await api.criarTarefa(dadosTarefa);
       await api.atualizarProjeto("a/b c?d#e", { nome: "Controlado" });
+      await api.excluirTarefa("a/b c?d#e");
     } finally {
       globalThis.fetch = fetchOriginal;
     }
@@ -176,6 +178,7 @@ async function executar() {
     assert.deepEqual(chamadas, [
       { url: `${apiUrl}/tarefas`, metodo: "POST" },
       { url: `${apiUrl}/projetos/a%2Fb%20c%3Fd%23e`, metodo: "PATCH" },
+      { url: `${apiUrl}/tarefas/a%2Fb%20c%3Fd%23e`, metodo: "DELETE" },
     ]);
   });
 
@@ -185,6 +188,14 @@ async function executar() {
     const ehAbort = (erro) => erro?.name === "AbortError";
     await assert.rejects(api.criarTarefa(dadosTarefa, controle.signal), ehAbort);
     await assert.rejects(api.atualizarProjeto(projetoCriado.id, { nome: "Cancelado" }, controle.signal), ehAbort);
+    await assert.rejects(api.excluirTarefa(tarefaCriada.id, controle.signal), ehAbort);
+  });
+
+  await conferir("excluirTarefa remove a tarefa do banco temporário", async () => {
+    await api.excluirTarefa(tarefaCriada.id);
+    await assert.rejects(api.buscarTarefa(tarefaCriada.id), (erro) => erro instanceof api.ErroApi && erro.status === 404);
+    const db = await esperarGravacao(caminhoDb, (atual) => !atual.tarefas.some((t) => t.id === tarefaCriada.id));
+    assert.ok(!db.tarefas.some((t) => t.id === tarefaCriada.id));
   });
 
   await conferir("servidor parado rejeita escrita e leitura", async () => {
