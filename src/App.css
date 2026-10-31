@@ -424,5 +424,12 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-status-trigger[data-pending]{cursor:wait;opacity:.6}
 .e-status-trigger>.e-uicon{width:14px;height:14px;font-size:14px}
 .e-task-error{margin:10px 0 0;color:var(--e-error);font-size:12px}
+.e-confirm-overlay{background:rgb(24 24 27 / 35%)!important;backdrop-filter:none!important}
+.e-confirm-modal{width:420px!important;max-width:100%;border:1px solid var(--e-line);background:var(--e-sheet)!important;color:var(--e-ink);border-radius:13px!important;box-shadow:0 14px 48px rgb(24 24 27 / 20%)!important}
+.e-confirm-dialog{padding:22px;overflow:visible!important}
+.e-confirm-dialog h2{margin:0 0 10px;font-size:18px;font-weight:600}
+.e-confirm-dialog>p{margin:0;color:var(--e-muted);line-height:1.5}
+.e-confirm-dialog .e-confirm-error{margin-top:14px;color:var(--e-error)}
+.e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
 @media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
