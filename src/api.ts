@@ -80,6 +80,17 @@ export function atualizarTarefa(
   return escrever<Tarefa>("PATCH", `/tarefas/${encodeURIComponent(id)}`, dados, signal);
 }
 
+export async function excluirTarefa(id: string, signal?: AbortSignal): Promise<void> {
+  const resposta = await fetch(`${API_URL}/tarefas/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    signal,
+  });
+
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+}
+
 export function criarProjeto(
   dados: Omit<Projeto, "id">,
   signal?: AbortSignal,

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { listarTarefas, listarProjetos } from "../api";
+import { excluirTarefa, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
@@ -25,6 +25,10 @@ export function QuadroTarefas() {
   const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
   const location = useLocation();
   const navigate = useNavigate();
+  const excluir = async (tarefa: Tarefa) => {
+    await excluirTarefa(tarefa.id);
+    setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
+  };
   useEffect(() => {
     const controller = new AbortController();
     listarTarefas(controller.signal).then(setTarefas).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) setCarregando(false); });
@@ -45,7 +49,7 @@ export function QuadroTarefas() {
       {tarefasFiltradas.length === 0 && <div className="e-search-empty e-board-empty"><p>Nenhuma tarefa encontrada.</p><Button color="link-color" size="sm" onClick={limpar}>Limpar busca e filtros</Button></div>}
       <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
         <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
-        {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
+        {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
         {coluna.tarefas.length === 0 && <p className="e-column-empty">Nenhuma tarefa</p>}
       </section>)}</section>
     </>)}
