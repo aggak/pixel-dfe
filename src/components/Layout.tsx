@@ -20,8 +20,8 @@ export function Layout() {
   </div>;
 }
 export function AbasProjetos({ atual }: { atual?: string }) {
-  const { dados: projetos } = useConsulta(listarProjetos);
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{projetos?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
+  const { dados: projetos, carregando } = useConsulta(listarProjetos);
+  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{carregando && <Carregando compacto>Carregando projetos…</Carregando>}{projetos?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
@@ -37,8 +37,8 @@ export function AlternarVisao() {
     return <Link key={destino} ref={atual ? ativo : undefined} to={destino} state={{ focoVisao: true }} aria-current={atual ? "page" : undefined}><Icone />{nome}</Link>;
   })}</nav>;
 }
-export function Carregando({ children }: { children: string }) {
-  return <div className="e-loading-state" role="status"><span className="e-loading-dot" />{children}</div>;
+export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
+  return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();
