@@ -20,8 +20,8 @@ export function Layout() {
   </div>;
 }
 export function AbasProjetos({ atual }: { atual?: string }) {
-  const { dados: projetos, carregando } = useConsulta(listarProjetos);
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{carregando && <Carregando compacto>Carregando projetos…</Carregando>}{projetos?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
+  const { dados: projetos, erro, carregando, tentarDeNovo } = useConsulta(listarProjetos);
+  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{carregando && <Carregando compacto>Carregando projetos…</Carregando>}{erro !== undefined && <><span className="e-tabs-error">Os projetos não carregaram.</span><button type="button" onClick={tentarDeNovo}>Tentar de novo</button></>}{projetos?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
@@ -40,8 +40,12 @@ export function AlternarVisao() {
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
 }
-export function ErroCarregamento({ titulo, onTentarDeNovo }: { titulo: string; onTentarDeNovo: () => void }) {
-  return <div className="e-load-error" role="alert"><Icon name="exclamation" /><h2>{titulo}</h2><p>Confira se a API está em execução.</p><Button color="secondary" size="sm" onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+export function ErroCarregamento({ titulo, onTentarDeNovo, focar = false }: { titulo: string; onTentarDeNovo: () => void; focar?: boolean }) {
+  const caixa = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (focar && (!document.activeElement || document.activeElement === document.body)) caixa.current?.querySelector("button")?.focus();
+  }, [focar]);
+  return <div ref={caixa} className="e-load-error" role="alert"><Icon name="exclamation" /><h2>{titulo}</h2><p>Confira se a API está em execução.</p><Button color="secondary" size="sm" onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();
