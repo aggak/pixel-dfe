@@ -426,7 +426,7 @@ async function executar() {
   await conferir("falha de leitura informa erro e encerra carregamento", async () => {
     await page.route(`${api}/projetos/1`, (route) => route.abort("connectionrefused"));
     await page.goto(`${origem}/projetos/1/editar`);
-    await page.getByRole("alert").filter({ hasText: "Não foi possível carregar o projeto" }).waitFor();
+    await page.getByRole("dialog").getByRole("alert").filter({ hasText: "Não foi possível carregar o projeto" }).waitFor();
     assert.equal(await page.locator("form").count(), 0);
     assert.equal(await page.getByRole("status").count(), 0);
     await page.unrouteAll();

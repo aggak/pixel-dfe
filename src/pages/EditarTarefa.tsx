@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router";
 import { useFicha } from "../components/ficha-contexto";
+import { ErroCarregamento } from "../components/Layout";
 import { atualizarTarefa, buscarTarefa, ErroApi } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import { useConsulta } from "../hooks/useConsulta";
@@ -10,7 +11,7 @@ export function EditarTarefa() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
-  const { dados: tarefa, erro, carregando } = useConsulta(consultar);
+  const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 
@@ -31,12 +32,11 @@ export function EditarTarefa() {
   return (
     <>
       {carregando && <p className="e-ficha-state" role="status">Carregando tarefa...</p>}
-      {erro !== undefined && (
-        <p className="e-ficha-state e-form-error" role="alert">
-          {erro instanceof ErroApi && erro.status === 404
-            ? "Tarefa não encontrada."
-            : "Não foi possível carregar a tarefa. Confira se a API está em execução."}
-        </p>
+      {erro instanceof ErroApi && erro.status === 404 && (
+        <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
+      )}
+      {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
+        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={tentarDeNovo} tentando={tentando} />
       )}
       {tarefa && (
         <FormularioTarefa
