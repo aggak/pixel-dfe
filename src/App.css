@@ -75,7 +75,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 20px}
 .e-empty h2:has(+ p){margin-bottom:7px}
 .e-empty p{margin:0 0 20px;font-size:13px;line-height:1.6}
-.e-empty-compact{min-height:0;padding:6px 20px 30px}
 .e-load-error{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;color:var(--e-muted);text-align:center}
 .e-load-error>i{font-size:24px;color:var(--e-error);margin-bottom:16px}
 .e-load-error h2{font-size:18px;color:var(--e-ink);margin:0 0 7px}
@@ -184,7 +183,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-title{font-size:15px;min-height:30px}
 .e-sheet-footer{padding:10px 12px;font-size:10px}
 .e-empty{padding:44px 4px;min-height:300px}
-.e-empty-compact{min-height:0;padding:4px 4px 26px}
 .e-empty h2{font-size:17px}
 .e-empty p{font-size:12px}
 .e-empty button{min-height:44px}

@@ -107,11 +107,11 @@ async function executar() {
 
     await busca.fill("sem correspondência");
     await page.getByText("Nenhuma tarefa encontrada").waitFor();
-    assert.equal(await page.locator(".e-column").count(), 4);
+    assert.equal(await page.locator(".e-column").count(), 0);
     await page.getByRole("button", { name: "Limpar busca e filtros" }).click();
     await coluna("a-fazer").locator("[data-task-id]").first().waitFor();
     assert.equal(await quadro.locator("[data-task-id]").count(), seed.tarefas.length);
-    console.log("OK: busca sem resultado mantém as colunas e a limpeza restaura o quadro");
+    console.log("OK: busca sem resultado esconde as colunas e a limpeza restaura o quadro");
 
     // Detalhe e edição abrem na ficha sobre o quadro; a nova coluna vem do status gravado.
     const alvo = seed.tarefas.find((t) => t.status === "a-fazer");

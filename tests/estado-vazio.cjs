@@ -88,6 +88,7 @@ async function executar() {
     await busca().fill("sem correspondência");
     await vazio("Nenhuma tarefa encontrada").waitFor();
     assert.equal(await page.locator("[data-task-id]").count(), 0);
+    assert.equal(await page.locator(".e-column").count(), 0);
     assert.equal(await vazio("Nenhuma tarefa por aqui").count(), 0);
     await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).click();
     await page.locator("[data-task-id]").first().waitFor();
