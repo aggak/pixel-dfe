@@ -2,69 +2,514 @@
   "projetos": [
     {
       "id": "1",
-      "nome": "Gerenciador de Tarefas",
-      "descricao": "Projeto em equipe da disciplina",
+      "nome": "Portal da biblioteca",
+      "descricao": "Interface web do acervo da biblioteca do campus, com busca, reserva e renovação de empréstimos.",
       "disciplina": "Desenvolvimento Frontend",
-      "criadoEm": "2026-10-01"
+      "criadoEm": "2026-08-10"
     },
     {
       "id": "2",
-      "nome": "Modelagem da Biblioteca",
-      "descricao": "Trabalho de modelagem de dados",
+      "nome": "Esquema do acervo",
+      "descricao": "Modelo relacional e scripts SQL do acervo, cobrindo empréstimos, reservas e integridade referencial.",
       "disciplina": "Banco de Dados",
-      "criadoEm": "2026-10-02"
+      "criadoEm": "2026-08-05"
+    },
+    {
+      "id": "3",
+      "nome": "Sprint do app acadêmico",
+      "descricao": "Planejamento ágil do app de matrícula: requisitos, backlog, riscos e critérios de aceite.",
+      "disciplina": "Engenharia de Software",
+      "criadoEm": "2026-08-17"
+    },
+    {
+      "id": "4",
+      "nome": "Listas, árvores e grafos",
+      "descricao": "Implementações em C e análises de complexidade de listas, árvores AVL, grafos e tabelas hash.",
+      "disciplina": "Estruturas de Dados",
+      "criadoEm": "2026-08-24"
+    },
+    {
+      "id": "5",
+      "nome": "Rede do laboratório",
+      "descricao": "Práticas de endereçamento, captura de pacotes, DNS, VLAN e firewall na rede do laboratório.",
+      "disciplina": "Redes de Computadores",
+      "criadoEm": "2026-09-02"
+    },
+    {
+      "id": "6",
+      "nome": "Testes de usabilidade",
+      "descricao": "Avaliação com estudantes e inspeção heurística do fluxo de matrícula no app acadêmico.",
+      "disciplina": "Interação Humano-Computador",
+      "criadoEm": "2026-09-14"
+    },
+    {
+      "id": "7",
+      "nome": "Cardápio do RU",
+      "descricao": "Projeto recém-criado para exibir o cardápio e a fila do restaurante universitário; tarefas ainda serão definidas.",
+      "disciplina": "Projeto Integrador",
+      "criadoEm": "2026-10-20"
     }
   ],
   "tarefas": [
     {
       "id": "1",
       "projetoId": "1",
-      "titulo": "Criar o repositório",
-      "descricao": "Repositório da equipe no GitHub, com todos os integrantes",
+      "titulo": "Publicar o protótipo navegável",
+      "descricao": "Subir o protótipo no Figma com os fluxos de login, busca no acervo e renovação de empréstimo.",
       "status": "concluida",
-      "prioridade": "alta",
-      "responsavel": "Ana",
-      "prazo": "2026-10-06"
+      "prioridade": "media",
+      "responsavel": "Camila",
+      "prazo": "2026-08-28"
     },
     {
       "id": "2",
       "projetoId": "1",
-      "titulo": "Subir o json-server",
-      "descricao": "API local a partir do db.json",
-      "status": "em-andamento",
+      "titulo": "Implementar a listagem de livros",
+      "descricao": "Entregar a página com cards responsivos, filtro por título e paginação de 12 itens por página.",
+      "status": "concluida",
       "prioridade": "alta",
-      "responsavel": "Bruno",
-      "prazo": "2026-10-06"
+      "responsavel": "Ana",
+      "prazo": "2026-09-11"
     },
     {
       "id": "3",
       "projetoId": "1",
-      "titulo": "Montar o quadro no GitHub Projects",
-      "descricao": "Colunas por status e uma tarefa por marco",
-      "status": "em-revisao",
-      "prioridade": "media",
-      "responsavel": "Carla",
-      "prazo": "2026-10-07"
+      "titulo": "Consumir a API de empréstimos",
+      "descricao": "Integrar o endpoint GET /emprestimos com tratamento de erro 401 e esqueleto de carregamento.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Bruno",
+      "prazo": "2026-09-25"
     },
     {
       "id": "4",
       "projetoId": "1",
-      "titulo": "Listar as tarefas na tela",
-      "descricao": "Primeira entrega do Marco 2",
+      "titulo": "Refatorar o layout da home",
+      "descricao": "Substituir a grade fixa por CSS Grid e garantir leitura confortável em telas de 360px.",
+      "status": "em-andamento",
+      "prioridade": "baixa",
+      "responsavel": "Mateus",
+      "prazo": "2026-10-22"
+    },
+    {
+      "id": "5",
+      "projetoId": "1",
+      "titulo": "Validar o formulário de reserva",
+      "descricao": "Exigir matrícula válida, bloquear datas passadas e exibir mensagens de erro acessíveis por campo.",
+      "status": "em-revisao",
+      "prioridade": "media",
+      "responsavel": "Júlia",
+      "prazo": "2026-11-06"
+    },
+    {
+      "id": "6",
+      "projetoId": "1",
+      "titulo": "Escrever testes do componente Busca",
+      "descricao": "Cobrir busca vazia, resultado único e falha de rede usando Vitest e Testing Library.",
+      "status": "em-andamento",
+      "prioridade": "alta",
+      "responsavel": "Diego",
+      "prazo": "2026-11-12"
+    },
+    {
+      "id": "7",
+      "projetoId": "1",
+      "titulo": "Ajustar o contraste do tema escuro",
+      "descricao": "Garantir razão mínima de 4.5:1 nos textos secundários sobre o fundo #12141a.",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Larissa",
+      "prazo": "2026-11-20"
+    },
+    {
+      "id": "8",
+      "projetoId": "1",
+      "titulo": "Documentar o relatório de componentes",
+      "descricao": "Registrar no relatório quais componentes são reutilizáveis e as propriedades aceitas por cada um.",
       "status": "a-fazer",
       "prioridade": "media",
+      "responsavel": "Rafael",
+      "prazo": "2026-11-28"
+    },
+    {
+      "id": "9",
+      "projetoId": "2",
+      "titulo": "Modelar o diagrama ER da biblioteca",
+      "descricao": "Entregar o DER com aluno, exemplar, empréstimo e reserva, detalhando chaves e cardinalidades.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Beatriz",
+      "prazo": "2026-08-24"
+    },
+    {
+      "id": "10",
+      "projetoId": "2",
+      "titulo": "Normalizar as tabelas até a 3FN",
+      "descricao": "Justificar cada dependência funcional removida e anexar o esquema relacional resultante.",
+      "status": "concluida",
+      "prioridade": "media",
+      "responsavel": "Bruno",
+      "prazo": "2026-09-08"
+    },
+    {
+      "id": "11",
+      "projetoId": "2",
+      "titulo": "Revisar as constraints de integridade",
+      "descricao": "Definir cláusulas ON DELETE e CHECKs de data para impedir devolução anterior à retirada.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Rafael",
+      "prazo": "2026-09-22"
+    },
+    {
+      "id": "12",
+      "projetoId": "2",
+      "titulo": "Popular a base com dados fictícios",
+      "descricao": "Inserir 200 exemplares e 40 alunos no banco de testes respeitando as chaves estrangeiras.",
+      "status": "em-andamento",
+      "prioridade": "baixa",
+      "responsavel": "Larissa",
+      "prazo": "2026-10-12"
+    },
+    {
+      "id": "13",
+      "projetoId": "2",
+      "titulo": "Escrever as consultas da API",
+      "descricao": "Implementar os SELECT da API de atrasos com JOIN entre aluno e empréstimo e filtro por semestre.",
+      "status": "em-revisao",
+      "prioridade": "alta",
+      "responsavel": "Camila",
+      "prazo": "2026-11-04"
+    },
+    {
+      "id": "14",
+      "projetoId": "2",
+      "titulo": "Criar os índices de busca",
+      "descricao": "Indexar as colunas isbn e data_prevista e comparar o EXPLAIN ANALYZE antes e depois.",
+      "status": "em-andamento",
+      "prioridade": "media",
+      "responsavel": "Diego",
+      "prazo": "2026-11-18"
+    },
+    {
+      "id": "15",
+      "projetoId": "2",
+      "titulo": "Exportar o script de migração",
+      "descricao": "Gerar o script SQL consolidado com criação de schema, triggers e carga inicial para o PostgreSQL 16.",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Júlia",
+      "prazo": "2026-12-02"
+    },
+    {
+      "id": "16",
+      "projetoId": "3",
+      "titulo": "Configurar o quadro Kanban",
+      "descricao": "",
+      "status": "concluida",
+      "prioridade": "baixa",
+      "responsavel": "Diego",
+      "prazo": "2026-08-21"
+    },
+    {
+      "id": "17",
+      "projetoId": "3",
+      "titulo": "Redigir o relatório de requisitos",
+      "descricao": "Especificar requisitos funcionais e não funcionais no relatório, priorizados pelo método MoSCoW.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Mateus",
+      "prazo": "2026-08-28"
+    },
+    {
+      "id": "18",
+      "projetoId": "3",
+      "titulo": "Desenhar os casos de uso do módulo",
+      "descricao": "Mapear os fluxos de matrícula, trancamento e histórico escolar com os atores aluno e secretaria.",
+      "status": "concluida",
+      "prioridade": "media",
+      "responsavel": "Ana",
+      "prazo": "2026-09-08"
+    },
+    {
+      "id": "19",
+      "projetoId": "3",
+      "titulo": "Acordar os critérios de pronto",
+      "descricao": "Estabelecer revisão por pares, testes automatizados verdes e atualização do README como obrigatórios.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Júlia",
+      "prazo": "2026-09-16"
+    },
+    {
+      "id": "20",
+      "projetoId": "3",
+      "titulo": "Estimar o backlog da sprint",
+      "descricao": "Pontuar as histórias de usuário com Planning Poker e registrar a capacidade prevista da equipe.",
+      "status": "concluida",
+      "prioridade": "baixa",
+      "responsavel": "Camila",
+      "prazo": "2026-09-25"
+    },
+    {
+      "id": "21",
+      "projetoId": "3",
+      "titulo": "Atualizar o protótipo das histórias",
+      "descricao": "Alinhar o protótipo de telas com os critérios ajustados durante a review da sprint 2.",
+      "status": "em-andamento",
+      "prioridade": "media",
+      "responsavel": "Rafael",
+      "prazo": "2026-11-06"
+    },
+    {
+      "id": "22",
+      "projetoId": "3",
+      "titulo": "Planejar os testes de aceitação",
+      "descricao": "Escrever cenários no formato Dado-Quando-Então para os três fluxos críticos da matrícula.",
+      "status": "em-revisao",
+      "prioridade": "alta",
+      "responsavel": "Bruno",
+      "prazo": "2026-11-14"
+    },
+    {
+      "id": "23",
+      "projetoId": "3",
+      "titulo": "Mapear os riscos do cronograma",
+      "descricao": "Classificar probabilidade e impacto dos gargalos técnicos e definir plano de mitigação.",
+      "status": "a-fazer",
+      "prioridade": "media",
+      "responsavel": "Beatriz",
+      "prazo": "2026-11-25"
+    },
+    {
+      "id": "24",
+      "projetoId": "3",
+      "titulo": "Levantar as métricas do sprint",
+      "descricao": "Calcular lead time, vazão semanal e gráfico burndown para a retrospectiva de encerramento.",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Mateus",
+      "prazo": "2026-12-08"
+    },
+    {
+      "id": "25",
+      "projetoId": "4",
+      "titulo": "Implementar a lista encadeada",
+      "descricao": "Codificar inserção ordenada, remoção e busca em C, acompanhadas de casos de teste.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Ana",
+      "prazo": "2026-09-09"
+    },
+    {
+      "id": "26",
+      "projetoId": "4",
+      "titulo": "Corrigir o vazamento na pilha",
+      "descricao": "Liberar todos os nós ao destruir a estrutura e comprovar ausência de leaks no Valgrind.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Larissa",
+      "prazo": "2026-10-05"
+    },
+    {
+      "id": "27",
+      "projetoId": "4",
+      "titulo": "Comparar os tempos de ordenação",
+      "descricao": "Medir quicksort, mergesort e heapsort com vetores de 10 mil, 50 mil e 100 mil inteiros.",
+      "status": "em-revisao",
+      "prioridade": "media",
+      "responsavel": "Beatriz",
+      "prazo": "2026-10-27"
+    },
+    {
+      "id": "28",
+      "projetoId": "4",
+      "titulo": "Balancear a árvore AVL de notas",
+      "descricao": "Demonstrar as rotações simples e duplas (LL, RR, LR e RL) inserindo 15 chaves em sequência.",
+      "status": "em-andamento",
+      "prioridade": "alta",
+      "responsavel": "Bruno",
+      "prazo": "2026-11-07"
+    },
+    {
+      "id": "29",
+      "projetoId": "4",
+      "titulo": "Analisar a complexidade do grafo",
+      "descricao": "Demonstrar o custo de Dijkstra com heap binário e anexar o grafo ponderado usado em aula.",
+      "status": "a-fazer",
+      "prioridade": "media",
+      "responsavel": "Diego",
+      "prazo": "2026-11-21"
+    },
+    {
+      "id": "30",
+      "projetoId": "4",
+      "titulo": "Executar os testes da tabela hash",
+      "descricao": "Verificar tratamento de colisão por encadeamento, fator de carga e redimensionamento.",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Rafael",
+      "prazo": "2026-12-04"
+    },
+    {
+      "id": "31",
+      "projetoId": "5",
+      "titulo": "Configurar a sub-rede do laboratório",
+      "descricao": "Definir máscara /27, gateway padrão e faixa DHCP sem conflitar com o servidor de arquivos.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Mateus",
+      "prazo": "2026-09-16"
+    },
+    {
+      "id": "32",
+      "projetoId": "5",
+      "titulo": "Capturar o tráfego HTTP do laboratório",
+      "descricao": "Salvar arquivo pcap com requisições GET e POST e destacar os cabeçalhos no Wireshark.",
+      "status": "concluida",
+      "prioridade": "media",
+      "responsavel": "Júlia",
+      "prazo": "2026-09-30"
+    },
+    {
+      "id": "33",
+      "projetoId": "5",
+      "titulo": "Montar o servidor DNS local",
+      "descricao": "Publicar a zona lab.ads.br no BIND9 com registros A e CNAME e validar as respostas via dig.",
+      "status": "concluida",
+      "prioridade": "alta",
       "responsavel": "Diego",
       "prazo": "2026-10-14"
     },
     {
-      "id": "5",
-      "projetoId": "2",
-      "titulo": "Desenhar o diagrama ER",
-      "descricao": "Entidades livro, leitor e empréstimo",
+      "id": "34",
+      "projetoId": "5",
+      "titulo": "Comparar TCP e UDP no envio",
+      "descricao": "Medir vazão efetiva e perda de pacotes na transferência de 20 MB com iperf3.",
+      "status": "concluida",
+      "prioridade": "media",
+      "responsavel": "Beatriz",
+      "prazo": "2026-10-19"
+    },
+    {
+      "id": "35",
+      "projetoId": "5",
+      "titulo": "Testar a API do monitoramento",
+      "descricao": "Consultar o endpoint do agente SNMP/HTTP e validar o JSON de latência dos últimos 15 minutos.",
+      "status": "a-fazer",
+      "prioridade": "media",
+      "responsavel": "Larissa",
+      "prazo": "2026-10-26"
+    },
+    {
+      "id": "36",
+      "projetoId": "5",
+      "titulo": "Diagnosticar a perda de pacotes",
+      "descricao": "Executar mtr e traceroute entre as bancadas para isolar o salto com descarte acima de 5%.",
+      "status": "em-andamento",
+      "prioridade": "alta",
+      "responsavel": "Ana",
+      "prazo": "2026-11-05"
+    },
+    {
+      "id": "37",
+      "projetoId": "5",
+      "titulo": "Redigir o relatório da prática 2",
+      "descricao": "Detalhar no relatório o three-way handshake TCP capturado e anexar os prints comentados.",
+      "status": "em-revisao",
+      "prioridade": "media",
+      "responsavel": "Bruno",
+      "prazo": "2026-11-11"
+    },
+    {
+      "id": "38",
+      "projetoId": "5",
+      "titulo": "Auditar as regras de firewall",
+      "descricao": "Liberar portas 443 e 53, bloquear Telnet no iptables e comentar o motivo de cada regra.",
+      "status": "em-revisao",
+      "prioridade": "baixa",
+      "responsavel": "Camila",
+      "prazo": "2026-11-17"
+    },
+    {
+      "id": "39",
+      "projetoId": "5",
+      "titulo": "Simular o atraso no enlace",
+      "descricao": "Injetar 80 ms de latência com tc netem e medir o impacto no tempo de resposta HTTP.",
       "status": "a-fazer",
       "prioridade": "baixa",
+      "responsavel": "Rafael",
+      "prazo": "2026-11-27"
+    },
+    {
+      "id": "40",
+      "projetoId": "5",
+      "titulo": "Isolar a VLAN dos visitantes",
+      "descricao": "Bloquear o roteamento da VLAN 30 para a sub-rede interna mantendo apenas a saída para a internet.",
+      "status": "a-fazer",
+      "prioridade": "alta",
+      "responsavel": "Mateus",
+      "prazo": "2026-12-01"
+    },
+    {
+      "id": "41",
+      "projetoId": "5",
+      "titulo": "Documentar o endereçamento IPv6",
+      "descricao": "",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Júlia",
+      "prazo": "2026-12-10"
+    },
+    {
+      "id": "42",
+      "projetoId": "6",
+      "titulo": "Recrutar participantes da avaliação",
+      "descricao": "Confirmar 5 estudantes de períodos variados e coletar a assinatura do termo de consentimento.",
+      "status": "concluida",
+      "prioridade": "media",
+      "responsavel": "Rafael",
+      "prazo": "2026-09-28"
+    },
+    {
+      "id": "43",
+      "projetoId": "6",
+      "titulo": "Conduzir os testes com alunos",
+      "descricao": "Aplicar o roteiro moderado com os 5 participantes registrando hesitações, erros e tempo por tarefa.",
+      "status": "concluida",
+      "prioridade": "alta",
+      "responsavel": "Beatriz",
+      "prazo": "2026-10-08"
+    },
+    {
+      "id": "44",
+      "projetoId": "6",
+      "titulo": "Sintetizar o relatório de heurísticas",
+      "descricao": "Consolidar no relatório as violações às 10 heurísticas de Nielsen classificadas por severidade.",
+      "status": "em-andamento",
+      "prioridade": "media",
+      "responsavel": "Camila",
+      "prazo": "2026-11-13"
+    },
+    {
+      "id": "45",
+      "projetoId": "6",
+      "titulo": "Ajustar o protótipo de alta fidelidade",
+      "descricao": "Corrigir no Figma os problemas graves de navegação identificados durante a sessão de testes.",
+      "status": "em-revisao",
+      "prioridade": "alta",
       "responsavel": "Ana",
-      "prazo": "2026-10-20"
+      "prazo": "2026-11-24"
+    },
+    {
+      "id": "46",
+      "projetoId": "6",
+      "titulo": "Gravar o vídeo do fluxo principal",
+      "descricao": "Demonstrar o fluxo corrigido de matrícula em até 90 segundos com narração das melhorias aplicadas.",
+      "status": "a-fazer",
+      "prioridade": "baixa",
+      "responsavel": "Larissa",
+      "prazo": "2026-12-05"
     }
   ]
 }
