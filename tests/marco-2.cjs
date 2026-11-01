@@ -131,7 +131,7 @@ async function executar() {
   await conferir("resposta atrasada não substitui o projeto atual", async () => {
     await page.route(`${api}/projetos/1*`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
     await page.goto(`${origem}/projetos/1`);
-    await page.getByRole("status").waitFor();
+    await page.getByRole("status").filter({ hasText: /^Carregando projeto…$/ }).waitFor();
     await page.evaluate(() => { history.pushState({}, "", "/projetos/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await page.getByRole("heading", { name: "Modelagem da Biblioteca", exact: true }).waitFor();
     await page.waitForTimeout(600);
@@ -160,7 +160,7 @@ async function executar() {
     await page.route(`${api}/projetos/1?_embed=tarefas`, (route) => route.fulfill({ json: { ...seed.projetos[0], tarefas: [] } }));
     await abrir("/projetos/1");
     const semTarefas = await texto();
-    assert.ok(semTarefas.includes("Crie a primeira tarefa de Gerenciador de Tarefas."), semTarefas);
+    assert.ok(semTarefas.includes("Este projeto ainda não tem tarefas"), semTarefas);
     await page.getByRole("button", { name: "Criar tarefa", exact: true }).waitFor();
     assert.equal(await page.locator("article").count(), 0);
     await page.unrouteAll();

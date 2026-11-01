@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { NavLink, Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
-import { BoardIcon, FolderIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
+import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto } from "../tipos";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
@@ -45,8 +45,8 @@ export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, com
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
   return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
 }
-export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
+export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <div className="e-empty"><div className="e-project-icon"><FolderIcon /></div><h2>{titulo}</h2><p>{descricao}</p><Button color="primary" size="sm" onClick={() => navigate(destino, { state: { fundo: location } })}>{acao}</Button></div>;
+  return <div className="e-empty"><div className="e-project-icon"><Icon name={icone} /></div><h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
 }
