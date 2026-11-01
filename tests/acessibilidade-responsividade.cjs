@@ -77,6 +77,10 @@ async function executar() {
         await abrir(page, caminho);
         const problema = await page.evaluate(() => {
           if (document.documentElement.scrollWidth > document.documentElement.clientWidth) return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
+          // Só as abas de projetos podem rolar de lado; qualquer outro contêiner rolável (o corpo da ficha tem overflow-y:auto) não pode transbordar.
+          const faixa = (el) => Boolean(el.closest(".e-tabs"));
+          const transbordo = [...document.querySelectorAll("body *")].find((el) => !faixa(el) && /(auto|scroll)/.test(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth + 1);
+          if (transbordo) return `${transbordo.tagName}.${transbordo.className} rola na horizontal (${transbordo.scrollWidth} > ${transbordo.clientWidth})`;
           const rolavel = (el) => { for (let pai = el.parentElement; pai; pai = pai.parentElement) if (/(auto|scroll)/.test(getComputedStyle(pai).overflowX)) return true; return false; };
           const fora = [...document.querySelectorAll("body *")].find((el) => {
             const caixa = el.getBoundingClientRect();
@@ -97,25 +101,43 @@ async function executar() {
         const ficha = fichas.includes(caminho);
         if (!ficha) await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
         const paradas = [];
-        for (let tentativa = 0; tentativa < 80; tentativa++) {
+        // Cada elemento é marcado ao receber foco: voltar a um marcado é ciclo; sair do documento encerra o percurso.
+        let ciclo = false;
+        let saiu = false;
+        for (let tentativa = 0; tentativa < 120; tentativa++) {
           await page.keyboard.press("Tab");
           const foco = page.locator(":focus");
-          if ((await foco.count()) === 0) break;
+          if ((await foco.count()) === 0) { saiu = true; break; }
           const parada = await foco.evaluate((el) => {
             const caixa = el.getBoundingClientRect();
+            const repetida = el.hasAttribute("data-parada-tab");
+            el.setAttribute("data-parada-tab", "");
             return {
+              repetida,
               nome: `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || "").trim().slice(0, 40)}"`,
               naTela: caixa.width > 0 && caixa.height > 0 && caixa.bottom > 0 && caixa.top < innerHeight && caixa.right > 0 && caixa.left < innerWidth,
               naFicha: Boolean(el.closest(".e-form-overlay")),
             };
           });
-          if (paradas.some((anterior) => anterior.nome === parada.nome)) break;
+          if (parada.repetida) { ciclo = true; break; }
           paradas.push(parada);
           assert.equal(await focoVisivel(foco), true, `${tema} ${largura}px ${caminho}: sem foco visível em ${parada.nome}`);
           assert.equal(parada.naTela, true, `${tema} ${largura}px ${caminho}: ${parada.nome} fora da tela`);
           if (ficha) assert.equal(parada.naFicha, true, `${tema} ${largura}px ${caminho}: o Tab saiu da ficha para ${parada.nome}`);
         }
         assert.ok(paradas.length >= (ficha ? 2 : 4), `${tema} ${largura}px ${caminho}: só ${paradas.length} paradas`);
+        // Sem armadilha: ao fechar o ciclo (ou sair do documento), o Tab passou por todos os elementos tabuláveis
+        // do escopo — a página inteira, ou só a ficha, que é modal e por isso circula dentro de si.
+        assert.ok(ciclo || saiu, `${tema} ${largura}px ${caminho}: o percurso não terminou em ${paradas.length} paradas`);
+        if (ficha) assert.equal(saiu, false, `${tema} ${largura}px ${caminho}: o foco saiu da ficha`);
+        const esquecidos = await page.evaluate((ficha) => {
+          const escopo = ficha ? document.querySelector(".e-form-overlay [role=dialog]") : document;
+          return [...escopo.querySelectorAll("a[href], button, input, select, textarea, [tabindex]")]
+            .filter((el) => el.tabIndex >= 0 && !el.disabled && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden" && !el.closest("[inert], [aria-hidden=true]"))
+            .filter((el) => !el.hasAttribute("data-parada-tab"))
+            .map((el) => `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}"`);
+        }, ficha);
+        assert.deepEqual(esquecidos, [], `${tema} ${largura}px ${caminho}: o Tab não alcança estes elementos`);
       }
     }
     console.log(`OK: ${tema}: foco visível e na tela em todas as paradas do Tab; a ficha prende o foco`);
@@ -164,6 +186,24 @@ async function executar() {
     }
   }
   console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px");
+
+  // A área de toque ampliada não pode levar o anel de foco para cima do texto vizinho.
+  await page.setViewportSize({ width: 375, height: 800 });
+  for (const [caminho, seletor, vizinhos] of [["/projetos", ".e-project-card h2 a", [".e-project-card > p"]], ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]]]) {
+    await abrir(page, caminho);
+    const sobreposto = await page.evaluate(([seletor, vizinhos]) => {
+      const link = document.querySelector(seletor);
+      link.focus({ focusVisible: true });
+      const estilo = getComputedStyle(link);
+      const margem = parseFloat(estilo.outlineOffset) + parseFloat(estilo.outlineWidth);
+      const caixa = link.getBoundingClientRect();
+      const anel = { top: caixa.top - margem, bottom: caixa.bottom + margem };
+      return vizinhos.map((vizinho) => [vizinho, link.closest("article, section").querySelector(vizinho).getBoundingClientRect()])
+        .filter(([, outro]) => anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5).map(([vizinho]) => vizinho);
+    }, [seletor, vizinhos]);
+    assert.deepEqual(sobreposto, [], `${caminho}: o anel de foco de ${seletor} cobre o texto vizinho`);
+  }
+  console.log("OK: o anel de foco dos links ampliados não cobre o texto vizinho");
 
   // Ficha pelo teclado: Enter no título abre os detalhes e Esc fecha, devolvendo o foco ao link de origem.
   await page.setViewportSize({ width: 1280, height: 900 });
