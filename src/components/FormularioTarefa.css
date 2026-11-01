@@ -26,6 +26,17 @@
   color: var(--e-error);
 }
 
+.formulario-tarefa__aviso--acao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 7px;
+}
+
+.formulario-tarefa__aviso--acao button .e-uicon {
+  color: inherit;
+}
+
 /* Equivale a `.e-description #task-description` (o id aqui é gerado por useId). */
 .e-description-body {
   padding: 4px 0 6px;

@@ -5,7 +5,7 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { listarProjetos } from "../api";
-import { FolderIcon, Icon } from "../design/icon";
+import { FolderIcon, Icon, RefreshIcon } from "../design/icon";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa, Prioridade, Status } from "../tipos";
 import "./FormularioTarefa.css";
@@ -223,11 +223,12 @@ export function FormularioTarefa({
             {projetos.erro !== undefined && (
               <p
                 id={`${id}-projeto-aviso`}
-                className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
+                className="formulario-tarefa__aviso formulario-tarefa__aviso--erro formulario-tarefa__aviso--acao"
                 role="alert"
               >
-                Não foi possível carregar os projetos.{" "}
-                <Button type="button" color="link-color" size="sm" isLoading={projetos.tentando} showTextWhileLoading onClick={projetos.tentarDeNovo}>
+                <Icon name="cloud-disabled" />
+                {projetos.tentando ? "Tentando de novo…" : "Não foi possível carregar os projetos."}
+                <Button type="button" color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={projetos.tentando} showTextWhileLoading onClick={projetos.tentarDeNovo}>
                   Tentar de novo
                 </Button>
               </p>
