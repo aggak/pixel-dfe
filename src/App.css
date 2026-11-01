@@ -74,7 +74,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-empty .e-project-icon{margin-bottom:16px}
 .e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 7px}
 .e-empty p{margin:0 0 20px;font-size:13px;line-height:1.6}
-.e-empty-compact{min-height:0;padding:28px 20px 30px}
+.e-empty-compact{min-height:0;padding:6px 20px 30px}
 .e-load-error{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;color:var(--e-muted);text-align:center}
 .e-load-error>i{font-size:24px;color:var(--e-error);margin-bottom:16px}
 .e-load-error h2{font-size:18px;color:var(--e-ink);margin:0 0 7px}
@@ -183,7 +183,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-title{font-size:15px;min-height:30px}
 .e-sheet-footer{padding:10px 12px;font-size:10px}
 .e-empty{padding:44px 4px;min-height:300px}
-.e-empty-compact{min-height:0;padding:24px 4px 26px}
+.e-empty-compact{min-height:0;padding:4px 4px 26px}
 .e-empty h2{font-size:17px}
 .e-empty p{font-size:12px}
 .e-empty button{min-height:44px}
@@ -301,7 +301,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-tabs .e-inline-error button{padding:0;min-height:0;border:0;background:none;font-size:12px;color:var(--e-action)}
 .e-read-project .e-loading-compact{color:inherit}
 .e-loading-dot{width:8px;height:8px;background:var(--e-action);border-radius:50%;animation:e-loading-pulse 1s ease-in-out infinite alternate}
-.e-project-empty{background:var(--e-sheet);border:1px solid var(--e-line);border-radius:12px}
 @keyframes e-loading-pulse{to{opacity:.35}}
 @media(max-width:650px){
 .e-projects .e-page-heading{align-items:start;gap:10px}

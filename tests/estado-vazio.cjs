@@ -89,12 +89,24 @@ async function executar() {
     await vazio("Nenhuma tarefa encontrada").waitFor();
     assert.equal(await page.locator("[data-task-id]").count(), 0);
     assert.equal(await vazio("Nenhuma tarefa por aqui").count(), 0);
-    await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).click();
+    assert.equal(await page.locator(".e-sheet-footer").getAttribute("aria-live"), "polite");
+    await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).press("Enter");
     await page.locator("[data-task-id]").first().waitFor();
     assert.equal(await page.locator("[data-task-id]").count(), seed.tarefas.length);
     assert.equal(await busca().inputValue(), "");
+    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("placeholder")), "Buscar tarefas");
   }
-  console.log("OK: busca sem resultado avisa na lista e no quadro e a limpeza restaura");
+  console.log("OK: busca sem resultado avisa na lista e no quadro, a limpeza restaura e devolve o foco à busca");
+
+  const projetoUnico = seed.projetos.find((projeto) => seed.tarefas.filter((tarefa) => tarefa.projetoId === projeto.id).length === 1);
+  const tarefaUnica = seed.tarefas.find((tarefa) => tarefa.projetoId === projetoUnico.id);
+  await page.goto(`${web}/projetos/${projetoUnico.id}`);
+  await page.getByRole("button", { name: `Ações de ${tarefaUnica.titulo}` }).click();
+  await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Excluir tarefa" }).click();
+  await vazio("Este projeto ainda não tem tarefas").waitFor();
+  assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
+  console.log("OK: excluir a última tarefa do projeto mostra o estado vazio");
 
   const semCombinacao = seed.tarefas.find((tarefa) => !seed.tarefas.some((outra) => outra.status === "concluida" && outra.titulo === tarefa.titulo));
   await page.goto(`${web}/`);
@@ -111,7 +123,8 @@ async function executar() {
 
   await page.route(`${api}/projetos`, (rota) => rota.fulfill({ json: [] }));
   await page.goto(`${web}/projetos`);
-  await vazio("Nenhum projeto por aqui").waitFor();
+  await vazio("Nenhum projeto por aqui").getByRole("button", { name: "Criar projeto" }).click();
+  await page.getByRole("dialog").getByLabel(/^Nome/).waitFor();
   await page.unrouteAll();
   console.log("OK: lista de projetos vazia avisa e oferece criar projeto");
 
