@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
 import { NavLink, Outlet, Link, useLocation, useNavigate } from "react-router";
-import { listarProjetos } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
-import { BoardIcon, FolderIcon, Icon, ListIcon } from "../design/icon";
+import { BoardIcon, FolderIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
+import type { Projeto } from "../tipos";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -19,9 +19,13 @@ export function Layout() {
     <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><strong>Pixel</strong><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.flaticon.com/uicons" target="_blank" rel="noreferrer">Uicons por Flaticon</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
   </div>;
 }
-export function AbasProjetos({ atual }: { atual?: string }) {
-  const { dados: projetos, erro, carregando, tentarDeNovo } = useConsulta(listarProjetos);
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{carregando && <Carregando compacto>Carregando projetos…</Carregando>}{erro !== undefined && <><span className="e-tabs-error">Os projetos não carregaram.</span><button type="button" onClick={tentarDeNovo}>Tentar de novo</button></>}{projetos?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
+export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
+  const botao = useRef<HTMLButtonElement>(null);
+  const falhou = mostrarErro && projetos.erro !== undefined;
+  useEffect(() => {
+    if (falhou && projetos.tentativa > 0 && (!document.activeElement || document.activeElement === document.body)) botao.current?.focus();
+  }, [falhou, projetos.tentativa]);
+  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{falhou && <button ref={botao} type="button" className="e-tabs-retry" onClick={projetos.tentarDeNovo}><RefreshIcon />Recarregar projetos</button>}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
@@ -40,12 +44,12 @@ export function AlternarVisao() {
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
 }
-export function ErroCarregamento({ titulo, onTentarDeNovo, focar = false }: { titulo: string; onTentarDeNovo: () => void; focar?: boolean }) {
+export function ErroCarregamento({ titulo, onTentarDeNovo, focar = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; focar?: boolean; compacto?: boolean }) {
   const caixa = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (focar && (!document.activeElement || document.activeElement === document.body)) caixa.current?.querySelector("button")?.focus();
   }, [focar]);
-  return <div ref={caixa} className="e-load-error" role="alert"><Icon name="exclamation" /><h2>{titulo}</h2><p>Confira se a API está em execução.</p><Button color="secondary" size="sm" onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+  return <div ref={caixa} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>O servidor não respondeu. Confira se a API está em execução.</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();

@@ -8,4 +8,5 @@ export const FilterIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="sett
 export const FolderIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="folder"/>;
 export const EditIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="pencil"/>;
 export const CheckIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="check"/>;
+export const RefreshIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="refresh"/>;
 export const TrashIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="trash"/>;
