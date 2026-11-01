@@ -261,7 +261,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-read-task .e-form-header>span{font-size:13px;font-weight:500}
 .e-read-body{padding:13px 18px 0}
 .e-read-title{font-size:22px;line-height:1.35;letter-spacing:-.5px;font-weight:500;margin:0 0 13px;overflow-wrap:anywhere}
-.e-read-project{display:flex;align-items:center;gap:7px;color:var(--e-muted);font-size:12px}
+.e-read-project{display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--e-muted);font-size:12px}
 .e-read-tags{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:19px 0}
 .e-read-tags>.e-priority{display:flex;align-items:center;gap:4px;box-shadow:none;--tw-ring-color:transparent;padding-left:0;padding-right:0}
 .e-read-meta{padding:14px 0;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line);display:grid;gap:11px;color:var(--e-muted);font-size:13px}
@@ -297,9 +297,10 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-loading-state{min-height:270px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--e-muted);font-size:14px}
 .e-loading-compact{min-height:0;justify-content:flex-start;white-space:nowrap;font-size:12px}
 .e-tabs .e-loading-compact{min-height:44px;padding:0 14px}
-.e-inline-error{display:inline-flex;align-items:center;gap:7px;color:var(--e-muted);font-size:12px;white-space:nowrap}
+.e-inline-error{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 7px;color:var(--e-muted);font-size:12px}
 .e-inline-error>.e-uicon{color:var(--e-error)}
-.e-tabs .e-inline-error{min-height:44px;padding-left:14px}
+.e-tabs .e-inline-error{min-height:44px;padding-left:14px;flex-wrap:nowrap;white-space:nowrap}
+@media(max-width:650px){.e-tabs .e-inline-error{padding-left:8px}.e-tabs .e-inline-error-text{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 .e-tabs .e-inline-error button{padding:0;min-height:0;border:0;background:none;font-size:12px;color:var(--e-action)}
 .e-read-project .e-loading-compact{color:inherit}
 .e-loading-dot{width:8px;height:8px;background:var(--e-action);border-radius:50%;animation:e-loading-pulse 1s ease-in-out infinite alternate}

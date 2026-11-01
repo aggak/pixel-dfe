@@ -40,10 +40,10 @@ export function Carregando({ children, compacto = false }: { children: string; c
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
 }
 export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
-  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>O servidor não respondeu. Confira se a API está em execução.</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : "O servidor não respondeu. Confira se a API está em execução."}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
-  return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" />{texto}<Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
+  return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();

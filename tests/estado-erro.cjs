@@ -196,6 +196,7 @@ async function executar() {
   await tentar().click();
   await page.locator("main [data-pending]").waitFor();
   assert.equal(await alerta("Não foi possível carregar os projetos").count(), 1);
+  await alerta("Tentando de novo…").waitFor();
   assert.equal(await page.getByRole("main").getByRole("status").count(), 0);
   while (!liberarLenta) await new Promise((resolve) => setTimeout(resolve, 20));
   liberarLenta();
