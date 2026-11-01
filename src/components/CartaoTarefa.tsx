@@ -81,7 +81,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
         <Heading slot="title">Excluir tarefa?</Heading>
         <p>Deseja excluir “{tarefa.titulo}”? Esta ação não pode ser desfeita.</p>
         {falhaExclusao && <p className="e-confirm-error" role="alert">Não foi possível excluir a tarefa. Tente novamente.</p>}
-        <div className="e-confirm-actions"><Button color="secondary" size="sm" onClick={() => setConfirmando(false)} isDisabled={excluindo}>Cancelar</Button><Button color="primary-destructive" size="sm" onClick={() => void excluir()} isDisabled={excluindo}>{excluindo ? "Excluindo…" : "Excluir tarefa"}</Button></div>
+        <div className="e-confirm-actions"><Button color="secondary" size="sm" onClick={() => setConfirmando(false)} isDisabled={excluindo}>Cancelar</Button>{/* Pendente, e não desabilitado: o botão segura o foco durante o envio e, se falhar, Enter tenta de novo. */}<Button color="primary-destructive" size="sm" onClick={() => void excluir()} isLoading={excluindo} showTextWhileLoading>{excluindo ? "Excluindo…" : "Excluir tarefa"}</Button></div>
       </Dialog></Modal>
     </ModalOverlay>
   </article>;
