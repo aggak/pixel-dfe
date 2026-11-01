@@ -21,6 +21,7 @@ export function QuadroTarefas() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
   const [tentativa, setTentativa] = useState(0);
+  const [tentando, setTentando] = useState(false);
   const { filtros, limpar } = useFiltros();
   const consultaProjetos = useConsulta(listarProjetos);
   const projetos = consultaProjetos.dados;
@@ -33,12 +34,11 @@ export function QuadroTarefas() {
   };
   useEffect(() => {
     const controller = new AbortController();
-    listarTarefas(controller.signal).then(setTarefas).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) setCarregando(false); });
+    listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
     return () => controller.abort();
   }, [tentativa]);
   const tentarDeNovo = () => {
-    setErro(false);
-    setCarregando(true);
+    setTentando(true);
     setTentativa((atual) => atual + 1);
     if (consultaProjetos.erro !== undefined) consultaProjetos.tentarDeNovo();
   };
@@ -52,7 +52,7 @@ export function QuadroTarefas() {
     <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
   </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<div className="e-content e-board-content">
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
-    {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" onTentarDeNovo={tentarDeNovo} focar={tentativa > 0} />}
+    {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio titulo="Espaço para o próximo passo" descricao="Organize seu trabalho criando uma tarefa." destino="/tarefas/nova" acao="Criar tarefa" /> : <>
       {tarefasFiltradas.length === 0 && <div className="e-search-empty e-board-empty"><p>Nenhuma tarefa encontrada.</p><Button color="link-color" size="sm" onClick={limpar}>Limpar busca e filtros</Button></div>}
       <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>

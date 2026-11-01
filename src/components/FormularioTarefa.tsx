@@ -227,7 +227,7 @@ export function FormularioTarefa({
                 role="alert"
               >
                 Não foi possível carregar os projetos.{" "}
-                <Button type="button" color="link-color" size="sm" onClick={projetos.tentarDeNovo}>
+                <Button type="button" color="link-color" size="sm" isLoading={projetos.tentando} showTextWhileLoading onClick={projetos.tentarDeNovo}>
                   Tentar de novo
                 </Button>
               </p>

@@ -11,7 +11,7 @@ export function EditarTarefa() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
-  const { dados: tarefa, erro, carregando, tentativa, tentarDeNovo } = useConsulta(consultar);
+  const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 
@@ -36,7 +36,7 @@ export function EditarTarefa() {
         <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
-        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={tentarDeNovo} focar={tentativa > 0} />
+        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={tentarDeNovo} tentando={tentando} />
       )}
       {tarefa && (
         <FormularioTarefa

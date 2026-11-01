@@ -5,21 +5,21 @@ import { Badge, BadgeWithDot } from "@/components/base/badges/badges";
 import { buscarTarefa, listarProjetos, ErroApi } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
 import { useFicha } from "../components/ficha-contexto";
-import { Carregando, ErroCarregamento } from "../components/Layout";
+import { AvisoCompacto, Carregando, ErroCarregamento } from "../components/Layout";
 import { Icon, FolderIcon, EditIcon } from "../design/icon";
 import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
 
 export function DetalheTarefa() {
   const { id = "" } = useParams();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
-  const { dados: tarefa, erro, carregando, tentativa, tentarDeNovo } = useConsulta(consultar);
-  const { dados: projetos, erro: erroProjetos, carregando: carregandoProjetos, tentarDeNovo: tentarProjetos } = useConsulta(listarProjetos);
+  const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  const { dados: projetos, erro: erroProjetos, carregando: carregandoProjetos, tentando: tentandoProjetos, tentarDeNovo: tentarProjetos } = useConsulta(listarProjetos);
   const { navegar } = useFicha();
   return <section className="e-read-task" aria-label="Dados da tarefa">
     <div className="e-panel-scroll">
       {carregando && <p className="e-ficha-state" role="status">Carregando tarefa…</p>}
-      {erro instanceof ErroApi && erro.status === 404 && <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>}{erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={() => { tentarDeNovo(); if (erroProjetos !== undefined) tentarProjetos(); }} focar={tentativa > 0} />}
-      {tarefa && <div className="e-read-body"><h2 className="e-read-title">{tarefa.titulo}</h2><div className="e-read-project"><FolderIcon />{carregandoProjetos ? <Carregando compacto>Carregando projeto…</Carregando> : <Link to={`/projetos/${encodeURIComponent(tarefa.projetoId)}`} onClick={(evento) => { if (!evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey) { evento.preventDefault(); navegar(`/projetos/${encodeURIComponent(tarefa.projetoId)}`); } }}>{projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome ?? `Projeto ${tarefa.projetoId}`}</Link>}</div>
+      {erro instanceof ErroApi && erro.status === 404 && <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>}{erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={() => { tentarDeNovo(); if (erroProjetos !== undefined) tentarProjetos(); }} tentando={tentando} />}
+      {tarefa && <div className="e-read-body"><h2 className="e-read-title">{tarefa.titulo}</h2><div className="e-read-project"><FolderIcon />{carregandoProjetos ? <Carregando compacto>Carregando projeto…</Carregando> : <Link to={`/projetos/${encodeURIComponent(tarefa.projetoId)}`} onClick={(evento) => { if (!evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey) { evento.preventDefault(); navegar(`/projetos/${encodeURIComponent(tarefa.projetoId)}`); } }}>{projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome ?? `Projeto ${tarefa.projetoId}`}</Link>}{erroProjetos !== undefined && <AvisoCompacto texto="Nome do projeto indisponível." tentando={tentandoProjetos} onTentarDeNovo={tentarProjetos} />}</div>
         <div className="e-read-tags"><BadgeWithDot type="pill-color" size="sm" color={tarefa.status === "concluida" ? "success" : tarefa.status === "a-fazer" ? "gray" : "brand"} className={`e-status e-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</BadgeWithDot><Badge type="modern" size="sm" color="gray" className={`e-priority e-priority-${tarefa.prioridade}`}><Icon name={tarefa.prioridade === "alta" ? "angle-double-small-up" : tarefa.prioridade === "baixa" ? "arrow-small-down" : "minus-small"} />{prioridadeTexto[tarefa.prioridade]}</Badge></div>
         <div className="e-read-meta"><p><Icon name="user" /><span>{tarefa.responsavel}</span></p><p><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo, true)}</time></p></div><p className={`e-read-description ${tarefa.descricao.trim() ? "" : "is-empty"}`}>{tarefa.descricao.trim() ? tarefa.descricao : "Sem descrição."}</p><dl className="e-read-identifiers"><div><dt>Identificador</dt><dd>{tarefa.id}</dd></div><div><dt>Projeto</dt><dd>{tarefa.projetoId}</dd></div></dl>
       </div>}

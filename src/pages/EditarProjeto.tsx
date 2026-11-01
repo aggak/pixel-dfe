@@ -11,7 +11,7 @@ export function EditarProjeto() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
-  const { dados: projeto, erro, carregando, tentativa, tentarDeNovo } = useConsulta(consultar);
+  const { dados: projeto, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/projetos/${encodeURIComponent(id)}`;
 
@@ -36,7 +36,7 @@ export function EditarProjeto() {
         <p className="e-ficha-state e-form-error" role="alert">Projeto não encontrado.</p>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
-        <ErroCarregamento compacto titulo="Não foi possível carregar o projeto" onTentarDeNovo={tentarDeNovo} focar={tentativa > 0} />
+        <ErroCarregamento compacto titulo="Não foi possível carregar o projeto" onTentarDeNovo={tentarDeNovo} tentando={tentando} />
       )}
       {projeto && (
         <FormularioProjeto

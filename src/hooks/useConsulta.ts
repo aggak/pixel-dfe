@@ -24,6 +24,8 @@ export function useConsulta<T>(consultar: (signal: AbortSignal) => Promise<T>) {
   const tentarDeNovo = useCallback(() => setTentativa((atual) => atual + 1), []);
 
   // Uma nova consulta não deve exibir os dados da URL anterior.
-  const atual = resultado?.consulta === consultar && resultado.tentativa === tentativa ? resultado : undefined;
-  return { dados: atual?.dados, erro: atual?.erro, carregando: !atual, tentativa, tentarDeNovo };
+  const mesmaConsulta = resultado?.consulta === consultar;
+  const atual = mesmaConsulta && resultado.tentativa === tentativa ? resultado : undefined;
+  const tentando = mesmaConsulta && !atual && resultado?.erro !== undefined;
+  return { dados: atual?.dados, erro: tentando ? resultado?.erro : atual?.erro, carregando: !atual && !tentando, tentando, tentarDeNovo };
 }

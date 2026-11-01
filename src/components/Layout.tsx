@@ -20,12 +20,7 @@ export function Layout() {
   </div>;
 }
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
-  const botao = useRef<HTMLButtonElement>(null);
-  const falhou = mostrarErro && projetos.erro !== undefined;
-  useEffect(() => {
-    if (falhou && projetos.tentativa > 0 && (!document.activeElement || document.activeElement === document.body)) botao.current?.focus();
-  }, [falhou, projetos.tentativa]);
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{falhou && <button ref={botao} type="button" className="e-tabs-retry" onClick={projetos.tentarDeNovo}><RefreshIcon />Recarregar projetos</button>}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
+  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
@@ -44,12 +39,11 @@ export function AlternarVisao() {
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
 }
-export function ErroCarregamento({ titulo, onTentarDeNovo, focar = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; focar?: boolean; compacto?: boolean }) {
-  const caixa = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (focar && (!document.activeElement || document.activeElement === document.body)) caixa.current?.querySelector("button")?.focus();
-  }, [focar]);
-  return <div ref={caixa} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>O servidor não respondeu. Confira se a API está em execução.</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
+  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>O servidor não respondeu. Confira se a API está em execução.</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+}
+export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
+  return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" />{texto}<Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
 }
 export function EstadoVazio({ titulo, descricao, destino, acao }: { titulo: string; descricao: string; destino: string; acao: string }) {
   const location = useLocation();
