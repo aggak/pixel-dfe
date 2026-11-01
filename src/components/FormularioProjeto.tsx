@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { TextArea } from "@/components/base/textarea/textarea";
+import { ErroApi } from "../api";
 import { Icon } from "../design/icon";
 import type { Projeto } from "../tipos";
 import "./FormularioTarefa.css";
@@ -35,7 +36,8 @@ export function FormularioProjeto({
   const [criadoEm, setCriadoEm] = useState(valoresIniciais?.criadoEm ?? "");
 
   const [enviando, setEnviando] = useState(false);
-  const [erroEnvio, setErroEnvio] = useState(false);
+  // "inexistente": o projeto foi excluído enquanto a ficha estava aberta; tentar de novo não adianta.
+  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
 
@@ -101,8 +103,8 @@ export function FormularioProjeto({
     notificarEnvio(true);
     try {
       await onSalvar(dados);
-    } catch {
-      setErroEnvio(true);
+    } catch (erro) {
+      setErroEnvio(erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -171,7 +173,7 @@ export function FormularioProjeto({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente.
+          {erroEnvio === "inexistente" ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos." : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente."}
         </div>
       )}
 

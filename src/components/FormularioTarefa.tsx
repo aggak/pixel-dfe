@@ -4,7 +4,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
-import { listarProjetos } from "../api";
+import { ErroApi, listarProjetos } from "../api";
 import { FolderIcon, Icon, RefreshIcon } from "../design/icon";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa, Prioridade, Status } from "../tipos";
@@ -62,7 +62,8 @@ export function FormularioTarefa({
   const [descricaoAberta, setDescricaoAberta] = useState(Boolean(valoresIniciais?.descricao));
 
   const [enviando, setEnviando] = useState(false);
-  const [erroEnvio, setErroEnvio] = useState(false);
+  // "inexistente": a tarefa foi excluída enquanto a ficha estava aberta; tentar de novo não adianta.
+  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
   const seletorProjetoRef = useRef<HTMLDivElement>(null);
@@ -153,8 +154,8 @@ export function FormularioTarefa({
     notificarEnvio(true);
     try {
       await onSalvar(dados);
-    } catch {
-      setErroEnvio(true);
+    } catch (erro) {
+      setErroEnvio(erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -340,7 +341,7 @@ export function FormularioTarefa({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente.
+          {erroEnvio === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos." : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente."}
         </div>
       )}
 

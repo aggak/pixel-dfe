@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { excluirTarefa, listarTarefas, listarProjetos } from "../api";
+import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
@@ -29,7 +29,7 @@ export function QuadroTarefas() {
   const location = useLocation();
   const navigate = useNavigate();
   const excluir = async (tarefa: Tarefa) => {
-    await excluirTarefa(tarefa.id);
+    await excluirTarefaSeExistir(tarefa.id);
     setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
   };
   useEffect(() => {

@@ -91,6 +91,15 @@ export async function excluirTarefa(id: string, signal?: AbortSignal): Promise<v
   }
 }
 
+// Para a tela, excluir o que outra aba já excluiu é sucesso: o pedido do usuário já está cumprido.
+export async function excluirTarefaSeExistir(id: string, signal?: AbortSignal): Promise<void> {
+  try {
+    await excluirTarefa(id, signal);
+  } catch (erro) {
+    if (!(erro instanceof ErroApi && erro.status === 404)) throw erro;
+  }
+}
+
 export function criarProjeto(
   dados: Omit<Projeto, "id">,
   signal?: AbortSignal,
