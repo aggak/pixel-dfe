@@ -72,7 +72,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-sheet-footer{display:flex;justify-content:space-between;padding:11px 16px;color:var(--e-muted);font-size:11px;border-top:1px solid var(--e-line);margin-top:auto}
 .e-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;min-height:320px;color:var(--e-muted);text-align:center}
 .e-empty .e-project-icon{margin-bottom:16px}
-.e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 7px}
+.e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 20px}
+.e-empty h2:has(+ p){margin-bottom:7px}
 .e-empty p{margin:0 0 20px;font-size:13px;line-height:1.6}
 .e-empty-compact{min-height:0;padding:6px 20px 30px}
 .e-load-error{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;color:var(--e-muted);text-align:center}

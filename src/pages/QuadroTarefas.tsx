@@ -32,10 +32,6 @@ export function QuadroTarefas() {
     await excluirTarefa(tarefa.id);
     setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
   };
-  const limparBusca = () => {
-    limpar();
-    document.querySelector<HTMLInputElement>(".e-task-search input")?.focus();
-  };
   useEffect(() => {
     const controller = new AbortController();
     listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
@@ -57,13 +53,13 @@ export function QuadroTarefas() {
   </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<div className="e-content e-board-content">
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
-    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" descricao="Organize seu trabalho criando uma tarefa." destino="/tarefas/nova" acao="Criar tarefa" /> : <>
-      {tarefasFiltradas.length === 0 && <EstadoVazio compacto icone="search" titulo="Nenhuma tarefa encontrada" descricao="Nenhuma tarefa corresponde à busca e aos filtros aplicados." acao="Limpar busca e filtros" onAcao={limparBusca} />}
+    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : <>
+      {tarefasFiltradas.length === 0 && <EstadoVazio compacto icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} />}
       <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
         <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
         {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
         {coluna.tarefas.length === 0 && <p className="e-column-empty">Nenhuma tarefa</p>}
       </section>)}</section>
     </>)}
-  </div>{!carregando && !erro && <footer className="e-sheet-footer" aria-live="polite">{tarefasFiltradas.length} {tarefasFiltradas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
+  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasFiltradas.length} {tarefasFiltradas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
 }

@@ -45,8 +45,8 @@ export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, com
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
   return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
 }
-export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao, compacto = false }: { titulo: string; descricao: string; acao: string; icone?: string; destino?: string; onAcao?: () => void; compacto?: boolean }) {
+export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao, compacto = false }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void; compacto?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <div className={`e-empty${compacto ? " e-empty-compact" : ""}`}><div className="e-project-icon"><Icon name={icone} /></div><h2>{titulo}</h2><p>{descricao}</p><Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
+  return <div className={`e-empty${compacto ? " e-empty-compact" : ""}`}><div className="e-project-icon"><Icon name={icone} /></div><h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
 }

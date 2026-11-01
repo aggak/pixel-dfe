@@ -28,10 +28,6 @@ export function ListaTarefas() {
     await excluirTarefa(tarefa.id);
     setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
   };
-  const limparBusca = () => {
-    limpar();
-    document.querySelector<HTMLInputElement>(".e-task-search input")?.focus();
-  };
   useEffect(() => {
     const controller = new AbortController();
     listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
@@ -52,6 +48,6 @@ export function ListaTarefas() {
   </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<div className="e-content">
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
-    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" descricao="Organize seu trabalho criando uma tarefa." destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" descricao="Nenhuma tarefa corresponde à busca e aos filtros aplicados." acao="Limpar busca e filtros" onAcao={limparBusca} /> : <section className="e-list" aria-label="Lista de tarefas">{tarefasExibidas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}
-  </div>{!carregando && !erro && <footer className="e-sheet-footer" aria-live="polite">{tarefasExibidas.length} {tarefasExibidas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
+    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-list" aria-label="Lista de tarefas">{tarefasExibidas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}
+  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasExibidas.length} {tarefasExibidas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
 }

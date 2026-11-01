@@ -74,7 +74,7 @@ async function executar() {
 
   await page.route(`${api}/projetos/2?_embed=tarefas`, (rota) => rota.fulfill({ json: { ...seed.projetos[1], tarefas: [] } }));
   await page.goto(`${web}/projetos/2`);
-  await vazio("Este projeto ainda não tem tarefas").getByText(`Crie a primeira tarefa de ${seed.projetos[1].nome}.`).waitFor();
+  await vazio("Este projeto ainda não tem tarefas").waitFor();
   assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
   await vazio("Este projeto ainda não tem tarefas").getByRole("button", { name: "Criar tarefa" }).click();
   await page.getByRole("dialog").locator('select[name="projetoId"]').waitFor({ state: "attached" });
@@ -89,14 +89,12 @@ async function executar() {
     await vazio("Nenhuma tarefa encontrada").waitFor();
     assert.equal(await page.locator("[data-task-id]").count(), 0);
     assert.equal(await vazio("Nenhuma tarefa por aqui").count(), 0);
-    assert.equal(await page.locator(".e-sheet-footer").getAttribute("aria-live"), "polite");
-    await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).press("Enter");
+    await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).click();
     await page.locator("[data-task-id]").first().waitFor();
     assert.equal(await page.locator("[data-task-id]").count(), seed.tarefas.length);
     assert.equal(await busca().inputValue(), "");
-    assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("placeholder")), "Buscar tarefas");
   }
-  console.log("OK: busca sem resultado avisa na lista e no quadro, a limpeza restaura e devolve o foco à busca");
+  console.log("OK: busca sem resultado avisa na lista e no quadro, e a limpeza restaura as tarefas");
 
   const projetoUnico = seed.projetos.find((projeto) => seed.tarefas.filter((tarefa) => tarefa.projetoId === projeto.id).length === 1);
   const tarefaUnica = seed.tarefas.find((tarefa) => tarefa.projetoId === projetoUnico.id);
