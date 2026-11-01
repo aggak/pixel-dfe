@@ -67,7 +67,7 @@ async function executar() {
     assert.match(await page.locator(".e-sheet-footer").innerText(), /^1 tarefa$/);
 
     await busca.fill("sem correspondência");
-    await page.getByText("Nenhuma tarefa encontrada.").waitFor();
+    await page.getByText("Nenhuma tarefa encontrada").waitFor();
     assert.equal(await page.getByRole("article").count(), 0);
     assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
 
@@ -90,7 +90,7 @@ async function executar() {
     await busca.fill("LISTAR");
     assert.equal(await lista.getByRole("article").count(), 1);
     await busca.fill("json");
-    await page.getByText("Nenhuma tarefa encontrada.").waitFor();
+    await page.getByText("Nenhuma tarefa encontrada").waitFor();
     await busca.fill("");
     await lista.getByRole("link", { name: "Listar as tarefas na tela" }).waitFor();
     assert.equal(await lista.getByRole("article").count(), 1);

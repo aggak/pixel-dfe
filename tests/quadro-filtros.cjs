@@ -106,7 +106,7 @@ async function executar() {
     console.log("OK: lista e quadro leem o mesmo estado e mostram o mesmo conjunto");
 
     await busca.fill("sem correspondência");
-    await page.getByText("Nenhuma tarefa encontrada.").waitFor();
+    await page.getByText("Nenhuma tarefa encontrada").waitFor();
     assert.equal(await page.locator(".e-column").count(), 4);
     await page.getByRole("button", { name: "Limpar busca e filtros" }).click();
     await coluna("a-fazer").locator("[data-task-id]").first().waitFor();

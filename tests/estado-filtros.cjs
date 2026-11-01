@@ -95,7 +95,7 @@ async function executar() {
     console.log("OK: abrir e fechar a ficha mantém busca e filtros");
 
     await busca.fill("sem correspondência");
-    await page.getByText("Nenhuma tarefa encontrada.").waitFor();
+    await page.getByText("Nenhuma tarefa encontrada").waitFor();
     await page.getByRole("button", { name: "Limpar busca e filtros" }).click();
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
