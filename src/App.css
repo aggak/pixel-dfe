@@ -423,10 +423,11 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:650px){.e-view-switch a{padding:0 11px}.e-task-tools>button{min-height:44px}}
 /* Toque no celular: logo, busca e filtros com pelo menos 44 px de altura, como os demais controles. */
 @media(max-width:650px){.e-logo{display:inline-flex;align-items:center;min-height:44px}.e-task-search input{min-height:44px}.e-task-filter button{min-height:44px}
-  /* O título do cartão ganha área de toque sem mudar o desenho: o padding cresce e a margem negativa o compensa. */
-  .e-project-card h2 a{display:block;padding:11px 0;margin:-11px 0}
   .e-not-found>a{display:inline-flex;align-items:center;min-height:44px}
-  .e-read-project>a{display:inline-flex;align-items:center;min-height:44px;margin:-13px 0}}
+  /* Links em linha ganham área de toque invisível (::after), como o seletor de status: o desenho e o anel de foco ficam no texto. */
+  .e-project-card h2 a,.e-read-project>a{position:relative}
+  .e-project-card h2 a::after{content:"";position:absolute;inset:-11px 0}
+  .e-read-project>a::after{content:"";position:absolute;inset:-13px 0}}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
 /* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
 .e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
