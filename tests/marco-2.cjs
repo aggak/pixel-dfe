@@ -131,7 +131,7 @@ async function executar() {
   await conferir("resposta atrasada não substitui o projeto atual", async () => {
     await page.route(`${api}/projetos/1*`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
     await page.goto(`${origem}/projetos/1`);
-    await page.getByRole("status").waitFor();
+    await page.getByRole("status").filter({ hasText: /^Carregando projeto…$/ }).waitFor();
     await page.evaluate(() => { history.pushState({}, "", "/projetos/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await page.getByRole("heading", { name: "Modelagem da Biblioteca", exact: true }).waitFor();
     await page.waitForTimeout(600);
