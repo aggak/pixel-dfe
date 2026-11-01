@@ -1,0 +1,199 @@
+const assert = require("node:assert/strict");
+const { spawn } = require("node:child_process");
+const { copyFile, mkdtemp, readFile, rm } = require("node:fs/promises");
+const { createServer } = require("node:net");
+const { tmpdir } = require("node:os");
+const { join } = require("node:path");
+const { lancarNavegador, focoVisivel, contraste } = require("./ui.cjs");
+
+const raiz = join(__dirname, "..");
+const processos = [];
+let browser;
+let temporario;
+
+async function portaLivre() {
+  const servidor = createServer();
+  await new Promise((resolve) => servidor.listen(0, "127.0.0.1", resolve));
+  const porta = servidor.address().port;
+  await new Promise((resolve) => servidor.close(resolve));
+  return porta;
+}
+
+async function esperar(url) {
+  for (let tentativa = 0; tentativa < 100; tentativa++) {
+    if (processos.some((processo) => processo.exitCode !== null)) throw new Error("Servidor encerrou antes do teste.");
+    try { if ((await fetch(url)).ok) return; } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Servidor indisponível: ${url}`);
+}
+
+function iniciar(arquivo, argumentos, env = process.env) {
+  const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
+    cwd: raiz, env, windowsHide: true, stdio: "pipe",
+  });
+  processo.stdout.on("data", () => {});
+  processo.stderr.on("data", (dado) => process.stderr.write(dado));
+  processos.push(processo);
+}
+
+const paginas = ["/", "/quadro", "/projetos", "/projetos/1", "/rota-inexistente"];
+const fichas = ["/tarefas/1", "/tarefas/nova", "/tarefas/1/editar", "/projetos/novo", "/projetos/1/editar"];
+const larguras = [1280, 850, 800, 650, 375, 320];
+
+async function executar() {
+  const bancoOriginal = await readFile(join(raiz, "db.json"), "utf8");
+  const seedOriginal = await readFile(join(raiz, "db.seed.json"), "utf8");
+  temporario = await mkdtemp(join(tmpdir(), "pixel-a11y-"));
+  const banco = join(temporario, "db.json");
+  await copyFile(join(raiz, "db.seed.json"), banco);
+  const [portaApi, portaWeb] = [await portaLivre(), await portaLivre()];
+  const api = `http://127.0.0.1:${portaApi}`;
+  const web = `http://127.0.0.1:${portaWeb}`;
+  iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
+  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
+  await Promise.all([esperar(`${api}/tarefas`), esperar(web)]);
+
+  browser = await lancarNavegador();
+  const errosPagina = [];
+  // Conteúdo pronto: a consulta principal terminou, nenhum indicador de carregamento segue ativo
+  // e a ficha terminou de abrir (a animação de entrada a escala de 95% para 100%, o que distorce as medidas).
+  async function abrir(page, caminho) {
+    await page.goto(`${web}${caminho}`);
+    await page.locator("main h1, .e-form-overlay [role=dialog] h2, .e-form-overlay [role=dialog] form").first().waitFor();
+    await page.waitForFunction(() => !document.querySelector(".e-loading-state, .e-ficha-state[role=status]")
+      && document.getAnimations().every((animacao) => animacao.effect?.getTiming().iterations === Infinity || animacao.playState !== "running"));
+  }
+
+  for (const tema of ["light", "dark"]) {
+    const page = await browser.newPage({ colorScheme: tema, viewport: { width: 1280, height: 900 } });
+    page.setDefaultTimeout(10000);
+    page.on("pageerror", (erro) => errosPagina.push(erro.message));
+
+    // Telas pequenas: nada rola na horizontal e nenhum elemento sai da tela, salvo dentro de uma faixa rolável (abas de projetos).
+    for (const largura of larguras) {
+      await page.setViewportSize({ width: largura, height: 800 });
+      for (const caminho of [...paginas, ...fichas]) {
+        await abrir(page, caminho);
+        const problema = await page.evaluate(() => {
+          if (document.documentElement.scrollWidth > document.documentElement.clientWidth) return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
+          const rolavel = (el) => { for (let pai = el.parentElement; pai; pai = pai.parentElement) if (/(auto|scroll)/.test(getComputedStyle(pai).overflowX)) return true; return false; };
+          const fora = [...document.querySelectorAll("body *")].find((el) => {
+            const caixa = el.getBoundingClientRect();
+            return caixa.width > 0 && caixa.height > 0 && getComputedStyle(el).visibility !== "hidden" && (caixa.right > innerWidth + 1 || caixa.left < -1) && !rolavel(el);
+          });
+          return fora ? `${fora.tagName}.${fora.className} fora da tela` : null;
+        });
+        assert.equal(problema, null, `${tema} ${largura}px ${caminho}`);
+      }
+    }
+    console.log(`OK: ${tema}: ${paginas.length + fichas.length} rotas sem rolagem horizontal em ${larguras.join(", ")} px`);
+
+    // Teclado: cada parada do Tab tem foco visível e está na tela; nas páginas, o percurso sai do documento (sem armadilha).
+    for (const largura of [1280, 375]) {
+      await page.setViewportSize({ width: largura, height: 800 });
+      for (const caminho of [...paginas, ...fichas]) {
+        await abrir(page, caminho);
+        const ficha = fichas.includes(caminho);
+        if (!ficha) await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+        const paradas = [];
+        for (let tentativa = 0; tentativa < 80; tentativa++) {
+          await page.keyboard.press("Tab");
+          const foco = page.locator(":focus");
+          if ((await foco.count()) === 0) break;
+          const parada = await foco.evaluate((el) => {
+            const caixa = el.getBoundingClientRect();
+            return {
+              nome: `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || "").trim().slice(0, 40)}"`,
+              naTela: caixa.width > 0 && caixa.height > 0 && caixa.bottom > 0 && caixa.top < innerHeight && caixa.right > 0 && caixa.left < innerWidth,
+              naFicha: Boolean(el.closest(".e-form-overlay")),
+            };
+          });
+          if (paradas.some((anterior) => anterior.nome === parada.nome)) break;
+          paradas.push(parada);
+          assert.equal(await focoVisivel(foco), true, `${tema} ${largura}px ${caminho}: sem foco visível em ${parada.nome}`);
+          assert.equal(parada.naTela, true, `${tema} ${largura}px ${caminho}: ${parada.nome} fora da tela`);
+          if (ficha) assert.equal(parada.naFicha, true, `${tema} ${largura}px ${caminho}: o Tab saiu da ficha para ${parada.nome}`);
+        }
+        assert.ok(paradas.length >= (ficha ? 2 : 4), `${tema} ${largura}px ${caminho}: só ${paradas.length} paradas`);
+      }
+    }
+    console.log(`OK: ${tema}: foco visível e na tela em todas as paradas do Tab; a ficha prende o foco`);
+
+    // Achado do Lighthouse: o "opcional" da descrição ficava abaixo de 4,5:1 por causa da opacidade.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await abrir(page, "/tarefas/nova");
+    const [cor, fundo] = await page.locator(".e-description-toggle > span").evaluate((el) => {
+      let opacidade = 1;
+      for (let atual = el; atual; atual = atual.parentElement) opacidade *= Number(getComputedStyle(atual).opacity);
+      let fundo = "rgba(0, 0, 0, 0)";
+      for (let atual = el; atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo); atual = atual.parentElement) fundo = getComputedStyle(atual).backgroundColor;
+      const [r, g, b] = getComputedStyle(el).color.match(/[\d.]+/g).map(Number);
+      const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
+      const misturar = (c, f) => Math.round(c * opacidade + f * (1 - opacidade));
+      return [`rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`, fundo];
+    });
+    assert.ok(contraste(cor, fundo) >= 4.5, `${tema}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`);
+    console.log(`OK: ${tema}: "opcional" da descrição com contraste de pelo menos 4,5:1`);
+    await page.close();
+  }
+
+  // Alvos de toque no celular: controles fora de texto corrido têm ao menos 44 × 44 px (contando a área ampliada por ::after).
+  const page = await browser.newPage({ viewport: { width: 375, height: 800 }, hasTouch: true, isMobile: true });
+  page.setDefaultTimeout(10000);
+  page.on("pageerror", (erro) => errosPagina.push(erro.message));
+  for (const largura of [375, 320]) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    for (const caminho of [...paginas, ...fichas]) {
+      await abrir(page, caminho);
+      const pequenos = await page.evaluate(() => [...document.querySelectorAll('a[href], button, input:not([type=hidden]), textarea, [role="button"], [role="link"]')].filter((el) => {
+        const caixa = el.getBoundingClientRect();
+        if (!caixa.width || !caixa.height || getComputedStyle(el).visibility === "hidden") return false;
+        // Oculto visualmente (botões de dispensar do React Aria) ou dentro de texto corrido.
+        for (let atual = el; atual && atual !== document.body; atual = atual.parentElement) {
+          const estilo = getComputedStyle(atual);
+          if (estilo.clipPath.startsWith("inset(50%") || (estilo.clip !== "auto" && estilo.position === "absolute")) return false;
+        }
+        if (el.matches("a") && el.closest("p, dd, li:not([role])")) return false;
+        const area = ["::after", "::before"].map((pseudo) => getComputedStyle(el, pseudo)).filter((estilo) => estilo.content !== "none" && estilo.position === "absolute").map((estilo) => [parseFloat(estilo.width) || 0, parseFloat(estilo.height) || 0]);
+        const largura = Math.max(caixa.width, ...area.map(([l]) => l));
+        const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
+        return largura < 43.5 || altura < 43.5;
+      }).map((el) => { const caixa = el.getBoundingClientRect(); return `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(caixa.width)}×${Math.round(caixa.height)}`; }));
+      assert.deepEqual(pequenos, [], `${largura}px ${caminho}`);
+    }
+  }
+  console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px");
+
+  // Ficha pelo teclado: Enter no título abre os detalhes e Esc fecha, devolvendo o foco ao link de origem.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await abrir(page, "/");
+  const link = page.getByRole("link", { name: "Criar o repositório", exact: true });
+  await link.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForURL(`${web}/tarefas/1`);
+  await page.locator(".e-form-overlay").getByRole("heading", { name: "Criar o repositório" }).waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForURL(`${web}/`);
+  await page.waitForFunction(() => document.activeElement?.textContent === "Criar o repositório");
+  console.log("OK: Enter abre a ficha e Esc fecha devolvendo o foco ao link");
+
+  assert.deepEqual(errosPagina, []);
+  assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
+  assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
+  console.log("OK: sem erros JavaScript e bancos locais preservados");
+}
+
+executar()
+  .catch((erro) => { console.error(erro); process.exitCode = 1; })
+  .finally(async () => {
+    await browser?.close().catch(() => {});
+    for (const processo of processos) {
+      if (processo.exitCode === null && processo.signalCode === null) {
+        const encerrado = new Promise((resolve) => processo.once("exit", resolve));
+        processo.kill();
+        await encerrado;
+      }
+    }
+    if (temporario) await rm(temporario, { recursive: true, force: true });
+  });
