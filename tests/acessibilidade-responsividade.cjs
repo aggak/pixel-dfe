@@ -161,49 +161,71 @@ async function executar() {
   }
 
   // Alvos de toque no celular: controles fora de texto corrido têm ao menos 44 × 44 px (contando a área ampliada por ::after).
-  const page = await browser.newPage({ viewport: { width: 375, height: 800 }, hasTouch: true, isMobile: true });
-  page.setDefaultTimeout(10000);
-  page.on("pageerror", (erro) => errosPagina.push(erro.message));
-  for (const largura of [375, 320]) {
-    await page.setViewportSize({ width: largura, height: 800 });
-    for (const caminho of [...paginas, ...fichas]) {
-      await abrir(page, caminho);
-      const pequenos = await page.evaluate(() => [...document.querySelectorAll('a[href], button, input:not([type=hidden]), textarea, [role="button"], [role="link"]')].filter((el) => {
-        const caixa = el.getBoundingClientRect();
-        if (!caixa.width || !caixa.height || getComputedStyle(el).visibility === "hidden") return false;
-        // Oculto visualmente (botões de dispensar do React Aria) ou dentro de texto corrido.
-        for (let atual = el; atual && atual !== document.body; atual = atual.parentElement) {
-          const estilo = getComputedStyle(atual);
-          if (estilo.clipPath.startsWith("inset(50%") || (estilo.clip !== "auto" && estilo.position === "absolute")) return false;
-        }
-        if (el.matches("a") && el.closest("p, dd, li:not([role])")) return false;
-        const area = ["::after", "::before"].map((pseudo) => getComputedStyle(el, pseudo)).filter((estilo) => estilo.content !== "none" && estilo.position === "absolute").map((estilo) => [parseFloat(estilo.width) || 0, parseFloat(estilo.height) || 0]);
-        const largura = Math.max(caixa.width, ...area.map(([l]) => l));
-        const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
-        return largura < 43.5 || altura < 43.5;
-      }).map((el) => { const caixa = el.getBoundingClientRect(); return `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(caixa.width)}×${Math.round(caixa.height)}`; }));
-      assert.deepEqual(pequenos, [], `${largura}px ${caminho}`);
+  // Roda com a fonte da web e com ela bloqueada: sem a Commissioner o texto cai na fonte de reserva e encolhe,
+  // e a área de toque não pode depender disso.
+  const abrirCelular = async () => {
+    const aba = await browser.newPage({ viewport: { width: 375, height: 800 }, hasTouch: true, isMobile: true });
+    aba.setDefaultTimeout(10000);
+    aba.on("pageerror", (erro) => errosPagina.push(erro.message));
+    return aba;
+  };
+  const page = await abrirCelular();
+  const semFonte = await abrirCelular();
+  await semFonte.route(/fonts\.(googleapis|gstatic)\.com/, (rota) => rota.abort().catch(() => {}));
+  const prepararFonte = async (aba, fonte, caminho) => {
+    await abrir(aba, caminho);
+    const commissioner = await aba.evaluate(async () => {
+      await document.fonts.ready;
+      return [...document.fonts].some((face) => face.family.replace(/"/g, "") === "Commissioner" && face.status === "loaded");
+    });
+    if (fonte === "reserva") assert.equal(commissioner, false, `${caminho}: a Commissioner carregou mesmo bloqueada`);
+  };
+  for (const [fonte, aba] of [["web", page], ["reserva", semFonte]]) {
+    for (const largura of [375, 320]) {
+      await aba.setViewportSize({ width: largura, height: 800 });
+      for (const caminho of [...paginas, ...fichas]) {
+        await prepararFonte(aba, fonte, caminho);
+        const pequenos = await aba.evaluate(() => [...document.querySelectorAll('a[href], button, input:not([type=hidden]), textarea, [role="button"], [role="link"]')].flatMap((el) => {
+          const caixa = el.getBoundingClientRect();
+          if (!caixa.width || !caixa.height || getComputedStyle(el).visibility === "hidden") return [];
+          // Oculto visualmente (botões de dispensar do React Aria) ou dentro de texto corrido.
+          for (let atual = el; atual && atual !== document.body; atual = atual.parentElement) {
+            const estilo = getComputedStyle(atual);
+            if (estilo.clipPath.startsWith("inset(50%") || (estilo.clip !== "auto" && estilo.position === "absolute")) return [];
+          }
+          if (el.matches("a") && el.closest("p, dd, li:not([role])")) return [];
+          const area = ["::after", "::before"].map((pseudo) => getComputedStyle(el, pseudo)).filter((estilo) => estilo.content !== "none" && estilo.position === "absolute").map((estilo) => [parseFloat(estilo.width) || 0, parseFloat(estilo.height) || 0]);
+          const largura = Math.max(caixa.width, ...area.map(([l]) => l));
+          const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
+          // A mensagem mostra a área efetiva (com o pseudo-elemento), não só a caixa do texto.
+          return largura < 43.5 || altura < 43.5 ? [`${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(largura)}×${Math.round(altura)}`] : [];
+        }));
+        assert.deepEqual(pequenos, [], `fonte ${fonte}, ${largura}px ${caminho}`);
+      }
     }
   }
-  console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px");
+  console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte da web e com a de reserva");
 
   // A área de toque ampliada não pode levar o anel de foco para cima do texto vizinho.
-  await page.setViewportSize({ width: 375, height: 800 });
-  for (const [caminho, seletor, vizinhos] of [["/projetos", ".e-project-card h2 a", [".e-project-card > p"]], ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]]]) {
-    await abrir(page, caminho);
-    const sobreposto = await page.evaluate(([seletor, vizinhos]) => {
-      const link = document.querySelector(seletor);
-      link.focus({ focusVisible: true });
-      const estilo = getComputedStyle(link);
-      const margem = parseFloat(estilo.outlineOffset) + parseFloat(estilo.outlineWidth);
-      const caixa = link.getBoundingClientRect();
-      const anel = { top: caixa.top - margem, bottom: caixa.bottom + margem };
-      return vizinhos.map((vizinho) => [vizinho, link.closest("article, section").querySelector(vizinho).getBoundingClientRect()])
-        .filter(([, outro]) => anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5).map(([vizinho]) => vizinho);
-    }, [seletor, vizinhos]);
-    assert.deepEqual(sobreposto, [], `${caminho}: o anel de foco de ${seletor} cobre o texto vizinho`);
+  for (const [fonte, aba] of [["web", page], ["reserva", semFonte]]) {
+    await aba.setViewportSize({ width: 375, height: 800 });
+    for (const [caminho, seletor, vizinhos] of [["/projetos", ".e-project-card h2 a", [".e-project-card > p"]], ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]]]) {
+      await prepararFonte(aba, fonte, caminho);
+      const sobreposto = await aba.evaluate(([seletor, vizinhos]) => {
+        const link = document.querySelector(seletor);
+        link.focus({ focusVisible: true });
+        const estilo = getComputedStyle(link);
+        const margem = parseFloat(estilo.outlineOffset) + parseFloat(estilo.outlineWidth);
+        const caixa = link.getBoundingClientRect();
+        const anel = { top: caixa.top - margem, bottom: caixa.bottom + margem };
+        return vizinhos.map((vizinho) => [vizinho, link.closest("article, section").querySelector(vizinho).getBoundingClientRect()])
+          .filter(([, outro]) => anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5).map(([vizinho]) => vizinho);
+      }, [seletor, vizinhos]);
+      assert.deepEqual(sobreposto, [], `fonte ${fonte}, ${caminho}: o anel de foco de ${seletor} cobre o texto vizinho`);
+    }
   }
-  console.log("OK: o anel de foco dos links ampliados não cobre o texto vizinho");
+  await semFonte.close();
+  console.log("OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte da web e com a de reserva");
 
   // Ficha pelo teclado: Enter no título abre os detalhes e Esc fecha, devolvendo o foco ao link de origem.
   await page.setViewportSize({ width: 1280, height: 900 });
