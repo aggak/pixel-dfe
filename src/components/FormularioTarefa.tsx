@@ -37,6 +37,8 @@ interface FormularioTarefaProps {
   textoSalvar?: string;
   /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
   onEstadoEnvio?: (ocupada: boolean) => void;
+  /** Edição de tarefa existente: só então um 404 significa que ela foi excluída. O cadastro também recebe `valoresIniciais`. */
+  edicao?: boolean;
 }
 
 export function FormularioTarefa({
@@ -45,6 +47,7 @@ export function FormularioTarefa({
   onCancelar,
   textoSalvar = "Salvar tarefa",
   onEstadoEnvio,
+  edicao = false,
 }: FormularioTarefaProps) {
   const id = useId();
   const projetos = useConsulta(listarProjetos);
@@ -155,7 +158,7 @@ export function FormularioTarefa({
     try {
       await onSalvar(dados);
     } catch (erro) {
-      setErroEnvio(erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
+      setErroEnvio(edicao && erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviandoRef.current = false;
       setEnviando(false);

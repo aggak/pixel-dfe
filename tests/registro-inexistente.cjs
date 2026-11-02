@@ -136,6 +136,37 @@ async function executar() {
   assert.equal(await nome.inputValue(), "Nome digitado depois da exclusão");
   console.log("OK: salvar projeto excluído avisa que ele não existe mais e mantém o texto");
 
+  // 404 ao criar (POST) não fala de registro excluído: nada existia antes, então vale o aviso padrão de falha.
+  const recusarCriacao = (rota) => (rota.request().method() === "POST" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue()).catch(() => {});
+  await page.route(`${api}/tarefas`, recusarCriacao);
+  // Com ?projetoId a ficha recebe valores iniciais, mas continua sendo um cadastro.
+  await page.goto(`${web}/tarefas/nova?projetoId=1`);
+  const tituloNovo = ficha().getByLabel(/^Título/);
+  await tituloNovo.waitFor();
+  await tituloNovo.fill("Tarefa recusada pela API");
+  await ficha().getByLabel(/^Responsável/).fill("Ana");
+  await ficha().getByLabel(/^Prazo/).fill("2026-12-01");
+  await ficha().getByRole("button", { name: /^Salvar/ }).click();
+  await alerta("Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente.").waitFor();
+  assert.equal(await alerta("não existe mais").count(), 0);
+  assert.equal(await tituloNovo.inputValue(), "Tarefa recusada pela API");
+  await page.unroute(`${api}/tarefas`, recusarCriacao);
+  console.log("OK: 404 ao criar tarefa mostra a falha padrão e mantém o texto");
+
+  await page.route(`${api}/projetos`, recusarCriacao);
+  await page.goto(`${web}/projetos/novo`);
+  const nomeNovo = ficha().getByLabel(/^Nome/);
+  await nomeNovo.waitFor();
+  await nomeNovo.fill("Projeto recusado pela API");
+  await ficha().getByLabel(/^Disciplina/).fill("DFE");
+  await ficha().getByLabel(/^Criado em/).fill("2026-10-01");
+  await ficha().getByRole("button", { name: /^Salvar/ }).click();
+  await alerta("Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente.").waitFor();
+  assert.equal(await alerta("não existe mais").count(), 0);
+  assert.equal(await nomeNovo.inputValue(), "Projeto recusado pela API");
+  await page.unroute(`${api}/projetos`, recusarCriacao);
+  console.log("OK: 404 ao criar projeto mostra a falha padrão e mantém o texto");
+
   const orfa = await criarNaApi("tarefas", { projetoId: "999", titulo: "Tarefa sem projeto", descricao: "", status: "a-fazer", prioridade: "baixa", responsavel: "Bia", prazo: "2026-12-01" });
   await page.goto(`${web}/tarefas/${orfa.id}`);
   await ficha().getByRole("heading", { name: "Tarefa sem projeto" }).waitFor();

@@ -42,6 +42,7 @@ export function EditarProjeto() {
         <FormularioProjeto
           key={id}
           valoresIniciais={projeto}
+          edicao
           onSalvar={salvar}
           onCancelar={fechar}
           onEstadoEnvio={setOcupada}

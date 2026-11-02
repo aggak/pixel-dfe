@@ -21,6 +21,8 @@ interface FormularioProjetoProps {
   textoSalvar?: string;
   /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
   onEstadoEnvio?: (ocupada: boolean) => void;
+  /** Edição de projeto existente: só então um 404 significa que ele foi excluído. */
+  edicao?: boolean;
 }
 
 export function FormularioProjeto({
@@ -29,6 +31,7 @@ export function FormularioProjeto({
   onCancelar,
   textoSalvar = "Salvar projeto",
   onEstadoEnvio,
+  edicao = false,
 }: FormularioProjetoProps) {
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
@@ -104,7 +107,7 @@ export function FormularioProjeto({
     try {
       await onSalvar(dados);
     } catch (erro) {
-      setErroEnvio(erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
+      setErroEnvio(edicao && erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
