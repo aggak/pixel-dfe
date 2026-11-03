@@ -42,6 +42,7 @@ export function EditarTarefa() {
         <FormularioTarefa
           key={id}
           valoresIniciais={tarefa}
+          edicao
           onSalvar={salvar}
           onCancelar={fechar}
           onEstadoEnvio={setOcupada}

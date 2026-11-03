@@ -5,6 +5,7 @@ import { Badge, BadgeWithDot } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { ErroApi } from "../api";
 import { STATUS } from "../derivar";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, FolderIcon, TrashIcon } from "../design/icon";
@@ -14,7 +15,8 @@ import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
 // Com `onMudarStatus`, o selo de status vira um seletor; sem ele (página do projeto), segue só informativo.
 export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarStatus, onExcluir }: { tarefa: Tarefa; nomeProjeto?: string; variante?: "lista" | "quadro"; onMudarStatus?: (tarefa: Tarefa, status: Status) => Promise<void>; onExcluir: (tarefa: Tarefa) => Promise<void> }) {
   const [salvando, setSalvando] = useState(false);
-  const [falhou, setFalhou] = useState(false);
+  // "inexistente": a tarefa foi excluída em outro lugar e tentar de novo não adianta.
+  const [falhou, setFalhou] = useState<false | "falha" | "inexistente">(false);
   const [confirmando, setConfirmando] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
   const [falhaExclusao, setFalhaExclusao] = useState(false);
@@ -37,8 +39,8 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     setFalhou(false);
     try {
       await onMudarStatus(tarefa, status);
-    } catch {
-      setFalhou(true);
+    } catch (erro) {
+      setFalhou(erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviando.current = false;
       setSalvando(false);
@@ -72,7 +74,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     <div className="e-task-main"><div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" label="Excluir tarefa" icon={TrashIcon} onAction={() => { setFalhaExclusao(false); setConfirmando(true); }} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
     </div>{nomeProjeto && <span className="e-task-project"><FolderIcon />{nomeProjeto}</span>}<div className="e-task-meta"><span><Icon name="user" />{tarefa.responsavel}</span><span><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo)}</time></span></div>
-      {falhou && <p className="e-task-error" role="alert">Não foi possível mudar o status. Tente de novo.</p>}</div>
+      {falhou && <p className="e-task-error" role="alert">{falhou === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída." : "Não foi possível mudar o status. Tente de novo."}</p>}</div>
     <div className="e-task-tags">{emQuadro ? [tagPrioridade, seletorStatus] : [seletorStatus, tagPrioridade]}</div>
     <ModalOverlay isOpen={confirmando} onOpenChange={(aberta) => { if (!aberta && !excluindo) setConfirmando(false); }} isDismissable={!excluindo} isKeyboardDismissDisabled={excluindo} className="e-confirm-overlay">
       <Modal className="e-confirm-modal"><Dialog className="e-confirm-dialog" aria-label={`Excluir ${tarefa.titulo}`}>

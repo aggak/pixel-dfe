@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/base/buttons/button";
-import { buscarProjeto, excluirTarefa, listarProjetos, listarTarefasDoProjeto, ErroApi } from "../api";
+import { buscarProjeto, excluirTarefaSeExistir, listarProjetos, listarTarefasDoProjeto, ErroApi } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { AbasProjetos, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
@@ -27,7 +27,7 @@ export function DetalheProjeto() {
   };
   const tarefas = dados?.tarefas.filter((tarefa) => !excluidas.includes(tarefa.id)) ?? [];
   const excluir = async (tarefa: Tarefa) => {
-    await excluirTarefa(tarefa.id);
+    await excluirTarefaSeExistir(tarefa.id);
     setExcluidas((atuais) => [...atuais, tarefa.id]);
   };
   const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;

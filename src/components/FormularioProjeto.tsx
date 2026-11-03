@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { TextArea } from "@/components/base/textarea/textarea";
+import { ErroApi } from "../api";
 import { Icon } from "../design/icon";
 import type { Projeto } from "../tipos";
 import "./FormularioTarefa.css";
@@ -20,6 +21,8 @@ interface FormularioProjetoProps {
   textoSalvar?: string;
   /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
   onEstadoEnvio?: (ocupada: boolean) => void;
+  /** Edição de projeto existente: só então um 404 significa que ele foi excluído. */
+  edicao?: boolean;
 }
 
 export function FormularioProjeto({
@@ -28,6 +31,7 @@ export function FormularioProjeto({
   onCancelar,
   textoSalvar = "Salvar projeto",
   onEstadoEnvio,
+  edicao = false,
 }: FormularioProjetoProps) {
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
@@ -35,7 +39,8 @@ export function FormularioProjeto({
   const [criadoEm, setCriadoEm] = useState(valoresIniciais?.criadoEm ?? "");
 
   const [enviando, setEnviando] = useState(false);
-  const [erroEnvio, setErroEnvio] = useState(false);
+  // "inexistente": o projeto foi excluído enquanto a ficha estava aberta; tentar de novo não adianta.
+  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
 
@@ -101,8 +106,8 @@ export function FormularioProjeto({
     notificarEnvio(true);
     try {
       await onSalvar(dados);
-    } catch {
-      setErroEnvio(true);
+    } catch (erro) {
+      setErroEnvio(edicao && erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -171,7 +176,7 @@ export function FormularioProjeto({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente.
+          {erroEnvio === "inexistente" ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos." : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente."}
         </div>
       )}
 
