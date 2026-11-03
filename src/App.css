@@ -130,7 +130,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-description{padding:9px 18px 0}
 .e-description-toggle{border:0;background:transparent;display:flex;align-items:center;gap:7px;color:var(--e-muted);font-size:12px;padding:8px 0;min-height:35px}
 .e-description-toggle i{font-size:17px}
-.e-description-toggle span{font-size:10px;opacity:.8;margin-left:3px}
+.e-description-toggle span{font-size:10px;margin-left:3px}
 .e-description #task-description{padding:4px 0 6px}
 .e-description textarea{font-size:13px!important;line-height:1.5!important}
 .e-form-footer{padding:16px 18px 18px;display:flex;align-items:center;justify-content:flex-end;gap:9px}
@@ -419,8 +419,15 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-tools>button{margin-left:auto}
 /* Faixa estreita demais para uma linha: a busca fica sozinha e filtros, visão e botão dividem a segunda. */
 @media(min-width:651px) and (max-width:940px){.e-task-tools .e-task-search{flex-basis:100%}.e-task-tools>.e-task-filters{flex:1 1 0;min-width:230px}.e-task-tools .e-task-filter{flex:1 1 0;width:auto;min-width:110px}}
-@media(max-width:650px),(pointer:coarse){.e-view-switch a{min-height:38px}}
+@media(max-width:650px),(pointer:coarse){.e-view-switch a{min-height:44px}}
 @media(max-width:650px){.e-view-switch a{padding:0 11px}.e-task-tools>button{min-height:44px}}
+/* Toque no celular: logo, busca e filtros com pelo menos 44 px de altura, como os demais controles. */
+@media(max-width:650px){.e-logo{display:inline-flex;align-items:center;min-height:44px}.e-task-search input{min-height:44px}.e-task-filter button{min-height:44px}
+  .e-not-found>a{display:inline-flex;align-items:center;min-height:44px}
+  /* Links em linha ganham área de toque invisível (::after) de 44 px centrada, como o seletor de status: não depende da altura
+     do texto, que muda quando a Commissioner não carrega. O desenho e o anel de foco ficam no texto. */
+  .e-project-card h2 a,.e-read-project>a{position:relative}
+  .e-project-card h2 a::after,.e-read-project>a::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
 /* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
 .e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
