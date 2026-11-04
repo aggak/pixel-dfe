@@ -66,5 +66,5 @@ node tests/registro-inexistente.cjs
 
 ## Commits e limites
 
-- Commits: `31828eb` (Mantém o foco na confirmação quando a exclusão falha (#47)), `50ea8f5` (Testa falhas ao salvar e excluir com a API parada (#47)) — PR: `pendente`.
+- Commits: `31828eb` (Mantém o foco na confirmação quando a exclusão falha (#47)), `50ea8f5` (Testa falhas ao salvar e excluir com a API parada (#47)) — [PR #88](https://github.com/aggak/pixel-dfe/pull/88) integrado à `main`.
 - Limites: a suíte derruba a API entre o preenchimento e o envio. Ela não cobre a queda no meio de uma resposta já iniciada nem a lentidão sem queda.

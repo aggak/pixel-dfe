@@ -113,7 +113,7 @@ node tests/auditoria-lighthouse.mjs $env:TEMP\pixel-lighthouse
 
 ## Commits e limites
 
-- Commits: `8046e68` (Corrige contraste e amplia alvos de toque no celular (#48)), `83196d6` (Testa teclado, foco visível e telas pequenas (#48)), `1dffb7f` (Adiciona a auditoria do Lighthouse sobre o build de produção (#48)), `9a7779c` (Fortalece as verificações de teclado e de transbordo (#48)), `92c515a` (Amplia o toque dos links em linha sem deslocar o anel de foco (#48)), `a31a9cb` (Fixa em 44 px a área de toque dos links em linha, com qualquer fonte (#48)) — PR: `pendente`.
+- Commits: `8046e68` (Corrige contraste e amplia alvos de toque no celular (#48)), `83196d6` (Testa teclado, foco visível e telas pequenas (#48)), `1dffb7f` (Adiciona a auditoria do Lighthouse sobre o build de produção (#48)), `9a7779c` (Fortalece as verificações de teclado e de transbordo (#48)), `92c515a` (Amplia o toque dos links em linha sem deslocar o anel de foco (#48)), `a31a9cb` (Fixa em 44 px a área de toque dos links em linha, com qualquer fonte (#48)) — [PR #90](https://github.com/aggak/pixel-dfe/pull/90) integrado à `main`.
 - Ordem dos commits: o commit da correção `8046e68` veio antes do commit da suíte `83196d6`, mas a suíte foi escrita e vista falhando antes da correção.
 - Limites: o Lighthouse avalia cada tela no estado inicial, sem menus abertos nem avisos de erro. Esses estados são cobertos pelas suítes de navegador, não pela nota. Não testei com leitor de tela real. A auditoria depende de rede para as fontes externas e, na primeira execução, para baixar o Lighthouse pelo `npx`.
-- Observação: a issue #48 aparece como fechada no GitHub. Mantive a entrega apenas na branch local, sem alterar o estado da issue.
+- Observação: a issue #48 está fechada no GitHub e a entrega foi integrada à `main` pelo PR #90.
