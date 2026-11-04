@@ -72,5 +72,5 @@ node tests/api-escrita.mjs
 
 ## Commits e limites
 
-- Commits: `4cf451c` (Trata registros excluídos durante o uso (#46)), `4213408` (Testa tarefa e projeto inexistentes (#46)), `508450f` (Restringe o aviso de registro inexistente à edição (#46)) — PR: `pendente`.
+- Commits: `4cf451c` (Trata registros excluídos durante o uso (#46)), `4213408` (Testa tarefa e projeto inexistentes (#46)), `508450f` (Restringe o aviso de registro inexistente à edição (#46)) — [PR #89](https://github.com/aggak/pixel-dfe/pull/89) integrado à `main`.
 - Limites: os cenários de exclusão concorrente apagam o registro direto na API do banco temporário para simular outra aba. Eles não cobrem um registro que some durante uma resposta ainda pendente.
