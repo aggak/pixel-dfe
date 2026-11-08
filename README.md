@@ -2,6 +2,8 @@
 
 Organize projetos e tarefas em um só lugar. Crie, edite e acompanhe status, prioridades, responsáveis e prazos.
 
+**Acesse a aplicação publicada: [pixel-dfe-project.up.railway.app](https://pixel-dfe-project.up.railway.app)** — os dados vêm da API hospedada em [pixel-dfe-production.up.railway.app](https://pixel-dfe-production.up.railway.app/tarefas).
+
 ![Quadro kanban da Pixel no tema escuro, com colunas A fazer, Em andamento, Em revisão e Concluída e cartões com projeto, responsável, prazo, status e prioridade](docs/images/pixel-quadro.png)
 
 <details>
