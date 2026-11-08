@@ -447,3 +447,28 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
 @media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
+.e-top nav :is(button,a):not([aria-current]):hover{color:var(--e-ink);border-bottom-color:var(--e-line)}
+.e-tabs :is(button,a):not([aria-current],.e-inline-error *):hover{color:var(--e-ink)}
+.e-status-trigger[aria-expanded=true]>.e-uicon{transform:rotate(180deg)}
+:is(.e-card,.e-project-card){--e-elevacao:0 8px 20px -10px #49334b40;--e-borda-realce:color-mix(in srgb,var(--e-control) 45%,var(--e-line))}
+.dark :is(.e-card,.e-project-card){--e-elevacao:0 8px 22px -10px rgb(0 0 0 / 70%)}
+:is(.e-card,.e-project-card):is(:has(:focus-visible),:has([aria-expanded=true])){border-color:var(--e-borda-realce);box-shadow:var(--e-elevacao)}
+.e-card-high:is(:has(:focus-visible),:has([aria-expanded=true])){box-shadow:inset 3px 0 0 var(--e-error),var(--e-elevacao)}
+@media(hover:hover){
+:is(.e-card,.e-project-card):hover{border-color:var(--e-borda-realce);box-shadow:var(--e-elevacao)}
+.e-card-high:hover{box-shadow:inset 3px 0 0 var(--e-error),var(--e-elevacao)}
+}
+@media(prefers-reduced-motion:no-preference){
+.e-top nav :is(button,a),.e-tabs :is(button,a),.e-view-switch a,.e-details-trigger,.e-footer a{transition:color .15s ease,border-color .15s ease,background-color .15s ease}
+.e-card{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.e-project-card{transition:border-color .2s ease,box-shadow .2s ease}
+.e-task-title{text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s ease}
+.e-task-title:hover{text-decoration-color:currentColor}
+.e-status{transition:background-color .2s ease,color .2s ease,filter .12s ease}
+.e-status-trigger>.e-uicon{transition:transform .18s ease,color .15s ease}
+.e-empty,.e-load-error,.e-details-content,.e-description-body,.e-ficha-content{animation:e-surgir .2s ease-out}
+.e-task-error,.e-form-error,.e-confirm-error,.formulario-tarefa__aviso--erro{animation:e-surgir .18s ease-out}
+.e-card:is(:has(:focus-visible),:has([aria-expanded=true])){transform:translateY(-2px)}
+@media(hover:hover){.e-card:hover{transform:translateY(-2px)}}
+}
+@keyframes e-surgir{from{opacity:0;transform:translateY(4px)}}
