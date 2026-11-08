@@ -64,17 +64,6 @@ Para verificar o TypeScript e gerar os arquivos de produção em `dist/`:
 npm run build
 ```
 
-### Endereço da API
-
-A aplicação lê o endereço da API na variável `VITE_API_URL`:
-
-| Arquivo | Usado por | Endereço |
-| --- | --- | --- |
-| `.env.development` | `npm run dev` | `http://localhost:3000` |
-| `.env.production` | `npm run build` e `npm run preview` | [API publicada](https://pixel-dfe-production.up.railway.app/tarefas) |
-
-O valor é incluído nos arquivos durante o build; depois de alterá-lo, gere o build novamente.
-
 **Framework:** React com TypeScript.
 
 ## Equipe
