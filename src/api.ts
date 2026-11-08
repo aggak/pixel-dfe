@@ -1,6 +1,6 @@
 import type { NovaTarefa, Projeto, Tarefa } from "./tipos";
 
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/$/, "");
+const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3000" : "")).replace(/\/$/, "");
 
 export class ErroApi extends Error {
   readonly status: number;
