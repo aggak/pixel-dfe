@@ -7,6 +7,7 @@ import { FormularioProjeto } from "../components/FormularioProjeto";
 import type { DadosProjeto } from "../components/FormularioProjeto";
 import { useConsulta } from "../hooks/useConsulta";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
+import { GatinhoAbanando } from "../components/GatinhoAbanando";
 
 export function EditarProjeto() {
   const { id = "" } = useParams();
@@ -32,7 +33,7 @@ export function EditarProjeto() {
 
   return (
     <>
-      {carregando && <p className="e-ficha-state" role="status">Carregando projeto...</p>}
+      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando projeto...</p></>}
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
