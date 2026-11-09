@@ -21,6 +21,33 @@ async function ler<T>(caminho: string, signal?: AbortSignal): Promise<T> {
   return (await resposta.json()) as T;
 }
 
+const TEMPO_MINIMO_GATO_MS = 1000;
+
+function esperarTempoMinimo(signal?: AbortSignal): Promise<void> {
+  const semAnimacao = !("matchMedia" in globalThis) || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (signal?.aborted || semAnimacao) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const terminar = () => {
+      clearTimeout(temporizador);
+      signal?.removeEventListener("abort", terminar);
+      resolve();
+    };
+    const temporizador = setTimeout(terminar, TEMPO_MINIMO_GATO_MS);
+    signal?.addEventListener("abort", terminar);
+  });
+}
+
+async function lerComGato<T>(caminho: string, signal?: AbortSignal): Promise<T> {
+  const espera = esperarTempoMinimo(signal);
+
+  try {
+    return await ler<T>(caminho, signal);
+  } finally {
+    await espera;
+  }
+}
+
 async function escrever<T>(
   metodo: "POST" | "PATCH",
   caminho: string,
@@ -42,26 +69,30 @@ async function escrever<T>(
 }
 
 export function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
-  return ler<Tarefa[]>("/tarefas", signal);
+  return lerComGato<Tarefa[]>("/tarefas", signal);
 }
 
 export function listarProjetos(signal?: AbortSignal): Promise<Projeto[]> {
   return ler<Projeto[]>("/projetos", signal);
 }
 
+export function listarProjetosComGato(signal?: AbortSignal): Promise<Projeto[]> {
+  return lerComGato<Projeto[]>("/projetos", signal);
+}
+
 export function buscarTarefa(id: string, signal?: AbortSignal): Promise<Tarefa> {
-  return ler<Tarefa>(`/tarefas/${encodeURIComponent(id)}`, signal);
+  return lerComGato<Tarefa>(`/tarefas/${encodeURIComponent(id)}`, signal);
 }
 
 export function buscarProjeto(id: string, signal?: AbortSignal): Promise<Projeto> {
-  return ler<Projeto>(`/projetos/${encodeURIComponent(id)}`, signal);
+  return lerComGato<Projeto>(`/projetos/${encodeURIComponent(id)}`, signal);
 }
 
 export async function listarTarefasDoProjeto(
   id: string,
   signal?: AbortSignal,
 ): Promise<Tarefa[]> {
-  const projeto = await ler<Projeto & { tarefas: Tarefa[] }>(
+  const projeto = await lerComGato<Projeto & { tarefas: Tarefa[] }>(
     `/projetos/${encodeURIComponent(id)}?_embed=tarefas`,
     signal,
   );

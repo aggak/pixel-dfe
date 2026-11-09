@@ -1,12 +1,12 @@
 import { useLocation, useNavigate, Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
-import { listarProjetos } from "../api";
+import { listarProjetosComGato } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
 import { Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { FolderIcon, PlusIcon } from "../design/icon";
 
 export function ListaProjetos() {
-  const { dados: projetos, erro, carregando, tentando, tentarDeNovo } = useConsulta(listarProjetos);
+  const { dados: projetos, erro, carregando, tentando, tentarDeNovo } = useConsulta(listarProjetosComGato);
   const location = useLocation();
   const navigate = useNavigate();
   return <main className="e-projects"><header className="e-page-heading"><div><h1 tabIndex={-1}>Projetos</h1><p>Um lugar para cada frente de trabalho.</p></div><Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-project" onClick={() => navigate("/projetos/novo", { state: { fundo: location } })}>Novo projeto</Button></header>
