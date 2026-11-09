@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button as AriaButton, Heading } from "react-aria-components";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Badge, BadgeWithDot } from "@/components/base/badges/badges";
+import { Badge, BadgeWithDot, BadgeWithIcon } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { ErroApi } from "../api";
 import { STATUS } from "../derivar";
 import type { Status, Tarefa } from "../tipos";
-import { Icon, EditIcon, FolderIcon, TrashIcon } from "../design/icon";
+import { Icon, EditIcon, FolderIcon, TrashIcon, PawIcon } from "../design/icon";
 import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
@@ -31,7 +31,8 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const emQuadro = variante === "quadro";
   const concluida = tarefa.status === "concluida";
   const classe = emQuadro ? `e-task e-card${!concluida && tarefa.prioridade === "alta" ? " e-card-high" : ""}${concluida ? " e-card-done" : ""}` : "e-task e-row";
-  const tagStatus = <BadgeWithDot key="status" type="pill-color" size="sm" color={concluida ? "success" : tarefa.status === "a-fazer" ? "gray" : "brand"} className={`e-status e-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</BadgeWithDot>;
+  const SeloStatus = concluida ? BadgeWithIcon : BadgeWithDot;
+  const tagStatus = <SeloStatus key="status" type="pill-color" size="sm" iconLeading={PawIcon} color={concluida ? "success" : tarefa.status === "a-fazer" ? "gray" : "brand"} className={`e-status e-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</SeloStatus>;
   const mudar = async (status: Status) => {
     if (!onMudarStatus || status === tarefa.status || enviando.current) return;
     enviando.current = true;
