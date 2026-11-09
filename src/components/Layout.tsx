@@ -4,6 +4,10 @@ import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto } from "../tipos";
+import { GatinhoDormindo } from "./GatinhoDormindo";
+import { GatinhoOlhando } from "./GatinhoOlhando";
+import { GatinhoCostas } from "./GatinhoCostas";
+import { GatinhoCarregando } from "./GatinhoCarregando";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -37,10 +41,10 @@ export function AlternarVisao() {
   })}</nav>;
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
-  return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status"><span className="e-loading-dot" aria-hidden="true" />{children}</div>;
+  return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status">{compacto ? <span className="e-loading-dot" aria-hidden="true" /> : <GatinhoCarregando />}{children}</div>;
 }
 export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
-  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><Icon name="cloud-disabled" /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : "O servidor não respondeu. Confira se a API está em execução."}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : "O servidor não respondeu. Confira se a API está em execução."}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
   return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
@@ -48,5 +52,5 @@ export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { tex
 export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <div className="e-empty"><div className="e-project-icon"><Icon name={icone} /></div><h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
+  return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
 }
