@@ -461,7 +461,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 }
 @media(prefers-reduced-motion:no-preference){
 .e-top nav :is(button,a),.e-tabs :is(button,a),.e-view-switch a,.e-details-trigger,.e-footer a{transition:color .15s ease,border-color .15s ease,background-color .15s ease}
-.e-card{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.e-card{transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease,opacity .2s ease}
 .e-project-card{transition:border-color .2s ease,box-shadow .2s ease}
 .e-task-title{text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s ease}
 .e-task-title:hover{text-decoration-color:currentColor}
@@ -516,4 +516,3 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card[data-arrastando]{opacity:.45}
 .e-column[data-alvo-soltar]{outline:2px dashed var(--e-control);outline-offset:6px;border-radius:12px}
 @media(hover:hover){.e-card[draggable=true]{cursor:grab}}
-@media(prefers-reduced-motion:no-preference){.e-card{transition-property:border-color,box-shadow,transform,opacity}}

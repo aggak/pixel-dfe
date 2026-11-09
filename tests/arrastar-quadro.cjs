@@ -56,9 +56,7 @@ async function executar() {
   const cartao = (id) => page.locator(`[data-task-id="${id}"]`);
   const anuncio = page.locator("main p[role=status]");
   const lerTarefa = async (id) => (await fetch(`${api}/tarefas/${id}`)).json();
-  // O React Aria toma um toque exatamente no centro do elemento por leitor de tela (heurística do TalkBack) e cancela o arrasto nativo.
-  // O Playwright aponta para o centro por padrão; uma pessoa nunca acerta o ponto exato, então o teste parte de um canto.
-  const arrastar = (origem, destino) => origem.dragTo(destino, { sourcePosition: { x: 8, y: 8 } });
+  const arrastar = (origem, destino) => origem.dragTo(destino);
   const segurarPatch = async (id) => {
     let decidir;
     const decisao = new Promise((resolve) => { decidir = resolve; });
@@ -92,11 +90,18 @@ async function executar() {
   assert.equal(await anuncio.innerText(), "Status de Listar as tarefas na tela alterado para Em andamento.");
   console.log("OK: soltar em outra coluna grava só o status e move o cartão uma única vez");
 
-  // 2. Soltar na própria coluna não chama a API.
-  const semPatch = page.waitForRequest((r) => r.method() === "PATCH", { timeout: 1500 }).then(() => "houve PATCH", () => "nenhum PATCH");
-  await arrastar(cartao("4"), coluna("em-andamento"));
+  // 2. Soltar na própria coluna não realça nem chama a API.
+  let semPatch = page.waitForRequest((r) => r.method() === "PATCH", { timeout: 1500 }).then(() => "houve PATCH", () => "nenhum PATCH");
+  const deOrigem = await cartao("4").boundingBox();
+  const naColuna = await coluna("em-andamento").boundingBox();
+  await page.mouse.move(deOrigem.x + 20, deOrigem.y + deOrigem.height - 10);
+  await page.mouse.down();
+  await page.mouse.move(naColuna.x + naColuna.width / 2, naColuna.y + 60, { steps: 10 });
+  assert.notEqual(await cartao("4").getAttribute("data-arrastando"), null, "o arrasto aconteceu");
+  assert.equal(await coluna("em-andamento").getAttribute("data-alvo-soltar"), null);
+  await page.mouse.up();
   assert.equal(await semPatch, "nenhum PATCH");
-  console.log("OK: soltar na própria coluna não chama a API");
+  console.log("OK: soltar na própria coluna não realça nem chama a API");
 
   // 3. Arrastar pelo título não navega nem abre a ficha.
   await arrastar(cartao("5").locator(".e-task-title"), coluna("em-revisao"));
@@ -148,10 +153,28 @@ async function executar() {
   assert.equal(await cartao("5").getAttribute("draggable"), "true");
   console.log("OK: envio pendente trava o arrasto do cartão");
 
+  // 8. Ativar o título (teclado ou leitor de tela) abre a ficha, sem começar um arrasto.
+  await page.goto(`${web}/quadro`);
+  await quadro.locator("[data-task-id]").first().waitFor();
+  const titulo = cartao("4").locator(".e-task-title");
+  const novaPagina = page.context().waitForEvent("page");
+  await titulo.focus();
+  await page.keyboard.press("Control+Enter");
+  await (await novaPagina).close();
+  assert.doesNotMatch(await page.locator("[data-live-announcer]").innerText().catch(() => ""), /arrastar/i);
+  await titulo.evaluate((el) => el.click());
+  const ficha = page.getByRole("dialog");
+  await ficha.waitFor();
+  assert.equal(await ficha.evaluate((el) => el.contains(document.activeElement)), true);
+  assert.equal(await ficha.evaluate((el) => el.closest("[inert]") === null), true);
+  assert.equal(await page.locator("[data-live-announcer]").evaluate((el) => /arrastar/i.test(el.textContent)).catch(() => false), false);
+  assert.equal(await cartao("4").getAttribute("aria-describedby"), null);
+  console.log("OK: ativar o título abre a ficha sem começar um arrasto");
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("7 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("8 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

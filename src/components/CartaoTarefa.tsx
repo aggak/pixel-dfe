@@ -10,7 +10,7 @@ import { STATUS } from "../derivar";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, FolderIcon, TrashIcon, PawIcon } from "../design/icon";
 import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
-import { MOVER_TAREFA, TIPO_TAREFA } from "./arrastar-tarefa";
+import { MOVER_TAREFA, TIPO_TAREFA, tipoStatusOrigem } from "./arrastar-tarefa";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
 // Com `onMudarStatus`, o selo de status vira um seletor; sem ele (página do projeto), segue só informativo.
@@ -74,7 +74,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     window.addEventListener(MOVER_TAREFA, mover);
     return () => window.removeEventListener(MOVER_TAREFA, mover);
   }, [tarefa.id]);
-  const { dragProps, isDragging } = useDrag({ getItems: () => [{ [TIPO_TAREFA]: tarefa.id, "text/plain": tarefa.titulo }], isDisabled: !emQuadro || !onMudarStatus || salvando });
+  const { dragProps, isDragging } = useDrag({ hasDragButton: true, getItems: () => [{ [TIPO_TAREFA]: tarefa.id, [tipoStatusOrigem(tarefa.status)]: tarefa.status, "text/plain": tarefa.titulo }], isDisabled: !emQuadro || !onMudarStatus || salvando });
   // Se o foco se perdeu durante o envio (o menu fecha e o devolve ao botão pendente), a falha o traz de volta, sem tirá-lo de outro controle.
   useEffect(() => {
     if (falhou && (!document.activeElement || document.activeElement === document.body)) gatilho.current?.focus();
