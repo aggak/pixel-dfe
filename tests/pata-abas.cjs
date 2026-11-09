@@ -170,10 +170,80 @@ async function executar() {
   assert.equal(cores.corpo, "rgb(187, 145, 202)");
   assert.notEqual(cores.corpo, cores.aba);
 
+  // 11. Em 1280 px com só os 2 projetos do seed: nenhuma seta.
+  const setaDireita = (p) => p.getByRole("button", { name: "Mostrar projetos à direita" });
+  const setaEsquerda = (p) => p.getByRole("button", { name: "Mostrar projetos à esquerda" });
+  await page.goto(`${web}/`); await page.locator("main h1").waitFor(); await aba("Modelagem da Biblioteca").waitFor();
+  assert.equal(await setaDireita(page).count(), 0);
+  assert.equal(await setaEsquerda(page).count(), 0);
+
+  // Barra estreita com muitos projetos (criados pela API, no banco temporário).
+  for (let i = 1; i <= 8; i++) {
+    const r = await fetch(`${api}/projetos`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nome: `Projeto extra ${i}` }) });
+    assert.ok(r.ok);
+  }
+  const projetos = await (await fetch(`${api}/projetos`)).json();
+  const ultimo = projetos[projetos.length - 1];
+  const estreita = await novaPagina({ viewport: { width: 375, height: 800 } });
+  await estreita.goto(`${web}/`); await estreita.locator("main h1").waitFor();
+  const barra = estreita.locator("nav.e-tabs");
+  const dentro = (seletor) => estreita.evaluate((s) => {
+    const b = document.querySelector("nav.e-tabs").getBoundingClientRect(); const r = document.querySelector(s).getBoundingClientRect();
+    return r.left >= b.left - 1 && r.right <= b.right + 1;
+  }, seletor);
+
+  // 8. Barra larga demais: só a seta da direita aparece.
+  await setaDireita(estreita).waitFor();
+  assert.equal(await setaEsquerda(estreita).count(), 0);
+  assert.equal(await estreita.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "a página não rola na horizontal");
+  const alvo = await setaDireita(estreita).boundingBox();
+  assert.ok(alvo.width >= 44 && alvo.height >= 44, "alvo de toque de 44 px");
+  assert.equal(await estreita.locator('nav.e-tabs button[aria-label^="Mostrar projetos"]').count(), 0, "as setas ficam fora do nav");
+
+  // 9. Clicar avança: scrollLeft cresce, a seta da esquerda aparece e a última aba acaba à vista.
+  const antesRolagem = await barra.evaluate((el) => el.scrollLeft);
+  await setaDireita(estreita).click();
+  await estreita.waitForFunction((a) => document.querySelector("nav.e-tabs").scrollLeft > a, antesRolagem);
+  await setaEsquerda(estreita).waitFor();
+  for (let i = 0; i < 20 && (await setaDireita(estreita).count()) > 0; i++) { await setaDireita(estreita).click(); await estreita.waitForTimeout(500); }
+  assert.equal(await setaDireita(estreita).count(), 0);
+  assert.equal(await dentro("nav.e-tabs a:last-of-type"), true, "a última aba fica dentro da barra");
+  await setaEsquerda(estreita).click();
+  await estreita.waitForFunction(() => document.querySelector("nav.e-tabs").scrollLeft < document.querySelector("nav.e-tabs").scrollWidth - document.querySelector("nav.e-tabs").clientWidth - 1);
+  await setaDireita(estreita).waitFor();
+
+  // 10. Abrir direto o último projeto: a aba ativa está inteira na barra e a pata é visível.
+  const direta = await novaPagina({ viewport: { width: 375, height: 800 } });
+  await direta.goto(`${web}/`); await direta.locator("main h1").waitFor();
+  await direta.goto(`${web}/projetos/${ultimo.id}`);
+  await direta.locator('.e-tabs a[aria-current="page"]').waitFor();
+  await direta.waitForTimeout(300);
+  const visivel = await direta.evaluate(() => {
+    const b = document.querySelector("nav.e-tabs").getBoundingClientRect(); const a = document.querySelector('nav.e-tabs a[aria-current="page"]').getBoundingClientRect();
+    const livre = [...document.querySelectorAll(".e-tabs-seta")].every((s) => { const r = s.getBoundingClientRect(); return a.right <= r.left || a.left >= r.right; });
+    return livre && a.left >= b.left - 1 && a.right <= b.right + 1;
+  });
+  assert.equal(visivel, true, "a aba ativa fica inteira na barra");
+  const viaTab = await novaPagina({ viewport: { width: 375, height: 800 } });
+  await viaTab.goto(`${web}/`); await viaTab.locator("main h1").waitFor();
+  await viaTab.locator(".e-tabs").getByRole("link", { name: "Projeto extra 8", exact: true }).click();
+  const pataViva = viaTab.locator(".e-tabs .e-pata");
+  await pataViva.waitFor({ state: "attached" });
+  const [bp, bb] = [await pataViva.boundingBox(), await viaTab.locator("nav.e-tabs").boundingBox()];
+  assert.ok(bp.x < bb.x + bb.width && bp.x + bp.width > bb.x, "a pata intersecta a barra");
+
+  // 12. As setas não entram na ordem do Tab.
+  await estreita.locator(".e-logo").focus();
+  for (let i = 0; i < 25; i++) {
+    await estreita.keyboard.press("Tab");
+    const nome = await estreita.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? "");
+    assert.ok(!nome.startsWith("Mostrar projetos"), "o Tab não para nas setas");
+  }
+
   assert.deepEqual(errosJs, []);
   const finais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(finais, originais);
-  console.log("7 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("12 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
