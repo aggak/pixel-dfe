@@ -516,3 +516,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--e-back);pointer-events:none;animation:e-splash-sair .25s ease-in .45s forwards}
 .e-splash-nome{font-size:28px;font-weight:600;color:var(--e-ink);letter-spacing:-.01em}
 @keyframes e-splash-sair{to{opacity:0;visibility:hidden}}
+
+.e-form-overlay.e-form-overlay--desfoque{backdrop-filter:blur(3px)!important}
+@media(prefers-reduced-motion:no-preference){.e-form-overlay{transition:backdrop-filter .2s ease}}
+@media(min-width:651px){.e-form-header{cursor:grab;touch-action:none;user-select:none}.e-form-modal[data-arrastando] .e-form-header{cursor:grabbing}}
