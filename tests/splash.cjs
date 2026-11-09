@@ -96,6 +96,10 @@ async function executar() {
     await splash.waitFor({ state: "attached" });
     const t0 = Date.now();
     await page.mouse.click(640, 450);
+    await page.waitForTimeout(100);
+    assert.equal(await splash.count(), 1, "o splash sumiu sem esmaecer");
+    const opacidade = await splash.evaluate((el) => Number(getComputedStyle(el).opacity));
+    assert.ok(opacidade > 0 && opacidade < 1, `opacidade ${opacidade} não está esmaecendo`);
     await splash.waitFor({ state: "detached", timeout: 1000 });
     assert.ok(Date.now() - t0 <= 600, "o clique não acelerou a saída");
     assert.equal(await page.getByRole("dialog").count(), 0);
@@ -130,29 +134,6 @@ async function executar() {
     await context.close();
   }
 
-  // 7. Tecla durante a abertura pula.
-  {
-    const { context, page, splash } = await abrir();
-    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
-    await splash.waitFor({ state: "attached" });
-    await page.keyboard.press("Escape");
-    await splash.waitFor({ state: "detached", timeout: 1000 });
-    console.log("OK: uma tecla durante a abertura pula");
-    await context.close();
-  }
-
-  // 8. Suíte comum (sem opções) não vê a abertura.
-  {
-    const comum = await lancarNavegador();
-    const context = await comum.newContext({ viewport: { width: 1280, height: 900 } });
-    const page = await context.newPage();
-    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
-    await page.locator("main h1").waitFor();
-    assert.equal(await page.locator(".e-splash").count(), 0);
-    await comum.close();
-    console.log("OK: o navegador padrão das suítes não mostra a abertura");
-  }
-
   // 6. Contraste e largura nos dois temas, em 320 px.
   for (const esquema of ["light", "dark"]) {
     const { context, page, splash } = await abrir({ viewport: { width: 320, height: 700 }, colorScheme: esquema });
@@ -172,10 +153,73 @@ async function executar() {
   }
   console.log("OK: o nome tem contraste nos dois temas e o splash cabe em 320 px");
 
+  // 7. Tecla durante a abertura pula.
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.keyboard.press("Escape");
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    console.log("OK: uma tecla durante a abertura pula");
+    await context.close();
+  }
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.keyboard.press("Tab");
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    assert.equal(await page.evaluate(() => document.activeElement !== document.body), true, "o Tab não moveu o foco para o app");
+    console.log("OK: Tab durante a abertura pula e move o foco para o app");
+    await context.close();
+  }
+
+  // 8. Suíte comum (sem opções) não vê a abertura.
+  {
+    const comum = await lancarNavegador();
+    const context = await comum.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await context.newPage();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await page.locator("main h1").waitFor();
+    assert.equal(await page.locator(".e-splash").count(), 0);
+    await comum.close();
+    console.log("OK: o navegador padrão das suítes não mostra a abertura");
+  }
+
+  // 9. Toque durante a abertura pula e o toque não chega ao botão de baixo.
+  {
+    const { context, page, splash } = await abrir({ hasTouch: true, viewport: { width: 375, height: 800 } });
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    const botao = page.getByRole("button", { name: "Nova tarefa" });
+    await botao.waitFor({ state: "attached" });
+    const caixa = await botao.boundingBox();
+    await page.touchscreen.tap(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByRole("dialog").count(), 0, "o toque vazou para o botão de baixo");
+    console.log("OK: o toque durante a abertura pula, sem acionar o app");
+    await context.close();
+  }
+
+  // 10. Clique durante a saída automática: some, sem acionar o app nem gerar erro.
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.waitForTimeout(2100);
+    if (await splash.count()) await page.mouse.click(640, 450);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(200);
+    assert.equal(await page.getByRole("dialog").count(), 0);
+    console.log("OK: clicar durante a saída automática não trava nem aciona o app");
+    await context.close();
+  }
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("8 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("10 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

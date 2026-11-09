@@ -36,7 +36,7 @@ export function Splash() {
   }, [visivel]);
 
   if (!visivel) return null;
-  return <div className={saindo ? "e-splash e-splash--saindo" : "e-splash"} aria-hidden="true" onPointerDown={pular} onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair") setVisivel(false); }}>
+  return <div className={saindo ? "e-splash e-splash--saindo" : "e-splash"} aria-hidden="true" onPointerDown={pular} onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair" || e.animationName === "e-splash-sair-rapido") setVisivel(false); }}>
     <Gatinho escala={6} />
     <span className="e-splash-nome">Pixel</span>
   </div>;
