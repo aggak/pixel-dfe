@@ -8,6 +8,7 @@ import { Ficha } from "./components/Ficha";
 import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
+import { GatinhoCostas } from "./components/GatinhoCostas";
 import "./App.css";
 
 const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
@@ -39,7 +40,7 @@ function App() {
         <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />
-        <Route path="*" element={<main className="e-sheet e-not-found"><h1 tabIndex={-1}>Página não encontrada</h1><Link to="/">Voltar para tarefas</Link></main>} />
+        <Route path="*" element={<main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><Link to="/">Voltar para tarefas</Link></main>} />
       </Route>
     </Routes>
     {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>

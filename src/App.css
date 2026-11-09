@@ -447,6 +447,23 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
 @media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
+.e-gato-dormindo{display:block;flex-shrink:0;width:108px;height:108px;margin-bottom:18px;background:var(--e-gato-claro) 0 0/5184px 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-dormindo{background-image:var(--e-gato-escuro)}
+@media(prefers-reduced-motion:no-preference){.e-gato-dormindo{animation:e-gato-quadros 4s steps(48) infinite}}
+@keyframes e-gato-quadros{to{background-position-x:-5184px}}
+.e-gato-olhando{display:block;flex-shrink:0;width:108px;height:108px;margin-bottom:18px;background:var(--e-gato-claro) 0 0/10368px 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-olhando{background-image:var(--e-gato-escuro)}
+@media(prefers-reduced-motion:no-preference){.e-gato-olhando{animation:e-gato-olhando-quadros 8s steps(96) infinite}}
+@keyframes e-gato-olhando-quadros{to{background-position-x:-10368px}}
+.e-gato-costas{--e-gato-escala:3;display:block;flex-shrink:0;width:calc(36px*var(--e-gato-escala));height:calc(36px*var(--e-gato-escala));margin-bottom:18px;background:var(--e-gato-claro) 0 0/calc(3024px*var(--e-gato-escala)) 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-costas{background-image:var(--e-gato-escuro)}
+.e-load-error-compact .e-gato-costas{--e-gato-escala:2}
+.e-not-found{align-items:center;justify-content:center;text-align:center;gap:12px;padding:65px 20px}
+.e-not-found>.e-gato-costas{margin-bottom:6px}
+.e-not-found>h1{font-size:18px;font-weight:600}
+.e-not-found>a{color:var(--e-action)}
+@media(prefers-reduced-motion:no-preference){.e-gato-costas{animation:e-gato-costas-quadros 7s steps(84) infinite}}
+@keyframes e-gato-costas-quadros{to{background-position-x:calc(-3024px*var(--e-gato-escala))}}
 .e-gato-carregando{display:block;flex-shrink:0;width:108px;height:108px;background:var(--e-gato-claro) 0 0/1512px 100% no-repeat;image-rendering:pixelated}
 :root.dark .e-gato-carregando{background-image:var(--e-gato-escuro)}
 @media(prefers-reduced-motion:no-preference){.e-gato-carregando{animation:e-gato-carregando-quadros calc(14s/12) steps(14) infinite}}
