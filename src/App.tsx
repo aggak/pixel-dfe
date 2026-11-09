@@ -9,6 +9,7 @@ import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
+import { Splash } from "./components/Splash";
 import "./App.css";
 
 const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
@@ -34,6 +35,7 @@ function App() {
   // Nova tarefa aberta no quadro volta para ele ao fechar.
   const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fundo.pathname === "/quadro" ? "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>
+    <Splash />
     <Routes location={fundo} key={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
