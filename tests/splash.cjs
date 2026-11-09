@@ -57,6 +57,16 @@ async function executar() {
   // 1. Primeira entrada: aparece, é decorativo, não recebe cliques e some em até 1 s.
   {
     const { context, page, splash } = await abrir();
+    // Mede dentro da página: inserção, remoção e fim da animação de saída.
+    await context.addInitScript(() => {
+      window.__splash = { inserido: null, removido: null, animacaoFim: false };
+      document.addEventListener("animationend", (e) => { if (e.animationName === "e-splash-sair") window.__splash.animacaoFim = true; }, true);
+      new MutationObserver(() => {
+        const existe = !!document.querySelector(".e-splash");
+        if (existe && window.__splash.inserido === null) window.__splash.inserido = performance.now();
+        if (!existe && window.__splash.inserido !== null && window.__splash.removido === null) window.__splash.removido = performance.now();
+      }).observe(document, { childList: true, subtree: true });
+    });
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached", timeout: 5000 });
     const apareceu = Date.now();
@@ -65,6 +75,10 @@ async function executar() {
     await splash.waitFor({ state: "detached", timeout: 1500 });
     assert.ok(Date.now() - apareceu <= 1000, `splash durou ${Date.now() - apareceu} ms`);
     assert.equal(await page.evaluate(() => sessionStorage.getItem("pixel:splash-visto")), "1");
+    const medido = await page.evaluate(() => window.__splash);
+    assert.ok(medido.inserido !== null && medido.removido !== null, JSON.stringify(medido));
+    assert.ok(medido.removido - medido.inserido <= 1000, `splash durou ${medido.removido - medido.inserido} ms na página`);
+    assert.equal(medido.animacaoFim, true, "a animação de saída não terminou");
     console.log("OK: a primeira entrada mostra o splash decorativo, sem capturar cliques, por até 1 s");
 
     // 2. Recarga na mesma aba: não aparece.
@@ -80,6 +94,7 @@ async function executar() {
     const { context, page, splash } = await abrir();
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached" });
+    assert.equal(await splash.count(), 1);
     await page.getByRole("button", { name: "Nova tarefa" }).click();
     await page.getByRole("dialog", { name: "Nova tarefa" }).waitFor();
     console.log("OK: o clique durante a abertura chega ao app");
@@ -104,6 +119,7 @@ async function executar() {
     await context.addInitScript(() => Object.defineProperty(window, "sessionStorage", { get() { throw new DOMException("bloqueado", "SecurityError"); } }));
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached", timeout: 5000 });
+    assert.equal(await page.evaluate(() => { try { return sessionStorage === undefined; } catch { return true; } }), true);
     await splash.waitFor({ state: "detached", timeout: 1500 });
     await page.locator("main h1").waitFor();
     console.log("OK: com sessionStorage bloqueado o splash aparece, some e não quebra");
@@ -115,6 +131,7 @@ async function executar() {
     const { context, page, splash } = await abrir({ viewport: { width: 320, height: 700 }, colorScheme: esquema });
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached", timeout: 5000 });
+    await page.waitForFunction((escuro) => document.documentElement.classList.contains("dark") === escuro, esquema === "dark");
     const medidas = await page.evaluate(() => {
       const nome = document.querySelector(".e-splash-nome");
       const raiz = document.querySelector(".e-splash");
