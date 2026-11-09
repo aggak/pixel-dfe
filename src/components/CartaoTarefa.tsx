@@ -74,7 +74,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     window.addEventListener(MOVER_TAREFA, mover);
     return () => window.removeEventListener(MOVER_TAREFA, mover);
   }, [tarefa.id]);
-  const { dragProps } = useDrag({ getItems: () => [{ [TIPO_TAREFA]: tarefa.id, "text/plain": tarefa.titulo }], isDisabled: !emQuadro || !onMudarStatus });
+  const { dragProps, isDragging } = useDrag({ getItems: () => [{ [TIPO_TAREFA]: tarefa.id, "text/plain": tarefa.titulo }], isDisabled: !emQuadro || !onMudarStatus || salvando });
   // Se o foco se perdeu durante o envio (o menu fecha e o devolve ao botão pendente), a falha o traz de volta, sem tirá-lo de outro controle.
   useEffect(() => {
     if (falhou && (!document.activeElement || document.activeElement === document.body)) gatilho.current?.focus();
@@ -84,7 +84,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     <Dropdown.Popover className="e-popover" placement={emQuadro ? "bottom end" : "bottom start"}><Dropdown.Menu selectionMode="single" disallowEmptySelection shouldCloseOnSelect selectedKeys={[tarefa.status]} disabledKeys={salvando ? STATUS : undefined} onSelectionChange={(chaves) => { const [status] = chaves as Set<Status>; if (status) void mudar(status); }}>{STATUS.map((status) => <Dropdown.Item key={status} id={status} label={statusTexto[status]} />)}</Dropdown.Menu></Dropdown.Popover>
   </Dropdown.Root> : tagStatus;
   const tagPrioridade = <Badge key="prioridade" type="modern" size="sm" color="gray" className={`e-priority e-priority-${tarefa.prioridade}`}><Icon name={tarefa.prioridade === "alta" ? "angle-double-small-up" : tarefa.prioridade === "baixa" ? "arrow-small-down" : "minus-small"} />{prioridadeTexto[tarefa.prioridade]}</Badge>;
-  return <article {...dragProps} className={classe} data-task-id={tarefa.id}>
+  return <article {...dragProps} className={classe} data-task-id={tarefa.id} data-arrastando={isDragging || undefined}>
     <div className="e-task-main"><div className="e-task-heading"><Link className="e-task-title" draggable={false} to={caminho} state={estado}>{tarefa.titulo}</Link>
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" className="e-danger-item" label="Excluir tarefa" icon={TrashIcon} onAction={() => { setFalhaExclusao(false); setConfirmando(true); }} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
     </div>{nomeProjeto && <span className="e-task-project"><FolderIcon />{nomeProjeto}</span>}<div className="e-task-meta"><span><Icon name="user" />{tarefa.responsavel}</span><span><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo)}</time></span></div>

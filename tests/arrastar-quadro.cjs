@@ -59,6 +59,22 @@ async function executar() {
   // O React Aria toma um toque exatamente no centro do elemento por leitor de tela (heurística do TalkBack) e cancela o arrasto nativo.
   // O Playwright aponta para o centro por padrão; uma pessoa nunca acerta o ponto exato, então o teste parte de um canto.
   const arrastar = (origem, destino) => origem.dragTo(destino, { sourcePosition: { x: 8, y: 8 } });
+  const segurarPatch = async (id) => {
+    let decidir;
+    const decisao = new Promise((resolve) => { decidir = resolve; });
+    const url = `${api}/tarefas/${id}`;
+    await page.route(url, async (rota) => {
+      if (rota.request().method() !== "PATCH") return rota.continue();
+      if ((await decisao) === 500) await rota.fulfill({ status: 500, body: "{}" });
+      else await rota.continue();
+    });
+    return async (resposta) => {
+      const respondeu = page.waitForResponse((r) => r.url() === url && r.request().method() === "PATCH");
+      decidir(resposta);
+      await respondeu;
+      await page.unroute(url);
+    };
+  };
   const contar = async (status) => Number(await coluna(status).locator("h2 > span:last-child").innerText());
 
   // Dados de db.seed.json: tarefas 4 e 5 em "a-fazer" e 2 em "em-andamento".
@@ -107,10 +123,35 @@ async function executar() {
   }
   console.log("OK: lista e projeto não têm cartões arrastáveis");
 
+  // 6. Realce: arrasto manual, conferindo antes de soltar.
+  await page.goto(`${web}/quadro`);
+  await quadro.locator("[data-task-id]").first().waitFor();
+  const origem = await cartao("5").boundingBox();
+  const destino = await coluna("concluida").boundingBox();
+  await page.mouse.move(origem.x + 20, origem.y + origem.height - 10);
+  await page.mouse.down();
+  await page.mouse.move(destino.x + destino.width / 2, destino.y + 60, { steps: 10 });
+  assert.notEqual(await coluna("concluida").getAttribute("data-alvo-soltar"), null);
+  assert.notEqual(await cartao("5").getAttribute("data-arrastando"), null);
+  await page.mouse.up();
+  await coluna("concluida").locator('[data-task-id="5"]').waitFor();
+  assert.equal(await page.locator("[data-alvo-soltar], [data-arrastando]").count(), 0);
+  console.log("OK: a coluna de destino e o cartão arrastado ficam realçados só durante o arrasto");
+
+  // 7. Envio pendente trava o arrasto do cartão.
+  const liberar = await segurarPatch("5");
+  await arrastar(cartao("5"), coluna("a-fazer"));
+  await page.waitForFunction(() => document.querySelector('[data-task-id="5"] [data-pending][data-status-trigger]'));
+  assert.notEqual(await cartao("5").getAttribute("draggable"), "true");
+  await liberar("continuar");
+  await coluna("a-fazer").locator('[data-task-id="5"]').waitFor();
+  assert.equal(await cartao("5").getAttribute("draggable"), "true");
+  console.log("OK: envio pendente trava o arrasto do cartão");
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("5 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("7 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

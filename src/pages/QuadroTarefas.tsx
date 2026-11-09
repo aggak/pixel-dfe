@@ -21,8 +21,8 @@ const iconesStatus: Record<Status, string> = { "a-fazer": "circle", "em-andament
 // Cada coluna é um alvo de soltura; o hook precisa de uma chamada por coluna, por isso o componente.
 function ColunaQuadro({ status, children }: { status: Status; children: ReactNode }) {
   const ref = useRef<HTMLElement>(null);
-  const { dropProps } = useSoltarNaColuna(ref, status);
-  return <section {...dropProps} ref={ref} className="e-column" aria-label={statusTexto[status]} data-status-column={status}>{children}</section>;
+  const { dropProps, isDropTarget } = useSoltarNaColuna(ref, status);
+  return <section {...dropProps} ref={ref} className="e-column" aria-label={statusTexto[status]} data-status-column={status} data-alvo-soltar={isDropTarget || undefined}>{children}</section>;
 }
 
 export function QuadroTarefas() {

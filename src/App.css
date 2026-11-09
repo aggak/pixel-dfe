@@ -513,3 +513,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 :root.dark .e-gato-carregando{background-image:var(--e-gato-escuro)}
 @media(prefers-reduced-motion:no-preference){.e-gato-carregando{animation:e-gato-carregando-quadros calc(14s/12) steps(14) infinite}}
 @keyframes e-gato-carregando-quadros{to{background-position-x:-1512px}}
+.e-card[data-arrastando]{opacity:.45}
+.e-column[data-alvo-soltar]{outline:2px dashed var(--e-control);outline-offset:6px;border-radius:12px}
+@media(hover:hover){.e-card[draggable=true]{cursor:grab}}
+@media(prefers-reduced-motion:no-preference){.e-card{transition-property:border-color,box-shadow,transform,opacity}}
