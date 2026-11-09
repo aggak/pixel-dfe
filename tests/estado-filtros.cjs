@@ -79,6 +79,7 @@ async function executar() {
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Gerenciador de Tarefas" }).click();
     await page.getByRole("region", { name: "Tarefas do projeto" }).getByRole("article").first().waitFor();
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Todas" }).click();
+    await lista.getByRole("article").first().waitFor();
     await selecionar("Prioridade", "Baixa");
     assert.deepEqual(await titulos(), dados.tarefas.filter((t) => t.titulo.toLocaleLowerCase("pt-BR").includes("a") && t.status === "a-fazer" && t.prioridade === "baixa").map((t) => t.titulo));
     console.log("OK: filtros combinam entre si depois de visitar um projeto");
