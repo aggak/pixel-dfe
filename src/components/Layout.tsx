@@ -4,6 +4,8 @@ import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto } from "../tipos";
+import { GatinhoDormindo } from "./GatinhoDormindo";
+import { GatinhoOlhando } from "./GatinhoOlhando";
 import { GatinhoCostas } from "./GatinhoCostas";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
@@ -49,5 +51,5 @@ export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { tex
 export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <div className="e-empty"><div className="e-project-icon"><Icon name={icone} /></div><h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
+  return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
 }
