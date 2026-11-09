@@ -98,6 +98,9 @@ async function executar() {
   await page.goto(`${web}/projetos/novo`);
   await page.getByRole("dialog", { name: "Novo projeto" }).waitFor();
   await filtroFinal("none");
+  await page.goto(`${web}/projetos/1/editar`);
+  await page.getByRole("dialog", { name: "Editar projeto" }).waitFor();
+  await filtroFinal("blur(3px)");
   console.log("OK: o fundo só é desfocado na edição");
 
   // Volta à edição de tarefa para exercitar o movimento.
@@ -120,15 +123,24 @@ async function executar() {
   const movida = await caixaEstavel();
   assert.ok(Math.abs(movida.x - (inicio.x - 300)) <= 1 && Math.abs(movida.y - (inicio.y + 120)) <= 1);
   await arrastar(-5000, -5000);
-  let caixa = await modal.boundingBox();
+  let caixa = await caixaEstavel();
   assert.ok(caixa.x >= 8 - 1 && caixa.y >= 8 - 1);
   await arrastar(5000, 5000);
-  caixa = await modal.boundingBox();
+  caixa = await caixaEstavel();
   assert.ok(caixa.x + caixa.width <= 1280 - 8 + 1 && caixa.y <= 900 - 56 + 1);
   assert.equal(await page.getByRole("dialog", { name: "Editar tarefa" }).count(), 1);
   await titulo.dblclick();
   assert.deepEqual(await caixaEstavel(), inicio);
   console.log("OK: a ficha é arrastada pelo cabeçalho, respeita os limites e volta com duplo clique");
+
+  // Redimensionar a janela devolve a ficha à posição original.
+  await arrastar(-150, 40);
+  await page.setViewportSize({ width: 1300, height: 900 });
+  const aposRedimensionar = await caixaEstavel();
+  await titulo.dblclick();
+  assert.deepEqual(await caixaEstavel(), aposRedimensionar);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  console.log("OK: redimensionar a janela devolve a ficha à posição original");
 
   await arrastar(-200, 0);
   const antesDeSalvar = await caixaEstavel();
@@ -162,7 +174,7 @@ async function executar() {
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("4 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("5 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
