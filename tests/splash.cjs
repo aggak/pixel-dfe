@@ -94,6 +94,7 @@ async function executar() {
     const { context, page, splash } = await abrir();
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached" });
+    await page.waitForTimeout(300);
     const t0 = Date.now();
     await page.mouse.click(640, 450);
     await page.waitForTimeout(100);
@@ -207,19 +208,58 @@ async function executar() {
     const { context, page, splash } = await abrir();
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached" });
-    await page.waitForTimeout(2100);
-    if (await splash.count()) await page.mouse.click(640, 450);
+    // Espera o esmaecer automático começar (opacidade já abaixo de 1), sem depender de um instante fixo.
+    await page.waitForFunction(() => { const el = document.querySelector(".e-splash"); return !!el && Number(getComputedStyle(el).opacity) < 0.95; }, null, { polling: "raf", timeout: 5000 });
+    await page.evaluate(() => {
+      window.__ops = [];
+      const el = document.querySelector(".e-splash");
+      const amostrar = () => { if (el.isConnected) { window.__ops.push(Number(getComputedStyle(el).opacity)); requestAnimationFrame(amostrar); } };
+      amostrar();
+    });
+    await page.waitForTimeout(50);
+    assert.equal(await splash.count(), 1, "o splash sumiu antes do clique; o cenário não testou nada");
+    await page.mouse.click(640, 450);
     await splash.waitFor({ state: "detached", timeout: 1000 });
     await page.waitForTimeout(200);
     assert.equal(await page.getByRole("dialog").count(), 0);
+    const ops = await page.evaluate(() => window.__ops);
+    assert.ok(ops.length > 3 && ops[0] < 1, `fora da janela do esmaecer: ${ops.slice(0, 3)}`);
+    for (let k = 1; k < ops.length; k++) assert.ok(ops[k] <= ops[k - 1] + 1e-6, `a opacidade subiu: ${ops[k - 1]} -> ${ops[k]}`);
     console.log("OK: clicar durante a saída automática não trava nem aciona o app");
+    await context.close();
+  }
+
+  // 11. Toque longo (350 ms) durante a abertura pula e não chega ao botão de baixo.
+  {
+    const { context, page, splash } = await abrir({ hasTouch: true, viewport: { width: 375, height: 800 } });
+    // O botão do app só abre a ficha com pointerdown nele mesmo; por isso confere também onde o click caiu.
+    await context.addInitScript(() => {
+      window.__cliques = [];
+      document.addEventListener("click", (e) => window.__cliques.push(!!e.target.closest?.(".e-splash")), true);
+    });
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    const botao = page.getByRole("button", { name: "Nova tarefa" });
+    await botao.waitFor({ state: "attached" });
+    const caixa = await botao.boundingBox();
+    const ponto = [{ x: caixa.x + caixa.width / 2, y: caixa.y + caixa.height / 2 }];
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: ponto });
+    await page.waitForTimeout(350);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByRole("dialog").count(), 0, "o toque longo vazou para o botão de baixo");
+    const cliques = await page.evaluate(() => window.__cliques);
+    assert.ok(cliques.length > 0 && cliques.every(Boolean), `o click do toque longo caiu fora da abertura: ${JSON.stringify(cliques)}`);
+    console.log("OK: o toque longo durante a abertura pula, sem acionar o app");
     await context.close();
   }
 
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("10 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("11 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

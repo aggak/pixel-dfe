@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Gatinho } from "./Gatinho";
 
 const CHAVE = "pixel:splash-visto";
@@ -15,7 +15,9 @@ function jaVisto() {
 export function Splash() {
   const [visivel, setVisivel] = useState(() => !matchMedia("(prefers-reduced-motion: reduce)").matches && !jaVisto());
   const [saindo, setSaindo] = useState(false);
-  const pular = () => setSaindo(true);
+  // Depois que a saída automática começa, pular não reinicia o esmaecer.
+  const automatica = useRef(false);
+  const pular = () => { if (!automatica.current) setSaindo(true); };
 
   useEffect(() => {
     if (!visivel) return;
@@ -31,12 +33,12 @@ export function Splash() {
 
   useEffect(() => {
     if (!visivel) return;
-    window.addEventListener("keydown", pular, { once: true });
-    return () => window.removeEventListener("keydown", pular);
+    window.addEventListener("keydown", pular, { once: true, capture: true });
+    return () => window.removeEventListener("keydown", pular, { capture: true });
   }, [visivel]);
 
   if (!visivel) return null;
-  return <div className={saindo ? "e-splash e-splash--saindo" : "e-splash"} aria-hidden="true" onPointerDown={pular} onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair" || e.animationName === "e-splash-sair-rapido") setVisivel(false); }}>
+  return <div className={saindo ? "e-splash e-splash--saindo" : "e-splash"} aria-hidden="true" onClick={pular} onAnimationStart={(e) => { if (e.animationName === "e-splash-sair") automatica.current = true; }} onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair" || e.animationName === "e-splash-sair-rapido") setVisivel(false); }}>
     <Gatinho escala={6} />
     <span className="e-splash-nome">Pixel</span>
   </div>;
