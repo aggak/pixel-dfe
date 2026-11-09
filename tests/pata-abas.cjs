@@ -200,36 +200,66 @@ async function executar() {
   assert.ok(alvo.width >= 44 && alvo.height >= 44, "alvo de toque de 44 px");
   assert.equal(await estreita.locator('nav.e-tabs button[aria-label^="Mostrar projetos"]').count(), 0, "as setas ficam fora do nav");
 
+  const rolagemParada = (p) => p.evaluate(() => new Promise((resolve) => {
+    const n = document.querySelector("nav.e-tabs"); let ultimo = -1, iguais = 0;
+    const passo = () => { if (n.scrollLeft === ultimo) iguais++; else { iguais = 0; ultimo = n.scrollLeft; } if (iguais >= 3) resolve(); else requestAnimationFrame(passo); };
+    passo();
+  }));
+
   // 9. Clicar avança: scrollLeft cresce, a seta da esquerda aparece e a última aba acaba à vista.
   const antesRolagem = await barra.evaluate((el) => el.scrollLeft);
   await setaDireita(estreita).click();
   await estreita.waitForFunction((a) => document.querySelector("nav.e-tabs").scrollLeft > a, antesRolagem);
   await setaEsquerda(estreita).waitFor();
-  for (let i = 0; i < 20 && (await setaDireita(estreita).count()) > 0; i++) { await setaDireita(estreita).click(); await estreita.waitForTimeout(500); }
+  for (let i = 0; i < 20 && (await setaDireita(estreita).count()) > 0; i++) { const a = await barra.evaluate((el) => el.scrollLeft); await setaDireita(estreita).click(); await estreita.waitForFunction((v) => document.querySelector("nav.e-tabs").scrollLeft !== v, a); await rolagemParada(estreita); }
   assert.equal(await setaDireita(estreita).count(), 0);
   assert.equal(await dentro("nav.e-tabs a:last-of-type"), true, "a última aba fica dentro da barra");
   await setaEsquerda(estreita).click();
   await estreita.waitForFunction(() => document.querySelector("nav.e-tabs").scrollLeft < document.querySelector("nav.e-tabs").scrollWidth - document.querySelector("nav.e-tabs").clientWidth - 1);
   await setaDireita(estreita).waitFor();
 
+
+  // 9b. As setas não cobrem a borda de cima da folha.
+  await estreita.evaluate(() => document.fonts.ready); await rolagemParada(estreita);
+  const topoDaFolha = await estreita.locator("main.e-sheet").evaluate((el) => el.getBoundingClientRect().top);
+  assert.ok((await setaEsquerda(estreita).boundingBox()).y + 44 <= topoDaFolha + 0.01, "seta da esquerda acima da folha");
+  await setaEsquerda(estreita).click(); await estreita.evaluate(() => { document.querySelector("nav.e-tabs").scrollLeft = 0; });
+  await setaDireita(estreita).waitFor();
+  assert.ok((await setaDireita(estreita).boundingBox()).y + 44 <= topoDaFolha + 0.01, "seta da direita acima da folha");
+
+  // 9c. Foco por teclado: toda aba focada fica inteira e livre da seta visível e do degradê (16 px).
+  await estreita.evaluate(() => { document.querySelector("nav.e-tabs").scrollLeft = 0; });
+  await estreita.locator(".e-logo").focus();
+  for (let i = 0; i < 40; i++) {
+    await estreita.keyboard.press("Tab");
+    await rolagemParada(estreita);
+    const livre = await estreita.evaluate(() => {
+      const f = document.activeElement; if (!f?.closest("nav.e-tabs")) return null;
+      const a = f.getBoundingClientRect(); const b = document.querySelector("nav.e-tabs").getBoundingClientRect();
+      const setas = [...document.querySelectorAll(".e-tabs-seta")].map((s) => s.getBoundingClientRect());
+      return a.left >= b.left - 1 && a.right <= b.right + 1 && setas.every((r) => a.right <= r.left - 16 + 1 || a.left >= r.right + 16 - 1);
+    });
+    if (livre !== null) assert.equal(livre, true, "aba focada fica livre das setas");
+  }
+
   // 10. Abrir direto o último projeto: a aba ativa está inteira na barra e a pata é visível.
   const direta = await novaPagina({ viewport: { width: 375, height: 800 } });
   await direta.goto(`${web}/`); await direta.locator("main h1").waitFor();
   await direta.goto(`${web}/projetos/${ultimo.id}`);
   await direta.locator('.e-tabs a[aria-current="page"]').waitFor();
-  await direta.waitForTimeout(300);
+  await direta.evaluate(() => document.fonts.ready); await rolagemParada(direta);
   const visivel = await direta.evaluate(() => {
     const b = document.querySelector("nav.e-tabs").getBoundingClientRect(); const a = document.querySelector('nav.e-tabs a[aria-current="page"]').getBoundingClientRect();
-    const livre = [...document.querySelectorAll(".e-tabs-seta")].every((s) => { const r = s.getBoundingClientRect(); return a.right <= r.left || a.left >= r.right; });
+    const livre = [...document.querySelectorAll(".e-tabs-seta")].every((s) => { const r = s.getBoundingClientRect(); return a.right <= r.left - 16 || a.left >= r.right + 16; });
     return livre && a.left >= b.left - 1 && a.right <= b.right + 1;
   });
   assert.equal(visivel, true, "a aba ativa fica inteira na barra");
-  const viaTab = await novaPagina({ viewport: { width: 375, height: 800 } });
-  await viaTab.goto(`${web}/`); await viaTab.locator("main h1").waitFor();
-  await viaTab.locator(".e-tabs").getByRole("link", { name: "Projeto extra 8", exact: true }).click();
-  const pataViva = viaTab.locator(".e-tabs .e-pata");
+  const porClique = await novaPagina({ viewport: { width: 375, height: 800 } });
+  await porClique.goto(`${web}/`); await porClique.locator("main h1").waitFor();
+  await porClique.locator(".e-tabs").getByRole("link", { name: "Projeto extra 8", exact: true }).click();
+  const pataViva = porClique.locator(".e-tabs .e-pata");
   await pataViva.waitFor({ state: "attached" });
-  const [bp, bb] = [await pataViva.boundingBox(), await viaTab.locator("nav.e-tabs").boundingBox()];
+  const [bp, bb] = [await pataViva.boundingBox(), await porClique.locator("nav.e-tabs").boundingBox()];
   assert.ok(bp.x < bb.x + bb.width && bp.x + bp.width > bb.x, "a pata intersecta a barra");
 
   // 12. As setas não entram na ordem do Tab.
