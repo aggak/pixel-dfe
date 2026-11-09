@@ -524,3 +524,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card[data-arrastando]{opacity:.45}
 .e-column[data-alvo-soltar]{outline:2px dashed var(--e-control);outline-offset:6px;border-radius:12px}
 @media(hover:hover){.e-card[draggable=true]{cursor:grab}}
+
+.e-tabs a{position:relative}
+.e-pata{position:absolute;top:0;left:50%;pointer-events:none;line-height:0;translate:-50% -100%;animation:e-pata-puxar .7s ease-in-out forwards}
+.e-tabs a[data-puxada]{transform-origin:bottom;animation:e-aba-puxada .7s ease-in-out}
+@keyframes e-pata-puxar{30%{translate:-50% -40%}55%{translate:-50% -55%}100%{translate:-50% -100%}}
+@keyframes e-aba-puxada{30%{scale:1 1}55%{scale:1 1.08}100%{scale:1 1}}
