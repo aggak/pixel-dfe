@@ -15,10 +15,18 @@ export function useArrastarFicha(casca: RefObject<HTMLElement | null>) {
   const encerrar = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const zerar = () => { encerrar.current?.(); setDeslocamento(ZERO); };
+    const zerar = () => {
+      encerrar.current?.();
+      setDeslocamento(ZERO);
+      // O arrasto escreve no DOM por fora do React: sem isso, um translate inline sobraria se o estado já fosse 0,0.
+      casca.current?.closest<HTMLElement>(".e-form-modal")?.style.removeProperty("translate");
+    };
     window.addEventListener("resize", zerar);
     return () => window.removeEventListener("resize", zerar);
-  }, []);
+  }, [casca]);
+
+  // Desmontar no meio do arrasto cancela o quadro pendente e solta a captura.
+  useEffect(() => () => encerrar.current?.(), []);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLElement>) => {
     const alca = e.currentTarget;
@@ -33,14 +41,28 @@ export function useArrastarFicha(casca: RefObject<HTMLElement | null>) {
     const d0 = deslocamento;
     const minX = d0.x - (rect0.left - MARGEM), maxX = d0.x + (window.innerWidth - MARGEM - rect0.right);
     const minY = d0.y - (rect0.top - MARGEM), maxY = d0.y + (window.innerHeight - ALTURA_MINIMA_VISIVEL - rect0.top);
-    const mover = (ev: PointerEvent) => ev.pointerId === pointerId && setDeslocamento({ x: limitar(d0.x + (ev.clientX - px), minX, maxX), y: limitar(d0.y + (ev.clientY - py), minY, maxY) });
+    // Durante o arrasto a posição fica em variáveis locais e vai direto ao DOM, no máximo uma vez por quadro; o React só a recebe ao soltar.
+    let [ultimoX, ultimoY, quadro, desenhado] = [px, py, 0, d0];
+    const desenhar = () => {
+      quadro = 0;
+      desenhado = { x: limitar(d0.x + (ultimoX - px), minX, maxX), y: limitar(d0.y + (ultimoY - py), minY, maxY) };
+      modal.style.translate = `${desenhado.x}px ${desenhado.y}px`;
+    };
+    const mover = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      [ultimoX, ultimoY] = [ev.clientX, ev.clientY];
+      if (!quadro) quadro = requestAnimationFrame(desenhar);
+    };
     const soltar = () => {
+      if (quadro) { cancelAnimationFrame(quadro); desenhar(); }
       alca.removeEventListener("pointermove", mover);
       alca.removeEventListener("pointerup", soltar);
       alca.removeEventListener("pointercancel", soltar);
       alca.removeEventListener("lostpointercapture", soltar);
       encerrar.current = null;
+      setDeslocamento(desenhado);
       setArrastando(false);
+      if (!desenhado.x && !desenhado.y) modal.style.translate = "";
     };
     encerrar.current = soltar;
     alca.setPointerCapture(pointerId);

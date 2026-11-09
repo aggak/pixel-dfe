@@ -49,6 +49,13 @@ async function executar() {
   const errosJs = [];
   page.on("pageerror", (erro) => errosJs.push(erro));
   page.setDefaultTimeout(10000);
+  // Gancho de DevTools falso: conta os commits do React.
+  await page.addInitScript(() => {
+    let n = 0;
+    window.__commits = () => n;
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = { supportsFiber: true, isDisabled: false, renderers: new Map(), inject: () => 1,
+      onCommitFiberRoot() { n++; }, onCommitFiberUnmount() {}, onPostCommitFiberRoot() {}, checkDCE() {} };
+  });
 
   const lerTarefa = async (id) => (await fetch(`${api}/tarefas/${id}`)).json();
   const { campo } = criarUi(page);
@@ -171,10 +178,64 @@ async function executar() {
   await page.setViewportSize({ width: 1280, height: 900 });
   console.log("OK: no celular a ficha não se move");
 
+  // 6. Arrasto não renderiza o React a cada movimento.
+  await campo("Título").waitFor();
+  const base = await caixaEstavel();
+  const commits = () => page.evaluate(() => window.__commits());
+  assert.ok((await commits()) > 0, "o contador de commits não está ligado");
+  const t = await titulo.boundingBox();
+  await page.mouse.move(t.x + t.width / 2, t.y + t.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(50);
+  const antes = await commits();
+  await page.mouse.move(t.x + t.width / 2 - 200, t.y + t.height / 2 + 60, { steps: 40 });
+  assert.equal((await commits()) - antes, 0, "pointermove disparou renderizações");
+  assert.equal(await modal.evaluate((el) => getComputedStyle(el).willChange), "translate");
+  await page.mouse.up();
+  assert.equal(await modal.evaluate((el) => getComputedStyle(el).willChange), "auto");
+  const depois = await caixaEstavel();
+  assert.ok(Math.abs(depois.x - (base.x - 200)) <= 1 && Math.abs(depois.y - (base.y + 60)) <= 1, "a caixa não parou onde o ponteiro foi solto");
+  console.log("OK: o arrasto não renderiza o React a cada movimento");
+
+  // 7. Volta ao ponto de partida: nada de translate inline em repouso.
+  // O cenário 6 terminou em -200, 60: um arrasto de volta zera, e uma ida e volta também.
+  await arrastar(200, -60);
+  assert.equal(await modal.evaluate((el) => el.style.translate), "");
+  await arrastar(-120, 40);
+  await arrastar(120, -40);
+  assert.equal(await modal.evaluate((el) => el.style.translate), "");
+  console.log("OK: de volta ao ponto de partida não sobra translate inline");
+
+  // Num único gesto, partindo do repouso: sai e volta ao ponto exato. O React não muda o style (undefined para undefined), então o hook precisa limpar o translate.
+  await titulo.dblclick();
+  const r = await titulo.boundingBox();
+  const [rx, ry] = [r.x + r.width / 2, r.y + r.height / 2];
+  await page.mouse.move(rx, ry);
+  await page.mouse.down();
+  await page.mouse.move(rx - 120, ry + 40, { steps: 8 });
+  await page.mouse.move(rx, ry, { steps: 8 });
+  await page.mouse.up();
+  assert.equal(await modal.evaluate((el) => el.style.translate), "", "sobrou translate inline após ida e volta no mesmo gesto");
+  console.log("OK: ida e volta no mesmo gesto não deixa translate inline");
+
+  // 8. Esc no meio do arrasto: a ficha fecha (desmontando no meio do arrasto) e não há erro JavaScript.
+  await campo("Título").focus();
+  const t8 = await titulo.boundingBox();
+  await page.mouse.move(t8.x + t8.width / 2, t8.y + t8.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(t8.x + t8.width / 2 + 40, t8.y + t8.height / 2 + 40, { steps: 5 });
+  // Na edição o primeiro Esc volta à leitura (a ficha segue montada); o segundo fecha, ainda com o botão pressionado.
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog", { name: "Detalhes da tarefa" }).waitFor();
+  await page.keyboard.press("Escape");
+  await modal.waitFor({ state: "detached" });
+  await page.mouse.up();
+  console.log("OK: Esc no meio do arrasto fecha a ficha sem erros");
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("5 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("8 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
