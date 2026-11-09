@@ -1,4 +1,4 @@
-export type Pose = "cabeca";
+export type Pose = "cabeca" | "pata";
 
 const grades: Record<Pose, string[]> = {
   cabeca: [
@@ -18,6 +18,18 @@ const grades: Record<Pose, string[]> = {
     ".k############k.",
     "..kkkkkkkkkkkk..",
     "................",
+  ],
+  pata: [
+    ".k#####k.",
+    ".k#####k.",
+    ".k#####k.",
+    ".k#####k.",
+    "k#######k",
+    "k#p#p#p#k",
+    "k#######k",
+    "k##ppp##k",
+    ".k#####k.",
+    "..kkkkk..",
   ],
 };
 
