@@ -206,6 +206,18 @@ async function executar() {
   assert.equal(await modal.evaluate((el) => el.style.translate), "");
   console.log("OK: de volta ao ponto de partida não sobra translate inline");
 
+  // Num único gesto, partindo do repouso: sai e volta ao ponto exato. O React não muda o style (undefined para undefined), então o hook precisa limpar o translate.
+  await titulo.dblclick();
+  const r = await titulo.boundingBox();
+  const [rx, ry] = [r.x + r.width / 2, r.y + r.height / 2];
+  await page.mouse.move(rx, ry);
+  await page.mouse.down();
+  await page.mouse.move(rx - 120, ry + 40, { steps: 8 });
+  await page.mouse.move(rx, ry, { steps: 8 });
+  await page.mouse.up();
+  assert.equal(await modal.evaluate((el) => el.style.translate), "", "sobrou translate inline após ida e volta no mesmo gesto");
+  console.log("OK: ida e volta no mesmo gesto não deixa translate inline");
+
   // 8. Esc no meio do arrasto: a ficha fecha (desmontando no meio do arrasto) e não há erro JavaScript.
   await campo("Título").focus();
   const t8 = await titulo.boundingBox();
