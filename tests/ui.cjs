@@ -5,8 +5,26 @@ const { chromium } = require("playwright");
 const CONTROLES_SELECT = { Projeto: "projetoId", Status: "status", Prioridade: "prioridade" };
 const escapar = (texto) => texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-function lancarNavegador() {
-  return chromium.launch({ channel: process.env.TEST_BROWSER || "chrome", headless: true });
+// Por padrão a abertura já conta como vista, para as suítes não esperarem os 2,4 s dela.
+async function lancarNavegador({ splash = false } = {}) {
+  const browser = await chromium.launch({ channel: process.env.TEST_BROWSER || "chrome", headless: true });
+  if (splash) return browser;
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async (...args) => {
+    const context = await newContext(...args);
+    await context.addInitScript(() => {
+      try { sessionStorage.setItem("pixel:splash-visto", "1"); } catch {}
+    });
+    return context;
+  };
+  browser.newPage = async (...args) => {
+    const context = await browser.newContext(...args);
+    const page = await context.newPage();
+    const fechar = page.close.bind(page);
+    page.close = async (...opcoes) => { await fechar(...opcoes); await context.close(); };
+    return page;
+  };
+  return browser;
 }
 
 // `escopo` devolve o formulário alvo (o primeiro por padrão; use outro índice com mais de uma instância).

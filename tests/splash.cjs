@@ -44,7 +44,7 @@ async function executar() {
   iniciar(processos, ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
   await Promise.all([pronto(`${api}/tarefas`), pronto(web)]);
 
-  browser = await lancarNavegador();
+  browser = await lancarNavegador({ splash: true });
   const errosJs = [];
   const abrir = async (opcoes = {}) => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...opcoes });
@@ -54,7 +54,7 @@ async function executar() {
     return { context, page, splash: page.locator(".e-splash") };
   };
 
-  // 1. Primeira entrada: aparece, é decorativo, não recebe cliques e some em até 1 s.
+  // 1. Primeira entrada: aparece, é decorativo, recebe cliques e some entre 2 e 3 s.
   {
     const { context, page, splash } = await abrir();
     // Mede dentro da página: inserção, remoção e fim da animação de saída.
@@ -71,15 +71,15 @@ async function executar() {
     await splash.waitFor({ state: "attached", timeout: 5000 });
     const apareceu = Date.now();
     assert.equal(await splash.getAttribute("aria-hidden"), "true");
-    assert.equal(await splash.evaluate((el) => getComputedStyle(el).pointerEvents), "none");
-    await splash.waitFor({ state: "detached", timeout: 1500 });
-    assert.ok(Date.now() - apareceu <= 1000, `splash durou ${Date.now() - apareceu} ms`);
+    assert.equal(await splash.evaluate((el) => getComputedStyle(el).pointerEvents), "auto");
+    await splash.waitFor({ state: "detached", timeout: 3500 });
+    assert.ok(Date.now() - apareceu <= 3000, `splash durou ${Date.now() - apareceu} ms`);
     assert.equal(await page.evaluate(() => sessionStorage.getItem("pixel:splash-visto")), "1");
     const medido = await page.evaluate(() => window.__splash);
     assert.ok(medido.inserido !== null && medido.removido !== null, JSON.stringify(medido));
-    assert.ok(medido.removido - medido.inserido <= 1000, `splash durou ${medido.removido - medido.inserido} ms na página`);
+    assert.ok(medido.removido - medido.inserido >= 2000 && medido.removido - medido.inserido <= 3000, `durou ${medido.removido - medido.inserido} ms na página`);
     assert.equal(medido.animacaoFim, true, "a animação de saída não terminou");
-    console.log("OK: a primeira entrada mostra o splash decorativo, sem capturar cliques, por até 1 s");
+    console.log("OK: a primeira entrada mostra o splash decorativo, por 2 a 3 s, recebendo cliques");
 
     // 2. Recarga na mesma aba: não aparece.
     await page.reload();
@@ -89,15 +89,19 @@ async function executar() {
     await context.close();
   }
 
-  // 3. Clique durante a abertura chega ao app.
+  // 3. Clique durante a abertura pula, sem acionar o app.
   {
     const { context, page, splash } = await abrir();
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached" });
-    assert.equal(await splash.count(), 1);
+    const t0 = Date.now();
+    await page.mouse.click(640, 450);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    assert.ok(Date.now() - t0 <= 600, "o clique não acelerou a saída");
+    assert.equal(await page.getByRole("dialog").count(), 0);
     await page.getByRole("button", { name: "Nova tarefa" }).click();
     await page.getByRole("dialog", { name: "Nova tarefa" }).waitFor();
-    console.log("OK: o clique durante a abertura chega ao app");
+    console.log("OK: o clique durante a abertura pula, sem acionar o app");
     await context.close();
   }
 
@@ -120,10 +124,33 @@ async function executar() {
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached", timeout: 5000 });
     assert.equal(await page.evaluate(() => { try { return sessionStorage === undefined; } catch { return true; } }), true);
-    await splash.waitFor({ state: "detached", timeout: 1500 });
+    await splash.waitFor({ state: "detached", timeout: 3500 });
     await page.locator("main h1").waitFor();
     console.log("OK: com sessionStorage bloqueado o splash aparece, some e não quebra");
     await context.close();
+  }
+
+  // 7. Tecla durante a abertura pula.
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.keyboard.press("Escape");
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    console.log("OK: uma tecla durante a abertura pula");
+    await context.close();
+  }
+
+  // 8. Suíte comum (sem opções) não vê a abertura.
+  {
+    const comum = await lancarNavegador();
+    const context = await comum.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await context.newPage();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await page.locator("main h1").waitFor();
+    assert.equal(await page.locator(".e-splash").count(), 0);
+    await comum.close();
+    console.log("OK: o navegador padrão das suítes não mostra a abertura");
   }
 
   // 6. Contraste e largura nos dois temas, em 320 px.
@@ -148,7 +175,7 @@ async function executar() {
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("6 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("8 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

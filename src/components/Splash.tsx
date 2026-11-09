@@ -11,9 +11,11 @@ function jaVisto() {
   }
 }
 
-// Abertura decorativa: aparece só na primeira carga da sessão e nunca captura cliques.
+// Abertura decorativa: fica 2 s, some em 0,4 s e pode ser pulada com clique ou tecla.
 export function Splash() {
   const [visivel, setVisivel] = useState(() => !matchMedia("(prefers-reduced-motion: reduce)").matches && !jaVisto());
+  const [saindo, setSaindo] = useState(false);
+  const pular = () => setSaindo(true);
 
   useEffect(() => {
     if (!visivel) return;
@@ -23,12 +25,18 @@ export function Splash() {
       // Sem sessionStorage, o splash só aparece de novo na próxima carga.
     }
     // Garantia caso a animação de saída não termine.
-    const timer = setTimeout(() => setVisivel(false), 1000);
+    const timer = setTimeout(() => setVisivel(false), saindo ? 400 : 3000);
     return () => clearTimeout(timer);
+  }, [visivel, saindo]);
+
+  useEffect(() => {
+    if (!visivel) return;
+    window.addEventListener("keydown", pular, { once: true });
+    return () => window.removeEventListener("keydown", pular);
   }, [visivel]);
 
   if (!visivel) return null;
-  return <div className="e-splash" aria-hidden="true" onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair") setVisivel(false); }}>
+  return <div className={saindo ? "e-splash e-splash--saindo" : "e-splash"} aria-hidden="true" onPointerDown={pular} onAnimationEnd={(e) => { if (e.animationName === "e-splash-sair") setVisivel(false); }}>
     <Gatinho escala={6} />
     <span className="e-splash-nome">Pixel</span>
   </div>;
