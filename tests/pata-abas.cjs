@@ -69,7 +69,7 @@ async function executar() {
   const fim = async () => { await pata.first().waitFor({ state: "detached", timeout: 1500 }); };
 
   // 1. Primeira carga em "/": nenhuma pata.
-  await page.goto(`${web}/`); await page.locator("main h1").waitFor(); await page.waitForTimeout(800);
+  await page.goto(`${web}/`); await page.locator("main h1").waitFor(); await aba("Modelagem da Biblioteca").waitFor(); await page.waitForTimeout(500);
   assert.equal(await patas(), 0);
   assert.equal(await pata.count(), 0);
 
@@ -137,14 +137,16 @@ async function executar() {
   // 5. Lista <-> Quadro em "/": nenhuma pata nova.
   await aba("Todas").click();
   await ate("/");
+  await pata.waitFor({ state: "attached" });
   await fim();
   const antes = await patas();
   await page.getByRole("link", { name: "Quadro", exact: true }).click();
   await ate("/quadro");
-  await page.waitForTimeout(400);
+  await page.locator("main h1").waitFor();
   await page.getByRole("link", { name: "Lista", exact: true }).click();
   await ate("/");
-  await page.waitForTimeout(800);
+  await page.locator("main h1").waitFor();
+  await page.waitForTimeout(500);
   assert.equal(await patas(), antes);
   assert.equal(await page.locator(".e-pata").count(), 0);
 
@@ -240,6 +242,28 @@ async function executar() {
       return a.left >= b.left - 1 && a.right <= b.right + 1 && setas.every((r) => a.right <= r.left - 16 + 1 || a.left >= r.right + 16 - 1);
     });
     if (livre !== null) assert.equal(livre, true, "aba focada fica livre das setas");
+  }
+
+  // 9d. Primeiro clique (mouse e toque) numa aba só parcialmente visível navega, sem a aba fugir de baixo do ponteiro.
+  for (const toque of [false, true]) {
+    const p = await novaPagina({ viewport: { width: 375, height: 800 }, hasTouch: toque });
+    await p.goto(`${web}/`); await p.locator("main h1").waitFor(); await p.evaluate(() => document.fonts.ready);
+    const alvoParcial = await p.evaluate(() => {
+      const n = document.querySelector("nav.e-tabs");
+      for (let x = 0; x <= n.scrollWidth; x += 4) {
+        n.scrollLeft = x;
+        const seta = document.querySelector(".e-tabs-seta-dir"); if (!seta) continue;
+        const limite = seta.getBoundingClientRect().left;
+        for (const a of n.querySelectorAll("a")) {
+          const r = a.getBoundingClientRect();
+          if (r.right > limite + 6 && r.left < limite - 30) return { href: a.getAttribute("href"), x: limite - 3, y: r.top + r.height / 2, scroll: n.scrollLeft };
+        }
+      }
+      return null;
+    });
+    assert.ok(alvoParcial, "há uma aba parcialmente visível sob a seta");
+    if (toque) await p.touchscreen.tap(alvoParcial.x, alvoParcial.y); else await p.mouse.click(alvoParcial.x, alvoParcial.y);
+    await p.waitForURL((u) => u.pathname === alvoParcial.href, { timeout: 3000 });
   }
 
   // 10. Abrir direto o último projeto: a aba ativa está inteira na barra e a pata é visível.
