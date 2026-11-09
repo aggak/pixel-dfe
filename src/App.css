@@ -472,3 +472,18 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(hover:hover){.e-card:hover{transform:translateY(-2px)}}
 }
 @keyframes e-surgir{from{opacity:0;transform:translateY(4px)}}
+.e-gato{display:block;flex-shrink:0;overflow:visible}
+:root{--e-gato-contorno:#3d2944;--e-gato-corpo:#8a6596;--e-gato-rosa:#e8a0b8;--e-gato-olho:#2b1f30;--e-gato-brilho:#fdfdfd}
+:root.dark{--e-gato-contorno:#120d16;--e-gato-corpo:#bb91ca;--e-gato-rosa:#f2a7bf;--e-gato-olho:#1b1420;--e-gato-brilho:#fff}
+.e-gato-contorno{fill:var(--e-gato-contorno)}
+.e-gato-corpo{fill:var(--e-gato-corpo)}
+.e-gato-rosa{fill:var(--e-gato-rosa)}
+.e-gato-olho{fill:var(--e-gato-olho)}
+.e-gato-brilho{fill:var(--e-gato-brilho)}
+.e-gato :is(.e-gato-olho,.e-gato-brilho){transform-box:view-box;transform-origin:0 8px}
+.e-logo{display:inline-flex;align-items:center;gap:9px}
+.e-footer-identity>.e-gato{align-self:center}
+@media(prefers-reduced-motion:no-preference){
+.e-logo:hover .e-gato :is(.e-gato-olho,.e-gato-brilho),.e-logo:focus-visible .e-gato :is(.e-gato-olho,.e-gato-brilho){animation:e-gato-piscar .3s ease-in-out}
+}
+@keyframes e-gato-piscar{50%{transform:scaleY(.15)}}
