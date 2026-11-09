@@ -488,3 +488,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-logo:hover .e-gato :is(.e-gato-olho,.e-gato-brilho),.e-logo:focus-visible .e-gato :is(.e-gato-olho,.e-gato-brilho){animation:e-gato-piscar .3s ease-in-out}
 }
 @keyframes e-gato-piscar{50%{transform:scaleY(.15)}}
+.e-gato-olhando{display:block;flex-shrink:0;width:108px;height:108px;margin-bottom:18px;background:var(--e-gato-claro) 0 0/10368px 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-olhando{background-image:var(--e-gato-escuro)}
+@media(prefers-reduced-motion:no-preference){.e-gato-olhando{animation:e-gato-olhando-quadros 8s steps(96) infinite}}
+@keyframes e-gato-olhando-quadros{to{background-position-x:-10368px}}
