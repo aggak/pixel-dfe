@@ -500,3 +500,12 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 :root.dark .e-gato-dormindo{background-image:var(--e-gato-escuro)}
 @media(prefers-reduced-motion:no-preference){.e-gato-dormindo{animation:e-gato-quadros 4s steps(48) infinite}}
 @keyframes e-gato-quadros{to{background-position-x:-5184px}}
+.e-gato-costas{--e-gato-escala:3;display:block;flex-shrink:0;width:calc(36px*var(--e-gato-escala));height:calc(36px*var(--e-gato-escala));margin-bottom:18px;background:var(--e-gato-claro) 0 0/calc(3024px*var(--e-gato-escala)) 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-costas{background-image:var(--e-gato-escuro)}
+.e-load-error-compact .e-gato-costas{--e-gato-escala:2}
+.e-not-found{align-items:center;justify-content:center;text-align:center;gap:12px;padding:65px 20px}
+.e-not-found>.e-gato-costas{margin-bottom:6px}
+.e-not-found>h1{font-size:18px;font-weight:600}
+.e-not-found>a{color:var(--e-action)}
+@media(prefers-reduced-motion:no-preference){.e-gato-costas{animation:e-gato-costas-quadros 7s steps(84) infinite}}
+@keyframes e-gato-costas-quadros{to{background-position-x:calc(-3024px*var(--e-gato-escala))}}
