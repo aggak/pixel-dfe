@@ -66,7 +66,7 @@ async function executar() {
   const patas = () => page.evaluate(() => window.__patas);
   const aba = (nome) => page.locator(".e-tabs").getByRole("link", { name: nome, exact: true });
   const ate = (url) => page.waitForURL((u) => u.pathname === url);
-  const fim = async () => { await pata.first().waitFor({ state: "detached", timeout: 2000 }); };
+  const fim = async () => { await pata.first().waitFor({ state: "detached", timeout: 1500 }); };
 
   // 1. Primeira carga em "/": nenhuma pata.
   await page.goto(`${web}/`); await page.locator("main h1").waitFor(); await page.waitForTimeout(800);
@@ -86,19 +86,46 @@ async function executar() {
   assert.equal(await ativa.getAttribute("data-puxada"), null);
   assert.equal(await patas(), 1);
 
+  // 2b. Folga para o esticão: em repouso a aba fica onde sempre ficou, e durante a animação nunca sai da caixa de rolagem.
+  const topos = () => page.evaluate(() => ({ aba: document.querySelector('.e-tabs a[aria-current="page"]').getBoundingClientRect().top, outra: document.querySelector('.e-tabs a:not([aria-current])').getBoundingClientRect().top, caixa: document.querySelector(".e-tabs").getBoundingClientRect().top }));
+  const repouso = await topos();
+  assert.equal(repouso.aba, repouso.outra);
+  assert.ok(repouso.aba - repouso.caixa >= 5.9, "a caixa das abas tem folga no topo");
+  const semFolga = async (largura) => {
+    const p = await novaPagina({ viewport: { width: largura, height: 800 } });
+    await p.goto(`${web}/`); await p.locator("main h1").waitFor();
+    const ler = () => p.evaluate(() => [document.querySelector(".e-tabs a").getBoundingClientRect().top, document.querySelector("main").getBoundingClientRect().top]);
+    const com = await ler();
+    await p.addStyleTag({ content: ".e-tabs{padding-top:0!important;margin-top:0!important}" });
+    assert.deepEqual(com, await ler(), `abas e página não se mexem com a folga (${largura}px)`);
+  };
+  await semFolga(1280); await semFolga(375);
+
   // 3. Projeto -> projeto (mesma página): anima de novo, na aba nova.
+  const amostra = page.evaluate(() => new Promise((resolve) => {
+    let menor = Infinity; const inicio = performance.now();
+    const passo = () => {
+      const a = document.querySelector('.e-tabs a[aria-current="page"]'); const c = document.querySelector(".e-tabs");
+      if (a && c) menor = Math.min(menor, a.getBoundingClientRect().top - c.getBoundingClientRect().top);
+      if (performance.now() - inicio < 1000) requestAnimationFrame(passo); else resolve(menor);
+    };
+    passo();
+  }));
   await aba("Modelagem da Biblioteca").click();
   await pata.waitFor({ state: "attached" });
   assert.equal(await ativa.locator(".e-pata").count(), 1);
   assert.equal(await ativa.textContent(), "Modelagem da Biblioteca");
   assert.equal(await patas(), 2);
   await fim();
+  assert.ok((await amostra) >= 0, `a aba esticada fica dentro da caixa de rolagem (menor distância: ${await amostra})`);
+  assert.deepEqual(await topos(), repouso);
 
   // 4. Clique em outra aba durante a animação: navega, e no fim há no máximo uma pata, na aba ativa.
   await aba("Gerenciador de Tarefas").click();
   await pata.waitFor({ state: "attached" });
   await aba("Modelagem da Biblioteca").click();
   await ate("/projetos/2");
+  await page.locator('.e-tabs a[aria-current="page"]', { hasText: "Modelagem da Biblioteca" }).waitFor();
   await pata.waitFor({ state: "attached" });
   assert.ok((await pata.count()) <= 1);
   assert.equal(await ativa.locator(".e-pata").count(), 1);
@@ -140,6 +167,7 @@ async function executar() {
     token: getComputedStyle(document.documentElement).getPropertyValue("--e-gato-corpo").trim(),
   }));
   assert.equal(cores.token, "#bb91ca");
+  assert.equal(cores.corpo, "rgb(187, 145, 202)");
   assert.notEqual(cores.corpo, cores.aba);
 
   assert.deepEqual(errosJs, []);

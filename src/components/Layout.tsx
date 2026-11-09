@@ -28,9 +28,11 @@ export function Layout() {
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
   const { puxada, encerrar } = useTrocaDeAba(atual ?? "todas");
   // A patinha mora dentro da aba ativa: o recorte da aba faz parte do efeito.
-  const pata = (ativa: boolean) => ativa && puxada > 0 ? { "data-puxada": "" } : {};
-  const patinha = (ativa: boolean) => ativa && puxada > 0 && <span key={puxada} className="e-pata" aria-hidden="true" onAnimationEnd={(e) => e.animationName === "e-pata-puxar" && encerrar()}><Gatinho pose="pata" escala={2} /></span>;
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined} {...pata(!atual)}>Todas{patinha(!atual)}</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined} {...pata(atual === projeto.id)}>{projeto.nome}{patinha(atual === projeto.id)}</Link>)}</nav>;
+  const marca = (ativa: boolean) => ativa && puxada > 0 ? { "data-puxada": "" } : {};
+  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined} {...marca(!atual)}>Todas{!atual && puxada > 0 && <PataPuxando chave={puxada} onFim={encerrar} />}</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined} {...marca(atual === projeto.id)}>{projeto.nome}{atual === projeto.id && puxada > 0 && <PataPuxando chave={puxada} onFim={encerrar} />}</Link>)}</nav>;
+}
+function PataPuxando({ chave, onFim }: { chave: number; onFim: () => void }) {
+  return <span key={chave} className="e-pata" aria-hidden="true" onAnimationEnd={(e) => e.animationName === "e-pata-puxar" && onFim()}><Gatinho pose="pata" escala={2} /></span>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.

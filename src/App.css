@@ -14,7 +14,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-top nav{display:flex;gap:22px;align-items:center}
 .e-top nav :is(button,a){background:transparent;color:var(--e-muted);border:0;padding:8px 0 6px;font-size:14px;border-bottom:2px solid transparent}
 .e-top nav :is(button,a)[aria-current]{border-color:var(--e-action);color:var(--e-action)}
-.e-tabs{display:flex;gap:0;margin-bottom:-1px;z-index:1;align-items:end;padding-left:8px;overflow:auto;scrollbar-width:none}
+.e-tabs{display:flex;gap:0;margin-bottom:-1px;padding-top:6px;margin-top:-6px;z-index:1;align-items:end;padding-left:8px;overflow:auto;scrollbar-width:none}
 .e-tabs :is(button,a){border:1px solid transparent;background:transparent;color:var(--e-muted);padding:13px 20px;min-height:44px;white-space:nowrap;border-radius:12px 12px 0 0;font-size:14px}
 .e-tabs :is(button,a)[aria-current]{color:var(--e-action);border-color:var(--e-line);border-bottom-color:var(--e-sheet);background:var(--e-sheet)}
 .e-sheet{border:1px solid var(--e-line);border-radius:12px;display:flex;flex-direction:column;background:var(--e-sheet);min-height:calc(100dvh - 150px);overflow:clip;flex:1}
