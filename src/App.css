@@ -447,3 +447,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
 @media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
+.e-gato-carregando{display:block;flex-shrink:0;width:108px;height:108px;background:var(--e-gato-claro) 0 0/1512px 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-carregando{background-image:var(--e-gato-escuro)}
+@media(prefers-reduced-motion:no-preference){.e-gato-carregando{animation:e-gato-carregando-quadros calc(14s/12) steps(14) infinite}}
+@keyframes e-gato-carregando-quadros{to{background-position-x:-1512px}}
