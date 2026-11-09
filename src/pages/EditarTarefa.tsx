@@ -6,6 +6,7 @@ import { atualizarTarefa, buscarTarefa, ErroApi } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa } from "../tipos";
+import { GatinhoCochilando } from "../components/GatinhoCochilando";
 
 export function EditarTarefa() {
   const { id = "" } = useParams();
@@ -33,7 +34,10 @@ export function EditarTarefa() {
     <>
       {carregando && <p className="e-ficha-state" role="status">Carregando tarefa...</p>}
       {erro instanceof ErroApi && erro.status === 404 && (
-        <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
+        <>
+          <div className="e-ficha-gato"><GatinhoCochilando /></div>
+          <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
+        </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
         <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={tentarDeNovo} tentando={tentando} />

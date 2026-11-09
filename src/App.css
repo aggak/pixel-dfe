@@ -473,3 +473,10 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 :root.dark .e-gato-lavando{background-image:var(--e-gato-escuro)}
 @media(prefers-reduced-motion:no-preference){.e-gato-lavando{animation:e-gato-lavando-quadros 8s steps(96) infinite}}
 @keyframes e-gato-lavando-quadros{to{background-position-x:-6912px}}
+.e-gato-cochilando{--e-gato-escala:3;display:block;flex-shrink:0;width:calc(36px*var(--e-gato-escala));height:calc(36px*var(--e-gato-escala));background:var(--e-gato-claro) 0 0/calc(3456px*var(--e-gato-escala)) 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-cochilando{background-image:var(--e-gato-escuro)}
+.e-load-error>.e-gato-cochilando{margin-bottom:18px}
+.e-ficha-gato{display:flex;justify-content:center;padding:18px 18px 8px}
+.e-ficha-gato>.e-gato-cochilando{--e-gato-escala:2}
+@media(prefers-reduced-motion:no-preference){.e-gato-cochilando{animation:e-gato-cochilando-quadros 8s steps(96) infinite}}
+@keyframes e-gato-cochilando-quadros{to{background-position-x:calc(-3456px*var(--e-gato-escala))}}
