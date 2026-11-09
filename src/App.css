@@ -65,7 +65,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-status-em-revisao{background:var(--e-mark)!important;color:var(--e-action)!important;--tw-ring-color:#d8c4df!important}
 .dark .e-status-em-revisao{--tw-ring-color:#6b5178!important}
 .e-status-em-andamento svg,.e-status-em-revisao svg,.e-status-concluida svg{color:inherit!important}
-.e-status-concluida{background:#edf4ef!important;color:#40684d!important;--tw-ring-color:#c9ddce!important}
+.e-status-concluida{background:#edf4ef!important;color:#40684d!important;--tw-ring-color:#c9ddce!important;gap:4px}
+.e-status-concluida>.e-paw{width:8px;height:8px;flex-shrink:0;transform-box:fill-box;transform-origin:center}
 .dark .e-status-concluida{background:#24382e!important;color:#a6c8b1!important;--tw-ring-color:#456451!important}
 .e-status-a-fazer{background:var(--e-sheet)!important;color:var(--e-muted)!important;--tw-ring-color:var(--e-line)!important}
 .e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted)}
