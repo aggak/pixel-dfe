@@ -509,3 +509,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-not-found>a{color:var(--e-action)}
 @media(prefers-reduced-motion:no-preference){.e-gato-costas{animation:e-gato-costas-quadros 7s steps(84) infinite}}
 @keyframes e-gato-costas-quadros{to{background-position-x:calc(-3024px*var(--e-gato-escala))}}
+.e-gato-carregando{display:block;flex-shrink:0;width:108px;height:108px;background:var(--e-gato-claro) 0 0/1512px 100% no-repeat;image-rendering:pixelated}
+:root.dark .e-gato-carregando{background-image:var(--e-gato-escuro)}
+@media(prefers-reduced-motion:no-preference){.e-gato-carregando{animation:e-gato-carregando-quadros calc(14s/12) steps(14) infinite}}
+@keyframes e-gato-carregando-quadros{to{background-position-x:-1512px}}
