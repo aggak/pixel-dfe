@@ -1,6 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { NavLink, Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTrocaDeAba } from "../hooks/useTrocaDeAba";
+import { alinharAba, useRolagemAbas } from "../hooks/useRolagemAbas";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto } from "../tipos";
@@ -25,7 +27,25 @@ export function Layout() {
   </div>;
 }
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
-  return <nav className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}>Todas</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}>{projeto.nome}</Link>)}</nav>;
+  const { puxada, encerrar } = useTrocaDeAba(atual ?? "todas");
+  const barra = useRef<HTMLElement>(null);
+  const { temEsquerda, temDireita, rolar } = useRolagemAbas(barra, projetos.dados);
+  // A aba ativa precisa estar inteira à vista: é nela que a patinha aparece.
+  useLayoutEffect(() => {
+    const alinhar = () => { const aba = barra.current?.querySelector('[aria-current="page"]'); if (barra.current && aba) alinharAba(barra.current, aba); };
+    alinhar();
+    // Quando a fonte da página termina de carregar as abas mudam de largura; refaz o alinhamento se ninguém rolou a barra no meio tempo.
+    const posicao = barra.current?.scrollLeft;
+    let ativo = true;
+    document.fonts?.ready.then(() => { if (ativo && barra.current?.scrollLeft === posicao) alinhar(); });
+    return () => { ativo = false; };
+  }, [atual, projetos.dados]);
+  // A patinha mora dentro da aba ativa: o recorte da aba faz parte do efeito.
+  const marca = (ativa: boolean) => ativa && puxada > 0 ? { "data-puxada": "" } : {};
+  return <div className="e-tabs-barra">{temEsquerda && <button type="button" className="e-tabs-seta e-tabs-seta-esq" tabIndex={-1} aria-label="Mostrar projetos à esquerda" onClick={() => rolar(-1)}><Icon name="angle-small-left" /></button>}<nav ref={barra} className="e-tabs" aria-label="Projetos" onFocus={(e) => { if (barra.current && e.target.matches(":focus-visible")) alinharAba(barra.current, e.target); }}><Link to="/" aria-current={!atual ? "page" : undefined} {...marca(!atual)}>Todas{!atual && puxada > 0 && <PataPuxando chave={puxada} onFim={encerrar} />}</Link>{projetos.carregando && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{projetos.dados?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined} {...marca(atual === projeto.id)}>{projeto.nome}{atual === projeto.id && puxada > 0 && <PataPuxando chave={puxada} onFim={encerrar} />}</Link>)}</nav>{temDireita && <button type="button" className="e-tabs-seta e-tabs-seta-dir" tabIndex={-1} aria-label="Mostrar projetos à direita" onClick={() => rolar(1)}><Icon name="angle-small-right" /></button>}</div>;
+}
+function PataPuxando({ chave, onFim }: { chave: number; onFim: () => void }) {
+  return <span key={chave} className="e-pata" aria-hidden="true" onAnimationEnd={(e) => e.animationName === "e-pata-puxar" && onFim()}><Gatinho pose="pata" escala={2} /></span>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.

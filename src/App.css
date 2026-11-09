@@ -14,7 +14,15 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-top nav{display:flex;gap:22px;align-items:center}
 .e-top nav :is(button,a){background:transparent;color:var(--e-muted);border:0;padding:8px 0 6px;font-size:14px;border-bottom:2px solid transparent}
 .e-top nav :is(button,a)[aria-current]{border-color:var(--e-action);color:var(--e-action)}
-.e-tabs{display:flex;gap:0;margin-bottom:-1px;z-index:1;align-items:end;padding-left:8px;overflow:auto;scrollbar-width:none}
+.e-tabs-barra{position:relative;display:flex;align-items:end;margin-bottom:-1px;z-index:1}
+.e-tabs{display:flex;gap:0;flex:1;min-width:0;padding-top:6px;margin-top:-6px;align-items:end;padding-left:8px;overflow:auto;scrollbar-width:none;scroll-padding-inline:60px}
+.e-tabs-seta{position:absolute;z-index:2;bottom:1px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:0;padding:0;background:var(--e-back);color:var(--e-muted);font-size:18px}
+.e-tabs-seta-esq{left:0}
+.e-tabs-seta-dir{right:0}
+.e-tabs-seta:hover{color:var(--e-ink)}
+.e-tabs-seta::after{content:"";position:absolute;top:0;bottom:0;width:16px;pointer-events:none}
+.e-tabs-seta-dir::after{right:100%;background:linear-gradient(to right,transparent,var(--e-back))}
+.e-tabs-seta-esq::after{left:100%;background:linear-gradient(to left,transparent,var(--e-back))}
 .e-tabs :is(button,a){border:1px solid transparent;background:transparent;color:var(--e-muted);padding:13px 20px;min-height:44px;white-space:nowrap;border-radius:12px 12px 0 0;font-size:14px}
 .e-tabs :is(button,a)[aria-current]{color:var(--e-action);border-color:var(--e-line);border-bottom-color:var(--e-sheet);background:var(--e-sheet)}
 .e-sheet{border:1px solid var(--e-line);border-radius:12px;display:flex;flex-direction:column;background:var(--e-sheet);min-height:calc(100dvh - 150px);overflow:clip;flex:1}
@@ -527,3 +535,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card[data-arrastando]{opacity:.45}
 .e-column[data-alvo-soltar]{outline:2px dashed var(--e-control);outline-offset:6px;border-radius:12px}
 @media(hover:hover){.e-card[draggable=true]{cursor:grab}}
+
+.e-tabs a{position:relative}
+.e-pata{position:absolute;top:0;left:50%;pointer-events:none;line-height:0;translate:-50% -100%;animation:e-pata-puxar .7s ease-in-out forwards}
+.e-tabs a[data-puxada]{transform-origin:bottom;animation:e-aba-puxada .7s ease-in-out}
+@keyframes e-pata-puxar{30%{translate:-50% -40%}55%{translate:-50% -55%}100%{translate:-50% -100%}}
+@keyframes e-aba-puxada{30%{scale:1 1}55%{scale:1 1.08}100%{scale:1 1}}
