@@ -4,6 +4,7 @@ import { useLocation, useNavigate, type Location } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
+import { useArrastarFicha } from "../hooks/useArrastarFicha";
 import { ContextoFicha, ehRotaFicha, type EstadoFicha } from "./ficha-contexto";
 
 function Presenca({ aoSair, children }: { aoSair: () => void; children: ReactNode }) {
@@ -38,6 +39,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     }
   }, [location.pathname]);
   const casca = useRef<HTMLDivElement>(null);
+  const { deslocamento, arrastando, propsAlca } = useArrastarFicha(casca);
   const ultimoFoco = useRef<HTMLElement | null>(null);
   const eraOcupada = useRef(false);
   useEffect(() => {
@@ -84,9 +86,9 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
   const fechar = () => { if (!ocupada) navegar(destinoFechar); };
   return <ContextoFicha.Provider value={{ navegar, fechar, setOcupada }}>
     <ModalOverlay isOpen={aberta} onOpenChange={(valor) => { if (!valor) fechar(); }} isDismissable={!ocupada} isKeyboardDismissDisabled={ocupada} className={`e-form-overlay${desfocarFundo ? " e-form-overlay--desfoque" : ""}`}>
-      <Modal className="e-form-modal"><Dialog aria-label={titulo} className="e-form-dialog">
+      <Modal className="e-form-modal" style={{ translate: `${deslocamento.x}px ${deslocamento.y}px` }} data-arrastando={arrastando || undefined}><Dialog aria-label={titulo} className="e-form-dialog">
         <Presenca aoSair={concluirSaida}><div className="e-form-shell" ref={casca} onFocusCapture={(e) => { ultimoFoco.current = e.target as HTMLElement; }} aria-busy={ocupada}>
-          <header className="e-form-header"><div className="e-form-symbol"><Icon name={icone} /></div><Heading slot="title">{titulo}</Heading><Button color="tertiary" size="sm" aria-label={`Fechar ${titulo.toLocaleLowerCase("pt-BR")}`} onClick={fechar} isDisabled={ocupada}><Icon name="cross-small" /></Button></header>
+          <header className="e-form-header" {...propsAlca}><div className="e-form-symbol"><Icon name={icone} /></div><Heading slot="title">{titulo}</Heading><Button color="tertiary" size="sm" aria-label={`Fechar ${titulo.toLocaleLowerCase("pt-BR")}`} onClick={fechar} isDisabled={ocupada}><Icon name="cross-small" /></Button></header>
           <div className="e-ficha-content" key={location.pathname + location.search}>{children}</div>
         </div></Presenca>
       </Dialog></Modal>

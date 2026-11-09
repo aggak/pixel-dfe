@@ -516,3 +516,4 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 
 .e-form-overlay.e-form-overlay--desfoque{backdrop-filter:blur(3px)!important}
 @media(prefers-reduced-motion:no-preference){.e-form-overlay{transition:backdrop-filter .2s ease}}
+@media(min-width:651px){.e-form-header{cursor:grab;touch-action:none;user-select:none}.e-form-header button{cursor:pointer}.e-form-modal[data-arrastando] .e-form-header{cursor:grabbing}}
