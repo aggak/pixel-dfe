@@ -44,7 +44,7 @@ async function executar() {
   iniciar(processos, ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
   await Promise.all([pronto(`${api}/tarefas`), pronto(web)]);
 
-  browser = await lancarNavegador();
+  browser = await lancarNavegador({ splash: true });
   const errosJs = [];
   const abrir = async (opcoes = {}) => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, ...opcoes });
@@ -54,7 +54,7 @@ async function executar() {
     return { context, page, splash: page.locator(".e-splash") };
   };
 
-  // 1. Primeira entrada: aparece, é decorativo, não recebe cliques e some em até 1 s.
+  // 1. Primeira entrada: aparece, é decorativo, recebe cliques e some entre 2 e 3 s.
   {
     const { context, page, splash } = await abrir();
     // Mede dentro da página: inserção, remoção e fim da animação de saída.
@@ -71,15 +71,15 @@ async function executar() {
     await splash.waitFor({ state: "attached", timeout: 5000 });
     const apareceu = Date.now();
     assert.equal(await splash.getAttribute("aria-hidden"), "true");
-    assert.equal(await splash.evaluate((el) => getComputedStyle(el).pointerEvents), "none");
-    await splash.waitFor({ state: "detached", timeout: 1500 });
-    assert.ok(Date.now() - apareceu <= 1000, `splash durou ${Date.now() - apareceu} ms`);
+    assert.equal(await splash.evaluate((el) => getComputedStyle(el).pointerEvents), "auto");
+    await splash.waitFor({ state: "detached", timeout: 3500 });
+    assert.ok(Date.now() - apareceu <= 3000, `splash durou ${Date.now() - apareceu} ms`);
     assert.equal(await page.evaluate(() => sessionStorage.getItem("pixel:splash-visto")), "1");
     const medido = await page.evaluate(() => window.__splash);
     assert.ok(medido.inserido !== null && medido.removido !== null, JSON.stringify(medido));
-    assert.ok(medido.removido - medido.inserido <= 1000, `splash durou ${medido.removido - medido.inserido} ms na página`);
+    assert.ok(medido.removido - medido.inserido >= 2000 && medido.removido - medido.inserido <= 3000, `durou ${medido.removido - medido.inserido} ms na página`);
     assert.equal(medido.animacaoFim, true, "a animação de saída não terminou");
-    console.log("OK: a primeira entrada mostra o splash decorativo, sem capturar cliques, por até 1 s");
+    console.log("OK: a primeira entrada mostra o splash decorativo, por 2 a 3 s, recebendo cliques");
 
     // 2. Recarga na mesma aba: não aparece.
     await page.reload();
@@ -89,15 +89,24 @@ async function executar() {
     await context.close();
   }
 
-  // 3. Clique durante a abertura chega ao app.
+  // 3. Clique durante a abertura pula, sem acionar o app.
   {
     const { context, page, splash } = await abrir();
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached" });
-    assert.equal(await splash.count(), 1);
+    await page.waitForTimeout(300);
+    const t0 = Date.now();
+    await page.mouse.click(640, 450);
+    await page.waitForTimeout(100);
+    assert.equal(await splash.count(), 1, "o splash sumiu sem esmaecer");
+    const opacidade = await splash.evaluate((el) => Number(getComputedStyle(el).opacity));
+    assert.ok(opacidade > 0 && opacidade < 1, `opacidade ${opacidade} não está esmaecendo`);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    assert.ok(Date.now() - t0 <= 600, "o clique não acelerou a saída");
+    assert.equal(await page.getByRole("dialog").count(), 0);
     await page.getByRole("button", { name: "Nova tarefa" }).click();
     await page.getByRole("dialog", { name: "Nova tarefa" }).waitFor();
-    console.log("OK: o clique durante a abertura chega ao app");
+    console.log("OK: o clique durante a abertura pula, sem acionar o app");
     await context.close();
   }
 
@@ -120,7 +129,7 @@ async function executar() {
     await page.goto(`${web}/quadro`, { waitUntil: "commit" });
     await splash.waitFor({ state: "attached", timeout: 5000 });
     assert.equal(await page.evaluate(() => { try { return sessionStorage === undefined; } catch { return true; } }), true);
-    await splash.waitFor({ state: "detached", timeout: 1500 });
+    await splash.waitFor({ state: "detached", timeout: 3500 });
     await page.locator("main h1").waitFor();
     console.log("OK: com sessionStorage bloqueado o splash aparece, some e não quebra");
     await context.close();
@@ -145,10 +154,112 @@ async function executar() {
   }
   console.log("OK: o nome tem contraste nos dois temas e o splash cabe em 320 px");
 
+  // 7. Tecla durante a abertura pula.
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.keyboard.press("Escape");
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    console.log("OK: uma tecla durante a abertura pula");
+    await context.close();
+  }
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    await page.keyboard.press("Tab");
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    assert.equal(await page.evaluate(() => document.activeElement !== document.body), true, "o Tab não moveu o foco para o app");
+    console.log("OK: Tab durante a abertura pula e move o foco para o app");
+    await context.close();
+  }
+
+  // 8. Suíte comum (sem opções) não vê a abertura.
+  {
+    const comum = await lancarNavegador();
+    const context = await comum.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await context.newPage();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await page.locator("main h1").waitFor();
+    assert.equal(await page.locator(".e-splash").count(), 0);
+    await comum.close();
+    console.log("OK: o navegador padrão das suítes não mostra a abertura");
+  }
+
+  // 9. Toque durante a abertura pula e o toque não chega ao botão de baixo.
+  {
+    const { context, page, splash } = await abrir({ hasTouch: true, viewport: { width: 375, height: 800 } });
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    const botao = page.getByRole("button", { name: "Nova tarefa" });
+    await botao.waitFor({ state: "attached" });
+    const caixa = await botao.boundingBox();
+    await page.touchscreen.tap(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByRole("dialog").count(), 0, "o toque vazou para o botão de baixo");
+    console.log("OK: o toque durante a abertura pula, sem acionar o app");
+    await context.close();
+  }
+
+  // 10. Clique durante a saída automática: some, sem acionar o app nem gerar erro.
+  {
+    const { context, page, splash } = await abrir();
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    // Espera o esmaecer automático começar (opacidade já abaixo de 1), sem depender de um instante fixo.
+    await page.waitForFunction(() => { const el = document.querySelector(".e-splash"); return !!el && Number(getComputedStyle(el).opacity) < 0.95; }, null, { polling: "raf", timeout: 5000 });
+    await page.evaluate(() => {
+      window.__ops = [];
+      const el = document.querySelector(".e-splash");
+      const amostrar = () => { if (el.isConnected) { window.__ops.push(Number(getComputedStyle(el).opacity)); requestAnimationFrame(amostrar); } };
+      amostrar();
+    });
+    await page.waitForTimeout(50);
+    assert.equal(await splash.count(), 1, "o splash sumiu antes do clique; o cenário não testou nada");
+    await page.mouse.click(640, 450);
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(200);
+    assert.equal(await page.getByRole("dialog").count(), 0);
+    const ops = await page.evaluate(() => window.__ops);
+    assert.ok(ops.length > 3 && ops[0] < 1, `fora da janela do esmaecer: ${ops.slice(0, 3)}`);
+    for (let k = 1; k < ops.length; k++) assert.ok(ops[k] <= ops[k - 1] + 1e-6, `a opacidade subiu: ${ops[k - 1]} -> ${ops[k]}`);
+    console.log("OK: clicar durante a saída automática não trava nem aciona o app");
+    await context.close();
+  }
+
+  // 11. Toque longo (350 ms) durante a abertura pula e não chega ao botão de baixo.
+  {
+    const { context, page, splash } = await abrir({ hasTouch: true, viewport: { width: 375, height: 800 } });
+    // O botão do app só abre a ficha com pointerdown nele mesmo; por isso confere também onde o click caiu.
+    await context.addInitScript(() => {
+      window.__cliques = [];
+      document.addEventListener("click", (e) => window.__cliques.push(!!e.target.closest?.(".e-splash")), true);
+    });
+    await page.goto(`${web}/quadro`, { waitUntil: "commit" });
+    await splash.waitFor({ state: "attached" });
+    const botao = page.getByRole("button", { name: "Nova tarefa" });
+    await botao.waitFor({ state: "attached" });
+    const caixa = await botao.boundingBox();
+    const ponto = [{ x: caixa.x + caixa.width / 2, y: caixa.y + caixa.height / 2 }];
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: ponto });
+    await page.waitForTimeout(350);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await splash.waitFor({ state: "detached", timeout: 1000 });
+    await page.waitForTimeout(300);
+    assert.equal(await page.getByRole("dialog").count(), 0, "o toque longo vazou para o botão de baixo");
+    const cliques = await page.evaluate(() => window.__cliques);
+    assert.ok(cliques.length > 0 && cliques.every(Boolean), `o click do toque longo caiu fora da abertura: ${JSON.stringify(cliques)}`);
+    console.log("OK: o toque longo durante a abertura pula, sem acionar o app");
+    await context.close();
+  }
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("6 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("11 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

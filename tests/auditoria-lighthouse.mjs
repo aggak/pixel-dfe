@@ -70,7 +70,7 @@ async function auditar() {
         for (const [tema, esquema] of temas) {
           const arquivo = join(saida, `${pagina}-${dispositivo}-${tema}.json`);
           await executarArquivo("npx", ["--yes", "lighthouse@13.6.0", `${web}${caminho}`, "--only-categories=accessibility", "--output=json", `--output-path=${arquivo}`, "--quiet",
-            `--chrome-flags="--headless=new --blink-settings=preferredColorScheme=${esquema}"`, ...extras], { cwd: raiz, shell: true, maxBuffer: 64 * 1024 * 1024 });
+            `--chrome-flags="--headless=new --force-prefers-reduced-motion --blink-settings=preferredColorScheme=${esquema}"`, ...extras], { cwd: raiz, shell: true, maxBuffer: 64 * 1024 * 1024 });
           const relatorio = JSON.parse(await readFile(arquivo, "utf8"));
           const falhas = Object.values(relatorio.audits).filter((audit) => audit.score === 0 && audit.scoreDisplayMode === "binary").map((audit) => `${audit.id} (${audit.details?.items?.length ?? 0})`);
           const nota = Math.round(relatorio.categories.accessibility.score * 100);
