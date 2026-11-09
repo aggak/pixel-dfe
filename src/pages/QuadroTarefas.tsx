@@ -4,6 +4,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
+import { GatinhoLavando } from "../components/GatinhoLavando";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
 import { AbasProjetos, AlternarVisao, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
@@ -56,7 +57,7 @@ export function QuadroTarefas() {
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasFiltradas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
         <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
         {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
-        {coluna.tarefas.length === 0 && <p className="e-column-empty">Nenhuma tarefa</p>}
+        {coluna.tarefas.length === 0 && <p className="e-column-empty"><GatinhoLavando />Nenhuma tarefa</p>}
       </section>)}</section>)}
   </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasFiltradas.length} {tarefasFiltradas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
 }
