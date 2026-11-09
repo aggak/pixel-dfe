@@ -6,6 +6,7 @@ import { atualizarTarefa, buscarTarefa, ErroApi } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa } from "../tipos";
+import { GatinhoAbanando } from "../components/GatinhoAbanando";
 
 export function EditarTarefa() {
   const { id = "" } = useParams();
@@ -31,7 +32,7 @@ export function EditarTarefa() {
 
   return (
     <>
-      {carregando && <p className="e-ficha-state" role="status">Carregando tarefa...</p>}
+      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando tarefa...</p></>}
       {erro instanceof ErroApi && erro.status === 404 && (
         <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
       )}
