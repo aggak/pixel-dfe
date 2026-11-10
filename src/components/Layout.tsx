@@ -8,6 +8,7 @@ import { GatinhoDormindo } from "./GatinhoDormindo";
 import { GatinhoOlhando } from "./GatinhoOlhando";
 import { GatinhoCostas } from "./GatinhoCostas";
 import { GatinhoCarregando } from "./GatinhoCarregando";
+import { MarcaRodape } from "./MarcaRodape";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -20,7 +21,7 @@ export function Layout() {
   return <div id="pixel-encaixe" className="e-app">
     <header className="e-top"><Link className="e-logo" to="/">Pixel</Link><nav aria-label="Navegação principal"><Link to="/" aria-current={emTarefas ? "page" : undefined}>Tarefas</Link><NavLink to="/projetos">Projetos</NavLink></nav></header>
     <Outlet />
-    <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><strong>Pixel</strong><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.flaticon.com/uicons" target="_blank" rel="noreferrer">Uicons por Flaticon</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
+    <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.flaticon.com/uicons" target="_blank" rel="noreferrer">Uicons por Flaticon</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
   </div>;
 }
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
