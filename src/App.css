@@ -429,6 +429,27 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
      do texto, que muda quando a Commissioner não carrega. O desenho e o anel de foco ficam no texto. */
   .e-project-card h2 a,.e-read-project>a{position:relative}
   .e-project-card h2 a::after,.e-read-project>a::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
+@media(min-width:1140px) and (max-width:1439.98px){.e-project-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.e-project-card{display:flex;flex-direction:column;min-width:0;padding:18px}
+.e-project-card h2{margin:0 0 5px;font-size:18px;line-height:1.4}
+.e-project-card>p{min-height:0;margin:0 0 14px;overflow-wrap:anywhere}
+.e-project-card>p:empty{display:none}
+.e-trilha{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:22px;margin-bottom:10px}
+.e-trilha-passos{display:flex;align-items:flex-start;gap:2px;height:22px;color:var(--e-action)}
+.e-trilha-passos svg{display:block;flex:0 0 16px;width:16px;height:16px;shape-rendering:crispEdges}
+.e-trilha-passos svg:nth-child(even){margin-top:6px}
+.e-trilha-falta{color:color-mix(in srgb,var(--e-muted) 54%,var(--e-sheet))}
+.e-trilha-contagem{color:var(--e-muted);font-size:12px;line-height:1.5}
+.e-trilha-contagem strong{color:var(--e-ink);font-weight:500;font-variant-numeric:tabular-nums}
+.e-trilha-nota{display:block;font-size:11px}
+.e-project-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 12px;margin-top:auto;padding-top:10px;border-top:1px solid var(--e-line)}
+.e-project-discipline{color:var(--e-muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.e-project-card-actions{flex-shrink:0;gap:6px;margin-left:auto}
+.e-project-card-actions>button{min-height:36px;font-size:12px}
+.e-project-card :is(a,button):focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
+@media(max-width:850px){.e-project-card{padding:16px}}
+@media(max-width:650px){.e-project-card h2{font-size:17px}.e-project-card-actions>button{min-height:44px;padding-inline:10px}}
+@media(max-width:350px){.e-trilha{flex-direction:column;align-items:flex-start}}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
 /* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
 .e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
