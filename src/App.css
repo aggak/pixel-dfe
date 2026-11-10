@@ -344,6 +344,14 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-footer-links{display:flex;align-items:center;flex-wrap:wrap;column-gap:16px;margin-left:auto;min-width:0}
 .e-footer-links a{display:inline-flex;align-items:center;min-height:24px;color:var(--e-muted);text-decoration:underline;text-decoration-color:var(--e-line);text-underline-offset:3px;white-space:nowrap}
 .e-footer-links a:hover{color:var(--e-ink);text-decoration-color:var(--e-control)}
+.e-footer-identity{align-items:center;min-height:20px}
+.e-footer-identity>span{line-height:20px}
+.e-footer-identity .e-footer-marca{display:inline-flex;flex:none;width:62px;height:18px;margin:0;line-height:1}
+.e-footer-palavra{display:block;width:62px;height:18px;background:var(--e-rodape-marca-claro) 0 0/62px 18px no-repeat;image-rendering:pixelated}
+:root.dark .e-footer-palavra{background-image:var(--e-rodape-marca-escuro)}
+.e-footer-nome{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.e-footer .e-footer-context{font-size:11px}
+.e-footer-links a:focus-visible{outline-offset:2px;border-radius:2px}
 @media(max-width:650px){
 .e-footer{gap:5px;padding-top:11px}
 .e-footer-row{gap:3px 14px}
