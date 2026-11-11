@@ -408,6 +408,16 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card-done{background:color-mix(in srgb,var(--e-back) 35%,var(--e-sheet));box-shadow:none}
 .e-card-done .e-task-title{color:var(--e-muted)}
 .e-card-done .e-priority{color:var(--e-muted)!important;background:transparent!important}
+:is(.e-card,.e-project-card):has(:focus-visible){border-color:color-mix(in srgb,var(--e-action) 55%,var(--e-line));box-shadow:0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
+.e-card-high:has(:focus-visible){box-shadow:inset 3px 0 0 var(--e-error),0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
+@media(hover:hover) and (pointer:fine){
+:is(.e-card,.e-project-card):hover{border-color:color-mix(in srgb,var(--e-action) 55%,var(--e-line));box-shadow:0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
+.e-card-high:hover{box-shadow:inset 3px 0 0 var(--e-error),0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
+}
+@media(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
+:is(.e-card,.e-project-card){transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.e-card:hover{transform:translateY(-2px)}
+}
 @media(min-width:1600px){.e-board{gap:22px}}
 @media(max-width:850px){.e-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}}
 @media(max-width:650px){
