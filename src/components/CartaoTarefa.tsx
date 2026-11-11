@@ -30,7 +30,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const estado = { fundo: location };
   const emQuadro = variante === "quadro";
   const concluida = tarefa.status === "concluida";
-  const classe = emQuadro ? `e-task e-card${!concluida && tarefa.prioridade === "alta" ? " e-card-high" : ""}${concluida ? " e-card-done" : ""}` : "e-task e-row";
+  const classe = emQuadro ? `e-task e-card${concluida ? " e-card-done" : ""}` : "e-task e-row";
   const SeloStatus = concluida ? BadgeWithIcon : BadgeWithDot;
   const tagStatus = <SeloStatus key="status" type="pill-color" size="sm" iconLeading={PawIcon} color={concluida ? "success" : tarefa.status === "a-fazer" ? "gray" : "brand"} className={`e-status e-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</SeloStatus>;
   const mudar = async (status: Status) => {
