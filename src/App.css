@@ -398,12 +398,32 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-column-name{display:flex;align-items:center;gap:8px;min-width:0}
 .e-column-name>.e-uicon{width:14px;height:14px;color:var(--e-muted);font-size:14px}
 .e-column-empty{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0;padding:18px 2px;color:var(--e-muted);font-size:12px}
-.e-card{position:relative;background:var(--e-sheet);border:1px solid var(--e-line);border-radius:9px;margin-bottom:12px;padding:13px 14px;box-shadow:0 2px 2px #49334b08}
-.e-card .e-task-heading{gap:6px;padding-right:26px}
-.e-card .e-task-menu{position:absolute;top:9px;right:8px}
-.e-card .e-task-title{font-size:15px}
-.e-card .e-task-meta{flex-wrap:wrap;gap:16px;row-gap:9px;margin-top:12px}
-.e-card .e-task-tags{flex-wrap:wrap;justify-content:space-between;gap:8px;margin-top:20px}
+.e-card{position:relative;background:var(--e-sheet);border:1px solid var(--e-line);border-radius:9px;margin-bottom:12px;padding:12px 14px;box-shadow:0 2px 2px #49334b08}
+.e-card .e-task-heading{gap:6px;padding-right:28px}
+.e-card .e-task-menu{position:absolute;top:8px;right:6px}
+.e-card .e-task-title{display:block;min-width:0;font-size:15px;line-height:21px}
+.e-card-contexto{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-top:5px}
+.e-card .e-task-project{display:block;min-width:0;margin:0;font-size:11px;line-height:16px;overflow-wrap:anywhere}
+.e-card .e-status-trigger{flex:none;min-height:28px;margin:0 -4px 0 0;padding:4px;border-radius:5px}
+.e-card .e-status-trigger:hover,.e-card .e-status-trigger[aria-expanded=true]{background:var(--e-back)}
+.e-card-status{display:inline-flex;align-items:center;gap:3px;color:var(--e-muted);font-size:12px;line-height:18px;white-space:nowrap}
+.e-card-status>.e-uicon{width:14px;height:14px;font-size:14px}
+.e-card-status-em-andamento{color:#3d5d85}
+.dark .e-card-status-em-andamento{color:#a7bedb}
+.e-card-status-em-revisao{color:var(--e-action)}
+.e-card-status-concluida{color:#40684d}
+.dark .e-card-status-concluida{color:#a6c8b1}
+.e-card .e-task-meta{flex-wrap:nowrap;align-items:center;gap:8px;margin-top:5px;line-height:18px}
+.e-card .e-task-meta>.e-card-pessoa{display:block;min-width:0;overflow-wrap:anywhere}
+.e-card .e-task-meta>.e-card-prazo{flex:none;white-space:nowrap}
+.e-card-separador{font-size:11px}
+.e-card-vencido{color:var(--e-error)}
+.e-card .e-task-meta>.e-priority{flex:none;gap:3px;margin-left:auto;padding:0;border:0;background:transparent;box-shadow:none;--tw-ring-color:transparent!important;font-size:12px;font-weight:400;line-height:18px;white-space:nowrap}
+.e-card .e-card-meta-longa{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px}
+.e-card-meta-longa>.e-card-pessoa{grid-column:1/-1}
+.e-card-meta-longa>.e-card-separador{display:none}
+.e-card-meta-longa>.e-card-prazo{grid-column:1}
+.e-card-meta-longa>.e-priority{grid-column:2}
 .e-card-high{box-shadow:inset 3px 0 0 var(--e-error),0 2px 2px #49334b08}
 .e-card-done{background:color-mix(in srgb,var(--e-back) 35%,var(--e-sheet));box-shadow:none}
 .e-card-done .e-task-title{color:var(--e-muted)}
@@ -425,10 +445,12 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-board{grid-template-columns:1fr;gap:20px}
 .e-column>h2{margin-bottom:10px;padding-bottom:9px}
 .e-column-empty{padding:6px 2px 8px}
-.e-card{padding:12px 13px}
-.e-card .e-task-heading{padding-right:42px}
-.e-card .e-task-meta{margin-top:6px}
-.e-card .e-task-tags{margin-top:17px}
+.e-card{padding:10px 13px 12px}
+.e-card .e-task-heading{padding-right:36px}
+.e-card .e-task-title{display:flex;align-items:center}
+.e-card .e-task-menu{top:8px;right:4px}
+.e-card .e-status-trigger{min-height:44px}
+.e-card-contexto,.e-card .e-task-meta{margin-top:0}
 }
 .e-view-switch{display:flex;padding:2px;border:1px solid var(--e-line);border-radius:8px;background:var(--e-back)}
 .e-view-switch a{display:flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:6px;color:var(--e-muted);font-size:13px;text-decoration:none;white-space:nowrap}
