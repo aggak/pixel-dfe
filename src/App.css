@@ -59,16 +59,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .dark .e-priority-alta{color:#e59ba9!important}
 .dark .e-priority-media{color:#d5b683!important}
 .dark .e-priority-baixa{color:#99bdce!important}
-.e-status{font-weight:400;min-height:23px}
-.e-status-em-andamento{background:#eef3f9!important;color:#3d5d85!important;--tw-ring-color:#cbd7e5!important}
-.dark .e-status-em-andamento{background:#253246!important;color:#a7bedb!important;--tw-ring-color:#415771!important}
-.e-status-em-revisao{background:var(--e-mark)!important;color:var(--e-action)!important;--tw-ring-color:#d8c4df!important}
-.dark .e-status-em-revisao{--tw-ring-color:#6b5178!important}
-.e-status-em-andamento svg,.e-status-em-revisao svg,.e-status-concluida svg{color:inherit!important}
-.e-status-concluida{background:#edf4ef!important;color:#40684d!important;--tw-ring-color:#c9ddce!important;gap:4px}
-.e-status-concluida>.e-paw,.e-card-status>.e-paw{width:8px;height:8px;flex-shrink:0;transform-box:fill-box;transform-origin:center}
-.dark .e-status-concluida{background:#24382e!important;color:#a6c8b1!important;--tw-ring-color:#456451!important}
-.e-status-a-fazer{background:var(--e-sheet)!important;color:var(--e-muted)!important;--tw-ring-color:var(--e-line)!important}
+.e-card-status>.e-paw{width:8px;height:8px;flex-shrink:0;transform-box:fill-box;transform-origin:center}
 .e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted)}
 .e-sheet-footer{display:flex;justify-content:space-between;padding:11px 16px;color:var(--e-muted);font-size:11px;border-top:1px solid var(--e-line);margin-top:auto}
 .e-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;min-height:320px;color:var(--e-muted);text-align:center}
@@ -263,7 +254,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-read-title{font-size:21px;line-height:1.3;letter-spacing:-.5px;font-weight:500;margin:0 0 6px;overflow-wrap:anywhere}
 .e-read-project{display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--e-muted);font-size:12px}
 .e-read-tags{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:12px 0}
-.e-read-tags>.e-priority{display:flex;align-items:center;gap:4px;box-shadow:none;--tw-ring-color:transparent;padding-left:0;padding-right:0}
+.e-read-tags>.e-priority{display:flex;align-items:center;gap:3px;box-shadow:none;--tw-ring-color:transparent;padding:0;background:transparent;font-size:12px;font-weight:400;line-height:18px}
 .e-read-meta{padding:10px 0;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line);display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--e-muted);font-size:13px}
 .e-read-meta p{margin:0;display:flex;align-items:center;gap:7px;line-height:1.5;min-width:0;overflow-wrap:anywhere}
 .e-read-meta i{font-size:15px}
@@ -284,7 +275,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-row{padding-right:56px}
 }
 .e-row .e-task-tags{display:grid;grid-template-columns:120px 64px;column-gap:14px;align-items:center;justify-content:start;flex:0 0 auto;width:198px}
-.e-row .e-task-tags>.e-status,.e-row .e-task-tags>.e-priority,.e-row .e-task-tags>.e-status-trigger{justify-self:start}
+.e-row .e-task-tags>.e-card-status,.e-row .e-task-tags>.e-priority,.e-row .e-task-tags>.e-status-trigger{justify-self:start}
 .e-projects .e-page-heading{display:flex;align-items:start;justify-content:space-between;gap:18px}
 .e-projects .e-page-heading>button{flex-shrink:0}
 .e-project-card h2{overflow-wrap:anywhere}
@@ -504,8 +495,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
 /* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
 .e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
-.e-status-trigger:hover .e-status,.e-status-trigger[aria-expanded=true] .e-status{filter:brightness(.95)}
-.dark .e-status-trigger:hover .e-status,.dark .e-status-trigger[aria-expanded=true] .e-status{filter:brightness(1.15)}
 .e-status-trigger:hover>.e-uicon,.e-status-trigger[aria-expanded=true]>.e-uicon{color:var(--e-ink)}
 .e-status-trigger:focus-visible{outline:2px solid var(--e-action);outline-offset:2px}
 .e-status-trigger[data-pending]{cursor:wait;opacity:.6}
