@@ -71,15 +71,14 @@ async function executar() {
     assert.equal(await page.locator("article").count(), seed.tarefas.length);
     for (const tarefa of seed.tarefas) assert.equal(await page.getByRole("link", { name: tarefa.titulo, exact: true }).count(), 1);
   });
-  await conferir("detalhe direto apresenta os oito campos e permite recarregar", async () => {
+  await conferir("detalhe direto apresenta os campos e permite recarregar", async () => {
     await abrir("/tarefas/2");
     await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
     const conteudo = await textoFicha();
     // A data agora é apresentada por extenso; o valor ISO fica no atributo do elemento <time>.
-    for (const valor of ["Subir o json-server", "API local a partir do db.json", "Em andamento", "Alta", "Bruno", "6 de outubro de 2026", "Identificador", "Gerenciador de Tarefas"]) assert.ok(conteudo.includes(valor), valor);
+    for (const valor of ["Subir o json-server", "API local a partir do db.json", "Em andamento", "Alta", "Bruno", "6 de outubro de 2026", "Gerenciador de Tarefas"]) assert.ok(conteudo.includes(valor), valor);
     assert.equal(await ficha().locator("time").getAttribute("datetime"), "2026-10-06");
-    assert.equal(await ficha().locator(".e-read-identifiers dd").first().innerText(), "2");
-    assert.equal(await ficha().locator(".e-read-identifiers dd").nth(1).innerText(), "1");
+    assert.equal(await ficha().locator(".e-read-identifiers").count(), 0);
     await page.reload();
     await page.getByRole("heading", { name: "Subir o json-server", exact: true }).waitFor();
   });
