@@ -1,72 +1,47 @@
-# Pixel
+<h1 align="center">Pixel</h1>
 
-Organize projetos e tarefas em um só lugar. Crie, edite e acompanhe status, prioridades, responsáveis e prazos.
+<p align="center">
+  <strong>Seus projetos acadêmicos, em um só lugar.</strong><br>
+  Organize tarefas, acompanhe prazos e veja suas entregas avançarem.
+</p>
 
-**Acesse a aplicação publicada: [pixel-dfe-project.up.railway.app](https://pixel-dfe-project.up.railway.app)** — os dados vêm da API hospedada em [pixel-dfe-production.up.railway.app](https://pixel-dfe-production.up.railway.app/tarefas).
+<h3 align="center"><a href="https://pixel-dfe-project.up.railway.app/">Acesse a Pixel</a></h3>
 
-![Quadro kanban da Pixel no tema escuro, com colunas A fazer, Em andamento, Em revisão e Concluída e cartões com projeto, responsável, prazo, status e prioridade](docs/images/pixel-quadro.png)
+<p align="center">
+  <sub>Lista e kanban · Busca e filtros · Interface responsiva</sub>
+</p>
 
-<details>
-<summary>Lista com busca e filtros</summary>
+<p align="center">
+  <a href="https://pixel-dfe-project.up.railway.app/">
+    <img src="docs/images/cartoes-andamento-escuro.png" width="1000" alt="Visão geral dos projetos da Pixel, com progresso das tarefas e próximos prazos">
+  </a>
+</p>
 
-![Lista de tarefas da Pixel no tema escuro filtrada pela busca "ar" e status A fazer, com projeto, responsável, prazo, status e prioridade](docs/images/pixel-lista-filtros.png)
+## Do projeto à próxima tarefa
 
-</details>
+- **Projetos organizados:** acompanhe disciplinas, tarefas concluídas e o próximo prazo.
+- **Lista ou kanban:** escolha sua visão e encontre tarefas com busca e filtros.
+- **Tudo à mão:** crie, edite e exclua tarefas; ajuste status, prioridade e responsável.
+- **Sem perder o contexto:** abra detalhes e formulários em fichas sobre a página.
 
-<details>
-<summary>Projetos e página do projeto</summary>
+![Navegação por abas com as iniciais do projeto selecionado](docs/images/abas-etiqueta-detalhe.png)
 
-![Página de projetos da Pixel no tema escuro, com cartões Gerenciador de Tarefas e Modelagem da Biblioteca e botões de abrir e editar](docs/images/pixel-projetos.png)
+## Personalidade em cada detalhe
 
-![Página do projeto Gerenciador de Tarefas da Pixel no tema escuro, com lista de tarefas, responsáveis, prazos, status e prioridades](docs/images/pixel-pagina-projeto.png)
+O gatinho acompanha os estados da aplicação com animações em pixel art, do carregamento às telas vazias.
 
-</details>
+<p align="center">
+  <img src="docs/images/gatinho-carregando-animacao.png" width="96" alt="Gatinho carregando" title="Carregamento">
+  <img src="docs/images/gatinho-dormindo-animacao.png" width="96" alt="Gatinho dormindo" title="Sem tarefas">
+  <img src="docs/images/gatinho-olhando-animacao.png" width="96" alt="Gatinho olhando ao redor" title="Busca sem resultados">
+  <img src="docs/images/gatinho-lavando-animacao.png" width="96" alt="Gatinho se lavando" title="Coluna vazia">
+  <img src="docs/images/gatinho-cochilando-animacao.png" width="96" alt="Gatinho cochilando" title="Registro não encontrado">
+  <img src="docs/images/gatinho-costas-animacao.png" width="96" alt="Gatinho de costas" title="Erro ou página não encontrada">
+</p>
 
-<details>
-<summary>Detalhe e cadastro em fichas</summary>
+Navegação por teclado, foco visível e respeito à preferência por movimento reduzido.
 
-![Painel de detalhes da tarefa Listar as tarefas na tela da Pixel no tema escuro, com projeto, responsável, prazo, status e prioridade](docs/images/pixel-ficha-detalhe.png)
-
-![Formulário de nova tarefa da Pixel no tema escuro com erros de validação em título, projeto, responsável e prazo](docs/images/pixel-ficha-nova-validacao.png)
-
-</details>
-
-<details>
-<summary>Mudança de status pelo selo do cartão</summary>
-
-<img src="docs/images/pixel-menu-status.png" width="318" alt="Detalhe ampliado de cartão de tarefa da Pixel no tema escuro com menu de status aberto nas opções A fazer, Em andamento, Em revisão e Concluída">
-
-</details>
-
-## Como rodar
-
-Requer **Node.js 24 ou superior**, com npm. Na pasta do projeto:
-
-```bash
-npm ci
-```
-
-Em um terminal, inicie a API em `http://localhost:3000`:
-
-```bash
-npx json-server db.json
-```
-
-Em outro terminal, na mesma pasta, inicie a aplicação:
-
-```bash
-npm run dev
-```
-
-Abra o endereço mostrado pelo Vite, normalmente `http://localhost:5173`. Mantenha os dois terminais abertos.
-
-Para verificar o TypeScript e gerar os arquivos de produção em `dist/`:
-
-```bash
-npm run build
-```
-
-**Framework:** React com TypeScript.
+<sub>Desenvolvido com React e TypeScript.</sub>
 
 ## Equipe
 
