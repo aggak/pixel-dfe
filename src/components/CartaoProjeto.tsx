@@ -49,11 +49,11 @@ function iniciais(nome: string) {
   return principais.length > 1 ? principais.slice(0, 2).map((palavra) => palavra[0]).join("") : (principais[0] ?? palavras[0] ?? "?").slice(0, 2);
 }
 
-export function Monograma({ nome }: { nome: string }) {
+export function Monograma({ nome, className = "e-proj-mono" }: { nome: string; className?: string }) {
   const letras = [...iniciais(nome)];
   const largura = letras.length * 6 + (letras.length - 1) * 2;
   const desenho = letras.map((letra, i) => (GLIFOS[letra] ?? GLIFOS["?"]).map((linha, y) => Array.from({ length: 6 }, (_, x) => (linha & (32 >> x) ? `M${i * 8 + x} ${y}h1v1h-1z` : "")).join("")).join("")).join("");
-  return <span className="e-proj-mono" aria-hidden="true"><svg viewBox={`0 0 ${largura} 9`} width={largura * 2} height="18" shapeRendering="crispEdges" focusable="false"><path fill="currentColor" d={desenho} /></svg></span>;
+  return <span className={className} aria-hidden="true"><svg viewBox={`0 0 ${largura} 9`} width={largura * 2} height="18" shapeRendering="crispEdges" focusable="false"><path fill="currentColor" d={desenho} /></svg></span>;
 }
 
 export function AndamentoProjeto({ tarefas }: { tarefas?: Tarefa[] }) {
