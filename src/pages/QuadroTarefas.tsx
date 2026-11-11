@@ -11,11 +11,9 @@ import { AbasProjetos, AlternarVisao, Carregando, ErroCarregamento, EstadoVazio 
 import { useConsulta } from "../hooks/useConsulta";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { agruparPorStatus, filtrarTarefas } from "../derivar";
-import { statusTexto } from "../design/formatos";
+import { iconeStatus, statusTexto } from "../design/formatos";
 import { Icon, PlusIcon } from "../design/icon";
-import type { Status, Tarefa } from "../tipos";
-
-const iconesStatus: Record<Status, string> = { "a-fazer": "circle", "em-andamento": "play", "em-revisao": "eye", concluida: "check" };
+import type { Tarefa } from "../tipos";
 
 export function QuadroTarefas() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
@@ -55,7 +53,7 @@ export function QuadroTarefas() {
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasFiltradas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
-        <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
+        <h2><span className="e-column-name"><Icon name={iconeStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
         {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
         {coluna.tarefas.length === 0 && <p className="e-column-empty"><GatinhoLavando />Nenhuma tarefa</p>}
       </section>)}</section>)}
