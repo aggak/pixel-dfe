@@ -9,3 +9,7 @@ export function formatarData(iso: string, extensa = false) {
   if (Number.isNaN(data.getTime())) return iso;
   return new Intl.DateTimeFormat("pt-BR", extensa ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "short" }).format(data);
 }
+export function prazoVencido(iso: string, hoje = new Date()) {
+  const dia = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(iso) && iso < dia;
+}

@@ -9,7 +9,7 @@ import { ErroApi } from "../api";
 import { STATUS } from "../derivar";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, FolderIcon, TrashIcon, PawIcon } from "../design/icon";
-import { formatarData, prioridadeTexto, statusTexto } from "../design/formatos";
+import { formatarData, prazoVencido, prioridadeTexto, statusTexto } from "../design/formatos";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
 // Com `onMudarStatus`, o selo de status vira um seletor; sem ele (página do projeto), segue só informativo.
@@ -67,16 +67,24 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     if (falhou && (!document.activeElement || document.activeElement === document.body)) gatilho.current?.focus();
   }, [falhou]);
   const seletorStatus = onMudarStatus ? <Dropdown.Root key="status">
-    <AriaButton ref={gatilho} className="e-status-trigger" data-status-trigger aria-label={`Mudar status de ${tarefa.titulo} (atual: ${statusTexto[tarefa.status]})`} isPending={salvando}>{tagStatus}<Icon name="angle-small-down" /></AriaButton>
+    <AriaButton ref={gatilho} className="e-status-trigger" data-status-trigger aria-label={`Mudar status de ${tarefa.titulo} (atual: ${statusTexto[tarefa.status]})`} isPending={salvando}>{emQuadro ? <span className={`e-card-status e-card-status-${tarefa.status}`}>{statusTexto[tarefa.status]}<Icon name="angle-small-down" /></span> : <>{tagStatus}<Icon name="angle-small-down" /></>}</AriaButton>
     <Dropdown.Popover className="e-popover" placement={emQuadro ? "bottom end" : "bottom start"}><Dropdown.Menu selectionMode="single" disallowEmptySelection shouldCloseOnSelect selectedKeys={[tarefa.status]} disabledKeys={salvando ? STATUS : undefined} onSelectionChange={(chaves) => { const [status] = chaves as Set<Status>; if (status) void mudar(status); }}>{STATUS.map((status) => <Dropdown.Item key={status} id={status} label={statusTexto[status]} />)}</Dropdown.Menu></Dropdown.Popover>
-  </Dropdown.Root> : tagStatus;
+  </Dropdown.Root> : emQuadro ? <span key="status" className={`e-card-status e-card-status-${tarefa.status}`}>{statusTexto[tarefa.status]}</span> : tagStatus;
   const tagPrioridade = <Badge key="prioridade" type="modern" size="sm" color="gray" className={`e-priority e-priority-${tarefa.prioridade}`}><Icon name={tarefa.prioridade === "alta" ? "angle-double-small-up" : tarefa.prioridade === "baixa" ? "arrow-small-down" : "minus-small"} />{prioridadeTexto[tarefa.prioridade]}</Badge>;
-  return <article className={classe} data-task-id={tarefa.id}>
-    <div className="e-task-main"><div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
+  const cabecalho = <div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" label="Excluir tarefa" icon={TrashIcon} onAction={() => { setFalhaExclusao(false); setConfirmando(true); }} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
-    </div>{nomeProjeto && <span className="e-task-project"><FolderIcon />{nomeProjeto}</span>}<div className="e-task-meta"><span><Icon name="user" />{tarefa.responsavel}</span><span><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo)}</time></span></div>
-      {falhou && <p className="e-task-error" role="alert">{falhou === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída." : "Não foi possível mudar o status. Tente de novo."}</p>}</div>
-    <div className="e-task-tags">{emQuadro ? [tagPrioridade, seletorStatus] : [seletorStatus, tagPrioridade]}</div>
+    </div>;
+  const alerta = falhou && <p className="e-task-error" role="alert">{falhou === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída." : "Não foi possível mudar o status. Tente de novo."}</p>;
+  const vencido = !concluida && prazoVencido(tarefa.prazo);
+  return <article className={classe} data-task-id={tarefa.id}>
+    {emQuadro ? <div className="e-task-main">{cabecalho}
+      <div className="e-card-contexto">{nomeProjeto ? <span className="e-task-project">{nomeProjeto}</span> : <span />}{seletorStatus}</div>
+      <div className={`e-task-meta${tarefa.responsavel.length > 24 ? " e-card-meta-longa" : ""}`}><span className="e-card-pessoa">{tarefa.responsavel}</span><span className="e-card-separador" aria-hidden="true">·</span><time className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`} dateTime={tarefa.prazo} title={`Prazo: ${formatarData(tarefa.prazo, true)}`}>{vencido ? "Venceu " : ""}{formatarData(tarefa.prazo).replace(" de ", " ").replace(".", "")}</time>{tagPrioridade}</div>
+      {alerta}
+    </div> : <>
+      <div className="e-task-main">{cabecalho}{nomeProjeto && <span className="e-task-project"><FolderIcon />{nomeProjeto}</span>}<div className="e-task-meta"><span><Icon name="user" />{tarefa.responsavel}</span><span><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo)}</time></span></div>{alerta}</div>
+      <div className="e-task-tags">{seletorStatus}{tagPrioridade}</div>
+    </>}
     <ModalOverlay isOpen={confirmando} onOpenChange={(aberta) => { if (!aberta && !excluindo) setConfirmando(false); }} isDismissable={!excluindo} isKeyboardDismissDisabled={excluindo} className="e-confirm-overlay">
       <Modal className="e-confirm-modal"><Dialog className="e-confirm-dialog" aria-label={`Excluir ${tarefa.titulo}`}>
         <Heading slot="title">Excluir tarefa?</Heading>
