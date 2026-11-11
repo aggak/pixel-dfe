@@ -401,8 +401,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card .e-task-title{display:block;min-width:0;font-size:15px;line-height:21px}
 .e-card-contexto{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-top:5px}
 .e-card .e-task-project{display:block;min-width:0;margin:0;font-size:11px;line-height:16px;overflow-wrap:anywhere}
-.e-card .e-status-trigger{flex:none;min-height:28px;margin:0 -4px 0 0;padding:4px;border-radius:5px}
-.e-card .e-status-trigger:hover,.e-card .e-status-trigger[aria-expanded=true]{background:var(--e-back)}
+.e-task .e-status-trigger{flex:none;min-height:28px;margin:0 -4px 0 0;padding:4px;border-radius:5px}
+.e-row .e-status-trigger{margin:0 0 0 -4px}
+.e-task .e-status-trigger:hover,.e-task .e-status-trigger[aria-expanded=true]{background:var(--e-back)}
 .e-card-status{display:inline-flex;align-items:center;gap:3px;color:var(--e-muted);font-size:12px;line-height:18px;white-space:nowrap}
 .e-card-status>.e-uicon{width:14px;height:14px;font-size:14px}
 .e-card-status-em-andamento{color:#3d5d85}
@@ -415,15 +416,18 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-card .e-task-meta>.e-card-prazo{flex:none;white-space:nowrap}
 .e-card-separador{font-size:11px}
 .e-card-vencido{color:var(--e-error)}
+.e-row .e-task-meta{align-items:center;gap:8px;margin-top:3px;line-height:18px}
+.e-row .e-task-project{margin-top:3px;line-height:16px}
+.e-row .e-priority{font-size:12px;font-weight:400;line-height:18px;background:transparent}
 .e-card .e-task-meta>.e-priority{flex:none;gap:3px;margin-left:auto;padding:0;border:0;background:transparent;box-shadow:none;--tw-ring-color:transparent!important;font-size:12px;font-weight:400;line-height:18px;white-space:nowrap}
 .e-card .e-card-meta-longa{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px}
 .e-card-meta-longa>.e-card-pessoa{grid-column:1/-1}
 .e-card-meta-longa>.e-card-separador{display:none}
 .e-card-meta-longa>.e-card-prazo{grid-column:1}
 .e-card-meta-longa>.e-priority{grid-column:2}
-.e-card-done{background:color-mix(in srgb,var(--e-back) 35%,var(--e-sheet));box-shadow:none}
-.e-card-done .e-task-title{color:var(--e-muted)}
-.e-card-done .e-priority{color:var(--e-muted)!important;background:transparent!important}
+.e-card.e-task-done{background:color-mix(in srgb,var(--e-back) 35%,var(--e-sheet));box-shadow:none}
+.e-task-done .e-task-title{color:var(--e-muted)}
+.e-task-done .e-priority{color:var(--e-muted)!important;background:transparent!important}
 :is(.e-card,.e-project-card):has(:focus-visible){border-color:color-mix(in srgb,var(--e-action) 55%,var(--e-line));box-shadow:0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
 @media(hover:hover) and (pointer:fine){
 :is(.e-card,.e-project-card):hover{border-color:color-mix(in srgb,var(--e-action) 55%,var(--e-line));box-shadow:0 6px 16px color-mix(in srgb,var(--e-action) 18%,transparent)}
