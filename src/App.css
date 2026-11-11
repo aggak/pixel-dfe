@@ -449,6 +449,38 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
      do texto, que muda quando a Commissioner não carrega. O desenho e o anel de foco ficam no texto. */
   .e-project-card h2 a,.e-read-project>a{position:relative}
   .e-project-card h2 a::after,.e-read-project>a::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
+@media(min-width:1024px) and (max-width:1799.98px){.e-project-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.e-project-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:18px 20px 20px;transition:border-color .1s linear}
+.e-project-card:hover{border-color:var(--e-control)}
+.e-proj-cab{display:flex;align-items:flex-start;gap:12px;margin-right:-8px}
+.e-proj-mono{display:flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;background:var(--e-mark);color:var(--e-action);border-radius:8px}
+.e-proj-mono svg{display:block}
+.e-proj-cab-txt{flex:1;min-width:0;padding-top:2px}
+.e-proj-cab .e-project-discipline{display:block;margin-bottom:2px;overflow:hidden;color:var(--e-muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.e-project-card h2{margin:0;font-size:17px;line-height:1.35;letter-spacing:-.1px}
+.e-project-card h2 a{position:static;border-radius:2px}
+.e-project-card h2 a::after{content:"";position:absolute;inset:0;width:auto;height:auto;border-radius:12px;transform:none}
+.e-project-card:hover h2 a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.e-proj-cab .e-edit-project{position:relative;z-index:1;flex-shrink:0;margin-top:-6px;color:var(--e-muted)}
+.e-project-card>p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;min-height:0;margin:12px 0 0;overflow:hidden;line-height:1.55}
+.e-project-card>p:empty{display:none}
+.e-proj-foot{min-height:55px;margin-top:auto;padding-top:20px}
+.e-proj-foot-txt{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px;margin-bottom:10px;color:var(--e-muted);font-size:12px;line-height:1.4}
+.e-proj-prog,.e-proj-prazo{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.e-proj-prog b,.e-proj-prazo b{color:var(--e-ink);font-weight:500}
+.e-proj-ok{color:var(--e-action)}
+.e-proj-bar{display:block;height:8px;background:var(--e-line);clip-path:polygon(2px 0,calc(100% - 2px) 0,calc(100% - 2px) 2px,100% 2px,100% calc(100% - 2px),calc(100% - 2px) calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,2px calc(100% - 2px),0 calc(100% - 2px),0 2px,2px 2px)}
+.e-proj-bar>i{display:block;min-width:8px;height:100%;background:var(--e-action)}
+.e-proj-bar-vazia{background:linear-gradient(90deg,var(--e-line) 50%,transparent 0) 0 50%/8px 2px repeat-x;clip-path:none}
+@media(max-width:1023px){.e-project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){
+.e-project-grid{grid-template-columns:minmax(0,1fr);gap:12px}
+.e-project-card{padding:14px 16px 16px}
+.e-proj-cab{margin-right:-12px}
+.e-proj-cab .e-edit-project{min-width:44px;min-height:44px;margin-top:-8px}
+.e-proj-foot{padding-top:16px}
+}
+@media(prefers-reduced-motion:reduce){.e-project-card{transition:none}}
 @media(max-width:360px){.e-view-switch .e-uicon{display:none}}
 /* Selo de status como seletor: o selo continua igual, com a seta indicando que abre um menu. */
 .e-status-trigger{position:relative;display:inline-flex;align-items:center;gap:2px;padding:2px;margin:-2px;border:0;border-radius:999px;background:transparent;color:var(--e-muted);cursor:pointer}
