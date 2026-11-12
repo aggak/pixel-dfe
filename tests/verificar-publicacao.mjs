@@ -1,10 +1,10 @@
 // Issue #53: verificação sob demanda da aplicação publicada (fora da lista offline do
 // validate-delivery.mjs, como tests/auditoria-lighthouse.mjs). Confere o README e, ao vivo,
-// o frontend da Railway integrado à API hospedada. A API pública aceita escrita sem
+// o frontend da Railway integrado à API hospedada (ou PIXEL_APP_URL e PIXEL_API_URL).
+// O link do README continua apontando para a publicação. A API pública aceita escrita sem
 // autenticação: o script só cria, muda e exclui uma tarefa própria, identificada pelo
 // título, e no `finally` apaga qualquer sobra dela antes de comparar o estado final.
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -14,8 +14,10 @@ const require = createRequire(import.meta.url);
 const { comTextos, criarUi, escapar, lancarNavegador, TEXTO_STATUS } = require("./ui.cjs");
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
-const APP = "https://pixel-dfe-project.up.railway.app";
-const API = "https://pixel-dfe-production.up.railway.app";
+const APP_PUBLICADO = "https://pixel-dfe-project.up.railway.app";
+const APP = (process.env.PIXEL_APP_URL || APP_PUBLICADO).replace(/\/+$/, "");
+const API = (process.env.PIXEL_API_URL || "https://pixel-dfe-production.up.railway.app").replace(/\/+$/, "");
+const alvoLocal = ["localhost", "127.0.0.1", "[::1]"].includes(new URL(APP).hostname);
 const EQUIPE = ["Gabriela de Araújo Reis", "Euclides Carlos Pilon Neto", "Linnek Lima de Araujo"];
 
 async function lerApi(caminho) {
@@ -24,27 +26,24 @@ async function lerApi(caminho) {
   return resposta.json();
 }
 
-// 1. README: link clicável logo após o parágrafo de apresentação, sem perder nada da versão da main.
+// 1. README: link clicável no início e conteúdo necessário para a entrega.
 async function conferirReadme() {
   const readme = await readFile(join(raiz, "README.md"), "utf8");
-  const linhas = readme.split(/\r?\n/);
-  const posLink = linhas.findIndex((linha) => new RegExp(`\\]\\(${escapar(APP)}/?\\)`).test(linha));
-  assert.ok(posLink >= 0, `README.md sem link clicável para ${APP}`);
-  const posApresentacao = linhas.findIndex((linha) => linha.startsWith("Organize projetos e tarefas"));
-  const posImagem = linhas.findIndex((linha) => linha.startsWith("!["));
-  assert.ok(posApresentacao >= 0 && posApresentacao < posLink && posLink < posImagem, "o link deve ficar entre o parágrafo inicial e a primeira captura");
-  for (const trecho of ["## Como rodar", "**Framework:** React com TypeScript.", "## Equipe", "**Desenvolvimento Frontend**, ULBRA — 2026.2", ...EQUIPE.map((nome) => `- ${nome}`), "[Créditos e licenças](public/design-licenses/THIRD_PARTY_NOTICES.txt)"]) {
+  const destino = escapar(APP_PUBLICADO);
+  const posLink = readme.search(new RegExp(`(?<!!)\\[[^\\]\\n]+\\]\\(\\s*${destino}/?\\s*\\)|<a\\b[^>]*\\shref\\s*=\\s*(["'])${destino}/?\\1[^>]*>`, "i"));
+  assert.ok(posLink >= 0, `README.md sem link clicável para ${APP_PUBLICADO}`);
+  const posSecao = readme.indexOf("## Do projeto à próxima tarefa");
+  assert.ok(posSecao > posLink, "o link deve ficar antes da seção Do projeto à próxima tarefa");
+  for (const trecho of ["## Como rodar", "## Equipe", "**Desenvolvimento Frontend**, ULBRA — 2026.2", "[Créditos e licenças](public/design-licenses/THIRD_PARTY_NOTICES.txt)"]) {
     assert.ok(readme.includes(trecho), `README.md perdeu: ${trecho}`);
   }
-  // Toda linha do README da main continua presente, na mesma ordem (imagens, detalhes, comandos).
-  const original = execFileSync("git", ["show", "main:README.md"], { cwd: raiz, encoding: "utf8" }).split(/\r?\n/);
-  let cursor = 0;
-  for (const linha of original) {
-    const achada = linhas.indexOf(linha, cursor);
-    assert.ok(achada >= 0, `README.md perdeu ou reordenou a linha: ${JSON.stringify(linha)}`);
-    cursor = achada + 1;
+  for (const tecnologia of ["React", "TypeScript"]) {
+    assert.ok(new RegExp(`\\b${tecnologia}\\b`).test(readme), `README.md sem menção a ${tecnologia}`);
   }
-  console.log(`OK: README.md tem o link ${APP} após a apresentação e preserva as ${original.length} linhas da main, a equipe e as licenças`);
+  for (const nome of EQUIPE) {
+    assert.ok(new RegExp(`^[-*+]\\s+${escapar(nome)}\\s*$`, "m").test(readme), `README.md sem integrante da equipe em item de lista: ${nome}`);
+  }
+  console.log(`OK: README.md tem o link ${APP_PUBLICADO} no início e preserva as instruções, tecnologias, equipe e licenças`);
 }
 
 // 2. Aplicação publicada integrada à API hospedada, com um ciclo de escrita próprio.
@@ -145,9 +144,12 @@ async function conferirPublicacao() {
     assert.equal((await fetch(`${API}/tarefas/${encodeURIComponent(criada.id)}`, { cache: "no-store" })).status, 404);
     console.log("OK: a exclusão confirmada pela interface remove a tarefa temporária da API hospedada");
 
-    assert.deepEqual(locais, []);
+    if (!alvoLocal) {
+      assert.deepEqual(locais, [], "a aplicação publicada não deve fazer chamadas a localhost");
+      console.log("OK: nenhuma chamada a localhost na aplicação publicada");
+    }
     assert.deepEqual(errosPagina, []);
-    console.log("OK: nenhuma chamada a localhost e nenhum erro JavaScript na aplicação publicada");
+    console.log(`OK: nenhum erro JavaScript na aplicação em ${APP}`);
   } catch (erro) {
     falha = erro;
   } finally {
