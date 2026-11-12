@@ -31,9 +31,10 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-details-trigger{display:flex;gap:8px;align-items:center;background:transparent;border:0;color:var(--e-muted);font-size:12px;min-height:42px}
 .e-details-trigger>i:last-child{margin-left:2px}
 .e-details-trigger:hover{color:var(--e-ink)}
-.e-details-content{padding:0 0 18px;max-width:650px;color:var(--e-muted);font-size:13px}
+.e-details-content{padding:0 0 18px;max-width:650px;color:var(--e-muted);font-size:13px;overflow-wrap:anywhere}
 .e-details-content>p{color:var(--e-ink);margin:1px 0 15px;font-size:14px}
 .e-details-content dl{display:flex;gap:35px;margin:0}
+.e-details-content dl>div{min-width:0}
 .e-details-content dt{font-size:11px;margin-bottom:4px}
 .e-details-content dd{margin:0}
 .e-content{padding:4px 20px 24px;flex:1;min-height:300px}
@@ -56,7 +57,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-priority-media{color:#d5b683!important}
 .e-priority-baixa{color:#99bdce!important}
 .e-card-status>.e-paw{width:8px;height:8px;flex-shrink:0;transform-box:fill-box;transform-origin:center}
-.e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted)}
+.e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted);min-width:0;overflow-wrap:anywhere}
 .e-sheet-footer{display:flex;justify-content:space-between;padding:11px 16px;color:var(--e-muted);font-size:11px;border-top:1px solid var(--e-line);margin-top:auto}
 .e-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;min-height:320px;color:var(--e-muted);text-align:center}
 .e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 20px}
@@ -234,7 +235,8 @@ html{scroll-padding-top:71px}
 .e-read-task .e-form-header>span{font-size:13px;font-weight:500}
 .e-read-body{padding:13px 18px 0}
 .e-read-title{font-size:21px;line-height:1.3;letter-spacing:-.5px;font-weight:500;margin:0 0 6px;overflow-wrap:anywhere}
-.e-read-project{display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--e-muted);font-size:12px}
+.e-read-project{display:flex;flex-wrap:wrap;align-items:center;gap:7px;color:var(--e-muted);font-size:12px;overflow-wrap:anywhere}
+.e-read-project>a{min-width:0}
 .e-read-tags{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:12px 0}
 .e-read-tags>.e-priority{display:flex;align-items:center;gap:3px;box-shadow:none;--tw-ring-color:transparent;padding:0;background:transparent;font-size:12px;font-weight:400;line-height:18px}
 .e-read-meta{padding:10px 0;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line);display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--e-muted);font-size:13px}
@@ -332,7 +334,7 @@ html{scroll-padding-top:71px}
 .e-form-shell,.e-ficha-content { display:flex; flex-direction:column; min-height:0; overflow:hidden; }
 .e-ficha-content { flex:1 1 auto; }
 .e-ficha-content>.e-task-form,.e-ficha-content>.e-project-form,.e-ficha-content>.e-read-task { flex:1 1 auto; }
-.e-tools h1 { font-size:16px; font-weight:500; letter-spacing:-.2px; }
+.e-tools h1 { font-size:16px; font-weight:500; letter-spacing:-.2px; min-width:0; overflow-wrap:anywhere; }
 .e-ficha-state { padding:22px 18px 26px; font-size:14px; line-height:1.6; color:var(--e-muted); }
 .e-tools .e-toolbar-right { margin-left:auto; }
 @media(max-width:650px) {
@@ -378,6 +380,7 @@ html{scroll-padding-top:71px}
 .e-card-separador{font-size:11px}
 .e-card-vencido{color:var(--e-error)}
 .e-row .e-task-meta{align-items:center;gap:8px;margin-top:3px;line-height:18px}
+.e-row .e-task-meta>.e-card-pessoa{min-width:0;overflow-wrap:anywhere}
 .e-row .e-task-project{margin-top:3px;line-height:16px}
 .e-row .e-priority{font-size:12px;font-weight:400;line-height:18px;background:transparent}
 .e-card .e-task-meta>.e-priority{flex:none;gap:3px;margin-left:auto;padding:0;border:0;background:transparent;box-shadow:none;--tw-ring-color:transparent!important;font-size:12px;font-weight:400;line-height:18px;white-space:nowrap}
@@ -474,7 +477,7 @@ html{scroll-padding-top:71px}
 .e-confirm-modal{width:420px!important;max-width:100%;border:1px solid var(--e-line);background:var(--e-sheet)!important;color:var(--e-ink);border-radius:13px!important;box-shadow:0 14px 48px rgb(24 24 27 / 20%)!important}
 .e-confirm-dialog{padding:22px;overflow:visible!important}
 .e-confirm-dialog h2{margin:0 0 10px;font-size:18px;font-weight:600}
-.e-confirm-dialog>p{margin:0;color:var(--e-muted);line-height:1.5}
+.e-confirm-dialog>p{margin:0;color:var(--e-muted);line-height:1.5;overflow-wrap:anywhere}
 .e-confirm-dialog .e-confirm-error{margin-top:14px;color:var(--e-error)}
 .e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
