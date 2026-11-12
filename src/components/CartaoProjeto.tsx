@@ -1,6 +1,6 @@
 import type { Tarefa } from "../tipos";
 import { PawIcon } from "../design/icon";
-import { formatarData } from "../design/formatos";
+import { formatarData, iniciais } from "../design/formatos";
 
 const GLIFOS: Record<string, number[]> = {
   A: [30, 33, 33, 33, 63, 33, 33, 33, 33],
@@ -41,14 +41,6 @@ const GLIFOS: Record<string, number[]> = {
   9: [30, 33, 33, 33, 31, 1, 1, 1, 30],
   "?": [30, 33, 1, 2, 4, 8, 8, 0, 8],
 };
-const CONECTIVOS = new Set(["A", "AS", "O", "OS", "DA", "DAS", "DE", "DO", "DOS", "E", "EM", "PARA"]);
-
-function iniciais(nome: string) {
-  const palavras = nome.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase().match(/[A-Z0-9]+/g) ?? [];
-  const principais = palavras.filter((palavra) => !CONECTIVOS.has(palavra));
-  return principais.length > 1 ? principais.slice(0, 2).map((palavra) => palavra[0]).join("") : (principais[0] ?? palavras[0] ?? "?").slice(0, 2);
-}
-
 export function Monograma({ nome, className = "e-proj-mono" }: { nome: string; className?: string }) {
   const letras = [...iniciais(nome)];
   const largura = letras.length * 6 + (letras.length - 1) * 2;
