@@ -6,11 +6,11 @@ import type { Filtros } from "../derivar";
 import { useFiltros } from "./filtros-contexto";
 
 const opcoesStatus: { id: Filtros["status"]; label: string }[] = [
-  { id: "todos", label: "Todos os status" },
+  { id: "todos", label: "Todos" },
   ...Object.entries(statusTexto).map(([id, label]) => ({ id: id as Filtros["status"], label })),
 ];
 const opcoesPrioridade: { id: Filtros["prioridade"]; label: string }[] = [
-  { id: "todas", label: "Todas as prioridades" },
+  { id: "todas", label: "Todas" },
   ...Object.entries(prioridadeTexto).map(([id, label]) => ({ id: id as Filtros["prioridade"], label })),
 ];
 

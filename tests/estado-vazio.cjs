@@ -117,7 +117,7 @@ async function executar() {
   assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
   await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).click();
   await page.locator("[data-task-id]").first().waitFor();
-  assert.match(await page.getByRole("button", { name: /Status/ }).innerText(), /Todos os status/);
+  assert.match(await page.getByRole("button", { name: /Status/ }).innerText(), /Todos/);
   console.log("OK: busca e filtro combinados sem resultado avisam e são limpos juntos");
 
   await page.route(`${api}/projetos`, (rota) => rota.fulfill({ json: [] }));

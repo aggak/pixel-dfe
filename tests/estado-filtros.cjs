@@ -101,8 +101,8 @@ async function executar() {
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
     assert.equal(await busca.inputValue(), "");
-    assert.match(await seletor("Status").innerText(), /Todos os status/);
-    assert.match(await seletor("Prioridade").innerText(), /Todas as prioridades/);
+    assert.match(await seletor("Status").innerText(), /Todos/);
+    assert.match(await seletor("Prioridade").innerText(), /Todas/);
     console.log("OK: limpar volta busca, status e prioridade aos valores iniciais");
 
     // O estado fica na memória do JavaScript: recarregar a página começa do zero.

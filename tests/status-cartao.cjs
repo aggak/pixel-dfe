@@ -233,7 +233,7 @@ async function executar() {
   assert.equal(await rodape.innerText(), textoTotal(1));
   assert.equal(await tarefasNaTela(alvo.id), 1);
   await busca.fill("");
-  await selecionarFiltro("Prioridade", "Todas as prioridades");
+  await selecionarFiltro("Prioridade", "Todas");
   await selecionarFiltro("Status", "A fazer");
   await cartao("1").waitFor({ state: "detached" });
   const aFazer = (await lista.locator("[data-task-id]").count());
@@ -243,7 +243,7 @@ async function executar() {
   assert.equal((await lerTarefa(alvo.id)).status, "concluida");
   // O cartão saiu da tela; o foco vai para o título da página em vez de cair no body.
   await page.waitForFunction(() => document.activeElement?.matches("main h1"));
-  await selecionarFiltro("Status", "Todos os status");
+  await selecionarFiltro("Status", "Todos");
   console.log("OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai ao título");
 
   // Recarga, tema escuro e larguras.

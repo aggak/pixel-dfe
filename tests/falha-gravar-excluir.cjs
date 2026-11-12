@@ -84,7 +84,7 @@ async function executar() {
   await ui.preencherTarefa(novaTarefa);
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar tarefa" }).click();
-  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente." }).waitFor();
+  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo." }).waitFor();
   assert.equal(new URL(page.url()).pathname, "/tarefas/nova");
   for (const [rotulo, chave] of [["Título", "titulo"], ["Descrição", "descricao"], ["Responsável", "responsavel"], ["Prazo", "prazo"], ["Projeto", "projetoId"], ["Status", "status"], ["Prioridade", "prioridade"]]) {
     assert.equal(await ui.valor(rotulo), novaTarefa[chave], rotulo);
@@ -104,7 +104,7 @@ async function executar() {
   await ui.campo("Responsável").fill("Davi");
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
-  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente." }).waitFor();
+  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo." }).waitFor();
   assert.equal(await ui.valor("Título"), "Criar o repositório no GitHub");
   assert.equal(await ui.valor("Responsável"), "Davi");
   assert.equal(await focoDentro(ficha()), true, "foco saiu da ficha após a falha");
@@ -124,7 +124,7 @@ async function executar() {
   await ficharProjeto.campo("Criado em").fill("2026-10-20");
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar projeto" }).click();
-  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente." }).waitFor();
+  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo." }).waitFor();
   for (const [rotulo, esperado] of [["Nome", "Portfólio da turma"], ["Descrição", "Página com os trabalhos"], ["Disciplina", "DFE"], ["Criado em", "2026-10-20"]]) {
     assert.equal(await ficharProjeto.campo(rotulo).inputValue(), esperado, rotulo);
   }
@@ -140,7 +140,7 @@ async function executar() {
   await ficharProjeto.campo("Nome").fill("Modelagem da Biblioteca Central");
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
-  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente." }).waitFor();
+  await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo." }).waitFor();
   assert.equal(await ficharProjeto.campo("Nome").inputValue(), "Modelagem da Biblioteca Central");
   await ligarApi();
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
@@ -157,7 +157,7 @@ async function executar() {
     const dialogo = page.getByRole("dialog", { name: `Excluir ${titulo}` });
     await desligarApi();
     await dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }).click();
-    await dialogo.getByRole("alert").filter({ hasText: "Não foi possível excluir a tarefa. Tente novamente." }).waitFor();
+    await dialogo.getByRole("alert").filter({ hasText: "Não foi possível excluir a tarefa. Tente de novo." }).waitFor();
     assert.equal(await page.locator(`[data-task-id="${id}"]`).count(), 1, `${caminho}: cartão sumiu sem excluir`);
     assert.equal(await dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }).evaluate((el) => el === document.activeElement), true, `${caminho}: foco saiu do botão de confirmar`);
     await ligarApi();
