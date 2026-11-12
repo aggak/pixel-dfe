@@ -126,7 +126,7 @@ async function executar() {
     await selecionar("Status", "Concluída");
     await criar("Tarefa escondida pelo status");
     await aviso.waitFor();
-    assert.equal(await page.getByRole("status").filter({ hasText: "Tarefa criada, mas escondida pela busca ou pelos filtros." }).count(), 1);
+    assert.equal(await page.locator('[aria-live="polite"]').filter({ hasText: "Tarefa criada, mas escondida pela busca ou pelos filtros." }).count(), 1);
     assert.equal(await lista.getByRole("link", { name: "Tarefa escondida pelo status" }).count(), 0);
     await aviso.getByRole("button", { name: "Limpar busca e filtros" }).click();
     await lista.getByRole("link", { name: "Tarefa escondida pelo status" }).waitFor();

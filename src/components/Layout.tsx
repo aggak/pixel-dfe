@@ -142,7 +142,7 @@ function focarBuscaSePerdido() {
 export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar }: { tarefas: Tarefa[]; exibidas: Tarefa[]; onLimpar: () => void }) {
   const criada = (useLocation().state as { tarefaCriada?: string } | null)?.tarefaCriada;
   const escondida = criada !== undefined && tarefas.some((tarefa) => tarefa.id === criada) && !exibidas.some((tarefa) => tarefa.id === criada);
-  return <div role="status">{escondida && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>Tarefa criada, mas escondida pela busca ou pelos filtros.</span>{exibidas.length > 0 && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
+  return <div aria-live="polite" aria-atomic="true">{escondida && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>Tarefa criada, mas escondida pela busca ou pelos filtros.</span>{exibidas.length > 0 && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
 }
 export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
