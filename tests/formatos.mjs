@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { iniciais, prazoVencido } from "../src/design/formatos.ts";
+import { dataValida, iniciais, prazoVencido } from "../src/design/formatos.ts";
 
 const monogramas = [
   ["Portal da biblioteca", "PB"],
@@ -28,6 +28,10 @@ for (const conectivo of ["a", "as", "o", "os", "da", "das", "de", "do", "dos", "
   assert.equal(iniciais(`${conectivo} Portal ${conectivo} Biblioteca`), "PB", conectivo);
 }
 console.log("OK: iniciais removem acentos, ignoram conectivos, limitam letras e tratam nomes vazios");
+
+for (const iso of ["2026-12-20", "2024-02-29", "0000-02-29", "9999-12-31"]) assert.equal(dataValida(iso), true, iso);
+for (const iso of ["", "20265-12-20", "2026-02-30", "2025-02-29", "2026-13-01", "2026-1-01", "20/12/2026", " 2026-12-20", "2026-12-20T00:00:00Z"]) assert.equal(dataValida(iso), false, JSON.stringify(iso));
+console.log("OK: data válida exige AAAA-MM-DD com ano de quatro dígitos e dia existente");
 
 const fusoOriginal = process.env.TZ;
 try {

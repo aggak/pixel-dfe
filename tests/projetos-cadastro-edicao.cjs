@@ -204,6 +204,43 @@ async function executar() {
   }
   const projetosComNome = async (nome) => (await lerBanco()).projetos.filter((p) => p.nome === nome);
 
+  await conferir("data de criação com ano de mais de quatro dígitos é recusada no cadastro e na edição", async () => {
+    const anoLongo = "20265-12-20";
+    const invalida = "Informe uma data válida.";
+    async function conferirRecusa() {
+      await page.getByText(invalida, { exact: true }).waitFor();
+      assert.equal(gravacoes.length, 0);
+      assert.equal(await campo("Criado em").getAttribute("aria-invalid"), "true");
+      const descId = await campo("Criado em").getAttribute("aria-describedby");
+      assert.ok(descId);
+      assert.equal(await page.locator(`[id="${descId}"]`).innerText(), invalida);
+      await ate("foco na data inválida", async () =>
+        campo("Criado em").evaluate((el) => el === document.activeElement),
+      );
+    }
+    await page.goto(`${origem}/projetos/novo`);
+    await page.locator("form").waitFor();
+    await preencherProjeto({ nome: "Projeto com data inválida", descricao: "", disciplina: "Redes", criadoEm: anoLongo });
+    gravacoes.length = 0;
+    await salvarNovo().click();
+    await conferirRecusa();
+    assert.equal(caminho(), "/projetos/novo");
+    await campo("Criado em").fill("2026-12-20");
+    assert.equal(await page.getByText(invalida, { exact: true }).count(), 0);
+    assert.equal(await campo("Criado em").getAttribute("aria-invalid"), null);
+
+    await page.route(`${api}/projetos/1`, (route) =>
+      route.request().method() === "GET" ? route.fulfill({ json: { ...seed.projetos[0], criadoEm: anoLongo } }) : route.continue(),
+    );
+    await abrirEdicao("1");
+    assert.equal(await campo("Criado em").inputValue(), anoLongo);
+    gravacoes.length = 0;
+    await salvarEdicao().click();
+    await conferirRecusa();
+    assert.equal(caminho(), "/projetos/1/editar");
+    await page.unrouteAll();
+  });
+
   await conferir("POST real grava sem id e sem espaços nas pontas, retorna à lista e disponibiliza em tarefas", async () => {
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
