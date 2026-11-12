@@ -37,7 +37,7 @@ export function EditarTarefa() {
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
-          <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada.</p>
+          <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada. Ela pode ter sido excluída.</p>
         </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (

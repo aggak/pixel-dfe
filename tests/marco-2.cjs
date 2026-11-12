@@ -141,7 +141,7 @@ async function executar() {
   await conferir("IDs inexistentes encerram carregamento com mensagem", async () => {
     // Tarefa abre na ficha com a mensagem exata; o projeto mostra título e explicação na própria tela.
     await abrir("/tarefas/999");
-    assert.equal(await page.getByRole("alert").innerText(), "Tarefa não encontrada.");
+    assert.equal(await page.getByRole("alert").innerText(), "Tarefa não encontrada. Ela pode ter sido excluída.");
     assert.equal(await page.getByRole("status").count(), 0);
     await abrir("/projetos/999");
     const alerta = await page.getByRole("alert").innerText();

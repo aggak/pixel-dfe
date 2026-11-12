@@ -37,7 +37,7 @@ export function EditarProjeto() {
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
-          <p className="e-ficha-state e-form-error" role="alert">Projeto não encontrado.</p>
+          <p className="e-ficha-state e-form-error" role="alert">Projeto não encontrado. Ele pode ter sido excluído.</p>
         </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
