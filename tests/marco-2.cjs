@@ -170,7 +170,7 @@ async function executar() {
       await abrir(rota);
       const alvo = rota.startsWith("/tarefas/") ? ficha() : page;
       assert.equal(await alvo.getByRole("alert").count(), 1);
-      assert.ok((await alvo.getByRole("alert").innerText()).includes("Confira se a API está em execução."));
+      assert.ok((await alvo.getByRole("alert").innerText()).includes("Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo."));
       assert.equal(await page.getByRole("status").count(), 0);
     }
     await page.unrouteAll();
