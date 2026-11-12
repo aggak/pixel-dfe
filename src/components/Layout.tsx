@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
@@ -89,6 +89,23 @@ export function AlternarVisao() {
     const atual = caminho === destino;
     return <Link key={destino} ref={atual ? ativo : undefined} to={destino} state={{ focoVisao: true }} aria-current={atual ? "page" : undefined}><Icone />{nome}</Link>;
   })}</nav>;
+}
+export function AnuncioResultados({ total, filtros }: { total: number; filtros: object }) {
+  const [texto, setTexto] = useState("");
+  const chave = JSON.stringify(filtros);
+  const anterior = useRef(chave);
+  const totalAtual = useRef(total);
+  totalAtual.current = total;
+  useEffect(() => {
+    if (anterior.current === chave) return;
+    anterior.current = chave;
+    const espera = setTimeout(() => {
+      const n = totalAtual.current;
+      setTexto(`${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`);
+    }, 700);
+    return () => clearTimeout(espera);
+  }, [chave]);
+  return <p className="sr-only" aria-live="polite" aria-atomic="true">{texto}</p>;
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status">{compacto ? <span className="e-loading-dot" aria-hidden="true" /> : <GatinhoCarregando />}{children}</div>;
