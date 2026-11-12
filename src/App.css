@@ -59,7 +59,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted)}
 .e-sheet-footer{display:flex;justify-content:space-between;padding:11px 16px;color:var(--e-muted);font-size:11px;border-top:1px solid var(--e-line);margin-top:auto}
 .e-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;padding:65px 20px;min-height:320px;color:var(--e-muted);text-align:center}
-.e-empty .e-project-icon{margin-bottom:16px}
 .e-empty h2{font-size:18px;color:var(--e-ink);margin:0 0 20px}
 .e-empty h2:has(+ p){margin-bottom:7px}
 .e-empty p{margin:0 0 20px;font-size:13px;line-height:1.6}
@@ -69,10 +68,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-load-error p{margin:0 0 20px}
 .e-load-error-compact{padding:36px 18px}
 .e-load-error-compact h2{font-size:16px}
-.e-notice{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;border:1px solid var(--e-line);background:var(--e-sheet);color:var(--e-ink);padding:8px 8px 8px 15px;box-shadow:0 6px 28px rgb(24 24 27 / 13%);border-radius:10px;z-index:80;max-width:calc(100vw - 28px);font-size:13px}
-.e-notice-check{color:#44744f;display:flex;font-size:15px}
-.e-notice>span:nth-child(2){min-width:100px}
-.e-notice button{width:32px;height:32px;padding:0}
 .e-projects{width:100%;padding:26px 0 60px;flex:1}
 .e-page-heading h1{font-size:25px;font-weight:500;letter-spacing:-.6px;margin:0 0 8px}
 .e-page-heading p{color:var(--e-muted);margin:0 0 28px}
@@ -81,12 +76,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(min-width:1440px){.e-project-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:1800px){.e-project-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .e-project-card{background:var(--e-sheet);padding:24px;border:1px solid var(--e-line);border-radius:12px}
-.e-project-icon{display:flex;width:40px;height:40px;background:var(--e-mark);color:var(--e-action);align-items:center;justify-content:center;border-radius:9px;font-size:20px;margin-bottom:18px}
 .e-project-card h2{font-size:19px;font-weight:500;margin:0 0 8px}
 .e-project-card>p{color:var(--e-muted);font-size:13px;min-height:40px;line-height:1.6;margin:0 0 25px}
-.e-project-foot{display:flex;gap:12px;align-items:center;justify-content:space-between}
 .e-popover{min-width:208px}
-.e-danger-item span{color:var(--e-error)!important}
 .e-form-overlay{padding:14px 20px!important;align-items:flex-start!important;justify-content:flex-end!important;backdrop-filter:none!important;background:rgb(12 9 16 / 22%)!important;--modal-pt:14px;--modal-pb:14px}
 .e-form-modal{width:438px!important;max-width:100%;margin-top:89px;max-height:calc(100dvh - 125px)!important;border-radius:13px!important;border:1px solid #66576f;--e-sheet:#2c2732;background:var(--e-sheet)!important;box-shadow:0 14px 48px rgb(10 7 14 / 32%)!important;overflow:auto}
 .e-form-dialog{overflow:visible!important}
@@ -117,7 +109,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-description-toggle{border:0;background:transparent;display:flex;align-items:center;gap:7px;color:var(--e-muted);font-size:12px;padding:8px 0;min-height:35px}
 .e-description-toggle i{font-size:17px}
 .e-description-toggle span{font-size:10px;margin-left:3px}
-.e-description #task-description{padding:4px 0 6px}
 .e-description textarea{font-size:13px!important;line-height:1.5!important}
 .e-form-footer{padding:16px 18px 18px;display:flex;align-items:center;justify-content:flex-end;gap:9px}
 .e-form-footer>button{font-size:13px}
@@ -150,8 +141,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-toolbar-right{grid-column:1/-1;margin:0;display:flex;justify-content:space-between;gap:8px}
 .e-toolbar-right>div{height:44px}
 .e-toolbar-right button{min-height:44px;font-size:12px;padding:10px 11px}
-.e-toolbar-right .e-create{min-height:44px;padding:10px 12px}
-.e-toolbar-right .e-create i{font-size:14px}
 .e-tools>button i{font-size:15px}
 .e-task-tools{grid-template-columns:minmax(0,1fr) auto;align-items:end}
 .e-task-tools .e-task-search{grid-column:1;grid-row:1;min-width:0;width:100%}
@@ -175,13 +164,10 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-empty h2{font-size:17px}
 .e-empty p{font-size:12px}
 .e-empty button{min-height:44px}
-.e-notice{bottom:18px;width:max-content}
-.e-notice button{width:40px;height:40px}
 .e-projects{padding-top:20px}
 .e-page-heading h1{font-size:23px}
 .e-project-grid{grid-template-columns:1fr}
 .e-project-card{padding:20px}
-.e-project-foot>button{min-height:44px}
 .e-form-overlay{padding:10px!important;align-items:flex-end!important;justify-content:center!important;--modal-pt:10px;--modal-pb:10px}
 .e-form-modal{margin-top:0;width:438px!important;max-height:calc(100dvh - 20px)!important}
 .e-form-header{padding:12px 13px 2px}
@@ -219,7 +205,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:360px){
 .e-toolbar-right{gap:7px}
 .e-toolbar-right button{padding-left:9px!important;padding-right:9px!important;font-size:11px!important}
-.e-toolbar-right .e-create{padding-left:9px!important;padding-right:9px!important}
 .e-toolbar-right button i{width:14px!important;font-size:14px}
 .e-toolbar-right [role=group]{flex-shrink:0}
 }
@@ -238,7 +223,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:650px),(pointer:coarse){
 [data-rac][role=option],[data-rac][role^=menuitem]{min-height:44px;display:flex;align-items:center}
 [data-rac][role^=menuitem]>div{width:100%}
-.e-notice button{min-width:44px;min-height:44px}
 }
 @layer base{
 .e-uicon{display:inline-block;width:1em;height:1em;flex-shrink:0;line-height:1;font-style:normal;vertical-align:middle}
@@ -275,11 +259,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-projects .e-page-heading{display:flex;align-items:start;justify-content:space-between;gap:18px}
 .e-projects .e-page-heading>button{flex-shrink:0}
 .e-project-card h2{overflow-wrap:anywhere}
-.e-project-card-actions{display:flex;gap:8px;align-items:center}
 .e-project-fields{padding:15px 18px 0;display:grid;gap:16px}
 .e-project-fields label{font-size:12px}
 .e-edit-project-details{margin-top:15px;font-size:12px}
-.e-menu-heading{padding:7px 16px 5px;font-size:11px;font-weight:500;color:var(--e-muted)}
 .e-loading-state{min-height:270px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--e-muted);font-size:14px}
 .e-loading-compact{min-height:0;justify-content:flex-start;white-space:nowrap;font-size:12px}
 .e-tabs .e-loading-compact{min-height:44px;padding:0 14px}
@@ -298,9 +280,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-project-fields{padding:12px 13px 0;gap:14px}
 .e-project-fields input,.e-project-fields textarea{font-size:16px!important}
 .e-project-fields input{min-height:44px}
-.e-project-card-actions>button,.e-edit-project-details{min-height:44px}
-.e-project-foot{align-items:start;flex-wrap:wrap}
-.e-project-card-actions{margin-left:auto}
+.e-edit-project-details{min-height:44px}
 .e-projects .e-page-heading h1{font-size:22px}
 }
 .e-tabs :is(button,a){flex:0 0 auto;max-width:min(240px,calc(100vw - 64px));overflow:hidden;text-overflow:ellipsis}
@@ -311,13 +291,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-form-header,.e-form-footer,.e-form-error{flex-shrink:0}
 .e-panel-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .e-panel-scroll>.e-read-body{padding-bottom:2px}
-.e-notice-inline{flex-shrink:0;display:flex;align-items:center;gap:10px;margin:12px 18px 0;padding:9px 10px;border:1px solid var(--e-line);border-radius:8px;background:color-mix(in srgb,var(--e-mark) 36%,var(--e-sheet));color:var(--e-ink);font-size:12px;line-height:1.5}
-.e-notice-inline>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
-.e-notice-inline>button{width:32px;height:32px;flex-shrink:0;padding:0}
 .e-form-error{max-height:120px;overflow-y:auto}
 @media(max-width:650px){
-.e-notice-inline{margin:10px 13px 0;padding:5px 8px}
-.e-notice-inline>button{width:44px;height:44px}
 .e-form-error{max-height:105px}
 }
 .e-sheet{min-height:0}
@@ -326,7 +301,6 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-footer-identity{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:0}
 .e-footer-identity strong{font-size:14px;font-weight:600;letter-spacing:-.35px;color:var(--e-ink)}
 .e-footer-context{font-size:11px}
-.e-footer-local{font-size:11px}
 .e-footer-links{display:flex;align-items:center;flex-wrap:wrap;column-gap:16px;margin-left:auto;min-width:0}
 .e-footer-links a{display:inline-flex;align-items:center;min-height:24px;color:var(--e-muted);text-decoration:underline;text-decoration-color:var(--e-line);text-underline-offset:3px;white-space:nowrap}
 .e-footer-links a:hover{color:var(--e-ink);text-decoration-color:var(--e-control)}
