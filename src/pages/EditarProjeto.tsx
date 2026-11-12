@@ -41,7 +41,7 @@ export function EditarProjeto() {
         </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
-        <ErroCarregamento compacto titulo="Não foi possível carregar o projeto" onTentarDeNovo={tentarDeNovo} tentando={tentando} />
+        <ErroCarregamento compacto titulo="Não foi possível carregar o projeto" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />
       )}
       {projeto && (
         <FormularioProjeto

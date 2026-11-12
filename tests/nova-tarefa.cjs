@@ -196,12 +196,12 @@ async function executar() {
     await ate("lista de tarefas pelo fechar", async () => caminho().pathname === "/");
     await abrir("/tarefas/nova"); await page.getByRole("button", { name: "Cancelar", exact: true }).click(); await ate("lista de tarefas", async () => caminho().pathname === "/");
   });
-  await conferir("sucesso com contexto de projeto sempre volta para a lista", async () => {
+  await conferir("sucesso com contexto de projeto volta para a lista do projeto", async () => {
     const dados = { ...base, projetoId: "2", titulo: "Tarefa contextual da suíte" };
     await abrir("/tarefas/nova?projetoId=2"); assert.equal(await ui.valor("Projeto"), "2");
     await preencher(dados); await botaoSalvar().click();
-    await ate("lista após sucesso contextual", async () => caminho().pathname === "/");
-    assert.equal(caminho().pathname + caminho().search, "/"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+    await ate("projeto após sucesso contextual", async () => caminho().pathname === "/projetos/2");
+    assert.equal(caminho().pathname + caminho().search, "/projetos/2"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
   });
   await conferir("projeto inexistente na query bloqueia até escolher um válido", async () => {
     posts.length = 0; await abrir("/tarefas/nova?projetoId=999"); assert.equal(await ui.valor("Projeto"), "999");

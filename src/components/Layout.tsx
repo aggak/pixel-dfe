@@ -4,6 +4,7 @@ import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto } from "../tipos";
+import { ErroApi } from "../api";
 import { GatinhoDormindo } from "./GatinhoDormindo";
 import { GatinhoOlhando } from "./GatinhoOlhando";
 import { GatinhoCostas } from "./GatinhoCostas";
@@ -92,7 +93,7 @@ export function AlternarVisao() {
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status">{compacto ? <span className="e-loading-dot" aria-hidden="true" /> : <GatinhoCarregando />}{children}</div>;
 }
-export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
+export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; erro?: unknown; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
   const raiz = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const elemento = raiz.current;
@@ -105,7 +106,8 @@ export function ErroCarregamento({ titulo, onTentarDeNovo, tentando = false, com
       });
     };
   }, []);
-  return <div ref={raiz} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : "O servidor não respondeu. Confira se a API está em execução."}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+  const motivo = erro instanceof ErroApi && erro.status >= 500 ? "O servidor encontrou um problema. Tente de novo em instantes." : "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
+  return <div ref={raiz} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : motivo}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
   return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;

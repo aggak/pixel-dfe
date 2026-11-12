@@ -209,6 +209,17 @@ async function executar() {
   assert.equal(await tentar().count(), 0);
   console.log("OK: projeto inexistente não oferece tentar de novo");
 
+  await page.route("**/src/pages/NovaTarefa.tsx*", (rota) => rota.abort("connectionrefused"));
+  await page.goto(`${web}/`);
+  await page.locator("[data-task-id]").first().waitFor();
+  await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
+  const fichaNova = page.getByRole("dialog", { name: "Nova tarefa" });
+  await fichaNova.getByRole("alert").filter({ hasText: "Não foi possível abrir o formulário" }).waitFor();
+  assert.equal(await fichaNova.getByRole("button", { name: "Tentar de novo" }).count(), 1);
+  assert.equal(await page.locator("[data-task-id]").first().isVisible(), true);
+  await page.unroute("**/src/pages/NovaTarefa.tsx*");
+  console.log("OK: formulário que não baixa mostra aviso na ficha, sem apagar a página");
+
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
