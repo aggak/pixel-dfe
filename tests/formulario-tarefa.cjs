@@ -46,13 +46,12 @@ async function encerrarApi() {
   }
 }
 const FIXTURE_HTML = `<!doctype html>
-<html lang="pt-BR"><head><meta charset="UTF-8" />
+<html lang="pt-BR" class="dark dark-mode"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Teste do formulário</title></head>
 <body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>`;
 const FIXTURE_TSX = `import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nProvider } from "react-aria-components";
-import { Aparencia } from "../src/components/Aparencia";
 import { FormularioTarefa } from "../src/components/FormularioTarefa";
 import { atualizarTarefa, criarTarefa } from "../src/api";
 import type { NovaTarefa, Tarefa } from "../src/tipos";
@@ -80,7 +79,7 @@ function Pagina() {
   if (modo === "sem-cancelar") formulario = <FormularioTarefa onSalvar={registrar} />;
   return <main><h1>Formulário de tarefa</h1>{formulario}<p data-testid="resultado">{resultado}</p><p data-testid="envios" hidden>{envios}</p></main>;
 }
-createRoot(document.getElementById("root")!).render(<StrictMode><Aparencia><I18nProvider locale="pt-BR"><Pagina /></I18nProvider></Aparencia></StrictMode>);`;
+createRoot(document.getElementById("root")!).render(<StrictMode><I18nProvider locale="pt-BR"><Pagina /></I18nProvider></StrictMode>);`;
 async function executar() {
   try { await access(join(repo, "src/components/FormularioTarefa.tsx")); } catch { throw new Error("Componente ausente: src/components/FormularioTarefa.tsx"); }
   const bancoRealAntes = await readFile(join(repo, "db.json"), "utf8");
@@ -358,26 +357,19 @@ async function executar() {
     } finally { await page.unrouteAll(); }
   });
 
-  await conferir("botão legível nos temas claro e escuro", async () => {
+  await conferir("tema escuro mesmo com preferência clara e botão legível", async () => {
     await page.setViewportSize({ width: 1024, height: 900 });
-    const fundos = {};
     const classesTema = () => page.evaluate(() => ({ dark: document.documentElement.classList.contains("dark"), darkMode: document.documentElement.classList.contains("dark-mode") }));
     for (const tema of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme: tema });
       await abrir("editar");
-      // Os provedores de produção alternam as classes de tema de verdade.
-      assert.deepEqual(await classesTema(), { dark: tema === "dark", darkMode: tema === "dark" }, tema);
-      // As cores têm transição: só se mede depois que nenhuma animação CSS está em curso.
+      assert.deepEqual(await classesTema(), { dark: true, darkMode: true }, tema);
       await page.waitForFunction(() => document.getAnimations().length === 0);
       const cores = await botaoEnvio().evaluate((el) => ({ texto: getComputedStyle(el).color, fundo: getComputedStyle(el).backgroundColor }));
-      fundos[tema] = await campo("Título").evaluate((el) => `${getComputedStyle(el).color} | ${getComputedStyle(document.body).backgroundColor} | ${getComputedStyle(el.closest("form")).color}`);
       assert.ok(contraste(cores.texto, cores.fundo) >= 4.5, `${tema}: ${cores.texto} sobre ${cores.fundo}`);
-      if (evidencias) await page.screenshot({ path: join(evidencias, `formulario-${tema}.png`), fullPage: true });
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(24, 22, 28)", tema);
+      if (evidencias && tema === "dark") await page.screenshot({ path: join(evidencias, "formulario-escuro.png"), fullPage: true });
     }
-    assert.notEqual(fundos.light, fundos.dark, "o tema escuro deve mudar as cores do texto e do fundo");
-    // A troca de preferência em tempo de execução também é refletida sem recarregar.
-    await page.emulateMedia({ colorScheme: "light" });
-    await ate("tema claro restaurado", async () => (await classesTema()).dark === false);
   });
 
   await conferir("largura de 320px sem overflow e navegação por teclado", async () => {

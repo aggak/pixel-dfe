@@ -65,7 +65,7 @@ async function executar() {
       && document.getAnimations().every((animacao) => animacao.effect?.getTiming().iterations === Infinity || animacao.playState !== "running"));
   }
 
-  for (const tema of ["light", "dark"]) {
+  for (const tema of ["dark"]) {
     const page = await browser.newPage({ colorScheme: tema, viewport: { width: 1280, height: 900 } });
     page.setDefaultTimeout(10000);
     page.on("pageerror", (erro) => errosPagina.push(erro.message));

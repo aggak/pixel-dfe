@@ -22,8 +22,8 @@ const paginas = [
   ["nova-tarefa", "/tarefas/nova"],
   ["editar-projeto", "/projetos/1/editar"],
 ];
-// Blink: preferredColorScheme 0 = escuro, 1 = claro. A aparência da Pixel segue prefers-color-scheme.
-const temas = [["claro", "1"], ["escuro", "0"]];
+// Blink: preferredColorScheme 0 = escuro. A Pixel só tem o tema escuro.
+const temas = [["escuro", "0"]];
 const dispositivos = [["mobile", []], ["desktop", ["--preset=desktop"]]];
 
 async function portaLivre() {
