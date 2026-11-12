@@ -46,6 +46,18 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
       setSalvando(false);
     }
   };
+  const raiz = useRef<HTMLElement>(null);
+  const focarVizinho = () => {
+    const cartoes = [...document.querySelectorAll<HTMLElement>("[data-task-id]")];
+    const posicao = raiz.current ? cartoes.indexOf(raiz.current) : -1;
+    const vizinho = posicao < 0 ? undefined : cartoes[posicao + 1] ?? cartoes[posicao - 1];
+    const alvo = vizinho?.querySelector<HTMLElement>(".e-task-title");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const ativo = document.activeElement;
+      if (ativo && ativo !== document.body && ativo.isConnected) return;
+      (alvo?.isConnected ? alvo : document.querySelector<HTMLElement>("main h1"))?.focus();
+    }));
+  };
   const excluir = async () => {
     if (exclusaoPendente.current) return;
     exclusaoPendente.current = true;
@@ -54,6 +66,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     try {
       await onExcluir(tarefa);
       setConfirmando(false);
+      focarVizinho();
     } catch {
       setFalhaExclusao(true);
     } finally {
@@ -76,7 +89,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const alerta = falhou && <p className="e-task-error" role="alert">{falhou === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída." : "Não foi possível mudar o status. Tente de novo."}</p>;
   const vencido = !concluida && prazoVencido(tarefa.prazo);
   const pessoaPrazo = <><span className="e-card-pessoa">{tarefa.responsavel}</span><span className="e-card-separador" aria-hidden="true">·</span><time className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`} dateTime={tarefa.prazo} title={`Prazo: ${formatarData(tarefa.prazo, true)}`}>{vencido ? "Venceu " : ""}{formatarData(tarefa.prazo).replace(" de ", " ").replace(".", "")}</time></>;
-  return <article className={classe} data-task-id={tarefa.id}>
+  return <article ref={raiz} className={classe} data-task-id={tarefa.id}>
     {emQuadro ? <div className="e-task-main">{cabecalho}
       <div className="e-card-contexto">{nomeProjeto ? <span className="e-task-project">{nomeProjeto}</span> : <span />}{seletorStatus}</div>
       <div className={`e-task-meta${tarefa.responsavel.length > 24 ? " e-card-meta-longa" : ""}`}>{pessoaPrazo}{tagPrioridade}</div>

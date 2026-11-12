@@ -16,7 +16,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
   const [aberta, setAberta] = useState(true);
   const [ocupada, setOcupada] = useState(false);
   const pendente = useRef<(() => void) | null>(null);
-  const origem = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const origem = useRef(document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null);
   const concluirSaida = useCallback(() => {
     const continuar = pendente.current;
     pendente.current = null;
