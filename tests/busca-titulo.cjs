@@ -99,9 +99,9 @@ async function executar() {
     await lista.getByRole("link", { name: "Listar as tarefas na tela" }).waitFor();
     assert.equal(await lista.getByRole("article").count(), 1);
 
-    await selecionar("Status", "Todos os status");
+    await selecionar("Status", "Todos");
     assert.equal(await lista.getByRole("article").count(), 2);
-    await selecionar("Prioridade", "Todas as prioridades");
+    await selecionar("Prioridade", "Todas");
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
 
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Gerenciador de Tarefas" }).click();

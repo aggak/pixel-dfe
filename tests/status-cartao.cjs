@@ -120,9 +120,9 @@ async function executar() {
   await conferirMenu(alvo);
   await page.goto(`${web}/projetos/${alvo.projetoId}`);
   await cartao(alvo.id).waitFor();
-  assert.equal(await page.locator("[data-status-trigger]").count(), 0);
-  assert.equal(await cartao(alvo.id).locator(".e-card-status").innerText(), TEXTO_STATUS["a-fazer"]);
-  console.log("OK: quadro e lista abrem o menu com os quatro status e o atual marcado; o projeto mostra só o selo");
+  assert.equal(await page.locator("[data-status-trigger]").count(), await page.locator("[data-task-id]").count());
+  await conferirMenu(alvo);
+  console.log("OK: quadro, lista e página do projeto abrem o menu com os quatro status e o atual marcado");
 
   // Quadro: grava só o status e o cartão muda de coluna, sem duplicar, com contadores e rodapé coerentes.
   await page.goto(`${web}/quadro`);
@@ -233,7 +233,7 @@ async function executar() {
   assert.equal(await rodape.innerText(), textoTotal(1));
   assert.equal(await tarefasNaTela(alvo.id), 1);
   await busca.fill("");
-  await selecionarFiltro("Prioridade", "Todas as prioridades");
+  await selecionarFiltro("Prioridade", "Todas");
   await selecionarFiltro("Status", "A fazer");
   await cartao("1").waitFor({ state: "detached" });
   const aFazer = (await lista.locator("[data-task-id]").count());
@@ -243,7 +243,7 @@ async function executar() {
   assert.equal((await lerTarefa(alvo.id)).status, "concluida");
   // O cartão saiu da tela; o foco vai para o título da página em vez de cair no body.
   await page.waitForFunction(() => document.activeElement?.matches("main h1"));
-  await selecionarFiltro("Status", "Todos os status");
+  await selecionarFiltro("Status", "Todos");
   console.log("OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai ao título");
 
   // Recarga, tema escuro e larguras.

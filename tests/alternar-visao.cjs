@@ -115,24 +115,24 @@ async function executar() {
   console.log("OK: lista → quadro preserva busca, status e prioridade, sem recarregar o documento");
 
   await busca.fill("");
-  await selecionar("Status", "Todos os status");
+  await selecionar("Status", "Todos");
   await selecionar("Prioridade", "Alta");
   const altas = seed.tarefas.filter((t) => t.prioridade === "alta").map((t) => t.id).sort();
   assert.deepEqual(await ids(quadro), altas);
   await linkLista.click();
   await lista.getByRole("article").first().waitFor();
   assert.equal(caminho(), "/");
-  await conferirFiltros("", "Todos os status", "Alta");
+  await conferirFiltros("", "Todos", "Alta");
   assert.deepEqual(await ids(lista), altas);
   console.log("OK: quadro → lista preserva os filtros alterados no quadro");
 
   // Voltar e avançar do navegador também trocam de visão sem perder o estado.
   await page.goBack();
   await quadro.locator("[data-task-id]").first().waitFor();
-  await conferirFiltros("", "Todos os status", "Alta");
+  await conferirFiltros("", "Todos", "Alta");
   await page.goForward();
   await lista.getByRole("article").first().waitFor();
-  await conferirFiltros("", "Todos os status", "Alta");
+  await conferirFiltros("", "Todos", "Alta");
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   console.log("OK: voltar e avançar do navegador mantêm busca e filtros");
 
@@ -164,7 +164,7 @@ async function executar() {
     await page.keyboard.press("Escape");
     await detalhe.waitFor({ state: "detached" });
     await page.waitForURL((url) => url.pathname === rota);
-    await conferirFiltros("", "Todos os status", "Alta");
+    await conferirFiltros("", "Todos", "Alta");
   }
   console.log("OK: a ficha sobre a lista e sobre o quadro mantém a visão marcada e os filtros");
 
@@ -179,6 +179,22 @@ async function executar() {
   assert.equal(await visao.count(), 0);
   assert.equal(await menuTarefas.getAttribute("aria-current"), null);
   console.log("OK: barra final e maiúsculas marcam a visão certa; fora das tarefas o controle some");
+  const abas = page.getByRole("navigation", { name: "Projetos" });
+  await page.goto(`${web}/quadro`);
+  await page.locator("[data-task-id]").first().waitFor();
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/quadro");
+  await abas.getByRole("link").nth(1).click();
+  await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/quadro");
+  await page.getByRole("link", { name: "Lista" }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  await abas.getByRole("link").nth(1).click();
+  await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  console.log("OK: \"Todas\" volta para a visão em uso, lista ou quadro");
 
   // Controle e botão na mesma linha, dentro da folha, de 1280 a 320 px.
   for (const rota of ["/", "/quadro"]) {

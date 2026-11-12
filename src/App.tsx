@@ -50,7 +50,7 @@ function App() {
         <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />
-        <Route path="*" element={<main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><Link to="/">Voltar para tarefas</Link></main>} />
+        <Route path="*" element={<main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><p>Este endereço não existe ou mudou.</p><Link to="/">Voltar para tarefas</Link></main>} />
       </Route>
     </Routes>
     {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>

@@ -12,7 +12,7 @@ import { Icon, EditIcon, TrashIcon, PawIcon } from "../design/icon";
 import { formatarData, prazoVencido, prioridadeTexto, statusTexto } from "../design/formatos";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
-// Com `onMudarStatus`, o selo de status vira um seletor; sem ele (página do projeto), segue só informativo.
+// Com `onMudarStatus`, o selo de status vira um seletor; sem ele, segue só informativo.
 export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarStatus, onExcluir }: { tarefa: Tarefa; nomeProjeto?: string; variante?: "lista" | "quadro"; onMudarStatus?: (tarefa: Tarefa, status: Status) => Promise<void>; onExcluir: (tarefa: Tarefa) => Promise<void> }) {
   const [salvando, setSalvando] = useState(false);
   // "inexistente": a tarefa foi excluída em outro lugar e tentar de novo não adianta.
@@ -46,6 +46,18 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
       setSalvando(false);
     }
   };
+  const raiz = useRef<HTMLElement>(null);
+  const focarVizinho = () => {
+    const cartoes = [...document.querySelectorAll<HTMLElement>("[data-task-id]")];
+    const posicao = raiz.current ? cartoes.indexOf(raiz.current) : -1;
+    const vizinho = posicao < 0 ? undefined : cartoes[posicao + 1] ?? cartoes[posicao - 1];
+    const alvo = vizinho?.querySelector<HTMLElement>(".e-task-title");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const ativo = document.activeElement;
+      if (ativo && ativo !== document.body && ativo.isConnected) return;
+      (alvo?.isConnected ? alvo : document.querySelector<HTMLElement>("main h1"))?.focus();
+    }));
+  };
   const excluir = async () => {
     if (exclusaoPendente.current) return;
     exclusaoPendente.current = true;
@@ -54,6 +66,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     try {
       await onExcluir(tarefa);
       setConfirmando(false);
+      focarVizinho();
     } catch {
       setFalhaExclusao(true);
     } finally {
@@ -76,7 +89,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const alerta = falhou && <p className="e-task-error" role="alert">{falhou === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída." : "Não foi possível mudar o status. Tente de novo."}</p>;
   const vencido = !concluida && prazoVencido(tarefa.prazo);
   const pessoaPrazo = <><span className="e-card-pessoa">{tarefa.responsavel}</span><span className="e-card-separador" aria-hidden="true">·</span><time className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`} dateTime={tarefa.prazo} title={`Prazo: ${formatarData(tarefa.prazo, true)}`}>{vencido ? "Venceu " : ""}{formatarData(tarefa.prazo).replace(" de ", " ").replace(".", "")}</time></>;
-  return <article className={classe} data-task-id={tarefa.id}>
+  return <article ref={raiz} className={classe} data-task-id={tarefa.id}>
     {emQuadro ? <div className="e-task-main">{cabecalho}
       <div className="e-card-contexto">{nomeProjeto ? <span className="e-task-project">{nomeProjeto}</span> : <span />}{seletorStatus}</div>
       <div className={`e-task-meta${tarefa.responsavel.length > 24 ? " e-card-meta-longa" : ""}`}>{pessoaPrazo}{tagPrioridade}</div>
@@ -89,7 +102,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
       <Modal className="e-confirm-modal"><Dialog className="e-confirm-dialog" aria-label={`Excluir ${tarefa.titulo}`}>
         <Heading slot="title">Excluir tarefa?</Heading>
         <p>Deseja excluir “{tarefa.titulo}”? Esta ação não pode ser desfeita.</p>
-        {falhaExclusao && <p className="e-confirm-error" role="alert">Não foi possível excluir a tarefa. Tente novamente.</p>}
+        {falhaExclusao && <p className="e-confirm-error" role="alert">Não foi possível excluir a tarefa. Tente de novo.</p>}
         <div className="e-confirm-actions"><Button color="secondary" size="sm" onClick={() => setConfirmando(false)} isDisabled={excluindo}>Cancelar</Button>{/* Pendente, e não desabilitado: o botão segura o foco durante o envio e, se falhar, Enter tenta de novo. */}<Button color="primary-destructive" size="sm" onClick={() => void excluir()} isLoading={excluindo} showTextWhileLoading>{excluindo ? "Excluindo…" : "Excluir tarefa"}</Button></div>
       </Dialog></Modal>
     </ModalOverlay>

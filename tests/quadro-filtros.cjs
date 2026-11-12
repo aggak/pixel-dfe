@@ -95,7 +95,7 @@ async function executar() {
     assert.match(await seletor("Status").innerText(), /A fazer/);
     assert.deepEqual(await lista.locator("[data-task-id]").evaluateAll((cartoes) => cartoes.map((c) => c.dataset.taskId)), doQuadro);
     await busca.fill("");
-    await selecionar("Status", "Todos os status");
+    await selecionar("Status", "Todos");
     await selecionar("Prioridade", "Alta");
     const daLista = await lista.locator("[data-task-id]").evaluateAll((cartoes) => cartoes.map((c) => c.dataset.taskId));
     await irPara("/quadro");

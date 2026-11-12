@@ -313,8 +313,8 @@ async function executar() {
   assert.deepEqual(await ids(lista), combinadas);
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   await busca.fill("");
-  await selecionarFiltro("Status", "Todos os status");
-  await selecionarFiltro("Prioridade", "Todas as prioridades");
+  await selecionarFiltro("Status", "Todos");
+  await selecionarFiltro("Prioridade", "Todas");
   await page.waitForFunction((n) => document.querySelectorAll("[data-task-id]").length === n, seed.tarefas.length);
   console.log("OK: busca + status + prioridade filtram a lista e se mantêm ao ir para o quadro e voltar");
 

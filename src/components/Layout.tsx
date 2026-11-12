@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
@@ -36,8 +36,11 @@ const SETAS = {
   fim: "M0 0h1v1h-1zM1 1h1v1h-1zM2 2h1v1h-1zM3 3h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM0 6h1v1h-1z",
 };
 let ultimaLista: Projeto[] | undefined;
+let ultimaVisao = "/";
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
   const fileira = useRef<HTMLElement>(null);
+  const caminho = caminhoNormalizado(useLocation().pathname);
+  if (caminho === "/" || caminho === "/quadro") ultimaVisao = caminho;
   useEffect(() => { if (projetos.dados) ultimaLista = projetos.dados; }, [projetos.dados]);
   const lista = projetos.dados ?? (projetos.carregando ? ultimaLista : undefined);
   const total = lista?.length ?? 0;
@@ -74,7 +77,7 @@ export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: 
     nav?.scrollBy({ left: sentido * Math.max(nav.clientWidth * 0.6, 160), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
   const seta = (lado: "ini" | "fim") => <button type="button" className="e-tabs-seta" data-lado={lado} aria-hidden="true" tabIndex={-1} onClick={() => rolar(lado === "ini" ? -1 : 1)}><PixelArte largura={4} altura={7} desenho={SETAS[lado]} /></button>;
-  return <nav ref={fileira} className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}><span className="e-tabs-mono" aria-hidden="true"><PixelArte largura={8} altura={8} desenho={GRADE_TODAS} /></span><span className="e-tabs-nome">Todas</span></Link>{seta("ini")}{projetos.carregando && !lista && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{lista?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}><Monograma nome={projeto.nome} className="e-tabs-mono" /><span className="e-tabs-nome">{projeto.nome}</span></Link>)}{seta("fim")}</nav>;
+  return <nav ref={fileira} className="e-tabs" aria-label="Projetos"><Link to={ultimaVisao} aria-current={!atual ? "page" : undefined}><span className="e-tabs-mono" aria-hidden="true"><PixelArte largura={8} altura={8} desenho={GRADE_TODAS} /></span><span className="e-tabs-nome">Todas</span></Link>{seta("ini")}{projetos.carregando && !lista && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{lista?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}><Monograma nome={projeto.nome} className="e-tabs-mono" /><span className="e-tabs-nome">{projeto.nome}</span></Link>)}{seta("fim")}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
@@ -111,8 +114,20 @@ export function Carregando({ children, compacto = false }: { children: string; c
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status">{compacto ? <span className="e-loading-dot" aria-hidden="true" /> : <GatinhoCarregando />}{children}</div>;
 }
 export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; erro?: unknown; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
+  const raiz = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const elemento = raiz.current;
+    return () => {
+      if (!elemento?.contains(document.activeElement)) return;
+      const alvo = elemento.closest<HTMLElement>('[role="dialog"]') ?? document.querySelector<HTMLElement>("main h1");
+      requestAnimationFrame(() => {
+        const ativo = document.activeElement;
+        if (!ativo || ativo === document.body || !ativo.isConnected) (alvo?.isConnected ? alvo : document.querySelector<HTMLElement>("main h1"))?.focus({ preventScroll: true });
+      });
+    };
+  }, []);
   const motivo = erro instanceof ErroApi && erro.status >= 500 ? "O servidor encontrou um problema. Tente de novo em instantes." : "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
-  return <div className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : motivo}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
+  return <div ref={raiz} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : motivo}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
   return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
@@ -120,5 +135,12 @@ export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { tex
 export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
-  return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : onAcao?.())}>{acao}</Button></div>;
+  const agir = () => {
+    onAcao?.();
+    requestAnimationFrame(() => {
+      const ativo = document.activeElement;
+      if (!ativo || ativo === document.body || !ativo.isConnected) (document.querySelector<HTMLElement>(".e-task-search input") ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    });
+  };
+  return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : agir())}>{acao}</Button></div>;
 }

@@ -176,7 +176,7 @@ export function FormularioProjeto({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          {erroEnvio === "inexistente" ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos." : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente."}
+          {erroEnvio === "inexistente" ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos." : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo."}
         </div>
       )}
 

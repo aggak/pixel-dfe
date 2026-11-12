@@ -121,7 +121,7 @@ async function executar() {
   await titulo.fill("Título digitado depois da exclusão");
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
   await alerta("Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos.").waitFor();
-  assert.equal(await alerta("tente novamente").count(), 0);
+  assert.equal(await alerta("tente de novo").count(), 0);
   assert.equal(await titulo.inputValue(), "Título digitado depois da exclusão");
   console.log("OK: salvar tarefa excluída avisa que ela não existe mais e mantém o texto");
 
@@ -147,7 +147,7 @@ async function executar() {
   await ficha().getByLabel(/^Responsável/).fill("Ana");
   await ficha().getByLabel(/^Prazo/).fill("2026-12-01");
   await ficha().getByRole("button", { name: /^Salvar/ }).click();
-  await alerta("Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente.").waitFor();
+  await alerta("Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.").waitFor();
   assert.equal(await alerta("não existe mais").count(), 0);
   assert.equal(await tituloNovo.inputValue(), "Tarefa recusada pela API");
   await page.unroute(`${api}/tarefas`, recusarCriacao);
@@ -161,7 +161,7 @@ async function executar() {
   await ficha().getByLabel(/^Disciplina/).fill("DFE");
   await ficha().getByLabel(/^Criado em/).fill("2026-10-01");
   await ficha().getByRole("button", { name: /^Salvar/ }).click();
-  await alerta("Não foi possível salvar o projeto. Seus dados foram mantidos; tente novamente.").waitFor();
+  await alerta("Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo.").waitFor();
   assert.equal(await alerta("não existe mais").count(), 0);
   assert.equal(await nomeNovo.inputValue(), "Projeto recusado pela API");
   await page.unroute(`${api}/projetos`, recusarCriacao);
