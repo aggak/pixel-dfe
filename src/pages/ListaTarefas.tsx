@@ -5,7 +5,7 @@ import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
-import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
+import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { filtrarTarefas } from "../derivar";
@@ -45,7 +45,7 @@ export function ListaTarefas() {
     <FiltrosTarefas />
     <AlternarVisao />
     <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className="e-content">
+  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className="e-content"><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-list" aria-label="Lista de tarefas">{tarefasExibidas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}

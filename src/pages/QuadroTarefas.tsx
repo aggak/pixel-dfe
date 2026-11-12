@@ -7,7 +7,7 @@ import { CartaoTarefa } from "../components/CartaoTarefa";
 import { GatinhoLavando } from "../components/GatinhoLavando";
 import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
-import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
+import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { agruparPorStatus, filtrarTarefas } from "../derivar";
@@ -51,7 +51,7 @@ export function QuadroTarefas() {
     <FiltrosTarefas />
     <AlternarVisao />
     <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasFiltradas.length} filtros={filtros} /><div className="e-content e-board-content">
+  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasFiltradas.length} filtros={filtros} /><div className="e-content e-board-content"><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasFiltradas} onLimpar={limpar} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasFiltradas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
