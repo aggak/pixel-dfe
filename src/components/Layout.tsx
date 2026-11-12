@@ -36,8 +36,11 @@ const SETAS = {
   fim: "M0 0h1v1h-1zM1 1h1v1h-1zM2 2h1v1h-1zM3 3h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM0 6h1v1h-1z",
 };
 let ultimaLista: Projeto[] | undefined;
+let ultimaVisao = "/";
 export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
   const fileira = useRef<HTMLElement>(null);
+  const caminho = caminhoNormalizado(useLocation().pathname);
+  if (caminho === "/" || caminho === "/quadro") ultimaVisao = caminho;
   useEffect(() => { if (projetos.dados) ultimaLista = projetos.dados; }, [projetos.dados]);
   const lista = projetos.dados ?? (projetos.carregando ? ultimaLista : undefined);
   const total = lista?.length ?? 0;
@@ -74,7 +77,7 @@ export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: 
     nav?.scrollBy({ left: sentido * Math.max(nav.clientWidth * 0.6, 160), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   };
   const seta = (lado: "ini" | "fim") => <button type="button" className="e-tabs-seta" data-lado={lado} aria-hidden="true" tabIndex={-1} onClick={() => rolar(lado === "ini" ? -1 : 1)}><PixelArte largura={4} altura={7} desenho={SETAS[lado]} /></button>;
-  return <nav ref={fileira} className="e-tabs" aria-label="Projetos"><Link to="/" aria-current={!atual ? "page" : undefined}><span className="e-tabs-mono" aria-hidden="true"><PixelArte largura={8} altura={8} desenho={GRADE_TODAS} /></span><span className="e-tabs-nome">Todas</span></Link>{seta("ini")}{projetos.carregando && !lista && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{lista?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}><Monograma nome={projeto.nome} className="e-tabs-mono" /><span className="e-tabs-nome">{projeto.nome}</span></Link>)}{seta("fim")}</nav>;
+  return <nav ref={fileira} className="e-tabs" aria-label="Projetos"><Link to={ultimaVisao} aria-current={!atual ? "page" : undefined}><span className="e-tabs-mono" aria-hidden="true"><PixelArte largura={8} altura={8} desenho={GRADE_TODAS} /></span><span className="e-tabs-nome">Todas</span></Link>{seta("ini")}{projetos.carregando && !lista && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{lista?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}><Monograma nome={projeto.nome} className="e-tabs-mono" /><span className="e-tabs-nome">{projeto.nome}</span></Link>)}{seta("fim")}</nav>;
 }
 const visoes = [{ destino: "/", nome: "Lista", Icone: ListIcon }, { destino: "/quadro", nome: "Quadro", Icone: BoardIcon }];
 // Links, e não botões: cada visão tem sua rota. Busca e filtros ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
