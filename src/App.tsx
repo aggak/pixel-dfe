@@ -11,6 +11,7 @@ import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
 import { GatinhoAbanando } from "./components/GatinhoAbanando";
 import { ErroCarregamento } from "./components/Layout";
+import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
 import "./App.css";
 
 const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
@@ -18,11 +19,11 @@ const EditarTarefa = lazy(() => import("./pages/EditarTarefa").then((pagina) => 
 const NovoProjeto = lazy(() => import("./pages/NovoProjeto").then((pagina) => ({ default: pagina.NovoProjeto })));
 const EditarProjeto = lazy(() => import("./pages/EditarProjeto").then((pagina) => ({ default: pagina.EditarProjeto })));
 
-class FalhaFormulario extends Component<{ children: ReactNode }, { falhou: boolean }> {
+class FalhaFormulario extends Component<{ children: ReactNode; titulo: string }, { falhou: boolean }> {
   state = { falhou: false };
   static getDerivedStateFromError() { return { falhou: true }; }
   render() {
-    return this.state.falhou ? <ErroCarregamento compacto titulo="Não foi possível abrir o formulário" onTentarDeNovo={() => window.location.reload()} /> : this.props.children;
+    return this.state.falhou ? <><TituloPagina titulo={this.props.titulo} /><ErroCarregamento compacto titulo="Não foi possível abrir o formulário" onTentarDeNovo={() => window.location.reload()} /></> : this.props.children;
   }
 }
 
@@ -41,20 +42,23 @@ function App() {
   const fundo: Location = ficha && candidato && typeof candidato.pathname === "string" && !ehRotaFicha(candidato.pathname) && (candidato.pathname === "/" || candidato.pathname === "/quadro" || candidato.pathname === "/projetos" || /^\/projetos\/[^/]+$/.test(candidato.pathname))
     ? candidato : ficha ? { pathname: fallback, search: "", hash: "", state: null, key: `fundo:${fallback}` } : location;
   const titulo = projetoNovo ? "Novo projeto" : tarefaNova ? "Nova tarefa" : editando ? projeto ? "Editar projeto" : "Editar tarefa" : "Detalhes da tarefa";
+  const tituloInicial = projetoNovo || tarefaNova ? titulo : projeto ? "Projeto" : "Tarefa";
   // Nova tarefa aberta no quadro volta para ele ao fechar.
   const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fundo.pathname === "/quadro" ? "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>
+    <ContextoPaginaAtiva.Provider value={!ficha}>
     <Routes location={fundo} key={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
         <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />
-        <Route path="*" element={<main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><p>Este endereço não existe ou mudou.</p><Link to="/">Voltar para tarefas</Link></main>} />
+        <Route path="*" element={<><TituloPagina titulo="Página não encontrada" /><main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><p>Este endereço não existe ou mudou.</p><Link to="/">Voltar para tarefas</Link></main></>} />
       </Route>
     </Routes>
+    </ContextoPaginaAtiva.Provider>
     {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
-      <FalhaFormulario key={location.pathname}><Suspense fallback={<><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
+      <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
       <Routes location={location}>
         <Route path="/tarefas/nova" element={<NovaTarefa />} />
         <Route path="/tarefas/:id/editar" element={<EditarTarefa />} />

@@ -9,6 +9,7 @@ import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
 import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { agruparPorStatus, filtrarTarefas } from "../derivar";
 import { statusTexto } from "../design/formatos";
@@ -18,6 +19,7 @@ import type { Status, Tarefa } from "../tipos";
 const iconesStatus: Record<Status, string> = { "a-fazer": "circle", "em-andamento": "play", "em-revisao": "eye", concluida: "check" };
 
 export function QuadroTarefas() {
+  useTituloPagina("Quadro");
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);

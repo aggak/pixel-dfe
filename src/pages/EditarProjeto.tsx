@@ -6,6 +6,7 @@ import { atualizarProjeto, buscarProjeto, ErroApi } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
 import type { DadosProjeto } from "../components/FormularioProjeto";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { GatinhoAbanando } from "../components/GatinhoAbanando";
 
@@ -14,6 +15,7 @@ export function EditarProjeto() {
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
   const { dados: projeto, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : projeto ? "Editar projeto" : "Projeto");
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/projetos/${encodeURIComponent(id)}`;
 
