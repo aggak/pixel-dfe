@@ -66,8 +66,10 @@ async function executar() {
     await lista.getByRole("link", { name: "Subir o json-server" }).waitFor();
     assert.match(await page.locator(".e-sheet-footer").innerText(), /^1 tarefa$/);
 
+    const anuncio = page.locator("main [aria-live=polite]");
     await busca.fill("sem correspondência");
     await page.getByText("Nenhuma tarefa encontrada").waitFor();
+    await page.waitForFunction(() => document.querySelector("main [aria-live=polite]")?.textContent === "0 tarefas encontradas.");
     assert.equal(await page.getByRole("article").count(), 0);
     assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
 
@@ -85,6 +87,8 @@ async function executar() {
     assert.equal(await lista.getByRole("article").count(), 2);
     await selecionar("Prioridade", "Média");
     assert.equal(await lista.getByRole("article").count(), 1);
+    await page.waitForFunction(() => document.querySelector("main [aria-live=polite]")?.textContent === "1 tarefa encontrada.");
+    assert.equal(await anuncio.getAttribute("aria-atomic"), "true");
     await lista.getByRole("link", { name: "Listar as tarefas na tela" }).waitFor();
 
     await busca.fill("LISTAR");
