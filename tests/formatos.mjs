@@ -38,6 +38,10 @@ try {
       [2026, 0, 1, "2025-12-31", "2026-01-01", "2026-01-02"],
       [2024, 2, 1, "2024-02-29", "2024-03-01", "2024-03-02"],
       [2025, 2, 1, "2025-02-28", "2025-03-01", "2025-03-02"],
+      [1900, 2, 1, "1900-02-28", "1900-03-01", "1900-03-02"],
+      [2000, 2, 1, "2000-02-29", "2000-03-01", "2000-03-02"],
+      [2100, 2, 1, "2100-02-28", "2100-03-01", "2100-03-02"],
+      [2026, 4, 1, "2026-04-30", "2026-05-01", "2026-05-02"],
     ]) {
       for (const [hora, minuto] of [[0, 0], [12, 0], [23, 59]]) {
         const agora = new Date(ano, mes, dia, hora, minuto);
@@ -49,7 +53,13 @@ try {
     for (const iso of ["", "inválido", "2020", "2020-1-01", "2020-01-1", "01/01/2020", " 2020-01-01", "2020-01-01 ", "2020-01-01T00:00:00Z"]) {
       assert.equal(prazoVencido(iso, new Date(2026, 10, 12)), false, `${fuso}: formato inválido ${JSON.stringify(iso)}`);
     }
-    console.log(`OK: prazo compara o dia local, inclusive viradas de mês/ano, e rejeita formatos inválidos em ${fuso}`);
+    for (const iso of ["2026-02-30", "2026-04-31", "2025-02-29", "1900-02-29", "2100-02-29", "2026-13-01", "2026-01-00", "2026-00-01", "2026-01-32"]) {
+      assert.equal(prazoVencido(iso, new Date(2101, 0, 1)), false, `${fuso}: data inexistente ${iso}`);
+    }
+    for (const iso of ["0000-02-29", "0096-02-29"]) {
+      assert.equal(prazoVencido(iso, new Date(2026, 10, 12)), true, `${fuso}: data válida ${iso} já venceu`);
+    }
+    console.log(`OK: prazo compara o dia local, inclusive viradas de mês/ano, e rejeita formatos inválidos e datas inexistentes em ${fuso}`);
   }
 
   for (const [fuso, instante] of [
