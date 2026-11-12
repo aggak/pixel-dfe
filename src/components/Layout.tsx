@@ -10,6 +10,7 @@ import { GatinhoOlhando } from "./GatinhoOlhando";
 import { GatinhoCostas } from "./GatinhoCostas";
 import { GatinhoCarregando } from "./GatinhoCarregando";
 import { Cabecalho } from "./Cabecalho";
+import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
 
@@ -18,12 +19,13 @@ function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
 }
 export function Layout() {
+  const [areaAcao, setAreaAcao] = useState<HTMLDivElement | null>(null);
   const caminho = caminhoNormalizado(useLocation().pathname);
   // Lista e quadro são duas visões da mesma seção: "Tarefas" fica marcado nas duas.
   const emTarefas = caminho === "/" || caminho === "/quadro";
   return <div id="pixel-encaixe" className="e-app">
-    <Cabecalho emTarefas={emTarefas} />
-    <Outlet />
+    <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
+    <ContextoAcaoCabecalho.Provider value={areaAcao}><Outlet /></ContextoAcaoCabecalho.Provider>
     <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
   </div>;
 }

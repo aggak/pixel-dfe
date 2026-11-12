@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "./CartaoTarefa";
+import { AcaoCabecalho } from "./Cabecalho";
 import { FiltrosTarefas } from "./FiltrosTarefas";
 import { useFiltros } from "./filtros-contexto";
 import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "./Layout";
@@ -49,7 +50,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     <h1 className="e-task-page-title" tabIndex={-1}>{titulo}</h1>
     <FiltrosTarefas />
     <AlternarVisao />
-    <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
+    <AcaoCabecalho><Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Nova tarefa" data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button></AcaoCabecalho>
   </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}

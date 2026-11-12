@@ -206,7 +206,6 @@ async function executar() {
   await page.waitForURL((url) => url.pathname === "/");
   console.log("OK: \"Todas\" volta para a visão em uso, lista ou quadro");
 
-  // Controle e botão na mesma linha, dentro da folha, de 1280 a 320 px.
   for (const rota of ["/", "/quadro"]) {
     await page.goto(`${web}${rota}`);
     await page.locator("[data-task-id]").first().waitFor();
@@ -215,16 +214,24 @@ async function executar() {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `${rota} em ${largura} px`);
       const folha = await page.locator(".e-sheet").boundingBox();
       const controle = await visao.boundingBox();
-      const botao = await page.locator('[data-action="new-task"]').boundingBox();
-      for (const caixa of [controle, botao]) assert.ok(caixa.x >= folha.x && caixa.x + caixa.width <= folha.x + folha.width, `${rota} em ${largura} px`);
-      assert.ok(Math.abs(controle.y + controle.height - (botao.y + botao.height)) <= 2, `${rota} em ${largura} px: controle e botão em linhas diferentes`);
-      assert.ok(botao.x > controle.x, `${rota} em ${largura} px`);
+      const cabecalho = await page.locator(".e-top").boundingBox();
+      const acao = page.locator(".e-top").getByRole("button", { name: "Nova tarefa", exact: true });
+      const botao = await acao.boundingBox();
+      assert.ok(controle.x >= folha.x && controle.x + controle.width <= folha.x + folha.width, `${rota} em ${largura} px`);
+      assert.ok(botao.x >= cabecalho.x && botao.x + botao.width <= cabecalho.x + cabecalho.width, `${rota} em ${largura} px`);
+      assert.ok(botao.y >= cabecalho.y && botao.y + botao.height <= cabecalho.y + cabecalho.height, `${rota} em ${largura} px`);
+      assert.ok(controle.y >= cabecalho.y + cabecalho.height, `${rota} em ${largura} px`);
+      if (largura <= 650) assert.ok(botao.width >= 44 && botao.height >= 44, `${rota} em ${largura} px`);
+      await page.evaluate(() => window.scrollTo(0, 600));
+      assert.equal((await page.locator(".e-top").boundingBox()).y, 0);
+      assert.equal(await acao.evaluate((el) => { const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }), true);
+      await page.evaluate(() => window.scrollTo(0, 0));
       if (largura <= 650) for (const link of [linkLista, linkQuadro]) assert.ok((await link.boundingBox()).height >= 38, `${rota} em ${largura} px`);
       if (evidencias) await page.screenshot({ path: join(evidencias, `visao${rota === "/" ? "-lista" : "-quadro"}-${largura}.png`) });
     }
     await page.setViewportSize({ width: 1280, height: 900 });
   }
-  console.log("OK: controle e \"Nova tarefa\" dividem a linha dentro da folha, de 1280 a 320 px");
+  console.log("OK: controle dentro da folha e Nova tarefa no header fixo, acessível ao rolar, de 1280 a 320 px");
 
   // Build do GitHub Pages: HashRouter e base /pixel-dfe/.
   await page.goto(`${pages}#/`);
