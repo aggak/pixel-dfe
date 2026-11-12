@@ -179,6 +179,22 @@ async function executar() {
   assert.equal(await visao.count(), 0);
   assert.equal(await menuTarefas.getAttribute("aria-current"), null);
   console.log("OK: barra final e maiúsculas marcam a visão certa; fora das tarefas o controle some");
+  const abas = page.getByRole("navigation", { name: "Projetos" });
+  await page.goto(`${web}/quadro`);
+  await page.locator("[data-task-id]").first().waitFor();
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/quadro");
+  await abas.getByRole("link").nth(1).click();
+  await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/quadro");
+  await page.getByRole("link", { name: "Lista" }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  await abas.getByRole("link").nth(1).click();
+  await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
+  await abas.getByRole("link", { name: "Todas" }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  console.log("OK: \"Todas\" volta para a visão em uso, lista ou quadro");
 
   // Controle e botão na mesma linha, dentro da folha, de 1280 a 320 px.
   for (const rota of ["/", "/quadro"]) {
