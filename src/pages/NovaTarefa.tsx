@@ -4,8 +4,10 @@ import { useFicha } from "../components/ficha-contexto";
 import { criarTarefa } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import type { NovaTarefa as DadosNovaTarefa } from "../tipos";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovaTarefa() {
+  useTituloPagina("Nova tarefa");
   const { navegar, fechar, destinoFechar, setOcupada } = useFicha();
   const [busca] = useSearchParams();
   const projetoId = busca.get("projetoId") ?? "";

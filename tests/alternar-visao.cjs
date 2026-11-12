@@ -91,6 +91,7 @@ async function executar() {
 
   await page.goto(`${web}/`);
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   assert.deepEqual(await marcados(), ["page", null, "page"]);
   console.log("OK: a lista mostra o controle com \"Lista\" marcada e \"Tarefas\" ativo no menu");
 
@@ -105,6 +106,7 @@ async function executar() {
   assert.deepEqual(await ids(lista), combinadas);
   await linkQuadro.click();
   await quadro.locator("[data-task-id]").first().waitFor();
+  assert.equal(await page.title(), "Quadro · Pixel");
   assert.equal(caminho(), "/quadro");
   assert.equal(await lista.count(), 0);
   assert.equal(await page.evaluate(() => window.semRecarga), true);
@@ -121,6 +123,7 @@ async function executar() {
   assert.deepEqual(await ids(quadro), altas);
   await linkLista.click();
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   assert.equal(caminho(), "/");
   await conferirFiltros("", "Todos", "Alta");
   assert.deepEqual(await ids(lista), altas);
@@ -129,9 +132,11 @@ async function executar() {
   // Voltar e avançar do navegador também trocam de visão sem perder o estado.
   await page.goBack();
   await quadro.locator("[data-task-id]").first().waitFor();
+  assert.equal(await page.title(), "Quadro · Pixel");
   await conferirFiltros("", "Todos", "Alta");
   await page.goForward();
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   await conferirFiltros("", "Todos", "Alta");
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   console.log("OK: voltar e avançar do navegador mantêm busca e filtros");
@@ -143,12 +148,14 @@ async function executar() {
   assert.equal(await focoVisivel(linkQuadro), true);
   await page.keyboard.press("Enter");
   await quadro.locator("[data-task-id]").first().waitFor();
+  assert.equal(await page.title(), "Quadro · Pixel");
   assert.equal(caminho(), "/quadro");
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-current") === "page" && document.activeElement.textContent === "Quadro");
   await page.keyboard.press("Shift+Tab");
   assert.equal(await focado(), "Lista");
   await page.keyboard.press("Enter");
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-current") === "page" && document.activeElement.textContent === "Lista");
   console.log("OK: Tab alcança o controle, Enter troca de visão e o foco não volta ao início da página");
 
@@ -160,10 +167,13 @@ async function executar() {
     await regiao.locator("[data-task-id]").first().waitFor();
     await regiao.getByRole("link", { name: alvo.titulo, exact: true }).click();
     await detalhe.waitFor();
+    await detalhe.getByRole("heading", { name: alvo.titulo, exact: true }).waitFor();
+    assert.equal(await page.title(), `${alvo.titulo} · Pixel`);
     assert.deepEqual(await marcados(), esperado, rota);
     await page.keyboard.press("Escape");
     await detalhe.waitFor({ state: "detached" });
     await page.waitForURL((url) => url.pathname === rota);
+    assert.equal(await page.title(), `${rota === "/" ? "Tarefas" : "Quadro"} · Pixel`);
     await conferirFiltros("", "Todos", "Alta");
   }
   console.log("OK: a ficha sobre a lista e sobre o quadro mantém a visão marcada e os filtros");
@@ -219,12 +229,14 @@ async function executar() {
   // Build do GitHub Pages: HashRouter e base /pixel-dfe/.
   await page.goto(`${pages}#/`);
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   await page.evaluate(() => { window.semRecarga = true; });
   await busca.fill("a");
   await selecionar("Status", "A fazer");
   await selecionar("Prioridade", "Média");
   await linkQuadro.click();
   await quadro.locator("[data-task-id]").first().waitFor();
+  assert.equal(await page.title(), "Quadro · Pixel");
   assert.equal(new URL(page.url()).hash, "#/quadro");
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   await conferirFiltros("a", "A fazer", "Média");
@@ -232,6 +244,7 @@ async function executar() {
   assert.deepEqual(await marcados(), [null, "page", "page"]);
   await linkLista.click();
   await lista.getByRole("article").first().waitFor();
+  assert.equal(await page.title(), "Tarefas · Pixel");
   assert.equal(new URL(page.url()).hash, "#/");
   await conferirFiltros("a", "A fazer", "Média");
   assert.deepEqual(await marcados(), ["page", null, "page"]);

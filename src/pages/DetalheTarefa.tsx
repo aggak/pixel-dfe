@@ -4,6 +4,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
 import { buscarTarefa, listarProjetos, ErroApi } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { GatinhoAbanando } from "../components/GatinhoAbanando";
 import { useFicha } from "../components/ficha-contexto";
@@ -15,6 +16,7 @@ export function DetalheTarefa() {
   const { id = "" } = useParams();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
   const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa?.titulo ?? "Tarefa");
   const { dados: projetos, erro: erroProjetos, carregando: carregandoProjetos, tentando: tentandoProjetos, tentarDeNovo: tentarProjetos } = useConsulta(listarProjetos);
   const { navegar } = useFicha();
   const projeto = tarefa && projetos?.find((item) => item.id === tarefa.projetoId);

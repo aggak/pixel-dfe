@@ -3,8 +3,10 @@ import { useFicha } from "../components/ficha-contexto";
 import { criarProjeto } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
 import type { DadosProjeto } from "../components/FormularioProjeto";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovoProjeto() {
+  useTituloPagina("Novo projeto");
   const { navegar, fechar, setOcupada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
 

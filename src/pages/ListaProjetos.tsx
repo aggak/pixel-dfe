@@ -2,11 +2,13 @@ import { useLocation, useNavigate, Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { listarProjetos, listarTarefas } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { AvisoCompacto, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { AndamentoProjeto, Monograma } from "../components/CartaoProjeto";
 import { EditIcon, PlusIcon } from "../design/icon";
 
 export function ListaProjetos() {
+  useTituloPagina("Projetos");
   const { dados: projetos, erro, carregando, tentando, tentarDeNovo } = useConsulta(listarProjetos);
   const { dados: tarefas, erro: erroTarefas, tentando: tentandoTarefas, tentarDeNovo: tentarTarefas } = useConsulta(listarTarefas);
   const location = useLocation();

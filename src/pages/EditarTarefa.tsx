@@ -5,6 +5,7 @@ import { ErroCarregamento } from "../components/Layout";
 import { atualizarTarefa, buscarTarefa, ErroApi } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import type { NovaTarefa } from "../tipos";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { GatinhoAbanando } from "../components/GatinhoAbanando";
@@ -14,6 +15,7 @@ export function EditarTarefa() {
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
   const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa ? "Editar tarefa" : "Tarefa");
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 

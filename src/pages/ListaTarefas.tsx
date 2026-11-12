@@ -7,12 +7,14 @@ import { FiltrosTarefas } from "../components/FiltrosTarefas";
 import { useFiltros } from "../components/filtros-contexto";
 import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { filtrarTarefas } from "../derivar";
 import { PlusIcon } from "../design/icon";
 import type { Tarefa } from "../tipos";
 
 export function ListaTarefas() {
+  useTituloPagina("Tarefas");
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);

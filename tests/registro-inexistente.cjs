@@ -103,6 +103,7 @@ async function executar() {
   for (const caminho of ["/tarefas/999", "/tarefas/999/editar"]) {
     await page.goto(`${web}${caminho}`);
     await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+    assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
     assert.equal(await ficha().getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
     console.log(`OK: ${caminho} encerra o carregamento com "Tarefa não encontrada."`);
   }
@@ -111,6 +112,7 @@ async function executar() {
     // A edição abre sobre a página do projeto: os dois avisos precisam chegar.
     await page.getByRole("main").getByRole("alert").filter({ hasText: "Projeto não encontrado" }).waitFor();
     if (caminho.endsWith("/editar")) await ficha().getByRole("alert").filter({ hasText: "Projeto não encontrado." }).waitFor();
+    assert.equal(await page.title(), "Projeto não encontrado · Pixel");
     assert.equal(await page.getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
     assert.equal(await page.getByRole("button", { name: "Tentar de novo" }).count(), 0, `${caminho}: oferece tentar de novo`);
     console.log(`OK: ${caminho} encerra o carregamento com "Projeto não encontrado"`);
@@ -121,7 +123,9 @@ async function executar() {
   await page.route(`${api}/tarefas/998`, atrasar);
   await page.goto(`${web}/tarefas/998`);
   await ficha().getByRole("status").filter({ hasText: "Carregando tarefa" }).waitFor();
+  assert.equal(await page.title(), "Tarefa · Pixel");
   await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+  assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
   assert.equal(await ficha().getByRole("status").count(), 0);
   await page.unroute(`${api}/tarefas/998`, atrasar);
   console.log("OK: resposta lenta com 404 encerra a indicação de carregamento");
