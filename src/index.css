@@ -11,14 +11,14 @@
 @utility scrollbar-hide { &::-webkit-scrollbar { display:none; } scrollbar-width:none; }
 @utility transition-inherit-all { transition-property:inherit; transition-duration:inherit; transition-timing-function:inherit; }
 @layer base {
-  :where(.e-app,.e-form-overlay,.e-popover) :where(*,::before,::after) { box-sizing:border-box; border:0 solid; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(h1,h2,h3,h4,p,dl,dd) { margin:0; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(h1,h2,h3,h4) { font-size:inherit; font-weight:inherit; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(button,input,select,textarea) { font:inherit; color:inherit; letter-spacing:inherit; background:transparent; border-radius:0; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(button,[role=button]) { cursor:pointer; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(a) { color:inherit; text-decoration:inherit; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(svg) { display:block; vertical-align:middle; }
-  :where(.e-app,.e-form-overlay,.e-popover) :where(img) { display:block; max-width:100%; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(*,::before,::after) { box-sizing:border-box; border:0 solid; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(h1,h2,h3,h4,p,dl,dd) { margin:0; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(h1,h2,h3,h4) { font-size:inherit; font-weight:inherit; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(button,input,select,textarea) { font:inherit; color:inherit; letter-spacing:inherit; background:transparent; border-radius:0; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(button,[role=button]) { cursor:pointer; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(a) { color:inherit; text-decoration:inherit; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(svg) { display:block; vertical-align:middle; }
+  :where(.e-app,.e-form-overlay,.e-popover,.e-confirm-overlay) :where(img) { display:block; max-width:100%; }
 }
 html { line-height:1.5; -webkit-text-size-adjust:100%; }
 body { min-width:320px; -webkit-font-smoothing:antialiased; }
