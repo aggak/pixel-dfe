@@ -81,6 +81,24 @@ async function executar() {
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
     assert.equal(await busca.inputValue(), "");
 
+    for (const [termo, titulo] of [
+      ["repositorio", "Criar o repositório"],
+      ["REPOSITÓRIO", "Criar o repositório"],
+      ["tárefas", "Listar as tarefas na tela"],
+      ["tarefas  na   tela", "Listar as tarefas na tela"],
+    ]) {
+      await busca.fill(termo);
+      await lista.getByRole("link", { name: titulo, exact: true }).waitFor();
+      assert.equal(await lista.getByRole("article").count(), 1, termo);
+      assert.equal(await busca.inputValue(), termo);
+      await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "1 tarefa encontrada.");
+    }
+    await busca.fill("repositorioo");
+    await page.getByText("Nenhuma tarefa encontrada").waitFor();
+    await busca.fill("");
+    await lista.getByRole("article").first().waitFor();
+    assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
+
     const selecionar = async (nome, opcao) => {
       await page.getByRole("button", { name: new RegExp(nome) }).click();
       await page.getByRole("option", { name: opcao, exact: true }).click();
@@ -113,7 +131,7 @@ async function executar() {
     await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Todas" }).click();
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
-    console.log("OK: busca, filtros combinados, limpeza e abas de projeto");
+    console.log("OK: busca sem acentos e com espaços repetidos, filtros combinados, limpeza e abas de projeto");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();

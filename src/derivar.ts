@@ -9,11 +9,13 @@ export interface Filtros {
 
 export const FILTROS_INICIAIS: Filtros = { busca: "", status: "todos", prioridade: "todas" };
 
+const comparavel = (texto: string) => texto.normalize("NFD").replace(/\p{M}/gu, "").replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+
 export function filtrarTarefas(tarefas: Tarefa[], f: Filtros): Tarefa[] {
-  const termo = f.busca.trim().toLocaleLowerCase("pt-BR");
+  const termo = comparavel(f.busca.trim());
   return tarefas.filter(
     (t) =>
-      t.titulo.toLocaleLowerCase("pt-BR").includes(termo) &&
+      comparavel(t.titulo).includes(termo) &&
       (f.status === "todos" || t.status === f.status) &&
       (f.prioridade === "todas" || t.prioridade === f.prioridade),
   );
