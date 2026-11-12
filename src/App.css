@@ -24,7 +24,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-tools{align-items:end;gap:12px}
 .e-task-page-title{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .e-task-search{flex:1;min-width:180px}
-.e-task-search label,.e-task-filter label{font-size:11px;color:var(--e-muted)}
+.e-task-search :is(label,[data-label]),.e-task-filter :is(label,[data-label]){font-size:11px;color:var(--e-muted)}
 .e-task-filters{display:flex;gap:10px;align-items:end}
 .e-task-filter{width:165px}
 .e-project-details{border-bottom:1px solid var(--e-line);padding:0 20px}
@@ -94,8 +94,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-title-field input{font-size:21px!important;line-height:1.4!important;padding:7px 0!important;letter-spacing:-.45px}
 .e-title-field [aria-invalid=true]{border-color:var(--e-error)!important}
 .e-properties{background:var(--e-sheet);padding:14px 18px 17px;border-top:1px solid var(--e-line);border-bottom:1px solid var(--e-line);display:grid;gap:13px}
-.e-properties label{font-size:11px!important;color:var(--e-muted)!important;line-height:1.2}
-.e-properties label>span{color:var(--e-muted)!important}
+.e-properties :is(label,[data-label]){font-size:11px!important;color:var(--e-muted)!important;line-height:1.2}
+.e-properties :is(label,[data-label])>span{color:var(--e-muted)!important}
 .e-properties button,.e-properties input{font-size:13px!important}
 .e-properties input{min-width:0}
 .e-properties>div:first-child>button{background:var(--e-sheet);box-shadow:none}
@@ -182,7 +182,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-form-two input[type=date]{font-size:12px!important;padding-right:3px!important}
 .e-form-two [data-input-wrapper]>div[role=presentation]{padding-left:9px!important;padding-right:7px!important}
 .e-properties>div:first-child>button{min-height:44px}
-.e-properties label{font-size:11px!important}
+.e-properties :is(label,[data-label]){font-size:11px!important}
 .e-description{padding:7px 13px 0}
 .e-description-toggle{min-height:44px}
 .e-description textarea{font-size:16px!important}
@@ -212,7 +212,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-menu{min-width:44px!important}
 .e-properties>.e-person-date{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
 .e-form-two input[type=date]{font-size:14px!important}
-.e-properties label{line-height:1.3!important}
+.e-properties :is(label,[data-label]){line-height:1.3!important}
 }
 @media(max-width:650px){
 .e-top nav :is(button,a){min-width:44px}
@@ -343,9 +343,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-form-overlay input[type=date]::-webkit-datetime-edit-day-field { padding-block:0; }
 .e-form-overlay input[type=date]::-webkit-calendar-picker-indicator { line-height:1; }
 
-@media(max-width:360px) {
-  .e-project-fields>.e-form-two { grid-template-columns:minmax(0,1fr); }
-}
+.e-project-fields>.e-form-two { grid-template-columns:minmax(0,1fr); }
 .e-board-content>.e-board{margin-top:18px}
 .e-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
 .e-column{min-width:0}
