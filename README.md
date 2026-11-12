@@ -43,6 +43,34 @@ Navegação por teclado, foco visível e respeito à preferência por movimento 
 
 <sub>Desenvolvido com React e TypeScript.</sub>
 
+## Como rodar
+
+Requer **Node.js 24 ou superior**, com npm. Na pasta do projeto:
+
+```bash
+npm ci
+```
+
+Em um terminal, inicie a API em `http://localhost:3000`:
+
+```bash
+npx json-server db.json
+```
+
+Em outro terminal, na mesma pasta, inicie a aplicação:
+
+```bash
+npm run dev
+```
+
+Abra o endereço mostrado pelo Vite, normalmente `http://localhost:5173`. Mantenha os dois terminais abertos.
+
+Para verificar o TypeScript e gerar os arquivos de produção em `dist/`:
+
+```bash
+npm run build
+```
+
 ## Equipe
 
 Projeto da disciplina **Desenvolvimento Frontend**, ULBRA — 2026.2.
