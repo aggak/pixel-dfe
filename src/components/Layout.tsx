@@ -4,7 +4,7 @@ import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto, Tarefa } from "../tipos";
-import { ErroApi } from "../api";
+import { ErroApi, ErroTempoEsgotado } from "../api";
 import { GatinhoDormindo } from "./GatinhoDormindo";
 import { GatinhoOlhando } from "./GatinhoOlhando";
 import { GatinhoCostas } from "./GatinhoCostas";
@@ -133,7 +133,7 @@ function useDevolverFoco<T extends HTMLElement>() {
 }
 export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; erro?: unknown; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
   const raiz = useDevolverFoco<HTMLDivElement>();
-  const motivo = erro instanceof ErroApi && erro.status >= 500 ? "O servidor encontrou um problema. Tente de novo em instantes." : "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
+  const motivo = erro instanceof ErroTempoEsgotado ? erro.message : erro instanceof ErroApi || (erro instanceof Error && erro.name === "SyntaxError") ? "O servidor encontrou um problema. Tente de novo em instantes." : "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
   return <div ref={raiz} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : motivo}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {

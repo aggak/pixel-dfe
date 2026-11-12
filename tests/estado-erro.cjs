@@ -56,9 +56,13 @@ async function executar() {
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
   const tentar = () => page.getByRole("main").getByRole("button", { name: "Tentar de novo" });
+  const textoConexao = "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
+  const textoServidor = "O servidor encontrou um problema. Tente de novo em instantes.";
+  const textoTempo = "O servidor demorou para responder. Tente de novo.";
 
   await page.goto(`${web}/`);
   await alerta("Não foi possível carregar as tarefas").waitFor();
+  assert.equal(await alerta(textoConexao).count(), 1);
   assert.equal(await tentar().count(), 1);
   iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
   await esperar(`${api}/tarefas`);
@@ -77,13 +81,29 @@ async function executar() {
     await carregando.waitFor();
     await alerta(`Não foi possível carregar ${colecao === "tarefas" ? "as tarefas" : "os projetos"}`).waitFor();
     assert.equal(await carregando.count(), 0);
-    assert.equal(await alerta("Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.").count(), 1);
+    assert.equal(await alerta(textoTempo).count(), 1);
     assert.equal(await tentar().isEnabled(), true);
     await page.unroute(`${api}/${colecao}`, semResposta);
     await tentar().click();
     await page.locator(seletor).first().waitFor();
     assert.equal(await alerta("Não foi possível carregar").count(), 0);
     console.log(`OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`);
+  }
+
+  const respostas = [["erro 500", { status: 500, body: "{}" }], ["404 na coleção", { status: 404, body: "{}" }], ["corpo que não é JSON", { status: 200, contentType: "text/html", body: "<!doctype html>" }]];
+  for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/quadro", "tarefas", "[data-status-column] [data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
+    for (const [nome, resposta] of respostas) {
+      const responder = (rota) => rota.fulfill(resposta);
+      await page.route(`${api}/${colecao}`, responder);
+      await page.goto(`${web}${caminho}`);
+      await alerta(textoServidor).waitFor();
+      assert.equal(await alerta(textoConexao).count(), 0, `${caminho} com ${nome}: texto de conexão`);
+      await page.unroute(`${api}/${colecao}`, responder);
+      await tentar().click();
+      await page.locator(seletor).first().waitFor();
+      assert.equal(await alerta("Não foi possível carregar").count(), 0);
+    }
+    console.log(`OK: ${caminho} com erro 500, 404 na coleção ou corpo que não é JSON diz que o problema é do servidor`);
   }
 
   async function conferirRota(nome, caminho, texto, carregado, escopo = () => page.getByRole("main"), comAbas = false) {
