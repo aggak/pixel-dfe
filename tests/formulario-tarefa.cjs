@@ -199,6 +199,52 @@ async function executar() {
     for (const mensagem of ["Informe o título da tarefa.", "Selecione um projeto.", "Informe o responsável.", "Informe o prazo."]) await page.getByText(mensagem, { exact: true }).waitFor();
     if (evidencias) { await mkdir(evidencias, { recursive: true }); await page.screenshot({ path: join(evidencias, "formulario-novo.png") }); }
   });
+  await conferir("validação preserva o calendário, reserva espaço para ícones e usa a cor de erro do tema", async () => {
+    const corErro = "rgb(238, 152, 172)";
+    assert.ok(contraste(corErro, "rgb(44, 39, 50)") >= 4.5);
+    for (const largura of [320, 375, 1280]) for (const modo of ["novo", "editar"]) {
+      await page.setViewportSize({ width: largura, height: 900 });
+      await abrir(modo);
+      const paddingNormal = await campo("Título").evaluate((el) => getComputedStyle(el).paddingRight);
+      for (const rotulo of ["Título", "Responsável", "Prazo"]) await campo(rotulo).fill("");
+      await botaoEnvio().click();
+      await page.getByText("Informe o prazo.", { exact: true }).waitFor();
+      for (const rotulo of ["Título", "Responsável", "Prazo"]) for (const focado of [false, true]) {
+        if (focado) await campo(rotulo).focus(); else await botaoEnvio().focus();
+        const estado = await campo(rotulo).evaluate((el) => {
+          const grupo = el.parentElement;
+          const icone = grupo.querySelector(".text-fg-error-secondary");
+          const mensagem = document.getElementById(el.getAttribute("aria-describedby"));
+          const estilo = getComputedStyle(el);
+          return {
+            invalido: el.getAttribute("aria-invalid"),
+            mensagem: mensagem?.textContent,
+            corMensagem: mensagem && getComputedStyle(mensagem).color,
+            iconeVisivel: getComputedStyle(icone).display !== "none",
+            corIcone: getComputedStyle(icone).color,
+            reserva: icone.getBoundingClientRect().left - (el.getBoundingClientRect().right - parseFloat(estilo.paddingRight)),
+            corContorno: el.name === "titulo" ? getComputedStyle(grupo).borderBottomColor : getComputedStyle(grupo).getPropertyValue("--tw-ring-color").trim(),
+          };
+        });
+        assert.equal(estado.invalido, "true", rotulo);
+        assert.ok(estado.mensagem, rotulo);
+        assert.equal(estado.corMensagem, corErro, rotulo);
+        assert.equal(estado.corContorno, rotulo === "Título" ? corErro : "#ee98ac", `${rotulo}, foco: ${focado}`);
+        assert.equal(estado.iconeVisivel, rotulo !== "Prazo", rotulo);
+        if (focado) assert.equal(await focoVisivel(campo(rotulo)), true, rotulo);
+        if (rotulo !== "Prazo") {
+          assert.equal(estado.corIcone, corErro, rotulo);
+          assert.ok(estado.reserva >= 4, `${rotulo}: ${estado.reserva}px de reserva`);
+        }
+      }
+      await campo("Prazo").fill("2027-02-10");
+      await campo("Título").fill("Título corrigido");
+      assert.notEqual(await campo("Prazo").getAttribute("aria-invalid"), "true");
+      assert.equal(await campo("Prazo").inputValue(), "2027-02-10");
+      assert.equal(await campo("Título").evaluate((el) => getComputedStyle(el).paddingRight), paddingNormal);
+      assert.equal((await payloads()).length, 0);
+    }
+  });
   await conferir("edição preenche todos os campos no mesmo componente", async () => {
     await abrir("editar");
     assert.equal(await page.locator("form").count(), 1);
