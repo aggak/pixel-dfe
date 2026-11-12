@@ -1,6 +1,8 @@
 import type { NovaTarefa, Projeto, Tarefa } from "./tipos";
 
 const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3000" : "")).replace(/\/$/, "");
+const limiteConfigurado = Number(import.meta.env.MODE === "test" ? import.meta.env.VITE_API_TEMPO_LIMITE_MS : undefined);
+const TEMPO_LIMITE_MS = Number.isSafeInteger(limiteConfigurado) && limiteConfigurado > 0 ? limiteConfigurado : 15000;
 
 export class ErroApi extends Error {
   readonly status: number;
@@ -11,14 +13,28 @@ export class ErroApi extends Error {
   }
 }
 
-async function ler<T>(caminho: string, signal?: AbortSignal): Promise<T> {
-  const resposta = await fetch(`${API_URL}${caminho}`, { signal });
+async function requisitar<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
+  const limite = AbortSignal.timeout(TEMPO_LIMITE_MS);
+  const signal = opcoes.signal ? AbortSignal.any([opcoes.signal, limite]) : limite;
 
-  if (!resposta.ok) {
-    throw new ErroApi(resposta.status);
+  try {
+    const resposta = await fetch(`${API_URL}${caminho}`, { ...opcoes, signal });
+
+    if (!resposta.ok) {
+      throw new ErroApi(resposta.status);
+    }
+
+    return (opcoes.method === "DELETE" ? undefined : await resposta.json()) as T;
+  } catch (erro) {
+    if (signal.aborted && signal.reason?.name === "TimeoutError") {
+      throw new Error("O servidor demorou para responder. Tente de novo.", { cause: erro });
+    }
+    throw erro;
   }
+}
 
-  return (await resposta.json()) as T;
+function ler<T>(caminho: string, signal?: AbortSignal): Promise<T> {
+  return requisitar<T>(caminho, { signal });
 }
 
 async function escrever<T>(
@@ -27,18 +43,12 @@ async function escrever<T>(
   dados: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
-  const resposta = await fetch(`${API_URL}${caminho}`, {
+  return requisitar<T>(caminho, {
     method: metodo,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(dados),
     signal,
   });
-
-  if (!resposta.ok) {
-    throw new ErroApi(resposta.status);
-  }
-
-  return (await resposta.json()) as T;
 }
 
 export function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
@@ -81,14 +91,10 @@ export function atualizarTarefa(
 }
 
 export async function excluirTarefa(id: string, signal?: AbortSignal): Promise<void> {
-  const resposta = await fetch(`${API_URL}/tarefas/${encodeURIComponent(id)}`, {
+  return requisitar<void>(`/tarefas/${encodeURIComponent(id)}`, {
     method: "DELETE",
     signal,
   });
-
-  if (!resposta.ok) {
-    throw new ErroApi(resposta.status);
-  }
 }
 
 // Para a tela, excluir o que outra aba já excluiu é sucesso: o pedido do usuário já está cumprido.

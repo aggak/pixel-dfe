@@ -1,5 +1,5 @@
 import { Component, lazy, Suspense, type ReactNode } from "react";
-import { Link, Route, Routes, useLocation, type Location } from "react-router";
+import { Link, Navigate, Route, Routes, useLocation, type Location } from "react-router";
 import { ListaTarefas } from "./pages/ListaTarefas";
 import { QuadroTarefas } from "./pages/QuadroTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
@@ -50,6 +50,7 @@ function App() {
     <Routes location={fundo} key={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
+        <Route path="/tarefas" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
         <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />

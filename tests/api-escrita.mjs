@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { createServer as criarServidorHttp } from "node:http";
+import { once } from "node:events";
 import { createServer as criarServidorNet } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -14,6 +16,7 @@ let vite;
 let processoApi;
 let temporario;
 const urlAnterior = process.env.VITE_API_URL;
+const limiteAnterior = process.env.VITE_API_TEMPO_LIMITE_MS;
 
 async function conferir(nome, executar) {
   await executar();
@@ -76,7 +79,8 @@ async function executar() {
   processoApi.stderr.on("data", (dado) => process.stderr.write(dado));
   await esperarApi(`${apiUrl}/tarefas`);
   process.env.VITE_API_URL = apiUrl;
-  vite = await createServer({ root: raiz, cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } });
+  process.env.VITE_API_TEMPO_LIMITE_MS = "500";
+  vite = await createServer({ root: raiz, mode: "test", cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } });
   const api = await vite.ssrLoadModule("/src/api.ts");
   for (const nome of ["criarTarefa", "atualizarTarefa", "excluirTarefa", "criarProjeto", "atualizarProjeto"]) {
     if (typeof api[nome] !== "function") throw new Error(`Função ausente em src/api.ts: ${nome}`);
@@ -186,6 +190,7 @@ async function executar() {
     const controle = new AbortController();
     controle.abort();
     const ehAbort = (erro) => erro?.name === "AbortError";
+    await assert.rejects(api.listarTarefas(controle.signal), ehAbort);
     await assert.rejects(api.criarTarefa(dadosTarefa, controle.signal), ehAbort);
     await assert.rejects(api.atualizarProjeto(projetoCriado.id, { nome: "Cancelado" }, controle.signal), ehAbort);
     await assert.rejects(api.excluirTarefa(tarefaCriada.id, controle.signal), ehAbort);
@@ -203,6 +208,66 @@ async function executar() {
     await assert.rejects(api.criarTarefa(dadosTarefa));
     await assert.rejects(api.listarTarefas());
   });
+
+  let corpoParcial = false;
+  const servidorTravado = criarServidorHttp((_pedido, resposta) => {
+    if (corpoParcial) {
+      resposta.writeHead(200, { "Content-Type": "application/json" });
+      resposta.write("{");
+    }
+  });
+  await new Promise((resolve) => servidorTravado.listen(porta, "127.0.0.1", resolve));
+  try {
+    const chamadas = [
+      ["listarTarefas", (signal) => api.listarTarefas(signal)],
+      ["listarProjetos", (signal) => api.listarProjetos(signal)],
+      ["buscarTarefa", (signal) => api.buscarTarefa("1", signal)],
+      ["buscarProjeto", (signal) => api.buscarProjeto("1", signal)],
+      ["listarTarefasDoProjeto", (signal) => api.listarTarefasDoProjeto("1", signal)],
+      ["criarTarefa", (signal) => api.criarTarefa(dadosTarefa, signal)],
+      ["atualizarTarefa", (signal) => api.atualizarTarefa("1", { titulo: "Sem resposta" }, signal)],
+      ["excluirTarefa", (signal) => api.excluirTarefa("1", signal)],
+      ["excluirTarefaSeExistir", (signal) => api.excluirTarefaSeExistir("1", signal)],
+      ["criarProjeto", (signal) => api.criarProjeto(dadosProjeto, signal)],
+      ["atualizarProjeto", (signal) => api.atualizarProjeto("1", { nome: "Sem resposta" }, signal)],
+    ];
+    for (const [indice, [nome, chamar]] of chamadas.entries()) {
+      await conferir(`${nome} sem resposta rejeita por tempo limite`, async () => {
+        const controle = new AbortController();
+        const guarda = setTimeout(() => servidorTravado.closeAllConnections(), 3000);
+        try {
+          await assert.rejects(chamar(indice % 2 ? undefined : controle.signal), (erro) => erro.name === "Error" && erro.message === "O servidor demorou para responder. Tente de novo." && erro.cause?.name === "TimeoutError");
+          assert.equal(controle.signal.aborted, false);
+        } finally {
+          clearTimeout(guarda);
+        }
+      });
+    }
+
+    await conferir("cancelar leitura em andamento preserva AbortError", async () => {
+      const controle = new AbortController();
+      const recebida = once(servidorTravado, "request");
+      const rejeitada = assert.rejects(api.listarTarefas(controle.signal), (erro) => erro.name === "AbortError");
+      await recebida;
+      controle.abort();
+      await rejeitada;
+    });
+
+    corpoParcial = true;
+    for (const [nome, chamar] of chamadas.filter(([nome]) => ["listarTarefas", "criarTarefa", "atualizarProjeto"].includes(nome))) {
+      await conferir(`${nome} com JSON incompleto também atinge o limite`, async () => {
+        const guarda = setTimeout(() => servidorTravado.closeAllConnections(), 3000);
+        try {
+          await assert.rejects(chamar(), (erro) => erro.name === "Error" && erro.message === "O servidor demorou para responder. Tente de novo." && erro.cause !== undefined);
+        } finally {
+          clearTimeout(guarda);
+        }
+      });
+    }
+  } finally {
+    servidorTravado.closeAllConnections();
+    await new Promise((resolve) => servidorTravado.close(resolve));
+  }
 
   await conferir("banco real permanece intacto", async () => {
     assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoRealAntes);
@@ -222,5 +287,7 @@ executar()
     await encerrarApi().catch(() => {});
     if (urlAnterior === undefined) delete process.env.VITE_API_URL;
     else process.env.VITE_API_URL = urlAnterior;
+    if (limiteAnterior === undefined) delete process.env.VITE_API_TEMPO_LIMITE_MS;
+    else process.env.VITE_API_TEMPO_LIMITE_MS = limiteAnterior;
     if (temporario) await rm(temporario, { recursive: true, force: true });
   });
