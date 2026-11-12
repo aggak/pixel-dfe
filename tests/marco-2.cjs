@@ -181,6 +181,53 @@ async function executar() {
     assert.equal(await page.locator("article").count(), 0);
     await page.unrouteAll();
   });
+  const diaRelativo = (dias) => {
+    const data = new Date();
+    data.setDate(data.getDate() + dias);
+    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+  };
+  const tarefaComPrazo = (id, projetoId, status, prazo) => ({ ...seed.tarefas[0], id, projetoId, status, prazo });
+  const rodapeProjeto = async (id) => page.locator(`[data-project-id="${id}"] .e-proj-prazo`).evaluate((elemento) => {
+    const data = elemento.querySelector("b");
+    const esperada = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short" }).format(new Date(`${elemento.ownerDocument.defaultView.prazoEsperado}T12:00:00`));
+    const erro = getComputedStyle(elemento.ownerDocument.documentElement).getPropertyValue("--e-error").trim();
+    const amostra = elemento.ownerDocument.createElement("span");
+    amostra.style.color = erro;
+    elemento.append(amostra);
+    const corErro = getComputedStyle(amostra).color;
+    amostra.remove();
+    return { texto: elemento.textContent, esperada, data: data.textContent, cor: getComputedStyle(elemento).color, corData: getComputedStyle(data).color, corErro };
+  });
+  const prazoEsperado = (iso) => page.evaluate((valor) => { window.prazoEsperado = valor; }, iso);
+  await conferir("cartão de projeto avisa quando o menor prazo pendente já venceu", async () => {
+    const [anteontem, ontem, amanha] = [diaRelativo(-2), diaRelativo(-1), diaRelativo(1)];
+    await page.route(`${api}/tarefas`, (route) => route.fulfill({ json: [tarefaComPrazo("901", "1", "concluida", anteontem), tarefaComPrazo("902", "1", "a-fazer", amanha), tarefaComPrazo("903", "1", "em-andamento", ontem), tarefaComPrazo("904", "2", "concluida", ontem)] }));
+    await abrir("/projetos");
+    await prazoEsperado(ontem);
+    const rodape = await rodapeProjeto("1");
+    assert.equal(rodape.texto, `Prazo vencido ${rodape.esperada}`);
+    assert.equal(rodape.data, rodape.esperada);
+    assert.equal(rodape.cor, rodape.corErro);
+    assert.equal(rodape.corData, rodape.corErro);
+    assert.equal(await page.locator('[data-project-id="2"] .e-proj-prazo').count(), 0);
+    assert.ok(!(await texto()).includes("Próximo prazo"));
+    await page.unrouteAll();
+  });
+  await conferir("cartão de projeto mantém Próximo prazo para hoje e para datas futuras", async () => {
+    const [ontem, hoje, amanha] = [diaRelativo(-1), diaRelativo(0), diaRelativo(1)];
+    await page.route(`${api}/tarefas`, (route) => route.fulfill({ json: [tarefaComPrazo("901", "1", "concluida", ontem), tarefaComPrazo("902", "1", "a-fazer", amanha), tarefaComPrazo("903", "2", "em-revisao", hoje), tarefaComPrazo("904", "2", "a-fazer", amanha)] }));
+    await abrir("/projetos");
+    for (const [id, prazo] of [["1", amanha], ["2", hoje]]) {
+      await prazoEsperado(prazo);
+      const rodape = await rodapeProjeto(id);
+      assert.equal(rodape.texto, `Próximo prazo ${rodape.esperada}`, `projeto ${id}`);
+      assert.notEqual(rodape.cor, rodape.corErro, `projeto ${id}`);
+      assert.notEqual(rodape.corData, rodape.corErro, `projeto ${id}`);
+      assert.equal(await page.locator(`[data-project-id="${id}"] .e-proj-vencido`).count(), 0);
+    }
+    assert.ok(!(await texto()).includes("Prazo vencido"));
+    await page.unrouteAll();
+  });
   await conferir("falha de rede apresenta erro nas três telas novas", async () => {
     await page.route(`${api}/**`, (route) => route.abort("connectionrefused"));
     for (const rota of ["/tarefas/2", "/projetos", "/projetos/1"]) {
