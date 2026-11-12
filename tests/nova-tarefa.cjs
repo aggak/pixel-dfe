@@ -150,6 +150,13 @@ async function executar() {
     assert.equal(typeof gravada.id, "string");
     assert.deepEqual({ projetoId: gravada.projetoId, titulo: gravada.titulo, descricao: gravada.descricao, status: gravada.status, prioridade: gravada.prioridade, responsavel: gravada.responsavel, prazo: gravada.prazo }, dados);
   });
+  await conferir("título e responsável são gravados sem espaços nas pontas", async () => {
+    posts.length = 0;
+    await abrir("/tarefas/nova"); await preencher({ ...base, titulo: "   Tarefa com espaços da suíte   ", responsavel: "  Ana  " }); await botaoSalvar().click();
+    await ate("retorno à lista após criar com espaços", async () => caminho().pathname === "/");
+    assert.equal(posts.length, 1); assert.equal(posts[0].titulo, "Tarefa com espaços da suíte"); assert.equal(posts[0].responsavel, "Ana");
+    await page.getByRole("link", { name: "Tarefa com espaços da suíte", exact: true }).waitFor();
+  });
   await conferir("falha 500 no POST mantém dados e página", async () => {
     await page.route(`${apiUrl}/tarefas`, async (route) => route.request().method() !== "POST" ? route.continue() : route.fulfill({ status: 500, json: {} }));
     try {
