@@ -268,6 +268,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-tabs .e-inline-error{min-height:44px;padding-left:14px;flex-wrap:nowrap;white-space:nowrap}
 @media(max-width:650px){.e-tabs .e-inline-error{padding-left:8px}.e-tabs .e-inline-error-text{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}}
 .e-tabs .e-inline-error button{padding:0;min-height:0;border:0;background:none;font-size:12px;color:var(--e-action)}
+.e-projects-aviso{margin:-14px 0 14px}
 .e-read-project .e-loading-compact{color:inherit}
 .e-loading-dot{width:8px;height:8px;background:var(--e-action);border-radius:50%;animation:e-loading-pulse 1s ease-in-out infinite alternate}
 @keyframes e-loading-pulse{to{opacity:.35}}
@@ -420,8 +421,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
   .e-not-found>a{display:inline-flex;align-items:center;min-height:44px}
   /* Links em linha ganham área de toque invisível (::after) de 44 px centrada, como o seletor de status: não depende da altura
      do texto, que muda quando a Commissioner não carrega. O desenho e o anel de foco ficam no texto. */
-  .e-project-card h2 a,.e-read-project>a{position:relative}
-  .e-project-card h2 a::after,.e-read-project>a::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
+  .e-project-card h2 a,.e-read-project>a,.e-projects-aviso button{position:relative}
+  .e-project-card h2 a::after,.e-read-project>a::after,.e-projects-aviso button::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}}
 @media(min-width:1024px) and (max-width:1799.98px){.e-project-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .e-project-card{position:relative;display:flex;flex-direction:column;min-width:0;padding:18px 20px 20px;transition:border-color .1s linear}
 .e-project-card:hover{border-color:var(--e-control)}

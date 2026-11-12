@@ -178,6 +178,27 @@ async function executar() {
   await page.unroute(`${api}/projetos`, interceptarNome);
   console.log("OK: ficha avisa quando só o nome do projeto falha e recarrega");
 
+  let falharAndamento = true;
+  const interceptarAndamento = (rota) => (falharAndamento ? rota.abort() : rota.continue());
+  const avisoAndamento = () => page.getByRole("main").getByRole("status").filter({ hasText: "O andamento dos projetos não carregou." });
+  await page.route(`${api}/tarefas`, interceptarAndamento);
+  await page.goto(`${web}/projetos`);
+  await page.locator("[data-project-id]").first().waitFor();
+  await avisoAndamento().waitFor();
+  assert.equal(await page.locator(".e-proj-prog").count(), 0);
+  assert.equal(await page.getByRole("main").getByRole("alert").count(), 0);
+  await tentar().focus();
+  await page.keyboard.press("Enter");
+  await avisoAndamento().waitFor();
+  await page.waitForFunction(() => document.activeElement?.textContent === "Tentar de novo" && !document.activeElement.disabled);
+  falharAndamento = false;
+  await page.keyboard.press("Enter");
+  await page.locator(".e-proj-prog").first().waitFor();
+  assert.equal(await avisoAndamento().count(), 0);
+  await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+  await page.unroute(`${api}/tarefas`, interceptarAndamento);
+  console.log("OK: projetos avisam quando só o andamento falha e recarregam ao tentar de novo, com o foco no título");
+
   const interceptarTudo = (rota) => rota.abort();
   await page.route(`${api}/**`, interceptarTudo);
   await page.goto(`${web}/projetos`);
