@@ -49,14 +49,16 @@ async function executar() {
 
     const painel = await page.locator(".e-sheet").boundingBox();
     const campoDesktop = await busca.boundingBox();
-    const acaoDesktop = await page.locator('[data-action="new-task"]').boundingBox();
-    assert.ok(campoDesktop.x >= painel.x && campoDesktop.x < acaoDesktop.x);
-    assert.ok(Math.abs(campoDesktop.y + campoDesktop.height - acaoDesktop.y - acaoDesktop.height) < 5);
+    const acao = page.locator(".e-top").getByRole("button", { name: "Nova tarefa", exact: true });
+    const acaoDesktop = await acao.boundingBox();
+    assert.ok(campoDesktop.x >= painel.x && campoDesktop.x + campoDesktop.width <= painel.x + painel.width);
+    assert.ok(acaoDesktop.y + acaoDesktop.height < campoDesktop.y);
     await page.setViewportSize({ width: 375, height: 800 });
     const campoCelular = await busca.boundingBox();
     const filtroCelular = await page.getByRole("button", { name: /Status/ }).boundingBox();
-    const acaoCelular = await page.locator('[data-action="new-task"]').boundingBox();
-    assert.ok(campoCelular.y < filtroCelular.y && filtroCelular.y < acaoCelular.y);
+    const acaoCelular = await acao.boundingBox();
+    assert.ok(acaoCelular.y + acaoCelular.height < campoCelular.y && campoCelular.y < filtroCelular.y);
+    assert.ok(campoCelular.width > 300);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.setViewportSize({ width: 1280, height: 800 });
 

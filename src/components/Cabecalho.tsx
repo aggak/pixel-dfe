@@ -1,5 +1,7 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useContext, useEffect, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink } from "react-router";
+import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import gatoEscuro from "../assets/gatinho/cabecalho-gato-escuro.svg";
 import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
 
@@ -107,11 +109,24 @@ function useLogoAnimado() {
   return { logo, palavra, gato };
 }
 
-export function Cabecalho({ emTarefas }: { emTarefas: boolean }) {
+export function AcaoCabecalho({ children }: { children: ReactNode }) {
+  const area = useContext(ContextoAcaoCabecalho);
+  return area ? createPortal(children, area) : null;
+}
+
+export function Cabecalho({ emTarefas, areaAcaoRef }: { emTarefas: boolean; areaAcaoRef: Ref<HTMLDivElement> }) {
   const { logo, palavra, gato } = useLogoAnimado();
+  const cabecalho = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const atualizar = () => cabecalho.current?.toggleAttribute("data-rolada", window.scrollY > 0);
+    atualizar();
+    window.addEventListener("scroll", atualizar, { passive: true });
+    return () => window.removeEventListener("scroll", atualizar);
+  }, []);
   const imagens = { "--e-top-gato": `url("${gatoEscuro}")`, "--e-top-logo": `url("${logoEscuro}")` } as CSSProperties;
-  return <header className="e-top">
+  return <header ref={cabecalho} className="e-top">
     <Link ref={logo} className="e-logo" to="/" style={imagens}><span ref={gato} className="e-top-gato" aria-hidden="true" /><span ref={palavra} className="e-top-palavra" aria-hidden="true" /><span className="e-top-nome">Pixel</span></Link>
     <nav aria-label="Navegação principal"><Link to="/" aria-current={emTarefas ? "page" : undefined}><span>Tarefas</span></Link><NavLink to="/projetos"><span>Projetos</span></NavLink></nav>
+    <div ref={areaAcaoRef} className="e-top-acao" />
   </header>;
 }

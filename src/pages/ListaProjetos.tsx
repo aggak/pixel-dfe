@@ -6,6 +6,7 @@ import { useTituloPagina } from "../hooks/useTituloPagina";
 import { AvisoCompacto, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { AndamentoProjeto, Monograma } from "../components/CartaoProjeto";
 import { EditIcon, PlusIcon } from "../design/icon";
+import { AcaoCabecalho } from "../components/Cabecalho";
 
 export function ListaProjetos() {
   useTituloPagina("Projetos");
@@ -13,7 +14,7 @@ export function ListaProjetos() {
   const { dados: tarefas, erro: erroTarefas, tentando: tentandoTarefas, tentarDeNovo: tentarTarefas } = useConsulta(listarTarefas);
   const location = useLocation();
   const navigate = useNavigate();
-  return <main className="e-projects"><header className="e-page-heading"><div><h1 tabIndex={-1}>Projetos</h1><p>Um lugar para cada frente de trabalho.</p></div><Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-project" onClick={() => navigate("/projetos/novo", { state: { fundo: location } })}>Novo projeto</Button></header>
+  return <main className="e-projects"><header className="e-page-heading"><div><h1 tabIndex={-1}>Projetos</h1><p>Um lugar para cada frente de trabalho.</p></div><AcaoCabecalho><Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Novo projeto" data-action="new-project" onClick={() => navigate("/projetos/novo", { state: { fundo: location } })}>Novo projeto</Button></AcaoCabecalho></header>
     {carregando && <Carregando>Carregando projetos…</Carregando>}
     {erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar os projetos" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {projetos?.length === 0 && <EstadoVazio titulo="Nenhum projeto por aqui" descricao="Crie um projeto para reunir suas tarefas." destino="/projetos/novo" acao="Criar projeto" />}
