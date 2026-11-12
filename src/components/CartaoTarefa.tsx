@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Button as AriaButton, Heading } from "react-aria-components";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { ErroApi } from "../api";
 import { STATUS } from "../derivar";
 import type { Status, Tarefa } from "../tipos";
-import { Icon, EditIcon, TrashIcon, PawIcon } from "../design/icon";
-import { formatarData, prazoVencido, prioridadeTexto, statusTexto } from "../design/formatos";
+import { Icon, EditIcon, TrashIcon } from "../design/icon";
+import { formatarData, prazoVencido, statusTexto } from "../design/formatos";
+import { SeloPrioridade, SeloStatus } from "./Selos";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
 // Com `onMudarStatus`, o selo de status vira um seletor; sem ele, segue só informativo.
@@ -31,7 +31,6 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const emQuadro = variante === "quadro";
   const concluida = tarefa.status === "concluida";
   const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}`;
-  const textoStatus = (seta: boolean) => <span key="status" className={`e-card-status e-card-status-${tarefa.status}`}>{concluida && <PawIcon />}{statusTexto[tarefa.status]}{seta && <Icon name="angle-small-down" />}</span>;
   const mudar = async (status: Status) => {
     if (!onMudarStatus || status === tarefa.status || enviando.current) return;
     enviando.current = true;
@@ -79,10 +78,10 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     if (falhou && (!document.activeElement || document.activeElement === document.body)) gatilho.current?.focus();
   }, [falhou]);
   const seletorStatus = onMudarStatus ? <Dropdown.Root key="status">
-    <AriaButton ref={gatilho} className="e-status-trigger" data-status-trigger aria-label={`Mudar status de ${tarefa.titulo} (atual: ${statusTexto[tarefa.status]})`} isPending={salvando}>{textoStatus(true)}</AriaButton>
+    <AriaButton ref={gatilho} className="e-status-trigger" data-status-trigger aria-label={`Mudar status de ${tarefa.titulo} (atual: ${statusTexto[tarefa.status]})`} isPending={salvando}><SeloStatus status={tarefa.status} seta /></AriaButton>
     <Dropdown.Popover className="e-popover" placement={emQuadro ? "bottom end" : "bottom start"}><Dropdown.Menu selectionMode="single" disallowEmptySelection shouldCloseOnSelect selectedKeys={[tarefa.status]} disabledKeys={salvando ? STATUS : undefined} onSelectionChange={(chaves) => { const [status] = chaves as Set<Status>; if (status) void mudar(status); }}>{STATUS.map((status) => <Dropdown.Item key={status} id={status} label={statusTexto[status]} />)}</Dropdown.Menu></Dropdown.Popover>
-  </Dropdown.Root> : textoStatus(false);
-  const tagPrioridade = <Badge key="prioridade" type="modern" size="sm" color="gray" className={`e-priority e-priority-${tarefa.prioridade}`}><Icon name={tarefa.prioridade === "alta" ? "angle-double-small-up" : tarefa.prioridade === "baixa" ? "arrow-small-down" : "minus-small"} />{prioridadeTexto[tarefa.prioridade]}</Badge>;
+  </Dropdown.Root> : <SeloStatus key="status" status={tarefa.status} />;
+  const tagPrioridade = <SeloPrioridade key="prioridade" prioridade={tarefa.prioridade} />;
   const cabecalho = <div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" label="Excluir tarefa" icon={TrashIcon} onAction={() => { setFalhaExclusao(false); setConfirmando(true); }} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
     </div>;

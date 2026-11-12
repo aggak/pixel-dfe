@@ -1,65 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
 import { Badge } from "@/components/base/badges/badges";
-import { Button } from "@/components/base/buttons/button";
-import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
-import { CartaoTarefa } from "../components/CartaoTarefa";
 import { GatinhoLavando } from "../components/GatinhoLavando";
-import { FiltrosTarefas } from "../components/FiltrosTarefas";
-import { useFiltros } from "../components/filtros-contexto";
-import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
-import { useConsulta } from "../hooks/useConsulta";
-import { useTituloPagina } from "../hooks/useTituloPagina";
-import { useMudarStatus } from "../hooks/useMudarStatus";
-import { agruparPorStatus, filtrarTarefas } from "../derivar";
+import { VisaoTarefas } from "../components/VisaoTarefas";
+import { agruparPorStatus } from "../derivar";
 import { statusTexto } from "../design/formatos";
-import { Icon, PlusIcon } from "../design/icon";
-import type { Status, Tarefa } from "../tipos";
+import { Icon } from "../design/icon";
+import type { Status } from "../tipos";
 
 const iconesStatus: Record<Status, string> = { "a-fazer": "circle", "em-andamento": "play", "em-revisao": "eye", concluida: "check" };
 
 export function QuadroTarefas() {
-  useTituloPagina("Quadro");
-  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState(false);
-  const [tentativa, setTentativa] = useState(0);
-  const [tentando, setTentando] = useState(false);
-  const { filtros, limpar } = useFiltros();
-  const consultaProjetos = useConsulta(listarProjetos);
-  const projetos = consultaProjetos.dados;
-  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const excluir = async (tarefa: Tarefa) => {
-    await excluirTarefaSeExistir(tarefa.id);
-    setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
-  };
-  useEffect(() => {
-    const controller = new AbortController();
-    listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
-    return () => controller.abort();
-  }, [tentativa]);
-  const tentarDeNovo = () => {
-    setTentando(true);
-    setTentativa((atual) => atual + 1);
-    if (consultaProjetos.erro !== undefined) consultaProjetos.tentarDeNovo();
-  };
-  // Mesma derivação da lista, com um passo a mais: o agrupamento por status.
-  const tarefasFiltradas = useMemo(() => filtrarTarefas(tarefas, filtros), [tarefas, filtros]);
-  const colunas = useMemo(() => agruparPorStatus(tarefasFiltradas), [tarefasFiltradas]);
-  return <><AbasProjetos projetos={consultaProjetos} mostrarErro={!erro} /><main className="e-sheet"><header className="e-tools e-task-tools">
-    <h1 className="e-task-page-title" tabIndex={-1}>Quadro</h1>
-    <FiltrosTarefas />
-    <AlternarVisao />
-    <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasFiltradas.length} filtros={filtros} /><div className="e-content e-board-content"><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasFiltradas} onLimpar={limpar} />
-    {carregando && <Carregando>Carregando tarefas…</Carregando>}
-    {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
-    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasFiltradas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-board" aria-label="Quadro de tarefas por status">{colunas.map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
-        <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
-        {coluna.tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante="quadro" nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}
-        {coluna.tarefas.length === 0 && <p className="e-column-empty"><GatinhoLavando />Nenhuma tarefa</p>}
-      </section>)}</section>)}
-  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasFiltradas.length} {tarefasFiltradas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
+  return <VisaoTarefas titulo="Quadro" classeConteudo="e-content e-board-content">{(tarefas, cartao) => <section className="e-board" aria-label="Quadro de tarefas por status">{agruparPorStatus(tarefas).map((coluna) => <section key={coluna.status} className="e-column" aria-label={statusTexto[coluna.status]} data-status-column={coluna.status}>
+    <h2><span className="e-column-name"><Icon name={iconesStatus[coluna.status]} /><span>{statusTexto[coluna.status]}</span></span><Badge type="modern" color="gray" size="sm">{coluna.tarefas.length}</Badge></h2>
+    {coluna.tarefas.map((tarefa) => cartao(tarefa, "quadro"))}
+    {coluna.tarefas.length === 0 && <p className="e-column-empty"><GatinhoLavando />Nenhuma tarefa</p>}
+  </section>)}</section>}</VisaoTarefas>;
 }
