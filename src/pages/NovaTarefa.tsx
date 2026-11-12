@@ -24,8 +24,8 @@ export function NovaTarefa() {
 
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
-    await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted) navegar(destinoFechar, true);
+    const criada = await criarTarefa(dados, controller?.signal);
+    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id });
   }
 
   return (
