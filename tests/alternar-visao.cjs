@@ -188,7 +188,7 @@ async function executar() {
   await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
   await abas.getByRole("link", { name: "Todas" }).click();
   await page.waitForURL((url) => url.pathname === "/quadro");
-  await page.getByRole("link", { name: "Lista" }).click();
+  await page.getByRole("link", { name: "Lista", exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/");
   await abas.getByRole("link").nth(1).click();
   await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
