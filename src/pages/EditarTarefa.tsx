@@ -41,7 +41,7 @@ export function EditarTarefa() {
         </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
-        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" onTentarDeNovo={tentarDeNovo} tentando={tentando} />
+        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />
       )}
       {tarefa && (
         <FormularioTarefa
