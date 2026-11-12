@@ -65,15 +65,21 @@ async function executar() {
   const texto = async () => page.locator("main").innerText();
   const ficha = () => page.getByRole("dialog");
   const textoFicha = async () => ficha().innerText();
+  const conferirTitulo = async (titulo) => {
+    await page.waitForFunction((esperado) => document.title === esperado, `${titulo} · Pixel`);
+    assert.equal(await page.title(), `${titulo} · Pixel`);
+  };
 
   await conferir("lista original mantém as cinco tarefas sem duplicações", async () => {
     await abrir("/");
+    await conferirTitulo("Tarefas");
     assert.equal(await page.locator("article").count(), seed.tarefas.length);
     for (const tarefa of seed.tarefas) assert.equal(await page.getByRole("link", { name: tarefa.titulo, exact: true }).count(), 1);
   });
   await conferir("detalhe direto apresenta os campos e permite recarregar", async () => {
     await abrir("/tarefas/2");
     await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
+    await conferirTitulo("Subir o json-server");
     const conteudo = await textoFicha();
     // A data agora é apresentada por extenso; o valor ISO fica no atributo do elemento <time>.
     for (const valor of ["Subir o json-server", "API local a partir do db.json", "Em andamento", "Alta", "Bruno", "6 de outubro de 2026", "Gerenciador de Tarefas"]) assert.ok(conteudo.includes(valor), valor);
@@ -81,17 +87,20 @@ async function executar() {
     assert.equal(await ficha().locator(".e-read-identifiers").count(), 0);
     await page.reload();
     await page.getByRole("heading", { name: "Subir o json-server", exact: true }).waitFor();
+    await conferirTitulo("Subir o json-server");
   });
   await conferir("layout persiste e os links navegam sem recarregar o documento", async () => {
     await page.evaluate(() => { window.marcadorNavegacao = "preservado"; });
     // A ficha bloqueia o fundo: fecha-se o detalhe (navegação interna) antes de usar o menu principal.
     await page.keyboard.press("Escape");
     await ficha().waitFor({ state: "detached" });
+    await conferirTitulo("Tarefas");
     assert.equal(await page.evaluate(() => window.marcadorNavegacao), "preservado");
     const principal = page.getByRole("navigation", { name: "Navegação principal", exact: true });
     await principal.getByRole("link", { name: "Projetos", exact: true }).click();
     await page.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
     await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+    await conferirTitulo("Projetos");
     assert.equal(await page.evaluate(() => window.marcadorNavegacao), "preservado");
     assert.equal(await principal.count(), 1);
     assert.equal(await principal.getByRole("link", { name: "Projetos" }).getAttribute("aria-current"), "page");
@@ -104,6 +113,7 @@ async function executar() {
     for (const projeto of seed.projetos) {
       const resposta = page.waitForResponse(`${api}/projetos/${projeto.id}?_embed=tarefas`);
       await abrir(`/projetos/${projeto.id}`);
+      await conferirTitulo(projeto.nome);
       assert.equal((await resposta).status(), 200);
       const tarefas = seed.tarefas.filter((tarefa) => tarefa.projetoId === projeto.id);
       assert.equal(await page.locator("article").count(), tarefas.length);
@@ -120,20 +130,25 @@ async function executar() {
   });
   await conferir("troca de parâmetro não mantém dados da tarefa anterior", async () => {
     await abrir("/tarefas/1");
+    await conferirTitulo("Criar o repositório");
     await page.route(`${api}/tarefas/2`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
     await page.evaluate(() => { history.pushState({}, "", "/tarefas/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await ficha().getByRole("status").waitFor();
+    await conferirTitulo("Tarefa");
     assert.ok(!(await textoFicha()).includes("Criar o repositório"));
     await page.getByRole("heading", { name: "Subir o json-server", exact: true }).waitFor();
+    await conferirTitulo("Subir o json-server");
     await page.unrouteAll();
   });
   await conferir("resposta atrasada não substitui o projeto atual", async () => {
     await page.route(`${api}/projetos/1*`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
     await page.goto(`${origem}/projetos/1`);
     await page.getByRole("status").filter({ hasText: /^Carregando projeto…$/ }).waitFor();
+    await conferirTitulo("Projeto");
     await page.evaluate(() => { history.pushState({}, "", "/projetos/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await page.getByRole("heading", { name: "Modelagem da Biblioteca", exact: true }).waitFor();
     await page.waitForTimeout(600);
+    await conferirTitulo("Modelagem da Biblioteca");
     assert.equal(await page.locator("article").count(), 1);
     assert.ok(!(await texto()).includes("Criar o repositório"));
     await page.unrouteAll();
@@ -141,9 +156,11 @@ async function executar() {
   await conferir("IDs inexistentes encerram carregamento com mensagem", async () => {
     // Tarefa abre na ficha com a mensagem exata; o projeto mostra título e explicação na própria tela.
     await abrir("/tarefas/999");
+    await conferirTitulo("Tarefa não encontrada");
     assert.equal(await page.getByRole("alert").innerText(), "Tarefa não encontrada. Ela pode ter sido excluída.");
     assert.equal(await page.getByRole("status").count(), 0);
     await abrir("/projetos/999");
+    await conferirTitulo("Projeto não encontrado");
     const alerta = await page.getByRole("alert").innerText();
     assert.ok(alerta.includes("Projeto não encontrado"), alerta);
     assert.ok(alerta.includes("Este projeto não está disponível."), alerta);
@@ -168,6 +185,7 @@ async function executar() {
     await page.route(`${api}/**`, (route) => route.abort("connectionrefused"));
     for (const rota of ["/tarefas/2", "/projetos", "/projetos/1"]) {
       await abrir(rota);
+      await conferirTitulo(rota === "/projetos" ? "Projetos" : rota.startsWith("/tarefas/") ? "Tarefa" : "Projeto");
       const alvo = rota.startsWith("/tarefas/") ? ficha() : page;
       assert.equal(await alvo.getByRole("alert").count(), 1);
       assert.ok((await alvo.getByRole("alert").innerText()).includes("Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo."));
@@ -177,9 +195,55 @@ async function executar() {
   });
   await conferir("fallback mantém navegação e retorno à lista", async () => {
     await abrir("/rota-inexistente");
+    await conferirTitulo("Página não encontrada");
     assert.ok((await texto()).includes("Página não encontrada"));
     await page.getByRole("link", { name: "Voltar para tarefas" }).click();
     await page.getByRole("link", { name: seed.tarefas[0].titulo, exact: true }).waitFor();
+    await conferirTitulo("Tarefas");
+  });
+  await conferir("formulários têm títulos próprios e restauram o destino ao fechar", async () => {
+    for (const [rota, titulo, destino] of [["/tarefas/nova", "Nova tarefa", "Tarefas"], ["/tarefas/1/editar", "Editar tarefa", "Criar o repositório"], ["/projetos/novo", "Novo projeto", "Projetos"], ["/projetos/1/editar", "Editar projeto", "Gerenciador de Tarefas"]]) {
+      await abrir(rota);
+      await ficha().locator("form").waitFor();
+      await conferirTitulo(titulo);
+      await ficha().getByRole("button", { name: `Fechar ${titulo.toLocaleLowerCase("pt-BR")}`, exact: true }).click();
+      await conferirTitulo(destino);
+    }
+  });
+  await conferir("ficha sobre projeto acompanha edição, fechamento e histórico", async () => {
+    await abrir("/projetos/1");
+    await page.getByRole("link", { name: "Criar o repositório", exact: true }).click();
+    await conferirTitulo("Criar o repositório");
+    await page.goBack();
+    await conferirTitulo("Gerenciador de Tarefas");
+    await page.goForward();
+    await conferirTitulo("Criar o repositório");
+    await ficha().getByRole("button", { name: "Editar tarefa", exact: true }).click();
+    await conferirTitulo("Editar tarefa");
+    await page.keyboard.press("Escape");
+    await conferirTitulo("Criar o repositório");
+    await page.keyboard.press("Escape");
+    await ficha().waitFor({ state: "detached" });
+    await conferirTitulo("Gerenciador de Tarefas");
+  });
+  await conferir("resposta do fundo não sobrescreve o título da ficha", async () => {
+    let liberar;
+    const bloqueio = new Promise((resolve) => { liberar = resolve; });
+    await page.route(`${api}/projetos/1*`, async (route) => { await bloqueio; await route.continue(); });
+    try {
+      await page.goto(`${origem}/tarefas/nova?projetoId=1`);
+      await ficha().locator("form").waitFor();
+      await conferirTitulo("Nova tarefa");
+      liberar();
+      await page.getByRole("main", { includeHidden: true }).getByRole("heading", { name: "Gerenciador de Tarefas", exact: true, includeHidden: true }).waitFor();
+      await conferirTitulo("Nova tarefa");
+      await page.keyboard.press("Escape");
+      await ficha().waitFor({ state: "detached" });
+      await conferirTitulo("Gerenciador de Tarefas");
+    } finally {
+      liberar();
+      await page.unrouteAll({ behavior: "wait" });
+    }
   });
   await conferir("telas cabem em 375 px e links recebem foco por teclado", async () => {
     await page.setViewportSize({ width: 375, height: 812 });

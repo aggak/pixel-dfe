@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
-import type { Projeto } from "../tipos";
+import type { Projeto, Tarefa } from "../tipos";
 import { ErroApi } from "../api";
 import { GatinhoDormindo } from "./GatinhoDormindo";
 import { GatinhoOlhando } from "./GatinhoOlhando";
@@ -114,8 +114,8 @@ export function AnuncioResultados({ total, filtros }: { total: number; filtros: 
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
   return <div className={`e-loading-state${compacto ? " e-loading-compact" : ""}`} role="status">{compacto ? <span className="e-loading-dot" aria-hidden="true" /> : <GatinhoCarregando />}{children}</div>;
 }
-export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; erro?: unknown; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
-  const raiz = useRef<HTMLDivElement>(null);
+function useDevolverFoco<T extends HTMLElement>() {
+  const raiz = useRef<T>(null);
   useLayoutEffect(() => {
     const elemento = raiz.current;
     return () => {
@@ -127,21 +127,34 @@ export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = fals
       });
     };
   }, []);
+  return raiz;
+}
+export function ErroCarregamento({ titulo, erro, onTentarDeNovo, tentando = false, compacto = false }: { titulo: string; erro?: unknown; onTentarDeNovo: () => void; tentando?: boolean; compacto?: boolean }) {
+  const raiz = useDevolverFoco<HTMLDivElement>();
   const motivo = erro instanceof ErroApi && erro.status >= 500 ? "O servidor encontrou um problema. Tente de novo em instantes." : "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
   return <div ref={raiz} className={`e-load-error${compacto ? " e-load-error-compact" : ""}`} role="alert"><GatinhoCostas /><h2>{titulo}</h2><p>{tentando ? "Tentando de novo…" : motivo}</p><Button color="secondary" size="sm" iconLeading={RefreshIcon} isLoading={tentando} onClick={onTentarDeNovo}>Tentar de novo</Button></div>;
 }
 export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { texto: string; onTentarDeNovo: () => void; tentando?: boolean }) {
-  return <span className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
+  const raiz = useDevolverFoco<HTMLSpanElement>();
+  return <span ref={raiz} className="e-inline-error" role="status"><Icon name="cloud-disabled" /><span className="e-inline-error-text">{tentando ? "Tentando de novo…" : texto}</span><Button color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={tentando} showTextWhileLoading onClick={onTentarDeNovo}>Tentar de novo</Button></span>;
+}
+function focarBuscaSePerdido() {
+  requestAnimationFrame(() => {
+    const ativo = document.activeElement;
+    if (!ativo || ativo === document.body || !ativo.isConnected) (document.querySelector<HTMLElement>(".e-task-search input") ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+  });
+}
+export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar }: { tarefas: Tarefa[]; exibidas: Tarefa[]; onLimpar: () => void }) {
+  const criada = (useLocation().state as { tarefaCriada?: string } | null)?.tarefaCriada;
+  const escondida = criada !== undefined && tarefas.some((tarefa) => tarefa.id === criada) && !exibidas.some((tarefa) => tarefa.id === criada);
+  return <div aria-live="polite" aria-atomic="true">{escondida && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>Tarefa criada, mas escondida pela busca ou pelos filtros.</span>{exibidas.length > 0 && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
 }
 export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const agir = () => {
     onAcao?.();
-    requestAnimationFrame(() => {
-      const ativo = document.activeElement;
-      if (!ativo || ativo === document.body || !ativo.isConnected) (document.querySelector<HTMLElement>(".e-task-search input") ?? document.querySelector<HTMLElement>("main h1"))?.focus();
-    });
+    focarBuscaSePerdido();
   };
   return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : agir())}>{acao}</Button></div>;
 }

@@ -5,8 +5,9 @@ import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
 import { CartaoTarefa } from "./CartaoTarefa";
 import { FiltrosTarefas } from "./FiltrosTarefas";
 import { useFiltros } from "./filtros-contexto";
-import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "./Layout";
+import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "./Layout";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { filtrarTarefas } from "../derivar";
 import { PlusIcon } from "../design/icon";
@@ -15,6 +16,7 @@ import type { Tarefa } from "../tipos";
 type Cartao = (tarefa: Tarefa, variante?: "lista" | "quadro") => ReactNode;
 
 export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }: { titulo: string; classeConteudo?: string; children: (tarefas: Tarefa[], cartao: Cartao) => ReactNode }) {
+  useTituloPagina(titulo);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
@@ -48,7 +50,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     <FiltrosTarefas />
     <AlternarVisao />
     <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}>
+  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : children(tarefasExibidas, cartao))}

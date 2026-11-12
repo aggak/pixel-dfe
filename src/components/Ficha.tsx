@@ -58,7 +58,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     const frame = requestAnimationFrame(recuperar);
     return () => cancelAnimationFrame(frame);
   }, [ocupada, aberta, location.pathname]);
-  function navegar(destino: string, atualizar = false) {
+  function navegar(destino: string, atualizar = false, estado?: object) {
     if (ehRotaFicha(destino.split("?")[0])) {
       const fundoAtualizado = atualizar ? { ...fundo, state: { chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado` } } : fundo;
       navigate(destino, { state: { fundo: fundoAtualizado }, replace: true });
@@ -71,7 +71,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
       if (!atualizar && origemInterna && destino === fundo.pathname + fundo.search && Number.isInteger(indice) && indice > 0) {
         navigate(-1);
       } else {
-        navigate(destino, { replace: true, state: atualizar ? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key } });
+        navigate(destino, { replace: true, state: atualizar ? estado ?? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key } });
       }
       requestAnimationFrame(() => {
         const anterior = origem.current;

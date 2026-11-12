@@ -61,9 +61,49 @@ async function executar() {
   const removerNaApi = async (colecao, id) => assert.equal((await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok, true);
   const criarNaApi = async (colecao, dados) => (await fetch(`${api}/${colecao}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })).json();
 
+  for (const caminho of ["/tarefas", "/tarefas/", "/TAREFAS?origem=atalho&busca=a%20b#lista", "/TaReFaS/?origem=atalho&busca=a%20b#lista"]) {
+    const { search, hash } = new URL(caminho, web);
+    const destino = `${web}/${search}${hash}`;
+    await page.goto(`${web}/projetos`);
+    await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+    const historico = await page.evaluate(() => history.length);
+    const resposta = await page.goto(`${web}${caminho}`);
+    assert.equal(resposta.status(), 200);
+    await page.waitForURL(destino, { timeout: 10000 });
+    await page.getByRole("region", { name: "Lista de tarefas" }).locator("[data-task-id]").first().waitFor();
+    assert.equal(await ficha().count(), 0);
+    assert.equal(await page.evaluate(() => history.length), historico + 1, `${caminho}: redirecionamento empilhou histórico`);
+    await page.goBack();
+    await page.waitForURL(`${web}/projetos`, { timeout: 10000 });
+    await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+    await page.goForward();
+    await page.waitForURL(destino, { timeout: 10000 });
+    await page.getByRole("region", { name: "Lista de tarefas" }).locator("[data-task-id]").first().waitFor();
+    console.log(`OK: ${caminho} leva à lista, preserva query/hash e substitui a entrada no histórico`);
+  }
+
+  const listaRedirecionada = page.url();
+  await page.getByRole("region", { name: "Lista de tarefas" }).getByRole("link", { name: "Criar o repositório", exact: true }).click();
+  await ficha().getByRole("heading", { name: "Criar o repositório", exact: true }).waitFor();
+  const fundo = await page.evaluate(() => history.state.usr.fundo);
+  assert.equal(fundo.pathname + fundo.search + fundo.hash, new URL(listaRedirecionada).pathname + new URL(listaRedirecionada).search + new URL(listaRedirecionada).hash);
+  await page.keyboard.press("Escape");
+  await ficha().waitFor({ state: "detached" });
+  await page.waitForURL(listaRedirecionada, { timeout: 10000 });
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
+  console.log("OK: a ficha aberta após o redirecionamento mantém o fundo e retorna à lista com query/hash");
+
+  for (const caminho of ["/tarefas-extra", "/tarefas/999/extra"]) {
+    await page.goto(`${web}${caminho}`);
+    await page.getByRole("heading", { name: "Página não encontrada", exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, caminho);
+  }
+  console.log("OK: endereços fora das rotas continuam na página não encontrada");
+
   for (const caminho of ["/tarefas/999", "/tarefas/999/editar"]) {
     await page.goto(`${web}${caminho}`);
     await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+    assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
     assert.equal(await ficha().getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
     console.log(`OK: ${caminho} encerra o carregamento com "Tarefa não encontrada."`);
   }
@@ -72,6 +112,7 @@ async function executar() {
     // A edição abre sobre a página do projeto: os dois avisos precisam chegar.
     await page.getByRole("main").getByRole("alert").filter({ hasText: "Projeto não encontrado" }).waitFor();
     if (caminho.endsWith("/editar")) await ficha().getByRole("alert").filter({ hasText: "Projeto não encontrado." }).waitFor();
+    assert.equal(await page.title(), "Projeto não encontrado · Pixel");
     assert.equal(await page.getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
     assert.equal(await page.getByRole("button", { name: "Tentar de novo" }).count(), 0, `${caminho}: oferece tentar de novo`);
     console.log(`OK: ${caminho} encerra o carregamento com "Projeto não encontrado"`);
@@ -82,7 +123,9 @@ async function executar() {
   await page.route(`${api}/tarefas/998`, atrasar);
   await page.goto(`${web}/tarefas/998`);
   await ficha().getByRole("status").filter({ hasText: "Carregando tarefa" }).waitFor();
+  assert.equal(await page.title(), "Tarefa · Pixel");
   await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+  assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
   assert.equal(await ficha().getByRole("status").count(), 0);
   await page.unroute(`${api}/tarefas/998`, atrasar);
   console.log("OK: resposta lenta com 404 encerra a indicação de carregamento");

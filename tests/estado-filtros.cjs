@@ -4,7 +4,7 @@ const { copyFile, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarUi, lancarNavegador } = require("./ui.cjs");
 
 async function portaLivre() {
   const servidor = createServer();
@@ -113,10 +113,60 @@ async function executar() {
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
     console.log("OK: recarregar a página reinicia os filtros");
 
+    // Tarefa recém-criada que a busca ou os filtros escondem: o aviso diz que ela existe e oferece limpar.
+    const ui = criarUi(page);
+    const aviso = page.locator(".e-hidden-notice");
+    const criar = async (titulo) => {
+      await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
+      await page.waitForFunction(() => document.querySelectorAll('form select[name="projetoId"] option:not([value=""])').length >= 2);
+      await ui.preencherTarefa(comTextos({ projetoId: "1", titulo, descricao: "Criada pela suíte de filtros", status: "a-fazer", prioridade: "media", responsavel: "Ana", prazo: "2027-03-15" }, dados.projetos));
+      await page.getByRole("button", { name: "Salvar tarefa", exact: true }).click();
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+    };
+    await selecionar("Status", "Concluída");
+    await criar("Tarefa escondida pelo status");
+    await aviso.waitFor();
+    assert.equal(await page.locator('[aria-live="polite"]').filter({ hasText: "Tarefa criada, mas escondida pela busca ou pelos filtros." }).count(), 1);
+    assert.equal(await lista.getByRole("link", { name: "Tarefa escondida pelo status" }).count(), 0);
+    await aviso.getByRole("button", { name: "Limpar busca e filtros" }).click();
+    await lista.getByRole("link", { name: "Tarefa escondida pelo status" }).waitFor();
+    assert.equal(await aviso.count(), 0);
+    assert.match(await seletor("Status").innerText(), /Todos/);
+    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true);
+    console.log("OK: tarefa criada e escondida pelo filtro mostra aviso, e limpar a revela");
+
+    await criar("Tarefa visível sem filtros");
+    await lista.getByRole("link", { name: "Tarefa visível sem filtros" }).waitFor();
+    await page.waitForTimeout(300);
+    assert.equal(await aviso.count(), 0);
+    await busca.fill("sem correspondência");
+    await criar("Tarefa escondida pela busca");
+    await aviso.waitFor();
+    assert.equal(await page.getByText("Nenhuma tarefa encontrada").count(), 1);
+    assert.equal(await page.getByRole("button", { name: "Limpar busca e filtros" }).count(), 1);
+    await page.getByRole("button", { name: "Limpar busca e filtros" }).click();
+    await lista.getByRole("link", { name: "Tarefa escondida pela busca" }).waitFor();
+    assert.equal(await aviso.count(), 0);
+    console.log("OK: sem aviso quando a tarefa aparece; com a lista vazia, um só botão de limpar");
+
+    const visoes = page.getByRole("navigation", { name: "Visualização das tarefas" });
+    await visoes.getByRole("link", { name: "Quadro" }).click();
+    const quadro = page.getByRole("region", { name: "Quadro de tarefas por status" });
+    await quadro.getByRole("article").first().waitFor();
+    await busca.fill("diagrama");
+    await criar("Tarefa escondida no quadro");
+    await aviso.waitFor();
+    assert.equal(await quadro.getByRole("link", { name: "Tarefa escondida no quadro" }).count(), 0);
+    await visoes.getByRole("link", { name: "Lista" }).click();
+    await lista.getByRole("article").first().waitFor();
+    assert.equal(await aviso.count(), 0);
+    assert.equal(await busca.inputValue(), "diagrama");
+    console.log("OK: o aviso aparece no quadro e some ao navegar");
+
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
     assert.deepEqual(atuais, originais);
-    console.log("6 cenários aprovados; nenhum erro JavaScript não tratado.");
+    console.log("9 cenários aprovados; nenhum erro JavaScript não tratado.");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();

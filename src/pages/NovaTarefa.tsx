@@ -4,8 +4,10 @@ import { useFicha } from "../components/ficha-contexto";
 import { criarTarefa } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import type { NovaTarefa as DadosNovaTarefa } from "../tipos";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovaTarefa() {
+  useTituloPagina("Nova tarefa");
   const { navegar, fechar, destinoFechar, setOcupada } = useFicha();
   const [busca] = useSearchParams();
   const projetoId = busca.get("projetoId") ?? "";
@@ -22,8 +24,8 @@ export function NovaTarefa() {
 
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
-    await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted) navegar(destinoFechar, true);
+    const criada = await criarTarefa(dados, controller?.signal);
+    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id });
   }
 
   return (

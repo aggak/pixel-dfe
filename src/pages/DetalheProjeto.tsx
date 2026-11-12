@@ -6,6 +6,7 @@ import { CartaoTarefa } from "../components/CartaoTarefa";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { AbasProjetos, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
+import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { EditIcon, FolderIcon, Icon, PlusIcon } from "../design/icon";
 import { formatarData } from "../design/formatos";
@@ -21,6 +22,7 @@ export function DetalheProjeto() {
     return { projeto, tarefas };
   }, [id]);
   const { dados, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : dados?.projeto.nome ?? "Projeto");
   const consultaProjetos = useConsulta(listarProjetos);
   const tentarTudo = () => {
     tentarDeNovo();

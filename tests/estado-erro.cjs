@@ -46,7 +46,7 @@ async function executar() {
   const [portaApi, portaWeb] = [await portaLivre(), await portaLivre()];
   const api = `http://127.0.0.1:${portaApi}`;
   const web = `http://127.0.0.1:${portaWeb}`;
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
+  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort", "--mode", "test"], { ...process.env, VITE_API_URL: api, VITE_API_TEMPO_LIMITE_MS: "1000" });
   await esperar(web);
 
   browser = await lancarNavegador();
@@ -68,6 +68,23 @@ async function executar() {
   assert.equal(await alerta("Não foi possível carregar").count(), 0);
   assert.equal(await page.locator(".e-task-project").first().isVisible(), true);
   console.log("OK: lista com json-server parado avisa e carrega ao tentar de novo");
+
+  for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
+    const semResposta = () => {};
+    await page.route(`${api}/${colecao}`, semResposta);
+    await page.goto(`${web}${caminho}`);
+    const carregando = page.getByRole("main").getByRole("status").filter({ hasText: `Carregando ${colecao}` });
+    await carregando.waitFor();
+    await alerta(`Não foi possível carregar ${colecao === "tarefas" ? "as tarefas" : "os projetos"}`).waitFor();
+    assert.equal(await carregando.count(), 0);
+    assert.equal(await alerta("Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.").count(), 1);
+    assert.equal(await tentar().isEnabled(), true);
+    await page.unroute(`${api}/${colecao}`, semResposta);
+    await tentar().click();
+    await page.locator(seletor).first().waitFor();
+    assert.equal(await alerta("Não foi possível carregar").count(), 0);
+    console.log(`OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`);
+  }
 
   async function conferirRota(nome, caminho, texto, carregado, escopo = () => page.getByRole("main"), comAbas = false) {
     let falhar = true;
@@ -160,6 +177,27 @@ async function executar() {
   assert.equal(await ficha().getByText("Nome do projeto indisponível.").count(), 0);
   await page.unroute(`${api}/projetos`, interceptarNome);
   console.log("OK: ficha avisa quando só o nome do projeto falha e recarrega");
+
+  let falharAndamento = true;
+  const interceptarAndamento = (rota) => (falharAndamento ? rota.abort() : rota.continue());
+  const avisoAndamento = () => page.getByRole("main").getByRole("status").filter({ hasText: "O andamento dos projetos não carregou." });
+  await page.route(`${api}/tarefas`, interceptarAndamento);
+  await page.goto(`${web}/projetos`);
+  await page.locator("[data-project-id]").first().waitFor();
+  await avisoAndamento().waitFor();
+  assert.equal(await page.locator(".e-proj-prog").count(), 0);
+  assert.equal(await page.getByRole("main").getByRole("alert").count(), 0);
+  await tentar().focus();
+  await page.keyboard.press("Enter");
+  await avisoAndamento().waitFor();
+  await page.waitForFunction(() => document.activeElement?.textContent === "Tentar de novo" && !document.activeElement.disabled);
+  falharAndamento = false;
+  await page.keyboard.press("Enter");
+  await page.locator(".e-proj-prog").first().waitFor();
+  assert.equal(await avisoAndamento().count(), 0);
+  await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+  await page.unroute(`${api}/tarefas`, interceptarAndamento);
+  console.log("OK: projetos avisam quando só o andamento falha e recarregam ao tentar de novo, com o foco no título");
 
   const interceptarTudo = (rota) => rota.abort();
   await page.route(`${api}/**`, interceptarTudo);

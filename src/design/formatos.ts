@@ -1,5 +1,13 @@
 import type { Prioridade, Status } from "../tipos";
 
+const CONECTIVOS = new Set(["A", "AS", "O", "OS", "DA", "DAS", "DE", "DO", "DOS", "E", "EM", "PARA"]);
+
+export function iniciais(nome: string) {
+  const palavras = nome.normalize("NFD").replace(/\p{M}/gu, "").toUpperCase().match(/[A-Z0-9]+/g) ?? [];
+  const principais = palavras.filter((palavra) => !CONECTIVOS.has(palavra));
+  return principais.length > 1 ? principais.slice(0, 2).map((palavra) => palavra[0]).join("") : (principais[0] ?? palavras[0] ?? "?").slice(0, 2);
+}
+
 export const statusTexto: Record<Status, string> = {
   "a-fazer": "A fazer", "em-andamento": "Em andamento", "em-revisao": "Em revisão", concluida: "Concluída",
 };
