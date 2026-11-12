@@ -224,9 +224,11 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 [data-rac][role^=menuitem]>div{width:100%}
 }
 @layer base{
-.e-uicon{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;flex-shrink:0;line-height:1;font-style:normal;vertical-align:middle}
+.e-uicon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;font-style:normal;vertical-align:middle}
 }
-.e-uicon>svg{display:block;width:1em;height:1em;flex-shrink:0}
+.e-uicon{width:14px;height:14px}
+.e-uicon>svg{display:block;width:100%;height:100%;flex-shrink:0}
+.e-form-header>button .e-uicon,.e-load-error>.e-uicon{width:21px;height:21px}
 .e-read-task .e-form-header>span{font-size:13px;font-weight:500}
 .e-read-body{padding:13px 18px 0}
 .e-read-title{font-size:21px;line-height:1.3;letter-spacing:-.5px;font-weight:500;margin:0 0 6px;overflow-wrap:anywhere}

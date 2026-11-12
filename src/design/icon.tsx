@@ -2,37 +2,37 @@ import type {HTMLAttributes, SVGProps} from 'react';
 export const PawIcon=(p:SVGProps<SVGSVGElement>)=><svg {...p} aria-hidden="true" focusable="false" className={`e-paw ${p.className||''}`} width="8" height="8" viewBox="0 0 8 8" fill="currentColor" shapeRendering="crispEdges"><path d="M2 0h1v2H2zM5 0h1v2H5zM0 2h1v2H0zM7 2h1v2H7zM3 4h2v1H3zM2 5h4v1H2zM1 6h6v1H1zM1 7h2v1H1zM5 7h2v1H5z" /></svg>;
 
 const desenhos = {
-  "arrow-down": <><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></>,
-  "calendar": <><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></>,
-  "check": <><path d="M20 6 9 17l-5-5" /></>,
-  "chevron-down": <><path d="m6 9 6 6 6-6" /></>,
-  "chevron-right": <><path d="m9 18 6-6-6-6" /></>,
-  "chevron-up": <><path d="m18 15-6-6-6 6" /></>,
-  "chevrons-up": <><path d="m17 11-5-5-5 5" /><path d="m17 18-5-5-5 5" /></>,
-  "circle": <><circle cx="12" cy="12" r="10" /></>,
-  "circle-alert": <><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></>,
-  "circle-question-mark": <><circle cx="12" cy="12" r="10" /><path d="M9 9.5a3 2.5 0 016 0c0 2-2 2-3 3.5" /><path d="M12 17h.01" /></>,
-  "cloud-off": <><path d="M10.94 5.274A7 7 0 0 1 15.71 10h1.79a4.5 4.5 0 0 1 4.222 6.057" /><path d="M18.796 18.81A4.5 4.5 0 0 1 17.5 19H9A7 7 0 0 1 5.79 5.78" /><path d="m2 2 20 20" /></>,
-  "cloud-upload": <><path d="M12 13v8" /><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="m8 17 4-4 4 4" /></>,
-  "columns-3": <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M9 3v18" /><path d="M15 3v18" /></>,
-  "ellipsis-vertical": <><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></>,
-  "eye": <><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></>,
-  "eye-off": <><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" /><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" /><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" /><path d="m2 2 20 20" /></>,
-  "file-plus": <><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M9 15h6" /><path d="M12 18v-6" /></>,
-  "file-text": <><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></>,
-  "folder": <><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></>,
-  "info": <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
-  "list": <><path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" /></>,
-  "minus": <><path d="M5 12h14" /></>,
-  "pencil": <><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></>,
-  "play": <><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></>,
-  "plus": <><path d="M5 12h14" /><path d="M12 5v14" /></>,
-  "refresh-cw": <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></>,
-  "search": <><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></>,
-  "sliders-horizontal": <><path d="M10 5H3" /><path d="M12 19H3" /><path d="M14 3v4" /><path d="M16 17v4" /><path d="M21 12h-9" /><path d="M21 19h-5" /><path d="M21 5h-7" /><path d="M8 10v4" /><path d="M8 12H3" /></>,
-  "trash-2": <><path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></>,
-  "user": <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
-  "x": <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
+  "arrow-down": "M3 1h1v1h-1zM3 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1z",
+  "calendar": "M1 0h1v1h-1zM5 0h1v1h-1zM0 1h7v1h-7zM0 2h1v1h-1zM6 2h1v1h-1zM0 3h7v1h-7zM0 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
+  "check": "M6 1h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM2 5h1v1h-1z",
+  "chevron-down": "M1 2h1v1h-1zM5 2h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1z",
+  "chevron-right": "M2 1h1v1h-1zM3 2h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1zM2 5h1v1h-1z",
+  "chevron-up": "M3 2h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1z",
+  "chevrons-up": "M3 0h1v1h-1zM2 1h1v1h-1zM4 1h1v1h-1zM1 2h1v1h-1zM5 2h1v1h-1zM3 4h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM1 6h1v1h-1zM5 6h1v1h-1z",
+  "circle": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
+  "circle-alert": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
+  "circle-question-mark": "M2 0h3v1h-3zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
+  "cloud-off": "M0 0h1v1h-1zM1 1h1v1h-1zM3 1h2v1h-2zM2 2h1v1h-1zM5 2h1v1h-1zM0 3h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM1 5h3v1h-3zM5 5h1v1h-1zM6 6h1v1h-1z",
+  "cloud-upload": "M2 0h2v1h-2zM1 1h1v1h-1zM4 1h1v1h-1zM1 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM3 6h1v1h-1z",
+  "columns-3": "M1 0h5v1h-5zM0 1h1v1h-1zM2 1h1v1h-1zM4 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
+  "ellipsis-vertical": "M3 1h1v1h-1zM3 3h1v1h-1zM3 5h1v1h-1z",
+  "eye": "M2 1h3v1h-3zM1 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1zM2 5h3v1h-3z",
+  "eye-off": "M0 0h1v1h-1zM1 1h1v1h-1zM3 1h2v1h-2zM2 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM2 5h2v1h-2zM5 5h1v1h-1zM6 6h1v1h-1z",
+  "file-plus": "M1 0h5v1h-5zM0 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM2 3h3v1h-3zM6 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
+  "file-text": "M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM0 2h1v1h-1zM3 2h3v1h-3zM0 3h1v1h-1zM5 3h1v1h-1zM0 4h1v1h-1zM2 4h2v1h-2zM5 4h1v1h-1zM0 5h1v1h-1zM5 5h1v1h-1zM1 6h4v1h-4z",
+  "folder": "M1 1h2v1h-2zM0 2h1v1h-1zM3 2h3v1h-3zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
+  "info": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
+  "list": "M0 1h1v1h-1zM2 1h5v1h-5zM0 3h1v1h-1zM2 3h5v1h-5zM0 5h1v1h-1zM2 5h5v1h-5z",
+  "minus": "M1 3h5v1h-5z",
+  "pencil": "M5 0h1v1h-1zM4 1h1v1h-1zM6 1h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM0 6h2v1h-2z",
+  "play": "M1 0h2v1h-2zM1 1h1v1h-1zM3 1h1v1h-1zM1 2h1v1h-1zM4 2h1v1h-1zM1 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM1 6h2v1h-2z",
+  "plus": "M3 1h1v1h-1zM3 2h1v1h-1zM1 3h5v1h-5zM3 4h1v1h-1zM3 5h1v1h-1z",
+  "refresh-cw": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM2 6h3v1h-3z",
+  "search": "M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM1 4h4v1h-4zM5 5h1v1h-1zM6 6h1v1h-1z",
+  "sliders-horizontal": "M4 0h1v1h-1zM0 1h7v1h-7zM4 2h1v1h-1zM2 4h1v1h-1zM0 5h7v1h-7zM2 6h1v1h-1z",
+  "trash-2": "M2 0h3v1h-3zM0 1h7v1h-7zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
+  "user": "M2 0h3v1h-3zM2 1h1v1h-1zM4 1h1v1h-1zM2 2h3v1h-3zM2 4h3v1h-3zM1 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1z",
+  "x": "M1 1h1v1h-1zM5 1h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM3 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1z",
 };
 
 const nomes: Record<string, keyof typeof desenhos> = {
@@ -73,7 +73,7 @@ const nomes: Record<string, keyof typeof desenhos> = {
 
 export function Icon({name,...props}:HTMLAttributes<HTMLElement>&{name:string}){
   const desenho = Object.hasOwn(nomes, name) ? nomes[name] : "circle-question-mark";
-  return <i {...props} aria-hidden="true" className={`e-uicon ${props.className||''}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{desenhos[desenho]}</svg></i>;
+  return <i {...props} aria-hidden="true" className={`e-uicon ${props.className||''}`}><svg viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden="true" focusable="false"><path fill="currentColor" d={desenhos[desenho]} /></svg></i>;
 }
 export const SearchIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="search"/>;
 export const PlusIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="plus"/>;
