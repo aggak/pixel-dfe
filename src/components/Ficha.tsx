@@ -82,7 +82,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     setAberta(false);
   }
   const fechar = () => { if (!ocupada) navegar(destinoFechar); };
-  return <ContextoFicha.Provider value={{ navegar, fechar, setOcupada }}>
+  return <ContextoFicha.Provider value={{ navegar, fechar, destinoFechar, setOcupada }}>
     <ModalOverlay isOpen={aberta} onOpenChange={(valor) => { if (!valor) fechar(); }} isDismissable={!ocupada} isKeyboardDismissDisabled={ocupada} className="e-form-overlay">
       <Modal className="e-form-modal"><Dialog aria-label={titulo} className="e-form-dialog">
         <Presenca aoSair={concluirSaida}><div className="e-form-shell" ref={casca} onFocusCapture={(e) => { ultimoFoco.current = e.target as HTMLElement; }} aria-busy={ocupada}>
