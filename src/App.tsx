@@ -9,7 +9,6 @@ import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
-import { GatinhoAbanando } from "./components/GatinhoAbanando";
 import { ErroCarregamento } from "./components/Layout";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
 import "./App.css";
@@ -59,7 +58,7 @@ function App() {
     </Routes>
     </ContextoPaginaAtiva.Provider>
     {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
-      <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
+      <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
       <Routes location={location}>
         <Route path="/tarefas/nova" element={<NovaTarefa />} />
         <Route path="/tarefas/:id/editar" element={<EditarTarefa />} />
