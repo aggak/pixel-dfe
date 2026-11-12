@@ -18,6 +18,9 @@ export function formatarData(iso: string, extensa = false) {
   return new Intl.DateTimeFormat("pt-BR", extensa ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "short" }).format(data);
 }
 export function prazoVencido(iso: string, hoje = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const data = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(data.getTime()) || data.toISOString().slice(0, 10) !== iso) return false;
   const dia = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
-  return /^\d{4}-\d{2}-\d{2}$/.test(iso) && iso < dia;
+  return iso < dia;
 }
