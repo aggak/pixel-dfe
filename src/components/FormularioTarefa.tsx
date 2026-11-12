@@ -143,11 +143,11 @@ export function FormularioTarefa({
     // Monta o objeto campo a campo para nunca repassar `id` ou extras.
     const dados: NovaTarefa = {
       projetoId,
-      titulo,
+      titulo: titulo.trim(),
       descricao,
       status,
       prioridade,
-      responsavel,
+      responsavel: responsavel.trim(),
       prazo,
     };
 
