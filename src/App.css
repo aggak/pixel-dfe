@@ -4,7 +4,6 @@ body{margin:0;background:var(--e-back);color:var(--e-ink);font-family:Commission
 button,input,textarea{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:wait}
-i.fi{align-items:center;justify-content:center;flex-shrink:0;line-height:1}
 button:focus-visible,a:focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
 button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-app{min-height:100dvh;display:flex;flex-direction:column;padding:0 20px 12px}
@@ -225,10 +224,9 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 [data-rac][role^=menuitem]>div{width:100%}
 }
 @layer base{
-.e-uicon{display:inline-block;width:1em;height:1em;flex-shrink:0;line-height:1;font-style:normal;vertical-align:middle}
+.e-uicon{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;flex-shrink:0;line-height:1;font-style:normal;vertical-align:middle}
 }
-.e-uicon>.fi{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:inherit;line-height:1}
-.e-uicon>.fi::before{display:block;line-height:1}
+.e-uicon>svg{display:block;width:1em;height:1em;flex-shrink:0}
 .e-read-task .e-form-header>span{font-size:13px;font-weight:500}
 .e-read-body{padding:13px 18px 0}
 .e-read-title{font-size:21px;line-height:1.3;letter-spacing:-.5px;font-weight:500;margin:0 0 6px;overflow-wrap:anywhere}

@@ -1,1 +1,3 @@
-export const FileIcon = ({className}: {className?: string;[key:string]:unknown}) => <i aria-hidden="true" className={`fi fi-rr-folder ${className||''}`} />;
+import { Icon } from "./icon";
+
+export const FileIcon = ({className}: {className?: string;[key:string]:unknown}) => <Icon name="folder" className={className} />;
