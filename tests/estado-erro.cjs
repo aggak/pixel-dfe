@@ -46,7 +46,7 @@ async function executar() {
   const [portaApi, portaWeb] = [await portaLivre(), await portaLivre()];
   const api = `http://127.0.0.1:${portaApi}`;
   const web = `http://127.0.0.1:${portaWeb}`;
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
+  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort", "--mode", "test"], { ...process.env, VITE_API_URL: api, VITE_API_TEMPO_LIMITE_MS: "1000" });
   await esperar(web);
 
   browser = await lancarNavegador();
@@ -68,6 +68,23 @@ async function executar() {
   assert.equal(await alerta("Não foi possível carregar").count(), 0);
   assert.equal(await page.locator(".e-task-project").first().isVisible(), true);
   console.log("OK: lista com json-server parado avisa e carrega ao tentar de novo");
+
+  for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
+    const semResposta = () => {};
+    await page.route(`${api}/${colecao}`, semResposta);
+    await page.goto(`${web}${caminho}`);
+    const carregando = page.getByRole("main").getByRole("status").filter({ hasText: `Carregando ${colecao}` });
+    await carregando.waitFor();
+    await alerta(`Não foi possível carregar ${colecao === "tarefas" ? "as tarefas" : "os projetos"}`).waitFor();
+    assert.equal(await carregando.count(), 0);
+    assert.equal(await alerta("Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.").count(), 1);
+    assert.equal(await tentar().isEnabled(), true);
+    await page.unroute(`${api}/${colecao}`, semResposta);
+    await tentar().click();
+    await page.locator(seletor).first().waitFor();
+    assert.equal(await alerta("Não foi possível carregar").count(), 0);
+    console.log(`OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`);
+  }
 
   async function conferirRota(nome, caminho, texto, carregado, escopo = () => page.getByRole("main"), comAbas = false) {
     let falhar = true;

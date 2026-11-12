@@ -64,7 +64,7 @@ async function executar() {
   };
   const lerBanco = async () => JSON.parse(await readFile(banco, "utf8"));
 
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
+  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort", "--mode", "test"], { ...process.env, VITE_API_URL: api, VITE_API_TEMPO_LIMITE_MS: "1000" });
   await Promise.all([ligarApi(), esperar(web)]);
 
   browser = await lancarNavegador();
@@ -76,12 +76,28 @@ async function executar() {
   const ui = criarUi(page, () => ficha().locator("form"));
   const focoDentro = (locator) => locator.evaluate((el) => el.contains(document.activeElement) && document.activeElement !== el);
 
+  async function conferirLimite(caminho, metodo, botao, aviso) {
+    const semResposta = (rota) => rota.request().method() === metodo ? undefined : rota.continue();
+    await page.route(`${api}${caminho}`, semResposta);
+    try {
+      await botao.click();
+      await aviso.waitFor();
+      assert.equal(await botao.isEnabled(), true);
+      assert.equal(await botao.getAttribute("data-pending"), null);
+      console.log(`OK: ${metodo} ${caminho} sem resposta avisa e libera nova tentativa`);
+    } finally {
+      await page.unroute(`${api}${caminho}`, semResposta);
+    }
+  }
+
   // Cadastro de tarefa: todos os sete campos sobrevivem à falha e o mesmo envio grava quando a API volta.
   const novaTarefa = comTextos({ projetoId: "2", titulo: "Entregar o protótipo", descricao: "Com as telas de cadastro", status: "em-revisao", prioridade: "alta", responsavel: "Carla", prazo: "2026-12-10" }, seed.projetos);
   await page.goto(`${web}/tarefas/nova`);
   await ui.campo("Título").waitFor();
   while (!(await ui.projetosCarregados(2))) await page.waitForTimeout(50);
   await ui.preencherTarefa(novaTarefa);
+  await conferirLimite("/tarefas", "POST", ficha().getByRole("button", { name: "Salvar tarefa" }), ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo." }));
+  assert.equal((await lerBanco()).tarefas.some((tarefa) => tarefa.titulo === novaTarefa.titulo), false);
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar tarefa" }).click();
   await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo." }).waitFor();
@@ -138,6 +154,8 @@ async function executar() {
   await page.goto(`${web}/projetos/2/editar`);
   await ficharProjeto.campo("Nome").waitFor();
   await ficharProjeto.campo("Nome").fill("Modelagem da Biblioteca Central");
+  await conferirLimite("/projetos/2", "PATCH", ficha().getByRole("button", { name: "Salvar alterações" }), ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo." }));
+  assert.equal((await lerBanco()).projetos.find((projeto) => projeto.id === "2").nome, seed.projetos.find((projeto) => projeto.id === "2").nome);
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
   await ficha().getByRole("alert").filter({ hasText: "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo." }).waitFor();
@@ -155,6 +173,8 @@ async function executar() {
     await page.getByRole("button", { name: `Ações de ${titulo}` }).click();
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
     const dialogo = page.getByRole("dialog", { name: `Excluir ${titulo}` });
+    await conferirLimite(`/tarefas/${id}`, "DELETE", dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }), dialogo.getByRole("alert").filter({ hasText: "Não foi possível excluir a tarefa. Tente de novo." }));
+    assert.equal((await lerBanco()).tarefas.some((tarefa) => tarefa.id === id), true);
     await desligarApi();
     await dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }).click();
     await dialogo.getByRole("alert").filter({ hasText: "Não foi possível excluir a tarefa. Tente de novo." }).waitFor();
