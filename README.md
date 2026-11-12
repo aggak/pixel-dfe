@@ -54,8 +54,10 @@ npm ci
 Em um terminal, inicie a API em `http://localhost:3000`:
 
 ```bash
-npx json-server db.json
+npm run api
 ```
+
+A API lê e grava no `db.json`, que traz os dados de demonstração; `git checkout db.json` desfaz o que você gravar ao experimentar. O `db.seed.json` preserva os dados iniciais da disciplina e serve de base para os testes.
 
 Em outro terminal, na mesma pasta, inicie a aplicação:
 
@@ -73,7 +75,7 @@ npm run build
 
 ## Equipe
 
-Projeto da disciplina **Desenvolvimento Frontend**, ULBRA — 2026.2.
+Equipe **Pixel**. Projeto da disciplina **Desenvolvimento Frontend**, ULBRA — 2026.2.
 
 - Gabriela de Araújo Reis
 - Euclides Carlos Pilon Neto
