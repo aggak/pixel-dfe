@@ -344,7 +344,7 @@ export function FormularioTarefa({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          {erroEnvio === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos." : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente novamente."}
+          {erroEnvio === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos." : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo."}
         </div>
       )}
 
