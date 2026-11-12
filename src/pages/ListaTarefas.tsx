@@ -1,53 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-import { Button } from "@/components/base/buttons/button";
-import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
-import { CartaoTarefa } from "../components/CartaoTarefa";
-import { FiltrosTarefas } from "../components/FiltrosTarefas";
-import { useFiltros } from "../components/filtros-contexto";
-import { AbasProjetos, AlternarVisao, AnuncioResultados, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
-import { useConsulta } from "../hooks/useConsulta";
-import { useMudarStatus } from "../hooks/useMudarStatus";
-import { filtrarTarefas } from "../derivar";
-import { PlusIcon } from "../design/icon";
-import type { Tarefa } from "../tipos";
+import { VisaoTarefas } from "../components/VisaoTarefas";
 
 export function ListaTarefas() {
-  const [tarefas, setTarefas] = useState<Tarefa[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState(false);
-  const [tentativa, setTentativa] = useState(0);
-  const [tentando, setTentando] = useState(false);
-  const { filtros, limpar } = useFiltros();
-  const consultaProjetos = useConsulta(listarProjetos);
-  const projetos = consultaProjetos.dados;
-  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const excluir = async (tarefa: Tarefa) => {
-    await excluirTarefaSeExistir(tarefa.id);
-    setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
-  };
-  useEffect(() => {
-    const controller = new AbortController();
-    listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
-    return () => controller.abort();
-  }, [tentativa]);
-  const tentarDeNovo = () => {
-    setTentando(true);
-    setTentativa((atual) => atual + 1);
-    if (consultaProjetos.erro !== undefined) consultaProjetos.tentarDeNovo();
-  };
-  // Derivado durante a renderização: a lista filtrada nunca é guardada como estado.
-  const tarefasExibidas = useMemo(() => filtrarTarefas(tarefas, filtros), [tarefas, filtros]);
-  return <><AbasProjetos projetos={consultaProjetos} mostrarErro={!erro} /><main className="e-sheet"><header className="e-tools e-task-tools">
-    <h1 className="e-task-page-title" tabIndex={-1}>Tarefas</h1>
-    <FiltrosTarefas />
-    <AlternarVisao />
-    <Button color="primary" size="sm" iconLeading={PlusIcon} data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className="e-content">
-    {carregando && <Carregando>Carregando tarefas…</Carregando>}
-    {erro && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
-    {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio icone="clipboard-list" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio icone="search" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : <section className="e-list" aria-label="Lista de tarefas">{tarefasExibidas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />)}</section>)}
-  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasExibidas.length} {tarefasExibidas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
+  return <VisaoTarefas titulo="Tarefas">{(tarefas, cartao) => <section className="e-list" aria-label="Lista de tarefas">{tarefas.map((tarefa) => cartao(tarefa))}</section>}</VisaoTarefas>;
 }
