@@ -485,6 +485,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-not-found>.e-gato-costas{margin-bottom:6px}
 .e-not-found>h1{font-size:18px;font-weight:600}
 .e-not-found>a{color:var(--e-action)}
+.e-not-found>p{color:var(--e-muted)}
+.e-load-error>a{display:inline-flex;align-items:center;min-height:44px;color:var(--e-action)}
 @media(prefers-reduced-motion:no-preference){.e-gato-costas{animation:e-gato-costas-quadros 7s steps(84) infinite}}
 @keyframes e-gato-costas-quadros{to{background-position-x:calc(-3024px*var(--e-gato-escala))}}
 .e-gato-carregando{display:block;flex-shrink:0;width:108px;height:108px;background:var(--e-gato) 0 0/1512px 100% no-repeat;image-rendering:pixelated}
