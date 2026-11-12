@@ -120,9 +120,9 @@ async function executar() {
   await conferirMenu(alvo);
   await page.goto(`${web}/projetos/${alvo.projetoId}`);
   await cartao(alvo.id).waitFor();
-  assert.equal(await page.locator("[data-status-trigger]").count(), 0);
-  assert.equal(await cartao(alvo.id).locator(".e-card-status").innerText(), TEXTO_STATUS["a-fazer"]);
-  console.log("OK: quadro e lista abrem o menu com os quatro status e o atual marcado; o projeto mostra só o selo");
+  assert.equal(await page.locator("[data-status-trigger]").count(), await page.locator("[data-task-id]").count());
+  await conferirMenu(alvo);
+  console.log("OK: quadro, lista e página do projeto abrem o menu com os quatro status e o atual marcado");
 
   // Quadro: grava só o status e o cartão muda de coluna, sem duplicar, com contadores e rodapé coerentes.
   await page.goto(`${web}/quadro`);

@@ -12,7 +12,7 @@ import { Icon, EditIcon, TrashIcon, PawIcon } from "../design/icon";
 import { formatarData, prazoVencido, prioridadeTexto, statusTexto } from "../design/formatos";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
-// Com `onMudarStatus`, o selo de status vira um seletor; sem ele (página do projeto), segue só informativo.
+// Com `onMudarStatus`, o selo de status vira um seletor; sem ele, segue só informativo.
 export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarStatus, onExcluir }: { tarefa: Tarefa; nomeProjeto?: string; variante?: "lista" | "quadro"; onMudarStatus?: (tarefa: Tarefa, status: Status) => Promise<void>; onExcluir: (tarefa: Tarefa) => Promise<void> }) {
   const [salvando, setSalvando] = useState(false);
   // "inexistente": a tarefa foi excluída em outro lugar e tentar de novo não adianta.
