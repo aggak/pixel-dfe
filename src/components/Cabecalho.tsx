@@ -1,8 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from "react";
 import { Link, NavLink } from "react-router";
-import gatoClaro from "../assets/gatinho/cabecalho-gato-claro.svg";
 import gatoEscuro from "../assets/gatinho/cabecalho-gato-escuro.svg";
-import logoClaro from "../assets/gatinho/cabecalho-logo-claro.svg";
 import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
 
 type Passo = [quadro: number, ms: number];
@@ -111,7 +109,7 @@ function useLogoAnimado() {
 
 export function Cabecalho({ emTarefas }: { emTarefas: boolean }) {
   const { logo, palavra, gato } = useLogoAnimado();
-  const imagens = { "--e-top-gato-claro": `url("${gatoClaro}")`, "--e-top-gato-escuro": `url("${gatoEscuro}")`, "--e-top-logo-claro": `url("${logoClaro}")`, "--e-top-logo-escuro": `url("${logoEscuro}")` } as CSSProperties;
+  const imagens = { "--e-top-gato": `url("${gatoEscuro}")`, "--e-top-logo": `url("${logoEscuro}")` } as CSSProperties;
   return <header className="e-top">
     <Link ref={logo} className="e-logo" to="/" style={imagens}><span ref={gato} className="e-top-gato" aria-hidden="true" /><span ref={palavra} className="e-top-palavra" aria-hidden="true" /><span className="e-top-nome">Pixel</span></Link>
     <nav aria-label="Navegação principal"><Link to="/" aria-current={emTarefas ? "page" : undefined}><span>Tarefas</span></Link><NavLink to="/projetos"><span>Projetos</span></NavLink></nav>
