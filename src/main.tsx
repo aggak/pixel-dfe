@@ -1,21 +1,19 @@
 import { I18nProvider } from "react-aria-components";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, HashRouter } from "react-router";
+import { BrowserRouter } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
 import { FiltrosProvider } from "./components/FiltrosProvider";
 
-const Router = import.meta.env.PROD && import.meta.env.VITE_GITHUB_PAGES === "true" ? HashRouter : BrowserRouter;
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <I18nProvider locale="pt-BR">
-    <Router>
+    <BrowserRouter>
       <FiltrosProvider>
         <App />
       </FiltrosProvider>
-    </Router>
+    </BrowserRouter>
     </I18nProvider>
   </StrictMode>,
 );

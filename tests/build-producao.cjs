@@ -65,12 +65,11 @@ function rodar(descricao, arquivo, argumentos, env) {
   });
 }
 
-// Ambiente sem VITE_API_URL nem VITE_GITHUB_PAGES herdados do shell: variáveis do processo
+// Ambiente sem VITE_API_URL herdada do shell: variáveis do processo
 // têm prioridade sobre os arquivos .env, então só assim o Vite lê .env.production sozinho.
 function ambienteLimpo(extra = {}) {
   const env = { ...process.env, ...extra };
   if (!("VITE_API_URL" in extra)) delete env.VITE_API_URL;
-  delete env.VITE_GITHUB_PAGES;
   return env;
 }
 

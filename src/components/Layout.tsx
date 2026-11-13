@@ -175,12 +175,12 @@ export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar }: { tarefas:
   const escondida = criada !== undefined && tarefas.some((tarefa) => tarefa.id === criada) && !exibidas.some((tarefa) => tarefa.id === criada);
   return <div aria-live="polite" aria-atomic="true">{escondida && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>Tarefa criada, mas escondida pela busca ou pelos filtros.</span>{exibidas.length > 0 && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
 }
-export function EstadoVazio({ titulo, descricao, acao, icone = "folder", destino, onAcao }: { titulo: string; descricao?: string; acao: string; icone?: string; destino?: string; onAcao?: () => void }) {
+export function EstadoVazio({ titulo, descricao, acao, gato = "dormindo", destino, onAcao }: { titulo: string; descricao?: string; acao: string; gato?: "dormindo" | "olhando"; destino?: string; onAcao?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const agir = () => {
     onAcao?.();
     focarBuscaSePerdido();
   };
-  return <div className="e-empty">{icone === "search" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : agir())}>{acao}</Button></div>;
+  return <div className="e-empty">{gato === "olhando" ? <GatinhoOlhando /> : <GatinhoDormindo />}<h2>{titulo}</h2>{descricao && <p>{descricao}</p>}<Button color={destino ? "primary" : "secondary"} size="sm" onClick={() => (destino ? navigate(destino, { state: { fundo: location } }) : agir())}>{acao}</Button></div>;
 }

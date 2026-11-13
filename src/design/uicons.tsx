@@ -1,7 +1,6 @@
 import type { HTMLAttributes } from "react";
 import { Icon } from "./icon";
-export type IconProps = HTMLAttributes<HTMLElement>;
-export const AlertCircle = (props: IconProps) => <Icon {...props} name="exclamation" />;
+type IconProps = HTMLAttributes<HTMLElement>;
 export const Check = (props: IconProps) => <Icon {...props} name="check" />;
 export const ChevronDown = (props: IconProps) => <Icon {...props} name="angle-down" />;
 export const ChevronRight = (props: IconProps) => <Icon {...props} name="angle-right" />;
@@ -12,6 +11,5 @@ export const HelpCircle = (props: IconProps) => <Icon {...props} name="interroga
 export const InfoCircle = (props: IconProps) => <Icon {...props} name="info" />;
 export const Plus = (props: IconProps) => <Icon {...props} name="plus" />;
 export const SearchLg = (props: IconProps) => <Icon {...props} name="search" />;
-export const UploadCloud02 = (props: IconProps) => <Icon {...props} name="cloud-upload-alt" />;
 export const User01 = (props: IconProps) => <Icon {...props} name="user" />;
 export const X = (props: IconProps) => <Icon {...props} name="cross-small" />;
