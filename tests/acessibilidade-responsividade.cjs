@@ -70,6 +70,56 @@ async function executar() {
     page.setDefaultTimeout(10000);
     page.on("pageerror", (erro) => errosPagina.push(erro.message));
 
+    const dadosLongos = JSON.parse(seedOriginal);
+    dadosLongos.projetos = [{ ...dadosLongos.projetos[0], nome: "ProjetoSemEspacos".repeat(15), descricao: "DescricaoSemEspacos".repeat(20), disciplina: "DisciplinaSemEspacos".repeat(12) }];
+    dadosLongos.tarefas = [{ ...dadosLongos.tarefas[0], projetoId: dadosLongos.projetos[0].id, titulo: "TituloSemEspacos".repeat(19), responsavel: "ResponsavelSemEspacos".repeat(13) }];
+    const rotaDadosLongos = `${api}/**`;
+    await page.route(rotaDadosLongos, (rota) => {
+      const url = new URL(rota.request().url());
+      const [colecao, id] = url.pathname.split("/").filter(Boolean);
+      const registros = dadosLongos[colecao];
+      let dados = id ? registros?.find((registro) => registro.id === id) : registros;
+      if (dados && url.searchParams.has("_embed")) dados = { ...dados, tarefas: dadosLongos.tarefas.filter((tarefa) => tarefa.projetoId === id) };
+      return rota.fulfill({ status: dados ? 200 : 404, json: dados ?? {} });
+    });
+    for (const largura of [320, 375, 768, 1280]) {
+      await page.setViewportSize({ width: largura, height: 900 });
+      for (const caminho of ["/", "/quadro", "/projetos", `/projetos/${dadosLongos.projetos[0].id}`, `/tarefas/${dadosLongos.tarefas[0].id}`]) {
+        await abrir(page, caminho);
+        if (caminho === `/projetos/${dadosLongos.projetos[0].id}`) await page.locator(".e-details-trigger").click();
+        const conferirTexto = async () => {
+          const problemas = await page.evaluate(() => {
+            const problemas = [];
+            if (document.documentElement.scrollWidth > document.documentElement.clientWidth) problemas.push("rolagem horizontal na página");
+            const seletores = [".e-task-project", ".e-card-pessoa", ".e-card-prazo", ".e-tools h1:not(.e-task-page-title)", ".e-project-name", ".e-details-content>p", ".e-details-content dd", ".e-read-project>a", ".e-read-meta p", ".e-confirm-dialog>p", ".e-panel-scroll"];
+            for (const seletor of seletores) for (const el of document.querySelectorAll(seletor)) {
+              const caixa = el.getBoundingClientRect();
+              const pai = el.parentElement.getBoundingClientRect();
+              if (el.scrollWidth > el.clientWidth + 1) problemas.push(`${seletor}: conteúdo excede a largura`);
+              if (caixa.right > pai.right + 1 || caixa.left < pai.left - 1 || caixa.right > innerWidth + 1 || caixa.left < -1) problemas.push(`${seletor}: fora do contêiner`);
+              const texto = document.createRange();
+              texto.selectNodeContents(el);
+              if ([...texto.getClientRects()].some((r) => r.right > caixa.right + 1 || r.left < caixa.left - 1)) problemas.push(`${seletor}: texto cortado ou vazando`);
+            }
+            return problemas;
+          });
+          assert.deepEqual(problemas, [], `${largura}px ${caminho}: textos sem espaços`);
+        };
+        await conferirTexto();
+        if (caminho === "/") {
+          await page.locator(".e-task-menu").click();
+          await page.getByRole("menuitem", { name: "Excluir tarefa", exact: true }).click();
+          await page.locator(".e-confirm-dialog").waitFor();
+          await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== "running"));
+          await conferirTexto();
+          assert.equal(await page.locator(".e-confirm-dialog>p").textContent(), `Deseja excluir “${dadosLongos.tarefas[0].titulo}”? Esta ação não pode ser desfeita.`);
+          await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+        }
+      }
+    }
+    await page.unroute(rotaDadosLongos);
+    console.log(`OK: ${tema}: textos sem espaços cabem na lista, quadro, projetos, projeto, ficha e confirmação em 320, 375, 768 e 1280 px; prazos continuam visíveis`);
+
     // Telas pequenas: nada rola na horizontal e nenhum elemento sai da tela, salvo dentro de uma faixa rolável (abas de projetos).
     for (const largura of larguras) {
       await page.setViewportSize({ width: largura, height: 800 });
