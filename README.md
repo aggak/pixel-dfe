@@ -37,6 +37,7 @@ O gatinho acompanha os estados da aplicação com animações em pixel art, do c
   <img src="docs/images/gatinho-lavando-animacao.png" width="96" alt="Gatinho se lavando" title="Coluna vazia">
   <img src="docs/images/gatinho-cochilando-animacao.png" width="96" alt="Gatinho cochilando" title="Registro não encontrado">
   <img src="docs/images/gatinho-costas-animacao.png" width="96" alt="Gatinho de costas" title="Erro ou página não encontrada">
+  <img src="docs/images/gatinho-abanando-animacao.png" width="96" alt="Gatinho abanando o rabo" title="Carregamento na ficha">
 </p>
 
 Navegação por teclado, foco visível e respeito à preferência por movimento reduzido.
