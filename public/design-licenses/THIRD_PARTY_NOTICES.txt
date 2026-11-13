@@ -3,4 +3,5 @@ Repository: https://github.com/untitleduico/react
 Commit: 1d410cb8facde8d50869e7bbb5f3d048e2267466
 License: MIT; see UNTITLED_UI_LICENSE.txt.
 Components are vendored unmodified under vendor/. UI composition, pixel icons, and icon adapters are local to Pixel.
-React, React DOM, React Aria Components, and Tailwind Merge are dependencies with their licenses in package distributions.
+Runtime packages bundled into the built JavaScript and CSS: react, react-dom, scheduler, use-sync-external-store, react-router, react-aria, react-aria-components, react-stately, @internationalized/string, clsx, tailwind-merge, tailwindcss, and tailwindcss-animate.
+Their full license texts are in RUNTIME_LICENSES.txt, next to this file.
