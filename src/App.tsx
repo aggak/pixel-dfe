@@ -3,13 +3,12 @@ import { Link, Navigate, Route, Routes, useLocation, type Location } from "react
 import { ListaTarefas } from "./pages/ListaTarefas";
 import { QuadroTarefas } from "./pages/QuadroTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
-import { Layout } from "./components/Layout";
+import { ErroCarregamento, Layout } from "./components/Layout";
 import { Ficha } from "./components/Ficha";
 import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
-import { ErroCarregamento } from "./components/Layout";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
 import { ContextoAtualizacao } from "./hooks/useConsulta";
 import "./App.css";

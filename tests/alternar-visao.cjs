@@ -30,10 +30,9 @@ function iniciar(processos, argumentos, env = process.env) {
   return processo;
 }
 
-// O build do GitHub Pages usa HashRouter e base /pixel-dfe/; roda até o fim antes do preview.
 function gerarBuild(saida, api) {
   return new Promise((resolve, reject) => {
-    const build = spawn(process.execPath, ["node_modules/vite/bin/vite.js", "build", "--base=/pixel-dfe/", "--outDir", saida, "--emptyOutDir", "--logLevel", "error"], { windowsHide: true, stdio: "pipe", env: { ...process.env, VITE_API_URL: api, VITE_GITHUB_PAGES: "true" } });
+    const build = spawn(process.execPath, ["node_modules/vite/bin/vite.js", "build", "--outDir", saida, "--emptyOutDir", "--logLevel", "error"], { windowsHide: true, stdio: "pipe", env: { ...process.env, VITE_API_URL: api } });
     build.stdout.on("data", () => {});
     build.stderr.on("data", (erro) => process.stderr.write(erro));
     build.once("exit", (codigo) => (codigo === 0 ? resolve() : reject(new Error(`vite build terminou com código ${codigo}`))));
@@ -50,15 +49,15 @@ async function executar() {
   const evidencias = process.env.VISAO_EVIDENCIAS;
   const seed = JSON.parse(await readFile("db.seed.json", "utf8"));
   await copyFile("db.seed.json", join(temporario, "db.json"));
-  const [portaApi, portaWeb, portaPages] = [await portaLivre(), await portaLivre(), await portaLivre()];
+  const [portaApi, portaWeb, portaProducao] = [await portaLivre(), await portaLivre(), await portaLivre()];
   const api = `http://127.0.0.1:${portaApi}`;
   const web = `http://127.0.0.1:${portaWeb}`;
-  const pages = `http://127.0.0.1:${portaPages}/pixel-dfe/`;
+  const producao = `http://127.0.0.1:${portaProducao}`;
   iniciar(processos, ["node_modules/json-server/lib/bin.js", join(temporario, "db.json"), "--host", "127.0.0.1", "--port", String(portaApi)]);
   iniciar(processos, ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
-  await gerarBuild(join(temporario, "pages"), api);
-  iniciar(processos, ["node_modules/vite/bin/vite.js", "preview", "--base=/pixel-dfe/", "--outDir", join(temporario, "pages"), "--host", "127.0.0.1", "--port", String(portaPages), "--strictPort"]);
-  await Promise.all([pronto(`${api}/tarefas`), pronto(web), pronto(pages)]);
+  await gerarBuild(join(temporario, "producao"), api);
+  iniciar(processos, ["node_modules/vite/bin/vite.js", "preview", "--outDir", join(temporario, "producao"), "--host", "127.0.0.1", "--port", String(portaProducao), "--strictPort"]);
+  await Promise.all([pronto(`${api}/tarefas`), pronto(web), pronto(producao)]);
 
   browser = await lancarNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
@@ -286,6 +285,7 @@ async function executar() {
   assert.equal(await quadroLogo(), "0px");
   await animacao.getByRole("button", { name: "Editar tarefa", exact: true }).dispatchEvent("click");
   const responsavel = animacao.getByRole("textbox", { name: /^Responsável/ });
+  for (let tentativa = 0; tentativa < 100 && !(await responsavel.isVisible()); tentativa++) await animacao.clock.runFor(50);
   await responsavel.fill("Revalidação confirmada");
   await animacao.getByRole("button", { name: "Salvar alterações", exact: true }).dispatchEvent("click");
   await animacao.getByRole("button", { name: "Editar tarefa", exact: true }).waitFor();
@@ -333,8 +333,7 @@ async function executar() {
   await animacao.close();
   console.log("OK: logo e gato animam entrada e troca, reiniciam a troca em curso, respeitam movimento reduzido e não tocam com ficha, gravação, revalidação ou busca; a piscada não interrompe o gesto; projeto usa só embed");
 
-  // Build do GitHub Pages: HashRouter e base /pixel-dfe/.
-  await page.goto(`${pages}#/`);
+  await page.goto(`${producao}/`);
   await lista.getByRole("article").first().waitFor();
   assert.equal(await page.title(), "Tarefas · Pixel");
   await page.evaluate(() => { window.semRecarga = true; });
@@ -344,7 +343,8 @@ async function executar() {
   await linkQuadro.click();
   await quadro.locator("[data-task-id]").first().waitFor();
   assert.equal(await page.title(), "Quadro · Pixel");
-  assert.equal(new URL(page.url()).hash, "#/quadro");
+  assert.equal(caminho(), "/quadro");
+  assert.equal(new URL(page.url()).hash, "");
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   await conferirFiltros("a", "A fazer", "Média");
   assert.deepEqual(await ids(quadro), combinadas);
@@ -352,16 +352,18 @@ async function executar() {
   await linkLista.click();
   await lista.getByRole("article").first().waitFor();
   assert.equal(await page.title(), "Tarefas · Pixel");
-  assert.equal(new URL(page.url()).hash, "#/");
+  assert.equal(caminho(), "/");
   await conferirFiltros("a", "A fazer", "Média");
   assert.deepEqual(await marcados(), ["page", null, "page"]);
-  console.log("OK: no build do GitHub Pages (HashRouter) a troca preserva busca e filtros");
+  console.log("OK: no build padrão de produção (BrowserRouter) a troca preserva busca e filtros");
 
   const consultasProducao = [];
-  const registrarConsulta = (request) => { if (new URL(request.url()).pathname === "/projetos/1") consultasProducao.push(new URL(request.url()).search); };
+  const registrarConsulta = (request) => { const url = new URL(request.url()); if (url.origin === api && url.pathname === "/projetos/1") consultasProducao.push(url.search); };
   page.on("request", registrarConsulta);
-  await page.goto(`${pages}#/projetos/1`);
+  await page.goto(`${producao}/projetos/1`);
   await page.getByRole("heading", { level: 1, name: seed.projetos[0].nome, exact: true }).waitFor();
+  assert.equal(caminho(), "/projetos/1");
+  assert.equal(new URL(page.url()).hash, "");
   assert.deepEqual(consultasProducao, ["?_embed=tarefas"]);
   page.off("request", registrarConsulta);
   console.log("OK: o build de produção busca o detalhe do projeto com uma única chamada embed");

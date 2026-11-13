@@ -29,9 +29,6 @@
       ],
       "@untitledui/icons": [
         "./src/design/uicons.tsx"
-      ],
-      "@untitledui/file-icons": [
-        "./src/design/file-icon.tsx"
       ]
     }
   },

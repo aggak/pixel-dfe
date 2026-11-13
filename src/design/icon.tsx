@@ -13,7 +13,6 @@ const desenhos = {
   "circle-alert": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM3 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
   "circle-question-mark": "M2 0h3v1h-3zM1 1h1v1h-1zM3 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
   "cloud-off": "M0 0h1v1h-1zM1 1h1v1h-1zM3 1h2v1h-2zM2 2h1v1h-1zM5 2h1v1h-1zM0 3h2v1h-2zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM1 5h3v1h-3zM5 5h1v1h-1zM6 6h1v1h-1z",
-  "cloud-upload": "M2 0h2v1h-2zM1 1h1v1h-1zM4 1h1v1h-1zM1 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM2 4h3v1h-3zM6 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM3 6h1v1h-1z",
   "columns-3": "M1 0h5v1h-5zM0 1h1v1h-1zM2 1h1v1h-1zM4 1h1v1h-1zM6 1h1v1h-1zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
   "ellipsis-vertical": "M3 1h1v1h-1zM3 3h1v1h-1zM3 5h1v1h-1z",
   "eye": "M2 1h3v1h-3zM1 2h1v1h-1zM5 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1zM2 5h3v1h-3z",
@@ -29,7 +28,6 @@ const desenhos = {
   "plus": "M3 1h1v1h-1zM3 2h1v1h-1zM1 3h5v1h-5zM3 4h1v1h-1zM3 5h1v1h-1z",
   "refresh-cw": "M2 0h3v1h-3zM1 1h1v1h-1zM5 1h1v1h-1zM0 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM2 6h3v1h-3z",
   "search": "M1 0h3v1h-3zM0 1h1v1h-1zM4 1h1v1h-1zM0 2h1v1h-1zM4 2h1v1h-1zM0 3h1v1h-1zM4 3h1v1h-1zM1 4h4v1h-4zM5 5h1v1h-1zM6 6h1v1h-1z",
-  "sliders-horizontal": "M4 0h1v1h-1zM0 1h7v1h-7zM4 2h1v1h-1zM2 4h1v1h-1zM0 5h7v1h-7zM2 6h1v1h-1z",
   "trash-2": "M2 0h3v1h-3zM0 1h7v1h-7zM1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z",
   "user": "M2 0h3v1h-3zM2 1h1v1h-1zM4 1h1v1h-1zM2 2h3v1h-3zM2 4h3v1h-3zM1 5h1v1h-1zM5 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1z",
   "x": "M1 1h1v1h-1zM5 1h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM3 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1z",
@@ -47,7 +45,6 @@ const nomes: Record<string, keyof typeof desenhos> = {
   "check": "check",
   "circle": "circle",
   "cloud-disabled": "cloud-off",
-  "cloud-upload-alt": "cloud-upload",
   "columns-3": "columns-3",
   "cross-small": "x",
   "document": "file-text",
@@ -66,7 +63,6 @@ const nomes: Record<string, keyof typeof desenhos> = {
   "plus-small": "plus",
   "refresh": "refresh-cw",
   "search": "search",
-  "settings-sliders": "sliders-horizontal",
   "trash": "trash-2",
   "user": "user",
 };
@@ -79,9 +75,7 @@ export const SearchIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="sear
 export const PlusIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="plus"/>;
 export const ListIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="list"/>;
 export const BoardIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="columns-3"/>;
-export const FilterIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="settings-sliders"/>;
 export const FolderIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="folder"/>;
 export const EditIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="pencil"/>;
-export const CheckIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="check"/>;
 export const RefreshIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="refresh"/>;
 export const TrashIcon=(p:HTMLAttributes<HTMLElement>)=><Icon {...p} name="trash"/>;

@@ -13,8 +13,7 @@ import { SeloPrioridade, SeloStatus } from "./Selos";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
-// Com `onMudarStatus`, o selo de status vira um seletor; sem ele, segue só informativo.
-export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarStatus, onExcluir }: { tarefa: Tarefa; nomeProjeto?: string; variante?: "lista" | "quadro"; onMudarStatus?: (tarefa: Tarefa, status: Status) => Promise<void>; onExcluir: (tarefa: Tarefa) => Promise<void> }) {
+export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarStatus, onExcluir }: { tarefa: Tarefa; nomeProjeto?: string; variante?: "lista" | "quadro"; onMudarStatus: (tarefa: Tarefa, status: Status) => Promise<void>; onExcluir: (tarefa: Tarefa) => Promise<void> }) {
   const [salvando, setSalvando] = useState(false);
   // "inexistente": a tarefa foi excluída em outro lugar e tentar de novo não adianta.
   const [falhou, setFalhou] = useState<false | "falha" | "inexistente">(false);
@@ -33,7 +32,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   const concluida = tarefa.status === "concluida";
   const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}`;
   const mudar = async (status: Status) => {
-    if (!onMudarStatus || status === tarefa.status || enviando.current) return;
+    if (status === tarefa.status || enviando.current) return;
     enviando.current = true;
     setSalvando(true);
     setFalhou(false);
@@ -78,10 +77,10 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
   useEffect(() => {
     if (falhou && (!document.activeElement || document.activeElement === document.body)) gatilho.current?.focus();
   }, [falhou]);
-  const seletorStatus = onMudarStatus ? <Dropdown.Root key="status">
+  const seletorStatus = <Dropdown.Root key="status">
     <AriaButton ref={gatilho} className="e-status-trigger" data-status-trigger aria-label={`Mudar status de ${tarefa.titulo} (atual: ${statusTexto[tarefa.status]})`} isPending={salvando}><SeloStatus status={tarefa.status} seta /></AriaButton>
     <Dropdown.Popover className="e-popover" placement={emQuadro ? "bottom end" : "bottom start"}><Dropdown.Menu selectionMode="single" disallowEmptySelection shouldCloseOnSelect selectedKeys={[tarefa.status]} disabledKeys={salvando ? STATUS : undefined} onSelectionChange={(chaves) => { const [status] = chaves as Set<Status>; if (status) void mudar(status); }}>{STATUS.map((status) => <Dropdown.Item key={status} id={status} label={statusTexto[status]} />)}</Dropdown.Menu></Dropdown.Popover>
-  </Dropdown.Root> : <SeloStatus key="status" status={tarefa.status} />;
+  </Dropdown.Root>;
   const tagPrioridade = <SeloPrioridade key="prioridade" prioridade={tarefa.prioridade} />;
   const cabecalho = <div className="e-task-heading"><Link className="e-task-title" to={caminho} state={estado}>{tarefa.titulo}</Link>
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" label="Excluir tarefa" icon={TrashIcon} onAction={() => { setFalhaExclusao(false); setConfirmando(true); }} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
