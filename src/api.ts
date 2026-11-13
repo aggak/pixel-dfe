@@ -53,43 +53,77 @@ async function escrever<T>(
   });
 }
 
-export function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
-  return ler<Tarefa[]>("/tarefas", signal);
+type Registro = Record<string, unknown> & { id: string };
+
+function registro(dado: unknown): Registro | undefined {
+  if (typeof dado !== "object" || dado === null || Array.isArray(dado)) return undefined;
+  const { id } = dado as Record<string, unknown>;
+  return (typeof id === "string" && id !== "") || (typeof id === "number" && Number.isFinite(id)) ? { ...dado, id: String(id) } : undefined;
 }
 
-export function listarProjetos(signal?: AbortSignal): Promise<Projeto[]> {
-  return ler<Projeto[]>("/projetos", signal);
+function registroUnico(dado: unknown): Registro {
+  const valido = registro(dado);
+  if (!valido) throw new SyntaxError("Resposta da API fora do formato esperado.");
+  return valido;
 }
 
-export function buscarTarefa(id: string, signal?: AbortSignal): Promise<Tarefa> {
-  return ler<Tarefa>(`/tarefas/${encodeURIComponent(id)}`, signal);
+function colecao<T>(dados: unknown, normalizar: (registro: Registro) => T): T[] {
+  if (!Array.isArray(dados)) throw new SyntaxError("Resposta da API fora do formato esperado.");
+  return dados.flatMap((dado) => {
+    const valido = registro(dado);
+    return valido ? [normalizar(valido)] : [];
+  });
 }
 
-export function buscarProjeto(id: string, signal?: AbortSignal): Promise<Projeto> {
-  return ler<Projeto>(`/projetos/${encodeURIComponent(id)}`, signal);
+function texto(valor: unknown) {
+  return typeof valor === "string" ? valor : "";
+}
+
+function normalizarTarefa(tarefa: Registro): Tarefa {
+  return { id: tarefa.id, projetoId: texto(tarefa.projetoId), titulo: texto(tarefa.titulo), descricao: texto(tarefa.descricao), status: tarefa.status as Tarefa["status"], prioridade: tarefa.prioridade as Tarefa["prioridade"], responsavel: texto(tarefa.responsavel), prazo: texto(tarefa.prazo) };
+}
+
+function normalizarProjeto(projeto: Registro): Projeto {
+  return { id: projeto.id, nome: texto(projeto.nome), descricao: texto(projeto.descricao), disciplina: texto(projeto.disciplina), criadoEm: texto(projeto.criadoEm) };
+}
+
+export async function listarTarefas(signal?: AbortSignal): Promise<Tarefa[]> {
+  return colecao(await ler<unknown>("/tarefas", signal), normalizarTarefa);
+}
+
+export async function listarProjetos(signal?: AbortSignal): Promise<Projeto[]> {
+  return colecao(await ler<unknown>("/projetos", signal), normalizarProjeto);
+}
+
+export async function buscarTarefa(id: string, signal?: AbortSignal): Promise<Tarefa> {
+  return normalizarTarefa(registroUnico(await ler<unknown>(`/tarefas/${encodeURIComponent(id)}`, signal)));
+}
+
+export async function buscarProjeto(id: string, signal?: AbortSignal): Promise<Projeto> {
+  return normalizarProjeto(registroUnico(await ler<unknown>(`/projetos/${encodeURIComponent(id)}`, signal)));
 }
 
 export async function listarTarefasDoProjeto(
   id: string,
   signal?: AbortSignal,
 ): Promise<Tarefa[]> {
-  const projeto = await ler<Projeto & { tarefas: Tarefa[] }>(
+  const projeto = registroUnico(await ler<unknown>(
     `/projetos/${encodeURIComponent(id)}?_embed=tarefas`,
     signal,
-  );
-  return projeto.tarefas;
+  ));
+  return colecao(projeto.tarefas, normalizarTarefa);
 }
 
-export function criarTarefa(dados: NovaTarefa, signal?: AbortSignal): Promise<Tarefa> {
-  return escrever<Tarefa>("POST", "/tarefas", dados, signal);
+export async function criarTarefa(dados: NovaTarefa, signal?: AbortSignal): Promise<Tarefa> {
+  return normalizarTarefa(registroUnico(await escrever<unknown>("POST", "/tarefas", dados, signal)));
 }
 
-export function atualizarTarefa(
+export async function atualizarTarefa(
   id: string,
   dados: Partial<NovaTarefa>,
   signal?: AbortSignal,
 ): Promise<Tarefa> {
-  return escrever<Tarefa>("PATCH", `/tarefas/${encodeURIComponent(id)}`, dados, signal);
+  return normalizarTarefa(registroUnico(await escrever<unknown>("PATCH", `/tarefas/${encodeURIComponent(id)}`, dados, signal)));
 }
 
 export async function excluirTarefa(id: string, signal?: AbortSignal): Promise<void> {
