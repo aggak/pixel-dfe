@@ -90,7 +90,7 @@ async function executar() {
     console.log(`OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`);
   }
 
-  const respostas = [["erro 500", { status: 500, body: "{}" }], ["404 na coleção", { status: 404, body: "{}" }], ["corpo que não é JSON", { status: 200, contentType: "text/html", body: "<!doctype html>" }]];
+  const respostas = [["erro 500", { status: 500, body: "{}" }], ["404 na coleção", { status: 404, body: "{}" }], ["corpo que não é JSON", { status: 200, contentType: "text/html", body: "<!doctype html>" }], ["objeto no lugar da lista", { status: 200, contentType: "application/json", body: "{}" }]];
   for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/quadro", "tarefas", "[data-status-column] [data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
     for (const [nome, resposta] of respostas) {
       const responder = (rota) => rota.fulfill(resposta);
@@ -103,7 +103,7 @@ async function executar() {
       await page.locator(seletor).first().waitFor();
       assert.equal(await alerta("Não foi possível carregar").count(), 0);
     }
-    console.log(`OK: ${caminho} com erro 500, 404 na coleção ou corpo que não é JSON diz que o problema é do servidor`);
+    console.log(`OK: ${caminho} com erro 500, 404 na coleção, corpo que não é JSON ou objeto no lugar da lista diz que o problema é do servidor`);
   }
 
   async function conferirRota(nome, caminho, texto, carregado, escopo = () => page.getByRole("main"), comAbas = false) {
@@ -277,6 +277,55 @@ async function executar() {
   assert.equal(await page.locator("[data-task-id]").first().isVisible(), true);
   await page.unroute("**/src/pages/NovaTarefa.tsx*");
   console.log("OK: formulário que não baixa mostra aviso na ficha, sem apagar a página");
+
+  const totalTarefas = (await (await fetch(`${api}/tarefas`)).json()).length;
+  const totalProjetos = (await (await fetch(`${api}/projetos`)).json()).length;
+  const alterarResposta = (alterar) => async (rota) => {
+    const resposta = await rota.fetch();
+    await rota.fulfill({ response: resposta, json: alterar(await resposta.json()) });
+  };
+  const tarefasTortas = alterarResposta((lista) => [lista[0], {}, null, "x", { id: "" }, ...lista.slice(1)]);
+  await page.route(`${api}/tarefas`, tarefasTortas);
+  for (const caminho of ["/", "/quadro"]) {
+    await page.goto(`${web}${caminho}`);
+    await page.locator("[data-task-id]").first().waitFor();
+    assert.equal(await page.locator("[data-task-id]").count(), totalTarefas, `${caminho}: tarefas válidas faltando`);
+    assert.equal(await page.getByRole("alert").count(), 0);
+  }
+  await page.unroute(`${api}/tarefas`, tarefasTortas);
+  console.log("OK: itens fora do contrato no meio da lista são descartados e as outras tarefas aparecem");
+
+  const projetoSemNome = alterarResposta((lista) => [...lista, { id: "sem-nome" }]);
+  await page.route(`${api}/projetos`, projetoSemNome);
+  await page.goto(`${web}/`);
+  await page.locator("[data-task-id]").first().waitFor();
+  await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
+  assert.equal(await abas().locator('a[href="/projetos/sem-nome"]').count(), 1);
+  await page.goto(`${web}/projetos`);
+  await page.locator("[data-project-id]").first().waitFor();
+  assert.equal(await page.locator("[data-project-id]").count(), totalProjetos + 1);
+  assert.equal(await page.getByRole("alert").count(), 0);
+  await page.unroute(`${api}/projetos`, projetoSemNome);
+  console.log("OK: projeto sem nome não derruba as abas nem a lista de projetos");
+
+  const barreira = () => alerta("Não foi possível mostrar esta página");
+  const statusQuebrado = alterarResposta((lista) => lista.map((tarefa, indice) => (indice === 0 ? { ...tarefa, status: "__proto__" } : tarefa)));
+  await page.route(`${api}/tarefas`, statusQuebrado);
+  await page.goto(`${web}/`);
+  await barreira().waitFor();
+  assert.equal(await page.getByRole("navigation", { name: "Navegação principal" }).isVisible(), true);
+  assert.equal(await page.getByRole("contentinfo", { name: "Informações da Pixel" }).isVisible(), true);
+  assert.equal(await page.title(), "Não foi possível mostrar esta página · Pixel");
+  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Projetos" }).click();
+  await page.locator("[data-project-id]").first().waitFor();
+  assert.equal(await barreira().count(), 0);
+  await page.goBack();
+  await barreira().waitFor();
+  await page.unroute(`${api}/tarefas`, statusQuebrado);
+  await tentar().click();
+  await page.locator("[data-task-id]").first().waitFor();
+  assert.equal(await barreira().count(), 0);
+  console.log("OK: erro ao mostrar a página fica na barreira com header e rodapé, some ao navegar e recarrega ao tentar de novo");
 
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);

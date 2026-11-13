@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Component, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
+import { TituloPagina } from "../hooks/useTituloPagina";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
 import type { Projeto, Tarefa } from "../tipos";
@@ -18,6 +19,13 @@ import { Monograma } from "./CartaoProjeto";
 function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
 }
+class FalhaPagina extends Component<{ children: ReactNode }, { falhou: boolean }> {
+  state = { falhou: false };
+  static getDerivedStateFromError() { return { falhou: true }; }
+  render() {
+    return this.state.falhou ? <><TituloPagina titulo="Não foi possível mostrar esta página" /><main className="e-sheet"><div className="e-content"><ErroCarregamento titulo="Não foi possível mostrar esta página" erro={new SyntaxError()} onTentarDeNovo={() => window.location.reload()} /></div></main></> : this.props.children;
+  }
+}
 export function Layout() {
   const [areaAcao, setAreaAcao] = useState<HTMLDivElement | null>(null);
   const caminho = caminhoNormalizado(useLocation().pathname);
@@ -25,7 +33,7 @@ export function Layout() {
   const emTarefas = caminho === "/" || caminho === "/quadro";
   return <div id="pixel-encaixe" className="e-app">
     <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
-    <ContextoAcaoCabecalho.Provider value={areaAcao}><Outlet /></ContextoAcaoCabecalho.Provider>
+    <ContextoAcaoCabecalho.Provider value={areaAcao}><FalhaPagina key={caminho}><Outlet /></FalhaPagina></ContextoAcaoCabecalho.Provider>
     <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
   </div>;
 }
