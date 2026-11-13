@@ -263,19 +263,23 @@ async function executar() {
   await animacao.locator("[data-task-id]").first().waitFor();
   const palavra = animacao.locator(".e-top-palavra");
   const quadroLogo = () => palavra.evaluate((el) => getComputedStyle(el).backgroundPositionX);
+  const quadroGato = () => animacao.locator(".e-top-gato").evaluate((el) => getComputedStyle(el).backgroundPositionX);
   assert.notEqual(await quadroLogo(), "0px");
   await animacao.clock.fastForward(900);
   assert.equal(await quadroLogo(), "0px");
   const navegarAnimado = async (link, caminho) => {
     await link.dispatchEvent("click");
     await animacao.waitForURL((url) => url.pathname === caminho);
-    assert.equal(await quadroLogo(), "-84px", caminho);
+    assert.equal(await quadroLogo(), "-840px", caminho);
+    assert.equal(await quadroGato(), "-216px", caminho);
   };
   await navegarAnimado(animacao.getByRole("link", { name: "Quadro", exact: true }), "/quadro");
   await animacao.clock.fastForward(160);
-  assert.equal(await quadroLogo(), "-252px");
+  assert.equal(await quadroLogo(), "-924px");
+  assert.equal(await quadroGato(), "-288px");
   await navegarAnimado(animacao.getByRole("link", { name: "Lista", exact: true }), "/");
   await animacao.clock.fastForward(900);
+  assert.equal(await quadroGato(), "0px");
   await animacao.locator("[data-task-id] .e-task-title").first().dispatchEvent("click");
   await animacao.getByRole("dialog").waitFor();
   await animacao.clock.runFor(100);
@@ -306,22 +310,28 @@ async function executar() {
   await animacao.clock.fastForward(900);
   await animacao.evaluate(() => { history.pushState({}, "", "/nao-encontrada"); dispatchEvent(new PopStateEvent("popstate")); });
   await animacao.getByRole("heading", { name: "Página não encontrada", exact: true }).waitFor();
-  assert.equal(await quadroLogo(), "-84px");
+  assert.equal(await quadroLogo(), "-840px");
+  assert.equal(await quadroGato(), "-216px");
   await animacao.emulateMedia({ reducedMotion: "reduce" });
   await animacao.getByRole("link", { name: "Voltar para tarefas", exact: true }).dispatchEvent("click");
   await animacao.waitForURL((url) => url.pathname === "/");
   assert.equal(await quadroLogo(), "0px");
+  assert.equal(await quadroGato(), "0px");
   await animacao.emulateMedia({ reducedMotion: "no-preference" });
   const logo = animacao.locator(".e-logo");
   await logo.dispatchEvent("pointerenter", { pointerType: "mouse" });
-  assert.equal(await quadroLogo(), "-672px");
+  assert.equal(await quadroLogo(), "-756px");
   await animacao.clock.fastForward(400);
   assert.equal(await quadroLogo(), "0px");
   await logo.dispatchEvent("pointerleave", { pointerType: "mouse" });
   await logo.focus();
-  assert.equal(await quadroLogo(), "-672px");
+  assert.equal(await quadroLogo(), "-756px");
+  await animacao.clock.fastForward(4700);
+  await navegarAnimado(navPrincipal.getByRole("link", { name: "Projetos", exact: true }), "/projetos");
+  await animacao.clock.runFor(250);
+  assert.equal(await quadroGato(), "-288px", "a piscada agendada não interrompe o gesto da troca");
   await animacao.close();
-  console.log("OK: logo anima entrada e troca, reinicia a troca em curso, respeita movimento reduzido e não toca com ficha, gravação, revalidação ou busca; projeto usa só embed");
+  console.log("OK: logo e gato animam entrada e troca, reiniciam a troca em curso, respeitam movimento reduzido e não tocam com ficha, gravação, revalidação ou busca; a piscada não interrompe o gesto; projeto usa só embed");
 
   // Build do GitHub Pages: HashRouter e base /pixel-dfe/.
   await page.goto(`${pages}#/`);

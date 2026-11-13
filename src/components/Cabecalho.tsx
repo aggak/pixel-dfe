@@ -8,12 +8,15 @@ import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
 type Passo = [quadro: number, ms: number];
 const LARGURA_LOGO = 84;
 const LARGURA_GATO = 72;
-const entrada: Passo[] = [[1, 80], [2, 80], [3, 80], [4, 80], [5, 80], [6, 80], [7, 120], [0, 240]];
-const troca: Passo[] = [[1, 80], [2, 80], [3, 80], [4, 80], [5, 80], [6, 80], [7, 120], [0, 240]];
-const tecla: Passo[] = [[8, 80], [9, 120], [8, 80], [0, 80]];
-const onda: Passo[] = [[0, 3040], ...Array.from({ length: 9 }, (_, i): Passo => [10 + i, 120]), [0, 680]];
+const entrada: Passo[] = [[1, 150], [2, 67], [3, 67], [4, 67], [5, 67], [6, 67], [7, 67], [8, 100], [0, 200]];
+const troca: Passo[] = [[10, 50], [1, 67], [11, 67], [12, 67], [13, 67], [14, 67], [15, 67], [16, 83], [0, 100]];
+const tecla: Passo[] = [[9, 50], [10, 117], [9, 50], [17, 67], [0, 83]];
+const onda: Passo[] = [4200, 6900, 5300].flatMap((pausa): Passo[] => [[0, pausa], ...[133, 100, 83, 83, 83, 83, 83, 100, 150].map((ms, i): Passo => [18 + i, ms])]);
 const sequencias = { entrada, troca, tecla, onda };
-const pausasPiscada = [5300, 11200, 7100, 14900];
+const gatoEntrada: Passo[] = [[0, 617], [1, 50], [2, 100], [1, 67]];
+const gatoTroca: Passo[] = [[3, 50], [4, 333], [5, 50], [6, 100], [1, 67]];
+const piscada: Passo[] = [[1, 50], [2, 100], [1, 67]];
+const pausasPiscada = [5300, 11200, 183, 7100, 14900];
 
 function useLogoAnimado() {
   const { pathname } = useLocation();
@@ -71,24 +74,29 @@ function useLogoAnimado() {
       if (segurando() || parado()) return;
       pausar(); if (fase === "onda") decorrido = 0; avancar();
     }
-    function piscar(espera: number) {
-      if (parado()) return;
-      const quadros = [1, 2, 1, 0];
-      const passo = (i: number) => {
-        mostrarGato(quadros[i]);
-        if (i < quadros.length - 1) relogioGato = window.setTimeout(() => passo(i + 1), 80);
-        else piscar(pausasPiscada[piscadas++ % pausasPiscada.length]);
+    function animarGato(passos: Passo[]) {
+      clearTimeout(relogioGato);
+      const inicio = performance.now();
+      const seguir = () => {
+        if (parado()) return;
+        const tempo = performance.now() - inicio;
+        let fim = 0;
+        for (const [quadro, ms] of passos) {
+          fim += ms;
+          if (tempo < fim) { mostrarGato(quadro); relogioGato = window.setTimeout(seguir, fim - tempo); return; }
+        }
+        animarGato([[0, pausasPiscada[piscadas++ % pausasPiscada.length]], ...piscada]);
       };
-      relogioGato = window.setTimeout(() => { if (!parado()) passo(0); }, espera);
+      seguir();
     }
     function reiniciar(doRepouso: boolean) {
       pausar(); clearTimeout(relogioGato); mostrarGato(0);
       if (doRepouso) { fase = "onda"; decorrido = 0; mostrarPalavra(0); }
-      if (!parado()) { avancar(); piscar(5300); }
+      if (!parado()) { avancar(); animarGato([[0, 5300], ...piscada]); }
     }
     trocar.current = () => {
       pausar(); fase = "troca"; decorrido = 0;
-      if (parado()) mostrarPalavra(0); else avancar();
+      if (parado()) mostrarPalavra(0); else { avancar(); piscadas = 0; animarGato(gatoTroca); }
     };
     const aoEntrar = (e: PointerEvent) => { if (e.pointerType !== "touch") pressionar("ponteiro"); };
     const aoSair = (e: PointerEvent) => { if (e.pointerType !== "touch") soltar("ponteiro"); };
@@ -102,7 +110,7 @@ function useLogoAnimado() {
     elLogo.addEventListener("blur", aoDesfocar);
     document.addEventListener("visibilitychange", aoOcultar);
     movimento.addEventListener("change", aoMudarMovimento);
-    if (!parado()) { avancar(); piscar(640); }
+    if (!parado()) { avancar(); animarGato(gatoEntrada); }
     return () => {
       trocar.current = null;
       clearTimeout(relogioPalavra); clearTimeout(relogioGato);
