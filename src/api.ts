@@ -13,6 +13,8 @@ export class ErroApi extends Error {
   }
 }
 
+export class ErroTempoEsgotado extends Error {}
+
 async function requisitar<T>(caminho: string, opcoes: RequestInit = {}): Promise<T> {
   const limite = AbortSignal.timeout(TEMPO_LIMITE_MS);
   const signal = opcoes.signal ? AbortSignal.any([opcoes.signal, limite]) : limite;
@@ -27,7 +29,7 @@ async function requisitar<T>(caminho: string, opcoes: RequestInit = {}): Promise
     return (opcoes.method === "DELETE" ? undefined : await resposta.json()) as T;
   } catch (erro) {
     if (signal.aborted && signal.reason?.name === "TimeoutError") {
-      throw new Error("O servidor demorou para responder. Tente de novo.", { cause: erro });
+      throw new ErroTempoEsgotado("O servidor demorou para responder. Tente de novo.", { cause: erro });
     }
     throw erro;
   }

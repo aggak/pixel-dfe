@@ -20,7 +20,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
   useTituloPagina(titulo);
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState(false);
+  const [erro, setErro] = useState<Error>();
   const [tentativa, setTentativa] = useState(0);
   const [tentando, setTentando] = useState(false);
   const { filtros, limpar } = useFiltros();
@@ -35,7 +35,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
   };
   useEffect(() => {
     const controller = new AbortController();
-    listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(false); }).catch(() => { if (!controller.signal.aborted) setErro(true); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
+    listarTarefas(controller.signal).then((dados) => { setTarefas(dados); setErro(undefined); }).catch((falha: Error) => { if (!controller.signal.aborted) setErro(falha); }).finally(() => { if (!controller.signal.aborted) { setCarregando(false); setTentando(false); } });
     return () => controller.abort();
   }, [tentativa]);
   const tentarDeNovo = () => {
