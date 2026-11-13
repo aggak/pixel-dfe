@@ -522,8 +522,8 @@ html{scroll-padding-top:71px}
 .e-top-acao{display:flex;align-items:center;flex:none;margin-left:auto}
 .e-top-acao-botao{min-height:40px}
 .e-top .e-logo{position:relative;flex:0 0 158px;width:158px;height:64px;display:flex;align-items:center;color:var(--e-ink);text-decoration:none}
-.e-top-gato{position:absolute;left:-6px;top:-4px;width:72px;height:72px;background:var(--e-top-gato) 0 0/216px 72px no-repeat;image-rendering:pixelated;pointer-events:none}
-.e-top-palavra{position:absolute;left:68px;top:16px;width:84px;height:32px;background:var(--e-top-logo) 0 0/1596px 32px no-repeat;image-rendering:pixelated;pointer-events:none}
+.e-top-gato{position:absolute;left:-6px;top:-4px;width:72px;height:72px;background:var(--e-top-gato) 0 0/504px 72px no-repeat;image-rendering:pixelated;pointer-events:none}
+.e-top-palavra{position:absolute;left:68px;top:16px;width:84px;height:32px;background:var(--e-top-logo) 0 0/2268px 32px no-repeat;image-rendering:pixelated;pointer-events:none}
 .e-top-nome{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .e-top nav{gap:18px;height:64px}
 .e-top nav a{position:relative;flex:0 0 auto;width:60px;height:48px;min-height:44px;justify-content:center;padding:0;border:0;text-decoration:none;font-weight:400}
