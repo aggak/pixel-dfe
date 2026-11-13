@@ -133,13 +133,15 @@ async function executar() {
   const distAntes = await retratoDist();
   const notices = await readFile(join(raiz, "public/design-licenses/THIRD_PARTY_NOTICES.txt"), "utf8");
   const favicon = await readFile(join(raiz, "public/favicon.svg"), "utf8");
+  const robots = await readFile(join(raiz, "public/robots.txt"), "utf8");
+  const imagemOg = await readFile(join(raiz, "public/og-image.png"));
   temporario = await mkdtemp(join(tmpdir(), "pixel-build-producao-"));
 
   // 1. Compilação real com .env.production, fora do dist/ da raiz.
   await rodar("tsc -b", "node_modules/typescript/bin/tsc", ["-b"], ambienteLimpo());
   const saidaProducao = join(temporario, "producao");
   const producao = await gerarBuild(saidaProducao, ambienteLimpo());
-  for (const arquivo of ["index.html", "favicon.svg", "design-licenses/THIRD_PARTY_NOTICES.txt"]) {
+  for (const arquivo of ["index.html", "favicon.svg", "robots.txt", "og-image.png", "design-licenses/THIRD_PARTY_NOTICES.txt"]) {
     assert.ok(producao.lista.includes(arquivo), `${arquivo} ausente no build: ${producao.lista.join(", ")}`);
   }
   assert.equal(await readFile(join(saidaProducao, "design-licenses/THIRD_PARTY_NOTICES.txt"), "utf8"), notices);
@@ -149,11 +151,20 @@ async function executar() {
   for (const nome of FICHAS_LAZY) assert.ok(producao.chunks[nome], `chunk React.lazy de ${nome} ausente`);
   const indexHtml = await readFile(join(saidaProducao, "index.html"), "utf8");
   for (const nome of FICHAS_LAZY) assert.ok(!indexHtml.includes(producao.chunks[nome]), `${nome} não deveria estar no index.html`);
+  const metas = Object.fromEntries([...indexHtml.matchAll(/<meta (name|property)="([^"]+)" content="([^"]*)"/g)].map(([, , chave, valor]) => [chave, valor]));
+  assert.equal(metas["theme-color"], "#18161c");
+  assert.ok(metas.description?.length > 50 && metas.description === metas["og:description"], "description ausente ou diferente de og:description");
+  assert.equal(metas["og:url"], "https://pixel-dfe-project.up.railway.app/");
+  assert.equal(metas["og:image"], "https://pixel-dfe-project.up.railway.app/og-image.png");
+  assert.deepEqual([metas["og:type"], metas["og:locale"], metas["og:image:width"], metas["og:image:height"]], ["website", "pt_BR", "1200", "630"]);
+  assert.ok(metas["og:title"] && metas["og:image:alt"], "og:title ou og:image:alt ausente");
+  assert.deepEqual([imagemOg.readUInt32BE(16), imagemOg.readUInt32BE(20)], [1200, 630]);
   const conteudos = await Promise.all(producao.lista.filter((arquivo) => /\.(js|html|css)$/.test(arquivo)).map(async (arquivo) => [arquivo, await readFile(join(saidaProducao, arquivo), "utf8")]));
   assert.ok(conteudos.some(([arquivo, texto]) => arquivo.endsWith(".js") && texto.includes(API_PRODUCAO)), "URL de produção ausente dos bundles");
   const comLocalhost = conteudos.filter(([, texto]) => texto.includes("localhost:3000")).map(([arquivo]) => arquivo);
   assert.deepEqual(comLocalhost, []);
-  console.log(`OK: tsc -b e vite build geram index.html, favicon.svg, licenças, ${js.length} JS e ${css.length} CSS, com os 4 chunks React.lazy fora do index.html`);
+  console.log(`OK: tsc -b e vite build geram index.html, favicon.svg, robots.txt, og-image.png, licenças, ${js.length} JS e ${css.length} CSS, com os 4 chunks React.lazy fora do index.html`);
+  console.log("OK: o index.html do build traz description, theme-color e Open Graph com a imagem de 1200×630 do endereço publicado");
   console.log(`OK: os bundles embutem ${API_PRODUCAO} (.env.production) e nenhum arquivo cita localhost:3000`);
 
   browser = await lancarNavegador();
@@ -243,10 +254,18 @@ async function executar() {
   assert.equal(respostaFavicon.status, 200);
   assert.match(respostaFavicon.headers.get("content-type"), /image\/svg\+xml/);
   assert.equal(await respostaFavicon.text(), favicon);
+  const respostaRobots = await fetch(`${web}/robots.txt`);
+  assert.equal(respostaRobots.status, 200);
+  assert.match(respostaRobots.headers.get("content-type"), /text\/plain/);
+  assert.equal(await respostaRobots.text(), robots);
+  const respostaImagemOg = await fetch(`${web}/og-image.png`);
+  assert.equal(respostaImagemOg.status, 200);
+  assert.match(respostaImagemOg.headers.get("content-type"), /image\/png/);
+  assert.ok(Buffer.from(await respostaImagemOg.arrayBuffer()).equals(imagemOg), "og-image.png servida difere de public/");
   const respostaLicencas = await fetch(new URL(hrefLicencas, web));
   assert.equal(respostaLicencas.status, 200);
   assert.equal(await respostaLicencas.text(), notices);
-  console.log("OK: o preview serve /favicon.svg e o link Licenças (THIRD_PARTY_NOTICES.txt) com HTTP 200 e o conteúdo de public/");
+  console.log("OK: o preview serve /favicon.svg, /robots.txt, /og-image.png e o link Licenças (THIRD_PARTY_NOTICES.txt) com HTTP 200 e o conteúdo de public/");
 
   // Navegação SPA: cliques trocam de tela sem novo documento.
   await page.evaluate(() => { window.semRecarga = true; });
