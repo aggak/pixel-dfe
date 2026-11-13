@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 import { atualizarTarefa } from "../api";
 import { statusTexto } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
+import { ALVOS_RESERVA, primeiroVisivel } from "./useRetornoFoco";
 
 const TAREFA_GRAVADA = "pixel:tarefa-gravada";
 
@@ -33,7 +34,7 @@ export function useMudarStatus(tarefas: Tarefa[], setTarefas: Dispatch<SetStateA
     const cartao = `[data-task-id="${CSS.escape(id)}"]`;
     const ativo = document.activeElement;
     if (ativo && ativo !== document.body && !ativo.closest(cartao)) return;
-    (document.querySelector<HTMLElement>(`${cartao} [data-status-trigger]`) ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    (document.querySelector<HTMLElement>(`${cartao} [data-status-trigger]`) ?? primeiroVisivel(ALVOS_RESERVA))?.focus();
   }, [tarefas]);
   const mudarStatus = useCallback(async (tarefa: Tarefa, status: Status) => {
     const gravada = await atualizarTarefa(tarefa.id, { status });

@@ -30,7 +30,7 @@ export function EditarTarefa() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     await atualizarTarefa(id, dados, controller.signal);
-    if (!controller.signal.aborted) navegar(voltarPara, true);
+    if (!controller.signal.aborted) navegar(voltarPara, true, undefined, [`[data-task-id="${CSS.escape(id)}"] .e-task-title`]);
   }
 
   return (

@@ -301,6 +301,27 @@ async function executar() {
     await ate("envio pelo teclado", async () => caminho() === "/tarefas/1");
   });
 
+  await conferir("salvar a partir da lista rolada mantém a rolagem e devolve o foco ao título do cartão", async () => {
+    await page.setViewportSize({ width: 1280, height: 360 });
+    await page.goto(`${origem}/`);
+    const cartao = page.locator('[data-task-id="5"]');
+    await cartao.waitFor();
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    const rolagem = await page.evaluate(() => scrollY);
+    assert.ok(rolagem > 0, "a lista precisa estar rolada");
+    await cartao.locator(".e-task-menu").click();
+    await page.getByRole("menuitem", { name: "Editar tarefa" }).click();
+    const dados = await esperarFormulario("5");
+    await campo("Responsável").fill(`${dados.responsavel} editado`);
+    await salvar().click();
+    await page.getByRole("button", { name: "Editar tarefa", exact: true }).waitFor();
+    await page.keyboard.press("Escape");
+    await ate("foco no título do cartão editado", () => page.evaluate(() => document.activeElement?.matches('[data-task-id="5"] .e-task-title') ?? false));
+    const estado = await page.evaluate(() => { const caixa = document.activeElement.getBoundingClientRect(); return { rolagem: scrollY, visivel: caixa.width > 1 && caixa.height > 1 && caixa.top >= 0 && caixa.bottom <= innerHeight }; });
+    assert.deepEqual(estado, { rolagem, visivel: true });
+    await page.setViewportSize({ width: 1280, height: 900 });
+  });
+
   await conferir("sem erros JavaScript e bancos do repositório preservados", async () => {
     assert.deepEqual(errosPagina, []);
     assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);

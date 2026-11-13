@@ -3,6 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { listarProjetos, listarTarefas } from "../api";
 import { useConsulta } from "../hooks/useConsulta";
 import { useTituloPagina } from "../hooks/useTituloPagina";
+import { useRetornoFoco } from "../hooks/useRetornoFoco";
 import { AvisoCompacto, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { AndamentoProjeto, Monograma } from "../components/CartaoProjeto";
 import { EditIcon, PlusIcon } from "../design/icon";
@@ -11,9 +12,10 @@ import { AcaoCabecalho } from "../components/Cabecalho";
 export function ListaProjetos() {
   useTituloPagina("Projetos");
   const { dados: projetos, erro, carregando, tentando, tentarDeNovo } = useConsulta(listarProjetos);
-  const { dados: tarefas, erro: erroTarefas, tentando: tentandoTarefas, tentarDeNovo: tentarTarefas } = useConsulta(listarTarefas);
+  const { dados: tarefas, erro: erroTarefas, carregando: carregandoTarefas, tentando: tentandoTarefas, tentarDeNovo: tentarTarefas } = useConsulta(listarTarefas);
   const location = useLocation();
   const navigate = useNavigate();
+  useRetornoFoco(projetos !== undefined && !carregandoTarefas);
   return <main className="e-projects"><header className="e-page-heading"><div><h1 tabIndex={-1}>Projetos</h1><p>Um lugar para cada frente de trabalho.</p></div><AcaoCabecalho><Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Novo projeto" data-action="new-project" onClick={() => navigate("/projetos/novo", { state: { fundo: location } })}>Novo projeto</Button></AcaoCabecalho></header>
     {carregando && <Carregando>Carregando projetos…</Carregando>}
     {erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar os projetos" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}

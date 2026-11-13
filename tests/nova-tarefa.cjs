@@ -261,6 +261,23 @@ async function executar() {
       assert.deepEqual((await lerDb()).tarefas, antes.tarefas);
     } finally { await page.unrouteAll(); }
   });
+  await conferir("depois de criar com Enter, o foco vai ao título do cartão novo, à vista; escondido, ao aviso", async () => {
+    const focoNaTela = () => page.evaluate(() => { const ativo = document.activeElement; const caixa = ativo?.getBoundingClientRect(); return { texto: ativo?.textContent, cartao: ativo?.matches("[data-task-id] .e-task-title") ?? false, visivel: Boolean(caixa && caixa.width > 1 && caixa.height > 1 && caixa.top >= 0 && caixa.bottom <= innerHeight) }; });
+    const dados = { ...base, titulo: "Tarefa nova com foco no cartão" };
+    await page.goto(`${origem}/`); await page.getByRole("link", { name: seed.tarefas[0].titulo, exact: true }).waitFor();
+    await page.getByRole("button", { name: "Nova tarefa", exact: true }).press("Enter"); await page.locator("form").waitFor(); await aguardarProjetos();
+    await preencher(dados); await campo("Prazo").press("Enter");
+    await ate("foco no cartão criado", async () => (await focoNaTela()).texto === dados.titulo);
+    assert.deepEqual(await focoNaTela(), { texto: dados.titulo, cartao: true, visivel: true });
+    const escondida = { ...base, titulo: "Tarefa nova escondida pela busca" };
+    await page.locator(".e-task-search input").fill(seed.tarefas[0].titulo); await page.locator("[data-task-id]").first().waitFor();
+    await page.getByRole("button", { name: "Nova tarefa", exact: true }).click(); await page.locator("form").waitFor(); await aguardarProjetos();
+    await preencher(escondida); await botaoSalvar().click();
+    await page.getByText("Tarefa criada, mas escondida pela busca ou pelos filtros.").waitFor();
+    await ate("foco no aviso de tarefa escondida", () => page.evaluate(() => document.activeElement?.closest(".e-hidden-notice") !== null && document.activeElement?.textContent === "Limpar busca e filtros"));
+    await page.keyboard.press("Enter");
+    await ate("busca limpa com foco na busca", () => page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null));
+  });
   await conferir("sem erros de página ou console e bancos reais intactos", async () => {
     assert.deepEqual(errosPagina, []); assert.deepEqual(errosConsole, []);
     assert.equal(await readFile(join(repo, "db.json"), "utf8"), bancoRealAntes);

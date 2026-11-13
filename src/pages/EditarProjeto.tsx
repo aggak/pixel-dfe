@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { useFicha } from "../components/ficha-contexto";
 import { ErroCarregamento } from "../components/Layout";
 import { atualizarProjeto, buscarProjeto, ErroApi } from "../api";
@@ -13,6 +13,7 @@ import { GatinhoAbanando } from "../components/GatinhoAbanando";
 export function EditarProjeto() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada } = useFicha();
+  const detalhes = (useLocation().state as { detalhes?: boolean } | null)?.detalhes === true;
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
   const { dados: projeto, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
   useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : projeto ? "Editar projeto" : "Projeto");
@@ -30,7 +31,7 @@ export function EditarProjeto() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     await atualizarProjeto(id, dados, controller.signal);
-    if (!controller.signal.aborted) navegar(voltarPara, true);
+    if (!controller.signal.aborted) navegar(voltarPara, true, detalhes ? { detalhes } : undefined, detalhes ? [".e-edit-project-details", "main h1"] : ["main h1"]);
   }
 
   return (

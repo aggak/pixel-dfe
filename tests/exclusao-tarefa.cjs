@@ -120,6 +120,18 @@ async function executar() {
   assert.equal(await page.locator(".e-sheet-footer").innerText(), `${totalProjeto - 1} ${(totalProjeto - 1) === 1 ? "tarefa" : "tarefas"}`);
   console.log("OK: exclusão também atualiza a página do projeto");
 
+  const unica = tarefas[3];
+  await page.goto(web);
+  await cartao(unica).waitFor();
+  await page.locator(".e-task-search input").fill(unica.titulo);
+  await page.waitForFunction(() => document.querySelectorAll("[data-task-id]").length === 1);
+  await abrir(unica);
+  await confirmar(unica);
+  await cartao(unica).waitFor({ state: "detached" });
+  await page.waitForFunction(() => document.activeElement?.closest(".e-task-search") !== null);
+  assert.equal(await page.evaluate(() => { const caixa = document.activeElement.getBoundingClientRect(); return caixa.width > 1 && caixa.height > 1; }), true);
+  console.log("OK: excluir o único resultado da busca leva o foco à busca, visível");
+
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);

@@ -10,6 +10,7 @@ import { AbasProjetos, AlternarVisao, AnuncioResultados, AvisoTarefaEscondida, C
 import { useConsulta } from "../hooks/useConsulta";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
+import { useRetornoFoco } from "../hooks/useRetornoFoco";
 import { filtrarTarefas } from "../derivar";
 import { PlusIcon } from "../design/icon";
 import type { Tarefa } from "../tipos";
@@ -45,6 +46,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
   };
   // Derivado durante a renderização: a lista filtrada nunca é guardada como estado.
   const tarefasExibidas = useMemo(() => filtrarTarefas(tarefas, filtros), [tarefas, filtros]);
+  useRetornoFoco(!carregando && !erro && !consultaProjetos.carregando);
   const cartao: Cartao = (tarefa, variante) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} variante={variante} nomeProjeto={projetos?.find((projeto) => projeto.id === tarefa.projetoId)?.nome} />;
   return <><AbasProjetos projetos={consultaProjetos} mostrarErro={!erro} /><main className="e-sheet"><header className="e-tools e-task-tools">
     <h1 className="e-task-page-title" tabIndex={-1}>{titulo}</h1>

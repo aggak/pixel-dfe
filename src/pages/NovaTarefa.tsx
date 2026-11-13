@@ -25,7 +25,7 @@ export function NovaTarefa() {
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
     const criada = await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id });
+    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id }, [`[data-task-id="${CSS.escape(criada.id)}"] .e-task-title`, ".e-hidden-notice button", '[data-action="new-task"]']);
   }
 
   return (

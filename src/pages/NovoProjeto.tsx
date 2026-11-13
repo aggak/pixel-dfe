@@ -20,8 +20,8 @@ export function NovoProjeto() {
   async function salvar(dados: DadosProjeto) {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
-    await criarProjeto(dados, controller.signal);
-    if (!controller.signal.aborted) navegar("/projetos", true);
+    const criado = await criarProjeto(dados, controller.signal);
+    if (!controller.signal.aborted) navegar("/projetos", true, undefined, [`[data-project-id="${CSS.escape(criado.id)}"] h2 a`, '[data-action="new-project"]']);
   }
 
   return (
