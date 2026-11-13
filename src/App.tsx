@@ -11,6 +11,7 @@ import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
 import { ErroCarregamento } from "./components/Layout";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
+import { ContextoAtualizacao } from "./hooks/useConsulta";
 import "./App.css";
 
 const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
@@ -46,7 +47,8 @@ function App() {
   const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fundo.pathname === "/quadro" ? "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>
     <ContextoPaginaAtiva.Provider value={!ficha}>
-    <Routes location={fundo} key={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
+    <ContextoAtualizacao.Provider value={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
+    <Routes location={fundo}>
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
         <Route path="/tarefas" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
@@ -56,6 +58,7 @@ function App() {
         <Route path="*" element={<><TituloPagina titulo="Página não encontrada" /><main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><p>Este endereço não existe ou mudou.</p><Link to="/">Voltar para tarefas</Link></main></>} />
       </Route>
     </Routes>
+    </ContextoAtualizacao.Provider>
     </ContextoPaginaAtiva.Provider>
     {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
       <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>

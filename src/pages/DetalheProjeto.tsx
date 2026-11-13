@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/base/buttons/button";
-import { buscarProjeto, excluirTarefaSeExistir, listarProjetos, listarTarefasDoProjeto, ErroApi } from "../api";
+import { buscarProjetoComTarefas, excluirTarefaSeExistir, listarProjetos, ErroApi } from "../api";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { AcaoCabecalho } from "../components/Cabecalho";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
@@ -19,11 +19,8 @@ export function DetalheProjeto() {
   const location = useLocation();
   const navigate = useNavigate();
   const [detalhes, setDetalhes] = useState((location.state as { detalhes?: boolean } | null)?.detalhes === true);
-  const consultar = useCallback(async (signal: AbortSignal) => {
-    const [projeto, tarefas] = await Promise.all([buscarProjeto(id, signal), listarTarefasDoProjeto(id, signal)]);
-    return { projeto, tarefas };
-  }, [id]);
-  const { dados, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
+  const consultar = useCallback((signal: AbortSignal) => buscarProjetoComTarefas(id, signal), [id]);
+  const { dados, erro, carregando, tentando, tentarDeNovo, revalidando } = useConsulta(consultar);
   useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : dados?.projeto.nome ?? "Projeto");
   const consultaProjetos = useConsulta(listarProjetos);
   const tentarTudo = () => {
@@ -37,7 +34,7 @@ export function DetalheProjeto() {
     setTarefas(dados?.tarefas ?? []);
   }
   const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
-  useRetornoFoco(dados !== undefined);
+  useRetornoFoco(dados !== undefined && !revalidando);
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
     setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
