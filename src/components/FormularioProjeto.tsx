@@ -4,6 +4,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { ErroApi } from "../api";
+import { dataValida } from "../design/formatos";
 import { Icon } from "../design/icon";
 import type { Projeto } from "../tipos";
 import "./FormularioTarefa.css";
@@ -82,6 +83,7 @@ export function FormularioProjeto({
     if (!nome.trim()) novosErros.nome = "Informe o nome do projeto.";
     if (!disciplina.trim()) novosErros.disciplina = "Informe a disciplina.";
     if (!criadoEm) novosErros.criadoEm = "Informe a data de criação.";
+    else if (!dataValida(criadoEm)) novosErros.criadoEm = "Informe uma data válida.";
     setErros(novosErros);
     // A ordem de inserção acima é a ordem dos campos na ficha (nome, disciplina, criado em).
     const primeiroErro = Object.keys(novosErros)[0] as CampoObrigatorio | undefined;

@@ -70,6 +70,7 @@ function Pagina() {
   const cancelar = () => { janela.__cancelamentos = (janela.__cancelamentos || 0) + 1; setResultado("Cancelado"); };
   let formulario = <FormularioTarefa onSalvar={registrar} onCancelar={cancelar} />;
   if (modo === "editar") formulario = <FormularioTarefa valoresIniciais={edicao as unknown as Partial<NovaTarefa>} textoSalvar="Atualizar tarefa" onSalvar={registrar} onCancelar={cancelar} />;
+  if (modo === "editar-prazo-invalido") formulario = <FormularioTarefa valoresIniciais={{ ...edicao, prazo: "20265-12-20" } as unknown as Partial<NovaTarefa>} textoSalvar="Atualizar tarefa" onSalvar={registrar} onCancelar={cancelar} />;
   if (modo === "erro-salvar") formulario = <FormularioTarefa onSalvar={async (dados) => { janela.__payloads = [...(janela.__payloads || []), dados]; setEnvios((n) => n + 1); await dormir(30); throw new Error("Falha simulada ao salvar"); }} onCancelar={cancelar} />;
   if (modo === "lento") formulario = <FormularioTarefa onSalvar={async (dados) => { registrar(dados); await dormir(1000); setResultado("Concluído: " + dados.titulo); }} onCancelar={cancelar} />;
   if (modo === "criar-real") formulario = <FormularioTarefa onSalvar={async (dados) => { const criada = await criarTarefa(dados); registrar(dados); setResultado("Criada: " + criada.id); }} onCancelar={cancelar} />;
@@ -279,6 +280,33 @@ async function executar() {
     const [dados] = await payloads();
     assert.ok(!("id" in dados));
     assert.deepEqual(dados, valido);
+  });
+  await conferir("prazo com ano de mais de quatro dígitos é recusado ao salvar, no cadastro e na edição", async () => {
+    const invalida = "Informe uma data válida.";
+    const focoNoPrazo = () => campo("Prazo").evaluate((el) => el === document.activeElement);
+    await abrir("novo");
+    await preencher(valido);
+    await campo("Prazo").focus();
+    await page.keyboard.type("121220265");
+    assert.equal(await campo("Prazo").inputValue(), "20265-12-12", "dia e mês iguais dispensam a ordem dos segmentos; o quinto dígito entra no ano");
+    await botaoSalvar().click();
+    await page.getByText(invalida, { exact: true }).waitFor();
+    assert.equal((await payloads()).length, 0);
+    assert.equal(await campo("Prazo").getAttribute("aria-invalid"), "true");
+    assert.equal(await page.locator(`[id="${await campo("Prazo").getAttribute("aria-describedby")}"]`).innerText(), invalida);
+    await ate("foco no prazo inválido", focoNoPrazo);
+    await campo("Prazo").fill(valido.prazo);
+    assert.equal(await page.getByText(invalida, { exact: true }).count(), 0);
+    assert.equal(await campo("Prazo").getAttribute("aria-invalid"), null);
+    await botaoSalvar().click();
+    await ate("payload com o prazo corrigido", async () => (await payloads()).length === 1);
+    assert.deepEqual((await payloads())[0], valido);
+    await abrir("editar-prazo-invalido");
+    assert.equal(await campo("Prazo").inputValue(), "20265-12-20");
+    await botaoSalvar("Atualizar tarefa").click();
+    await page.getByText(invalida, { exact: true }).waitFor();
+    assert.equal((await payloads()).length, 0);
+    await ate("foco no prazo inválido já gravado", focoNoPrazo);
   });
   await conferir("cancelar não envia e a ação é opcional", async () => {
     await abrir("novo");

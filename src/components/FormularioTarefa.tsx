@@ -5,6 +5,7 @@ import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { TextArea } from "@/components/base/textarea/textarea";
 import { ErroApi, listarProjetos } from "../api";
+import { dataValida } from "../design/formatos";
 import { FolderIcon, Icon, RefreshIcon } from "../design/icon";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa, Prioridade, Status } from "../tipos";
@@ -125,6 +126,7 @@ export function FormularioTarefa({
     if (!titulo.trim()) novosErros.titulo = "Informe o título da tarefa.";
     if (!responsavel.trim()) novosErros.responsavel = "Informe o responsável.";
     if (!prazo) novosErros.prazo = "Informe o prazo.";
+    else if (!dataValida(prazo)) novosErros.prazo = "Informe uma data válida.";
     setErros(novosErros);
     const primeiroErro = ordemCampos.find((campo) => novosErros[campo]);
     if (primeiroErro) {
