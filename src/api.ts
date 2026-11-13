@@ -107,11 +107,15 @@ export async function listarTarefasDoProjeto(
   id: string,
   signal?: AbortSignal,
 ): Promise<Tarefa[]> {
+  return (await buscarProjetoComTarefas(id, signal)).tarefas;
+}
+
+export async function buscarProjetoComTarefas(id: string, signal?: AbortSignal): Promise<{ projeto: Projeto; tarefas: Tarefa[] }> {
   const projeto = registroUnico(await ler<unknown>(
     `/projetos/${encodeURIComponent(id)}?_embed=tarefas`,
     signal,
   ));
-  return colecao(projeto.tarefas, normalizarTarefa);
+  return { projeto: normalizarProjeto(projeto), tarefas: colecao(projeto.tarefas, normalizarTarefa) };
 }
 
 export async function criarTarefa(dados: NovaTarefa, signal?: AbortSignal): Promise<Tarefa> {

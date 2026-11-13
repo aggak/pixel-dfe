@@ -62,7 +62,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     return () => cancelAnimationFrame(frame);
   }, [ocupada, aberta, location.pathname]);
   function navegar(destino: string, atualizar = false, estado?: object, alvos?: string[]) {
-    if (alvos) marcarRetorno(alvos, rolagem.current);
+    if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
     if (ehRotaFicha(destino.split("?")[0])) {
       const fundoAtualizado = atualizar ? { ...fundo, state: { chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado` } } : fundo;
       navigate(destino, { state: { fundo: fundoAtualizado }, replace: true });

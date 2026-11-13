@@ -1,4 +1,4 @@
-import { Component, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Component, createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useConsulta } from "../hooks/useConsulta";
 import { TituloPagina } from "../hooks/useTituloPagina";
@@ -27,14 +27,20 @@ class FalhaPagina extends Component<{ children: ReactNode }, { falhou: boolean }
     return this.state.falhou ? <><TituloPagina titulo="Não foi possível mostrar esta página" /><main className="e-sheet"><div className="e-content"><ErroCarregamento titulo="Não foi possível mostrar esta página" erro={new SyntaxError()} onTentarDeNovo={() => window.location.reload()} /></div></main></> : this.props.children;
   }
 }
+type DadosAbas = { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean };
+const ContextoAbas = createContext<Dispatch<SetStateAction<DadosAbas | null>> | null>(null);
+
 export function Layout() {
+  const [abas, setAbas] = useState<DadosAbas | null>(null);
   const [areaAcao, setAreaAcao] = useState<HTMLDivElement | null>(null);
   const caminho = caminhoNormalizado(useLocation().pathname);
   // Lista e quadro são duas visões da mesma seção: "Tarefas" fica marcado nas duas.
   const emTarefas = caminho === "/" || caminho === "/quadro";
+  useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [caminho]);
   return <div id="pixel-encaixe" className="e-app">
     <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
-    <ContextoAcaoCabecalho.Provider value={areaAcao}><FalhaPagina key={caminho}><Outlet /></FalhaPagina></ContextoAcaoCabecalho.Provider>
+    {abas && <FaixaProjetos {...abas} />}
+    <ContextoAcaoCabecalho.Provider value={areaAcao}><ContextoAbas.Provider value={setAbas}><FalhaPagina key={caminho}><Outlet /></FalhaPagina></ContextoAbas.Provider></ContextoAcaoCabecalho.Provider>
     <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
   </div>;
 }
@@ -48,7 +54,16 @@ const SETAS = {
 };
 let ultimaLista: Projeto[] | undefined;
 let ultimaVisao = "/";
-export function AbasProjetos({ atual, projetos, mostrarErro = true }: { atual?: string; projetos: ReturnType<typeof useConsulta<Projeto[]>>; mostrarErro?: boolean }) {
+export function AbasProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
+  const setAbas = useContext(ContextoAbas);
+  const { dados, erro, carregando, revalidando, tentando, tentarDeNovo } = projetos;
+  useLayoutEffect(() => {
+    setAbas?.({ atual, projetos: { dados, erro, carregando, revalidando, tentando, tentarDeNovo }, mostrarErro });
+    return () => setAbas?.(null);
+  }, [setAbas, atual, dados, erro, carregando, revalidando, tentando, tentarDeNovo, mostrarErro]);
+  return null;
+}
+function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
   const fileira = useRef<HTMLElement>(null);
   const caminho = caminhoNormalizado(useLocation().pathname);
   const naVisao = caminho === "/" || caminho === "/quadro";

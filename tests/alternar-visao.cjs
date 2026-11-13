@@ -61,7 +61,7 @@ async function executar() {
   await Promise.all([pronto(`${api}/tarefas`), pronto(web), pronto(pages)]);
 
   browser = await lancarNavegador();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
   const errosJs = [];
   page.on("pageerror", (erro) => errosJs.push(erro));
   page.setDefaultTimeout(10000);
@@ -88,6 +88,28 @@ async function executar() {
     assert.match(await seletor("Prioridade").innerText(), new RegExp(prioridade));
   };
   const focado = () => page.evaluate(() => document.activeElement?.textContent ?? "");
+  const trocarSemCarga = async (link, regiao, esperadas) => {
+    let liberar;
+    const bloqueio = new Promise((resolve) => { liberar = resolve; });
+    const filtro = (url) => url.origin === api && ["/tarefas", "/projetos"].includes(url.pathname);
+    await page.route(filtro, async (route) => { await bloqueio; await route.continue(); });
+    const consultas = ["tarefas", "projetos"].map((colecao) => page.waitForRequest(`${api}/${colecao}`));
+    try {
+      await page.evaluate(() => window.scrollTo(0, 400));
+      await link.click();
+      await Promise.all(consultas);
+      assert.equal(await page.getByText("Carregando tarefas…", { exact: true }).count(), 0);
+      assert.deepEqual(await ids(regiao), esperadas);
+      assert.ok(await regiao.locator(".e-task-project").first().textContent());
+      assert.equal(await page.evaluate(() => scrollY), 0);
+      for (const seletor of [".e-top", ".e-tabs", ".e-footer"]) assert.equal(await page.locator(seletor).evaluate((el) => el.marcaPersistente), true, seletor);
+    } finally {
+      const respostas = ["tarefas", "projetos"].map((colecao) => page.waitForResponse(`${api}/${colecao}`));
+      liberar();
+      await Promise.all(respostas);
+      await page.unroute(filtro);
+    }
+  };
 
   await page.goto(`${web}/`);
   await lista.getByRole("article").first().waitFor();
@@ -97,15 +119,17 @@ async function executar() {
 
   // Os três critérios juntos: busca, status e prioridade fora do padrão numa mesma troca.
   // Marca no window: se a troca recarregasse o documento, a marca sumiria.
-  await page.evaluate(() => { window.semRecarga = true; });
+  await page.evaluate(() => {
+    window.semRecarga = true;
+    for (const seletor of [".e-top", ".e-tabs", ".e-footer"]) document.querySelector(seletor).marcaPersistente = true;
+  });
   await busca.fill("a");
   await selecionar("Status", "A fazer");
   await selecionar("Prioridade", "Média");
   const combinadas = seed.tarefas.filter((t) => t.titulo.toLocaleLowerCase("pt-BR").includes("a") && t.status === "a-fazer" && t.prioridade === "media").map((t) => t.id).sort();
   assert.ok(combinadas.length > 0 && combinadas.length < seed.tarefas.filter((t) => t.status === "a-fazer").length);
   assert.deepEqual(await ids(lista), combinadas);
-  await linkQuadro.click();
-  await quadro.locator("[data-task-id]").first().waitFor();
+  await trocarSemCarga(linkQuadro, quadro, combinadas);
   assert.equal(await page.title(), "Quadro · Pixel");
   assert.equal(caminho(), "/quadro");
   assert.equal(await lista.count(), 0);
@@ -121,8 +145,7 @@ async function executar() {
   await selecionar("Prioridade", "Alta");
   const altas = seed.tarefas.filter((t) => t.prioridade === "alta").map((t) => t.id).sort();
   assert.deepEqual(await ids(quadro), altas);
-  await linkLista.click();
-  await lista.getByRole("article").first().waitFor();
+  await trocarSemCarga(linkLista, lista, altas);
   assert.equal(await page.title(), "Tarefas · Pixel");
   assert.equal(caminho(), "/");
   await conferirFiltros("", "Todos", "Alta");
@@ -233,6 +256,73 @@ async function executar() {
   }
   console.log("OK: controle dentro da folha e Nova tarefa no header fixo, acessível ao rolar, de 1280 a 320 px");
 
+  const animacao = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
+  await animacao.clock.install({ time: new Date("2026-11-13T12:00:00Z") });
+  await animacao.clock.pauseAt(new Date("2026-11-13T12:00:01Z"));
+  await animacao.goto(web);
+  await animacao.locator("[data-task-id]").first().waitFor();
+  const palavra = animacao.locator(".e-top-palavra");
+  const quadroLogo = () => palavra.evaluate((el) => getComputedStyle(el).backgroundPositionX);
+  assert.notEqual(await quadroLogo(), "0px");
+  await animacao.clock.fastForward(900);
+  assert.equal(await quadroLogo(), "0px");
+  const navegarAnimado = async (link, caminho) => {
+    await link.dispatchEvent("click");
+    await animacao.waitForURL((url) => url.pathname === caminho);
+    assert.equal(await quadroLogo(), "-84px", caminho);
+  };
+  await navegarAnimado(animacao.getByRole("link", { name: "Quadro", exact: true }), "/quadro");
+  await animacao.clock.fastForward(160);
+  assert.equal(await quadroLogo(), "-252px");
+  await navegarAnimado(animacao.getByRole("link", { name: "Lista", exact: true }), "/");
+  await animacao.clock.fastForward(900);
+  await animacao.locator("[data-task-id] .e-task-title").first().dispatchEvent("click");
+  await animacao.getByRole("dialog").waitFor();
+  await animacao.clock.runFor(100);
+  assert.equal(await quadroLogo(), "0px");
+  await animacao.getByRole("button", { name: "Editar tarefa", exact: true }).dispatchEvent("click");
+  const responsavel = animacao.getByRole("textbox", { name: /^Responsável/ });
+  await responsavel.fill("Revalidação confirmada");
+  await animacao.getByRole("button", { name: "Salvar alterações", exact: true }).dispatchEvent("click");
+  await animacao.getByRole("button", { name: "Editar tarefa", exact: true }).waitFor();
+  await animacao.locator('[data-task-id="1"]').getByText("Revalidação confirmada", { exact: true }).waitFor();
+  assert.equal(await quadroLogo(), "0px");
+  await animacao.clock.runFor(100);
+  await animacao.keyboard.press("Escape");
+  await animacao.clock.runFor(400);
+  await animacao.waitForURL((url) => url.pathname === "/");
+  assert.equal(await quadroLogo(), "0px");
+  await animacao.getByRole("searchbox", { name: "Buscar por título" }).fill("a");
+  assert.equal(await quadroLogo(), "0px");
+  const navPrincipal = animacao.getByRole("navigation", { name: "Navegação principal" });
+  await navegarAnimado(navPrincipal.getByRole("link", { name: "Projetos", exact: true }), "/projetos");
+  await animacao.locator("[data-project-id] h2 a").first().waitFor();
+  let consultasProjeto = [];
+  animacao.on("request", (request) => { if (new URL(request.url()).pathname === "/projetos/1") consultasProjeto.push(new URL(request.url()).search); });
+  await navegarAnimado(animacao.locator('[data-project-id="1"] h2 a'), "/projetos/1");
+  await animacao.getByRole("heading", { level: 1, name: seed.projetos[0].nome, exact: true }).waitFor();
+  assert.ok(consultasProjeto.length > 0 && consultasProjeto.every((consulta) => consulta === "?_embed=tarefas"));
+  await navegarAnimado(animacao.locator('.e-tabs a[href="/projetos/2"]'), "/projetos/2");
+  await animacao.clock.fastForward(900);
+  await animacao.evaluate(() => { history.pushState({}, "", "/nao-encontrada"); dispatchEvent(new PopStateEvent("popstate")); });
+  await animacao.getByRole("heading", { name: "Página não encontrada", exact: true }).waitFor();
+  assert.equal(await quadroLogo(), "-84px");
+  await animacao.emulateMedia({ reducedMotion: "reduce" });
+  await animacao.getByRole("link", { name: "Voltar para tarefas", exact: true }).dispatchEvent("click");
+  await animacao.waitForURL((url) => url.pathname === "/");
+  assert.equal(await quadroLogo(), "0px");
+  await animacao.emulateMedia({ reducedMotion: "no-preference" });
+  const logo = animacao.locator(".e-logo");
+  await logo.dispatchEvent("pointerenter", { pointerType: "mouse" });
+  assert.equal(await quadroLogo(), "-672px");
+  await animacao.clock.fastForward(400);
+  assert.equal(await quadroLogo(), "0px");
+  await logo.dispatchEvent("pointerleave", { pointerType: "mouse" });
+  await logo.focus();
+  assert.equal(await quadroLogo(), "-672px");
+  await animacao.close();
+  console.log("OK: logo anima entrada e troca, reinicia a troca em curso, respeita movimento reduzido e não toca com ficha, gravação, revalidação ou busca; projeto usa só embed");
+
   // Build do GitHub Pages: HashRouter e base /pixel-dfe/.
   await page.goto(`${pages}#/`);
   await lista.getByRole("article").first().waitFor();
@@ -257,10 +347,19 @@ async function executar() {
   assert.deepEqual(await marcados(), ["page", null, "page"]);
   console.log("OK: no build do GitHub Pages (HashRouter) a troca preserva busca e filtros");
 
+  const consultasProducao = [];
+  const registrarConsulta = (request) => { if (new URL(request.url()).pathname === "/projetos/1") consultasProducao.push(new URL(request.url()).search); };
+  page.on("request", registrarConsulta);
+  await page.goto(`${pages}#/projetos/1`);
+  await page.getByRole("heading", { level: 1, name: seed.projetos[0].nome, exact: true }).waitFor();
+  assert.deepEqual(consultasProducao, ["?_embed=tarefas"]);
+  page.off("request", registrarConsulta);
+  console.log("OK: o build de produção busca o detalhe do projeto com uma única chamada embed");
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("9 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("Cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

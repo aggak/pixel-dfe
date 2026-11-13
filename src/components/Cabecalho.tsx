@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import gatoEscuro from "../assets/gatinho/cabecalho-gato-escuro.svg";
 import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
@@ -9,12 +9,16 @@ type Passo = [quadro: number, ms: number];
 const LARGURA_LOGO = 84;
 const LARGURA_GATO = 72;
 const entrada: Passo[] = [[1, 80], [2, 80], [3, 80], [4, 80], [5, 80], [6, 80], [7, 120], [0, 240]];
+const troca: Passo[] = [[1, 80], [2, 80], [3, 80], [4, 80], [5, 80], [6, 80], [7, 120], [0, 240]];
 const tecla: Passo[] = [[8, 80], [9, 120], [8, 80], [0, 80]];
 const onda: Passo[] = [[0, 3040], ...Array.from({ length: 9 }, (_, i): Passo => [10 + i, 120]), [0, 680]];
-const sequencias = { entrada, tecla, onda };
+const sequencias = { entrada, troca, tecla, onda };
 const pausasPiscada = [5300, 11200, 7100, 14900];
 
 function useLogoAnimado() {
+  const { pathname } = useLocation();
+  const caminhoAnterior = useRef(pathname);
+  const trocar = useRef<(() => void) | null>(null);
   const logo = useRef<HTMLAnchorElement>(null);
   const palavra = useRef<HTMLSpanElement>(null);
   const gato = useRef<HTMLSpanElement>(null);
@@ -82,6 +86,10 @@ function useLogoAnimado() {
       if (doRepouso) { fase = "onda"; decorrido = 0; mostrarPalavra(0); }
       if (!parado()) { avancar(); piscar(5300); }
     }
+    trocar.current = () => {
+      pausar(); fase = "troca"; decorrido = 0;
+      if (parado()) mostrarPalavra(0); else avancar();
+    };
     const aoEntrar = (e: PointerEvent) => { if (e.pointerType !== "touch") pressionar("ponteiro"); };
     const aoSair = (e: PointerEvent) => { if (e.pointerType !== "touch") soltar("ponteiro"); };
     const aoFocar = () => pressionar("foco");
@@ -96,6 +104,7 @@ function useLogoAnimado() {
     movimento.addEventListener("change", aoMudarMovimento);
     if (!parado()) { avancar(); piscar(640); }
     return () => {
+      trocar.current = null;
       clearTimeout(relogioPalavra); clearTimeout(relogioGato);
       elLogo.removeEventListener("pointerenter", aoEntrar);
       elLogo.removeEventListener("pointerleave", aoSair);
@@ -106,6 +115,11 @@ function useLogoAnimado() {
       mostrarPalavra(0); mostrarGato(0);
     };
   }, []);
+  useEffect(() => {
+    if (caminhoAnterior.current === pathname) return;
+    caminhoAnterior.current = pathname;
+    trocar.current?.();
+  }, [pathname]);
   return { logo, palavra, gato };
 }
 

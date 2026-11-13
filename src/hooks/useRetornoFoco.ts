@@ -4,11 +4,11 @@ import { ContextoPaginaAtiva } from "./useTituloPagina";
 
 export const ALVOS_RESERVA = [".e-task-search input", "main h1", '[data-action="new-task"]', '[data-action="new-project"]'];
 
-type Retorno = { alvos: string[]; rolagem: { caminho: string; y: number } };
+type Retorno = { origem?: HTMLElement | null; alvos: string[]; rolagem: { caminho: string; y: number } };
 let retorno: Retorno | null = null;
 
-export function marcarRetorno(alvos: string[], rolagem: Retorno["rolagem"]) {
-  retorno = { alvos, rolagem };
+export function marcarRetorno(alvos: string[], rolagem: Retorno["rolagem"], origem?: HTMLElement | null) {
+  retorno = { alvos, rolagem, origem };
 }
 export function descartarRetorno() {
   retorno = null;
@@ -36,9 +36,10 @@ export function useRetornoFoco(pronto: boolean) {
     if (!ativa) return;
     retorno = null;
     const foco = document.activeElement;
-    if (foco && foco !== document.body && foco !== document.documentElement && foco.isConnected) return;
     const alvo = primeiroVisivel([...atual.alvos, ...ALVOS_RESERVA]);
     if (!alvo) return;
+    const menuDoCartao = foco?.matches(".e-task-menu") && alvo.closest("[data-task-id]")?.contains(foco);
+    if (foco && foco !== document.body && foco !== document.documentElement && foco.isConnected && foco !== atual.origem && !menuDoCartao) return;
     const caixa = alvo.getBoundingClientRect();
     const topo = document.querySelector(".e-top")?.getBoundingClientRect().bottom ?? 0;
     if (caixa.top < topo || caixa.bottom > window.innerHeight) alvo.scrollIntoView({ block: "center", inline: "nearest" });
