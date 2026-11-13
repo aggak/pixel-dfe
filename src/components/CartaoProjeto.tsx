@@ -1,6 +1,6 @@
 import type { Tarefa } from "../tipos";
 import { PawIcon } from "../design/icon";
-import { formatarData, iniciais } from "../design/formatos";
+import { formatarData, iniciais, prazoVencido } from "../design/formatos";
 
 const GLIFOS: Record<string, number[]> = {
   A: [30, 33, 33, 33, 63, 33, 33, 33, 33],
@@ -54,12 +54,13 @@ export function AndamentoProjeto({ tarefas }: { tarefas?: Tarefa[] }) {
   const concluidas = tarefas.filter((tarefa) => tarefa.status === "concluida").length;
   const prazo = tarefas.filter((tarefa) => tarefa.status !== "concluida" && tarefa.prazo).map((tarefa) => tarefa.prazo).sort()[0];
   const porcento = total ? Math.round((concluidas / total) * 100) : 0;
+  const vencido = prazo ? prazoVencido(prazo) : false;
   return <div className="e-proj-foot">
     <div className="e-proj-foot-txt">
       {total === 0 && <span className="e-proj-prog">Sem tarefas ainda</span>}
       {total > 0 && concluidas === total && <span className="e-proj-prog e-proj-ok"><PawIcon />{total === 1 ? "Tarefa concluída" : `Todas as ${total} concluídas`}</span>}
       {total > 0 && concluidas < total && <span className="e-proj-prog"><b>{concluidas}</b> de {total} {concluidas === 1 ? "concluída" : "concluídas"}</span>}
-      {prazo && <span className="e-proj-prazo">Próximo prazo <b>{formatarData(prazo)}</b></span>}
+      {prazo && <span className={`e-proj-prazo${vencido ? " e-proj-vencido" : ""}`}>{vencido ? "Prazo vencido" : "Próximo prazo"} <b>{formatarData(prazo)}</b></span>}
     </div>
     <span className={`e-proj-bar${total ? "" : " e-proj-bar-vazia"}`} aria-hidden="true">{porcento > 0 && <i style={{ width: `${porcento}%` }} />}</span>
   </div>;
