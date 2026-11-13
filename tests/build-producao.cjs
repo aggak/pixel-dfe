@@ -132,6 +132,7 @@ async function executar() {
   const seed = JSON.parse(originais[1]);
   const distAntes = await retratoDist();
   const notices = await readFile(join(raiz, "public/design-licenses/THIRD_PARTY_NOTICES.txt"), "utf8");
+  const licencasExecucao = await readFile(join(raiz, "public/design-licenses/RUNTIME_LICENSES.txt"), "utf8");
   const favicon = await readFile(join(raiz, "public/favicon.svg"), "utf8");
   temporario = await mkdtemp(join(tmpdir(), "pixel-build-producao-"));
 
@@ -139,10 +140,16 @@ async function executar() {
   await rodar("tsc -b", "node_modules/typescript/bin/tsc", ["-b"], ambienteLimpo());
   const saidaProducao = join(temporario, "producao");
   const producao = await gerarBuild(saidaProducao, ambienteLimpo());
-  for (const arquivo of ["index.html", "favicon.svg", "design-licenses/THIRD_PARTY_NOTICES.txt"]) {
+  for (const arquivo of ["index.html", "favicon.svg", "design-licenses/THIRD_PARTY_NOTICES.txt", "design-licenses/RUNTIME_LICENSES.txt"]) {
     assert.ok(producao.lista.includes(arquivo), `${arquivo} ausente no build: ${producao.lista.join(", ")}`);
   }
   assert.equal(await readFile(join(saidaProducao, "design-licenses/THIRD_PARTY_NOTICES.txt"), "utf8"), notices);
+  assert.equal(await readFile(join(saidaProducao, "design-licenses/RUNTIME_LICENSES.txt"), "utf8"), licencasExecucao);
+  const pacotesLicencas = [...licencasExecucao.matchAll(/^Packages: (.+)$/gm)].flatMap(([, nomes]) => nomes.split(", ")).sort();
+  const pacotesNotices = notices.match(/^Runtime packages bundled into the built JavaScript and CSS: (.+)\.$/m)[1].replace(", and ", ", ").split(", ").sort();
+  assert.deepEqual(pacotesNotices, pacotesLicencas);
+  assert.ok(pacotesLicencas.includes("react-router"), "react-router ausente de RUNTIME_LICENSES.txt");
+  assert.match(notices, /RUNTIME_LICENSES\.txt/);
   const js = producao.lista.filter((arquivo) => arquivo.endsWith(".js"));
   const css = producao.lista.filter((arquivo) => arquivo.startsWith("assets/") && arquivo.endsWith(".css"));
   assert.ok(js.length >= 5 && css.length >= 1, `chunks insuficientes: ${producao.lista.join(", ")}`);
@@ -246,7 +253,10 @@ async function executar() {
   const respostaLicencas = await fetch(new URL(hrefLicencas, web));
   assert.equal(respostaLicencas.status, 200);
   assert.equal(await respostaLicencas.text(), notices);
-  console.log("OK: o preview serve /favicon.svg e o link Licenças (THIRD_PARTY_NOTICES.txt) com HTTP 200 e o conteúdo de public/");
+  const respostaLicencasExecucao = await fetch(new URL("RUNTIME_LICENSES.txt", new URL(hrefLicencas, web)));
+  assert.equal(respostaLicencasExecucao.status, 200);
+  assert.equal(await respostaLicencasExecucao.text(), licencasExecucao);
+  console.log("OK: o preview serve /favicon.svg e o link Licenças (THIRD_PARTY_NOTICES.txt, com RUNTIME_LICENSES.txt ao lado) com HTTP 200 e o conteúdo de public/");
 
   // Navegação SPA: cliques trocam de tela sem novo documento.
   await page.evaluate(() => { window.semRecarga = true; });
