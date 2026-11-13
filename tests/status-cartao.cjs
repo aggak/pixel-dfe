@@ -241,10 +241,10 @@ async function executar() {
   await cartao(alvo.id).waitFor({ state: "detached" });
   assert.equal(await rodape.innerText(), textoTotal(aFazer - 1));
   assert.equal((await lerTarefa(alvo.id)).status, "concluida");
-  // O cartão saiu da tela; o foco vai para o título da página em vez de cair no body.
-  await page.waitForFunction(() => document.activeElement?.matches("main h1"));
+  // O cartão saiu da tela; o foco vai para a busca, visível, em vez de cair no body ou no título recortado.
+  await page.waitForFunction(() => document.activeElement?.closest(".e-task-search") !== null);
   await selecionarFiltro("Status", "Todos");
-  console.log("OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai ao título");
+  console.log("OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai à busca");
 
   // Recarga, tema escuro e larguras.
   await page.goto(`${web}/quadro`);

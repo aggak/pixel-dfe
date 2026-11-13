@@ -10,6 +10,7 @@ import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, TrashIcon } from "../design/icon";
 import { formatarData, prazoVencido, statusTexto } from "../design/formatos";
 import { SeloPrioridade, SeloStatus } from "./Selos";
+import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 
 // "lista" mostra a tarefa como linha; "quadro" como cartão empilhado na coluna do status.
 // Com `onMudarStatus`, o selo de status vira um seletor; sem ele, segue só informativo.
@@ -54,7 +55,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const ativo = document.activeElement;
       if (ativo && ativo !== document.body && ativo.isConnected) return;
-      (alvo?.isConnected ? alvo : document.querySelector<HTMLElement>("main h1"))?.focus();
+      (alvo?.isConnected ? alvo : primeiroVisivel(ALVOS_RESERVA))?.focus();
     }));
   };
   const excluir = async () => {

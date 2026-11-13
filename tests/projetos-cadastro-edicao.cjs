@@ -202,6 +202,7 @@ async function executar() {
     await campo("Disciplina").fill(dados.disciplina);
     await campo("Criado em").fill(dados.criadoEm);
   }
+  const focoNaTela = () => page.evaluate(() => { const caixa = document.activeElement?.getBoundingClientRect(); return Boolean(caixa && caixa.width > 1 && caixa.height > 1 && caixa.top >= 0 && caixa.bottom <= innerHeight); });
   const projetosComNome = async (nome) => (await lerBanco()).projetos.filter((p) => p.nome === nome);
 
   await conferir("data de criação com ano de mais de quatro dígitos é recusada no cadastro e na edição", async () => {
@@ -261,6 +262,8 @@ async function executar() {
     const criado = db.projetos.find((p) => p.nome === novo.nome);
     assert.ok(criado && typeof criado.id === "string" && criado.id.length > 0);
     assert.deepEqual(criado, { id: criado.id, ...novo });
+    await ate("foco no título do cartão criado", () => page.evaluate((id) => document.activeElement === document.querySelector(`[data-project-id="${id}"] h2 a`), criado.id));
+    assert.equal(await focoNaTela(), true);
     await page.goto(`${origem}/tarefas/nova`);
     await page.locator("form").waitFor();
     await ate("novo projeto no seletor de tarefas", async () =>
@@ -430,14 +433,38 @@ async function executar() {
     gravacoes.length = 0;
     await salvarEdicao().click();
     await ate("retorno ao detalhe do projeto", async () => caminho() === "/projetos/1");
-    await page.getByRole("heading", { name: dados.nome, exact: true }).waitFor();
+    await page.getByRole("heading", { level: 1, name: dados.nome, exact: true }).waitFor();
     assert.deepEqual(gravacoes, [{ metodo: "PATCH", caminho: "/projetos/1", dados }]);
     const db = await lerBanco();
     assert.deepEqual(db.projetos.find((p) => p.id === "1"), { id: "1", ...dados });
     assert.equal(db.tarefas.filter((t) => t.projetoId === "1").length, 4);
     await page.reload();
-    await page.getByRole("heading", { name: dados.nome, exact: true }).waitFor();
+    await page.getByRole("heading", { level: 1, name: dados.nome, exact: true }).waitFor();
     assert.equal(await page.locator("article").count(), 4);
+  });
+
+  await conferir("editar com os detalhes abertos mantém o painel e o foco em Editar projeto; pela lista, o foco vai ao título", async () => {
+    await page.goto(`${origem}/projetos/1`);
+    const gatilho = page.locator(".e-details-trigger");
+    if ((await gatilho.getAttribute("aria-expanded")) === "false") await gatilho.click();
+    await page.getByRole("button", { name: "Editar projeto", exact: true }).click();
+    await esperarEdicao("1");
+    const descricao = "Descrição revisada com os detalhes abertos";
+    await campo("Descrição").fill(descricao);
+    await salvarEdicao().click();
+    await ate("retorno ao detalhe do projeto", async () => caminho() === "/projetos/1");
+    await page.locator("#project-details").getByText(descricao, { exact: true }).waitFor();
+    assert.equal(await page.locator(".e-details-trigger").getAttribute("aria-expanded"), "true");
+    await ate("foco em Editar projeto", () => page.evaluate(() => document.activeElement?.matches(".e-edit-project-details") ?? false));
+    assert.equal(await focoNaTela(), true);
+    await page.goto(`${origem}/projetos`);
+    await page.locator('[data-project-id="2"] .e-edit-project').click();
+    await esperarEdicao("2");
+    await salvarEdicao().click();
+    await ate("retorno ao detalhe do projeto", async () => caminho() === "/projetos/2");
+    await ate("foco no título visível do projeto", () => page.evaluate(() => document.activeElement === document.querySelector("main h1")));
+    assert.equal(await focoNaTela(), true);
+    assert.equal(await page.locator(".e-details-trigger").getAttribute("aria-expanded"), "false");
   });
 
   await conferir("cancelar e fechar na edição retornam ao detalhe sem gravar", async () => {

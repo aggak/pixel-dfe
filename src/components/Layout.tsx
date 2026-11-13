@@ -14,6 +14,7 @@ import { Cabecalho } from "./Cabecalho";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
+import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -130,10 +131,10 @@ function useDevolverFoco<T extends HTMLElement>() {
     const elemento = raiz.current;
     return () => {
       if (!elemento?.contains(document.activeElement)) return;
-      const alvo = elemento.closest<HTMLElement>('[role="dialog"]') ?? document.querySelector<HTMLElement>("main h1");
+      const alvo = elemento.closest<HTMLElement>('[role="dialog"]');
       requestAnimationFrame(() => {
         const ativo = document.activeElement;
-        if (!ativo || ativo === document.body || !ativo.isConnected) (alvo?.isConnected ? alvo : document.querySelector<HTMLElement>("main h1"))?.focus({ preventScroll: true });
+        if (!ativo || ativo === document.body || !ativo.isConnected) (alvo?.isConnected ? alvo : primeiroVisivel(ALVOS_RESERVA))?.focus({ preventScroll: true });
       });
     };
   }, []);
@@ -151,7 +152,7 @@ export function AvisoCompacto({ texto, onTentarDeNovo, tentando = false }: { tex
 function focarBuscaSePerdido() {
   requestAnimationFrame(() => {
     const ativo = document.activeElement;
-    if (!ativo || ativo === document.body || !ativo.isConnected) (document.querySelector<HTMLElement>(".e-task-search input") ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    if (!ativo || ativo === document.body || !ativo.isConnected) primeiroVisivel(ALVOS_RESERVA)?.focus();
   });
 }
 export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar }: { tarefas: Tarefa[]; exibidas: Tarefa[]; onLimpar: () => void }) {

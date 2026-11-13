@@ -5,6 +5,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
 import { ContextoFicha, ehRotaFicha, type EstadoFicha } from "./ficha-contexto";
+import { descartarRetorno, marcarRetorno, primeiroVisivel, retornoPendente } from "../hooks/useRetornoFoco";
 
 function Presenca({ aoSair, children }: { aoSair: () => void; children: ReactNode }) {
   useLayoutEffect(() => () => aoSair(), [aoSair]);
@@ -17,6 +18,8 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
   const [ocupada, setOcupada] = useState(false);
   const pendente = useRef<(() => void) | null>(null);
   const origem = useRef(document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null);
+  const rolagem = useRef({ caminho: fundo.pathname + fundo.search, y: window.scrollY });
+  useEffect(() => descartarRetorno(), []);
   const concluirSaida = useCallback(() => {
     const continuar = pendente.current;
     pendente.current = null;
@@ -58,7 +61,8 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     const frame = requestAnimationFrame(recuperar);
     return () => cancelAnimationFrame(frame);
   }, [ocupada, aberta, location.pathname]);
-  function navegar(destino: string, atualizar = false, estado?: object) {
+  function navegar(destino: string, atualizar = false, estado?: object, alvos?: string[]) {
+    if (alvos) marcarRetorno(alvos, rolagem.current);
     if (ehRotaFicha(destino.split("?")[0])) {
       const fundoAtualizado = atualizar ? { ...fundo, state: { chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado` } } : fundo;
       navigate(destino, { state: { fundo: fundoAtualizado }, replace: true });
@@ -73,10 +77,11 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
       } else {
         navigate(destino, { replace: true, state: atualizar ? estado ?? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key } });
       }
+      if (retornoPendente()) return;
       requestAnimationFrame(() => {
         const anterior = origem.current;
         if (anterior?.isConnected) anterior.focus({ preventScroll: true });
-        else document.querySelector<HTMLElement>('[data-action="new-task"], [data-action="new-project"], main h1')?.focus({ preventScroll: true });
+        else primeiroVisivel(['[data-action="new-task"]', '[data-action="new-project"]', "main h1"])?.focus({ preventScroll: true });
       });
     };
     setAberta(false);
