@@ -17,6 +17,7 @@ import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
 import { ALVOS_RESERVA, marcarVolta, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { FILTROS_INICIAIS, type Filtros } from "../derivar";
+import { movimentoReduzido, pausarAnimacoes, useMovimento } from "../hooks/useMovimento";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -70,8 +71,14 @@ export function Layout() {
     <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
     {abas && <FaixaProjetos {...abas} />}
     <ContextoAcaoCabecalho.Provider value={areaAcao}><ContextoAbas.Provider value={setAbas}><FalhaPagina key={caminho}><Outlet /></FalhaPagina></ContextoAbas.Provider></ContextoAcaoCabecalho.Provider>
-    <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a></nav></div></footer>
+    <footer className="e-footer" aria-label="Informações da Pixel"><div className="e-footer-row"><p className="e-footer-identity"><MarcaRodape /><span>Gerenciador de tarefas acadêmicas</span></p><span className="e-footer-context">Desenvolvimento Frontend · ULBRA · 2026.2</span></div><div className="e-footer-row"><nav className="e-footer-links" aria-label="Referências e créditos"><a href="https://github.com/aggak/pixel-dfe" target="_blank" rel="noreferrer">Repositório</a><a href="https://www.untitledui.com/react/components" target="_blank" rel="noreferrer">Componentes Untitled UI</a><a href={`${import.meta.env.BASE_URL}design-licenses/THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">Licenças</a><PausarAnimacoes /></nav></div></footer>
   </div>;
+}
+function PausarAnimacoes() {
+  const movimento = useMovimento();
+  if (movimento === "sistema") return null;
+  const pausadas = movimento === "pausadas";
+  return <button type="button" aria-pressed={pausadas} onClick={() => pausarAnimacoes(!pausadas)}>{pausadas ? "Retomar animações" : "Pausar animações"}</button>;
 }
 function PixelArte({ largura, altura, desenho }: { largura: number; altura: number; desenho: string }) {
   return <svg viewBox={`0 0 ${largura} ${altura}`} width={largura * 2} height={altura * 2} shapeRendering="crispEdges" focusable="false"><path fill="currentColor" d={desenho} /></svg>;
@@ -130,7 +137,7 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
     const aoFocar = (evento: FocusEvent) => {
       const aba = evento.target instanceof Element ? evento.target.closest("a") : null;
       if (!aba || !nav.contains(aba)) return;
-      trazer(aba, matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", folgaFoco());
+      trazer(aba, movimentoReduzido() ? "auto" : "smooth", folgaFoco());
     };
     mostrarAtual();
     document.fonts?.ready.then(mostrarAtual);
@@ -142,7 +149,7 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
   }, [atual, total]);
   const rolar = (sentido: number) => {
     const nav = fileira.current;
-    nav?.scrollBy({ left: sentido * Math.max(nav.clientWidth * 0.6, 160), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    nav?.scrollBy({ left: sentido * Math.max(nav.clientWidth * 0.6, 160), behavior: movimentoReduzido() ? "auto" : "smooth" });
   };
   const seta = (lado: "ini" | "fim") => <button type="button" className="e-tabs-seta" data-lado={lado} aria-hidden="true" tabIndex={-1} onClick={() => rolar(lado === "ini" ? -1 : 1)}><PixelArte largura={4} altura={7} desenho={SETAS[lado]} /></button>;
   return <nav ref={fileira} className="e-tabs" aria-label="Projetos"><Link to={naVisao ? caminho : ultimaVisao} aria-current={!atual ? "page" : undefined}><span className="e-tabs-mono" aria-hidden="true"><PixelArte largura={8} altura={8} desenho={GRADE_TODAS} /></span><span className="e-tabs-nome">Todas</span></Link>{seta("ini")}{projetos.carregando && !lista && <Carregando compacto>Carregando projetos…</Carregando>}{mostrarErro && projetos.erro !== undefined && <AvisoCompacto texto="Os projetos não carregaram." tentando={projetos.tentando} onTentarDeNovo={projetos.tentarDeNovo} />}{lista?.map((projeto) => <Link key={projeto.id} to={`/projetos/${encodeURIComponent(projeto.id)}`} title={projeto.nome} aria-current={atual === projeto.id ? "page" : undefined}><Monograma nome={projeto.nome} className="e-tabs-mono" /><span className="e-tabs-nome">{projeto.nome}</span></Link>)}{seta("fim")}</nav>;

@@ -3,6 +3,7 @@ import { atualizarTarefa, ErroApi } from "../api";
 import { statusTexto } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
 import { ALVOS_RESERVA, primeiroVisivel } from "./useRetornoFoco";
+import { movimentoReduzido } from "./useMovimento";
 import { ContextoPaginaAtiva } from "./useTituloPagina";
 
 const TAREFA_GRAVADA = "pixel:tarefa-gravada";
@@ -61,7 +62,7 @@ export function useMudarStatus(tarefas: Tarefa[], setTarefas: Dispatch<SetStateA
   useEffect(() => {
     const idCarimbo = carimbar.current;
     carimbar.current = null;
-    if (idCarimbo && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (idCarimbo && !movimentoReduzido()) {
       document.querySelector<SVGElement>(`[data-task-id="${CSS.escape(idCarimbo)}"] .e-paw`)?.animate([{ transform: "scale(1.5)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }], { duration: 240, easing: "ease-out" });
     }
     const id = focar.current;
