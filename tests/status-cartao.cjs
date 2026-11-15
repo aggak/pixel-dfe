@@ -305,15 +305,16 @@ async function executar() {
   await page.route(urlFicha, (rota) => (rota.request().method() === "PATCH" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue()));
   await escolherNaFicha( "a-fazer");
   await page.waitForFunction(() => document.querySelector(".e-read-task [role=alert]")?.textContent === "Esta tarefa não existe mais. Ela pode ter sido excluída.");
-  await page.unroute(urlFicha);
-  await escolherNaFicha( "em-andamento");
-  await coluna("em-andamento").locator(`[data-task-id="${naFicha.id}"]`).waitFor();
-  assert.equal(await ficha.getByRole("alert").count(), 0);
-  await menuDe(naFicha).waitFor({ state: "detached" });
+  await cartao(naFicha.id).waitFor({ state: "detached" });
+  assert.equal(await rodape.innerText(), textoTotal(total - 1));
   await page.waitForFunction(() => document.activeElement?.matches(".e-read-tags [data-status-trigger]"));
   await page.keyboard.press("Escape");
   await ficha.waitFor({ state: "detached" });
-  console.log("OK: na ficha, o envio trava o seletor; 500 e 404 avisam sem mudar nada e a tentativa seguinte grava");
+  assert.equal(await tarefasNaTela(naFicha.id), 0);
+  assert.equal(await page.locator("main [role=alert]").isVisible(), true);
+  assert.equal(await page.evaluate(() => document.activeElement !== document.body), true);
+  await page.unroute(urlFicha);
+  console.log("OK: 500 na ficha mantém a tarefa; 404 mantém o aviso na ficha e remove a tarefa e a contagem do fundo, inclusive ao fechar");
 
   // Recarga, tema escuro e larguras.
   await page.goto(`${web}/quadro`);
@@ -351,10 +352,70 @@ async function executar() {
   }
   console.log("OK: a recarga reflete a API; o alerta tem contraste no escuro; seletor e menu cabem de 850 a 320 px com toque de 44 px");
 
+  await page.emulateMedia({ colorScheme: "dark" });
+  for (const caminho of ["/", "/quadro", `/projetos/${alvo.projetoId}`]) {
+    await page.goto(`${web}${caminho}`);
+    await cartao(alvo.id).waitFor();
+    const antes = await page.locator("[data-task-id]").count();
+    const url = `${api}/tarefas/${alvo.id}`;
+    await page.route(url, (rota) => rota.request().method() === "PATCH" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue());
+    await seletorDe(alvo).focus();
+    await page.keyboard.press("Enter");
+    await menuDe(alvo).waitFor();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await cartao(alvo.id).waitFor({ state: "detached" });
+    const aviso = page.locator("main [role=alert]");
+    await aviso.waitFor();
+    assert.equal(await aviso.innerText(), `“${alvo.titulo}” não existe mais. Ela pode ter sido excluída.`);
+    assert.equal(await page.locator("[data-task-id]").count(), antes - 1);
+    assert.equal(await rodape.innerText(), textoTotal(antes - 1));
+    await page.waitForFunction(() => document.activeElement?.matches("main [role=alert]"));
+    assert.equal(await focoVisivel(aviso), true);
+    if (caminho === "/quadro") assert.equal(await coluna("concluida").locator("h2").innerText(), `Concluída\n${await coluna("concluida").locator("[data-task-id]").count()}`);
+    await page.keyboard.press("Tab");
+    assert.equal(await page.evaluate(() => document.activeElement !== document.body), true);
+    assert.equal(await aviso.isVisible(), true);
+    await page.unroute(url);
+  }
+  console.log("OK: 404 por teclado na lista, quadro e projeto remove o cartão e a contagem, mantém aviso visível e foco com contorno");
+
+  await page.route(`${api}/tarefas`, (rota) => rota.fulfill({ json: [seed.tarefas[0]] }));
+  await page.goto(`${web}/`);
+  const unica = seed.tarefas[0];
+  await cartao(unica.id).waitFor();
+  await page.route(`${api}/tarefas/${unica.id}`, (rota) => rota.request().method() === "PATCH" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue());
+  await escolher(unica, unica.status === "concluida" ? "a-fazer" : "concluida");
+  await cartao(unica.id).waitFor({ state: "detached" });
+  await page.getByText("Nenhuma tarefa por aqui", { exact: true }).waitFor();
+  assert.equal(await rodape.innerText(), "0 tarefas");
+  assert.equal(await page.locator("main [role=alert]").isVisible(), true);
+  await page.waitForFunction(() => document.activeElement?.matches("main [role=alert]"));
+  await page.unroute(`${api}/tarefas/${unica.id}`);
+  await page.unroute(`${api}/tarefas`);
+
+  await page.goto(`${web}/`);
+  await cartao(alvo.id).waitFor();
+  let responder404;
+  const resposta404 = new Promise((resolve) => { responder404 = resolve; });
+  await page.route(`${api}/tarefas/${alvo.id}`, async (rota) => {
+    if (rota.request().method() !== "PATCH") return rota.continue();
+    await resposta404;
+    await rota.fulfill({ status: 404, body: "{}" });
+  });
+  await escolher(alvo, "a-fazer");
+  await busca.focus();
+  responder404();
+  await cartao(alvo.id).waitFor({ state: "detached" });
+  assert.equal(await busca.evaluate((el) => el === document.activeElement), true);
+  assert.equal(await page.locator("main [role=alert]").isVisible(), true);
+  await page.unroute(`${api}/tarefas/${alvo.id}`);
+  console.log("OK: 404 na única tarefa mantém aviso e foco no estado vazio; 404 atrasado preserva foco na busca");
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("12 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("Cenários de status e cartão inexistente aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {

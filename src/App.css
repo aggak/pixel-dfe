@@ -465,6 +465,8 @@ main h1{scroll-margin-top:71px}
 .e-status-trigger:focus-visible{outline:2px solid var(--e-action);outline-offset:2px}
 .e-status-trigger[data-pending]{cursor:wait;opacity:.6}
 .e-task-error{margin:10px 0 0;color:var(--e-error);font-size:12px}
+.e-task-error[tabindex]{margin:0 0 16px;overflow-wrap:anywhere}
+.e-task-error:focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
 .e-confirm-overlay{background:rgb(24 24 27 / 35%)!important;backdrop-filter:none!important}
 .e-confirm-modal{width:420px!important;max-width:100%;border:1px solid var(--e-line);background:var(--e-sheet)!important;color:var(--e-ink);border-radius:13px!important;box-shadow:0 14px 48px rgb(24 24 27 / 20%)!important}
 .e-confirm-dialog{padding:22px;overflow:visible!important}
