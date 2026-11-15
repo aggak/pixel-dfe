@@ -29,7 +29,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-project-details{border-bottom:1px solid var(--e-line);padding:0 20px}
 .e-details-trigger{display:flex;gap:8px;align-items:center;background:transparent;border:0;color:var(--e-muted);font-size:12px;min-height:42px}
 .e-details-trigger>i:last-child{margin-left:2px}
-.e-details-trigger:hover{color:var(--e-ink)}
+.e-details-trigger:hover:not(:disabled){color:var(--e-ink)}
 .e-details-content{padding:0 0 18px;max-width:650px;color:var(--e-muted);font-size:13px;overflow-wrap:anywhere}
 .e-details-content>p{color:var(--e-ink);margin:1px 0 15px;font-size:14px}
 .e-details-content dl{display:flex;gap:35px;margin:0}
@@ -462,6 +462,7 @@ main h1{scroll-margin-top:71px}
 .e-confirm-dialog>p{margin:0;color:var(--e-muted);line-height:1.5;overflow-wrap:anywhere}
 .e-confirm-dialog .e-confirm-error{margin-top:14px;color:var(--e-error)}
 .e-confirm-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+@media(max-width:650px),(pointer:coarse){.e-confirm-actions button{min-height:44px}}
 /* Área de toque de 44 px por um pseudo-elemento, sem esticar o botão nem o anel de foco. */
 @media(max-width:650px),(pointer:coarse){.e-status-trigger::after{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}}
 .e-gato-dormindo{display:block;flex-shrink:0;width:108px;height:108px;margin-bottom:18px;background:var(--e-gato) 0 0/5184px 100% no-repeat;image-rendering:pixelated}

@@ -89,6 +89,51 @@ async function executar() {
     await page.getByRole("heading", { name: "Subir o json-server", exact: true }).waitFor();
     await conferirTitulo("Subir o json-server");
   });
+  await conferir("prazos mostram outro ano no cartão e vencimento na ficha, exceto concluídas", async () => {
+    await page.clock.setFixedTime(new Date("2026-11-12T12:00:00"));
+    const casos = [
+      ["2020-01-05", "a-fazer", "Venceu 5 jan 2020", true],
+      ["2026-11-11", "em-andamento", "Venceu 11 nov", true],
+      ["2027-01-10", "em-revisao", "10 jan 2027", false],
+      ["2026-11-12", "a-fazer", "12 nov", false],
+      ["2020-01-05", "concluida", "5 jan 2020", false],
+    ];
+    const tarefas = casos.map(([prazo, status], i) => ({ ...seed.tarefas[0], id: String(901 + i), prazo, status, responsavel: i % 2 ? "Ana" : "Maria de Oliveira Silva" }));
+    await page.route(`${api}/tarefas**`, (route) => {
+      const id = new URL(route.request().url()).pathname.split("/")[2];
+      return route.fulfill({ json: id ? tarefas.find((tarefa) => tarefa.id === id) : tarefas });
+    });
+    for (const largura of [1280, 375, 320]) {
+      await page.setViewportSize({ width: largura, height: 900 });
+      for (const rota of ["/", "/quadro"]) {
+        await abrir(rota);
+        for (const [i, tarefa] of tarefas.entries()) {
+          const prazo = page.locator(`[data-task-id="${tarefa.id}"] time`);
+          assert.equal(await prazo.textContent(), casos[i][2]);
+          assert.equal(await prazo.getAttribute("datetime"), tarefa.prazo);
+          assert.equal(await prazo.evaluate((el) => el.classList.contains("e-card-vencido")), casos[i][3]);
+        }
+        assert.ok(await page.locator("[data-task-id]").evaluateAll((cartoes) => cartoes.every((el) => {
+          const prazo = el.querySelector("time");
+          return el.scrollWidth <= el.clientWidth + 1 && prazo.getBoundingClientRect().right <= el.getBoundingClientRect().right;
+        })), `${rota}: prazos cabem em ${largura}px`);
+      }
+    }
+    for (const [i, tarefa] of tarefas.entries()) {
+      await abrir(`/tarefas/${tarefa.id}`);
+      const prazo = ficha().locator("time");
+      const extensa = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${tarefa.prazo}T12:00:00`));
+      assert.equal(await prazo.textContent(), `${casos[i][3] ? "Venceu em " : ""}${extensa}`);
+      assert.equal(await prazo.getAttribute("datetime"), tarefa.prazo);
+      assert.equal(await prazo.evaluate((el) => el.classList.contains("e-card-vencido")), casos[i][3]);
+      assert.ok((await ficha().ariaSnapshot()).includes(`${casos[i][3] ? "Venceu em " : ""}${extensa}`));
+      if (casos[i][3]) assert.equal(await prazo.evaluate((el) => getComputedStyle(el).color), await page.locator(`[data-task-id="${tarefa.id}"] time`).evaluate((el) => getComputedStyle(el).color));
+    }
+    await page.unrouteAll();
+    await page.clock.setFixedTime(new Date());
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await abrir("/tarefas/2");
+  });
   await conferir("layout persiste e os links navegam sem recarregar o documento", async () => {
     await page.evaluate(() => { window.marcadorNavegacao = "preservado"; });
     // A ficha bloqueia o fundo: fecha-se o detalhe (navegação interna) antes de usar o menu principal.

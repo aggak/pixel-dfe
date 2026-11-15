@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { dataValida, iniciais, prazoVencido } from "../src/design/formatos.ts";
+import { dataValida, formatarPrazoCartao, iniciais, prazoVencido } from "../src/design/formatos.ts";
 
 const monogramas = [
   ["Portal da biblioteca", "PB"],
@@ -37,6 +37,10 @@ const fusoOriginal = process.env.TZ;
 try {
   for (const fuso of ["UTC", "America/Sao_Paulo", "Pacific/Kiritimati"]) {
     process.env.TZ = fuso;
+    const agora = new Date(2026, 10, 12);
+    for (const [iso, esperado] of [["2020-01-05", "5 jan 2020"], ["2026-01-05", "5 jan"], ["2027-01-10", "10 jan 2027"], ["2025-12-31", "31 dez 2025"], ["inválido", "inválido"]]) {
+      assert.equal(formatarPrazoCartao(iso, agora), esperado, `${fuso}: prazo ${iso}`);
+    }
     for (const [ano, mes, dia, ontem, hoje, amanha] of [
       [2026, 10, 12, "2026-11-11", "2026-11-12", "2026-11-13"],
       [2026, 0, 1, "2025-12-31", "2026-01-01", "2026-01-02"],
@@ -77,6 +81,16 @@ try {
     assert.equal(prazoVencido("2026-11-12", hoje), false, `${fuso}: hoje local não venceu`);
     assert.equal(prazoVencido("2026-11-13", hoje), false, `${fuso}: amanhã local não venceu`);
   }
+  for (const [fuso, instante, iso, esperado] of [
+    ["America/Sao_Paulo", "2027-01-01T01:30:00Z", "2026-01-05", "5 jan"],
+    ["America/Sao_Paulo", "2027-01-01T01:30:00Z", "2027-01-05", "5 jan 2027"],
+    ["Pacific/Kiritimati", "2026-12-31T12:30:00Z", "2027-01-05", "5 jan"],
+    ["Pacific/Kiritimati", "2026-12-31T12:30:00Z", "2026-01-05", "5 jan 2026"],
+  ]) {
+    process.env.TZ = fuso;
+    assert.equal(formatarPrazoCartao(iso, new Date(instante)), esperado, `${fuso}: ano local`);
+  }
+  console.log("OK: prazo compacto inclui outro ano e usa o ano local na virada");
   console.log("OK: prazo usa o dia local mesmo quando a data UTC é diferente");
 } finally {
   if (fusoOriginal === undefined) delete process.env.TZ;

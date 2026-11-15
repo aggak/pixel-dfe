@@ -13,7 +13,7 @@ import { ConfirmarExclusao } from "../components/ConfirmarExclusao";
 import { AvisoCompacto, Carregando, ErroCarregamento } from "../components/Layout";
 import { SeloPrioridade } from "../components/Selos";
 import { Icon, FolderIcon, EditIcon, TrashIcon } from "../design/icon";
-import { formatarData } from "../design/formatos";
+import { formatarData, prazoVencido } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
 
 function EtiquetasTarefa({ tarefa, onMudarStatus }: { tarefa: Tarefa; onMudarStatus: (tarefa: Tarefa, status: Status) => Promise<void> }) {
@@ -53,6 +53,7 @@ export function DetalheTarefa() {
     navegar(destinoFechar, false, undefined, vizinho ? [`[data-task-id="${CSS.escape(vizinho.dataset.taskId ?? "")}"] .e-task-title`] : []);
   };
   const projeto = tarefa && projetos?.find((item) => item.id === tarefa.projetoId);
+  const vencido = tarefa && tarefa.status !== "concluida" && prazoVencido(tarefa.prazo);
   // Com a lista carregada e sem o projeto, o link levaria a uma página de não encontrado.
   const projetoInexistente = tarefa !== undefined && projetos !== undefined && !projeto;
   return <section className="e-read-task" aria-label="Dados da tarefa">
@@ -61,7 +62,7 @@ export function DetalheTarefa() {
       {erro instanceof ErroApi && erro.status === 404 && <><div className="e-ficha-gato"><GatinhoCochilando /></div><p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada. Ela pode ter sido excluída.</p></>}{erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" erro={erro} onTentarDeNovo={() => { tentarDeNovo(); if (erroProjetos !== undefined) tentarProjetos(); }} tentando={tentando} />}
       {tarefa && <div className="e-read-body"><h2 className="e-read-title">{tarefa.titulo}</h2><div className="e-read-project"><FolderIcon />{carregandoProjetos ? <Carregando compacto>Carregando projeto…</Carregando> : projetoInexistente ? <span>Projeto não encontrado</span> : <Link to={`/projetos/${encodeURIComponent(tarefa.projetoId)}`} onClick={(evento) => { if (!evento.ctrlKey && !evento.metaKey && !evento.shiftKey && !evento.altKey) { evento.preventDefault(); navegar(`/projetos/${encodeURIComponent(tarefa.projetoId)}`); } }}>{projeto?.nome ?? `Projeto ${tarefa.projetoId}`}</Link>}{erroProjetos !== undefined && <AvisoCompacto texto="Nome do projeto indisponível." tentando={tentandoProjetos} onTentarDeNovo={tentarProjetos} />}</div>
         <EtiquetasTarefa tarefa={tarefa} onMudarStatus={mudarStatus} />{aviso && <p className="sr-only" role="status">{aviso}</p>}
-        <div className="e-read-meta"><p><Icon name="user" /><span>{tarefa.responsavel}</span></p><p><Icon name="calendar" /><time dateTime={tarefa.prazo}>{formatarData(tarefa.prazo, true)}</time></p></div><p className={`e-read-description ${tarefa.descricao.trim() ? "" : "is-empty"}`}>{tarefa.descricao.trim() ? tarefa.descricao : "Sem descrição."}</p>
+        <div className="e-read-meta"><p><Icon name="user" /><span>{tarefa.responsavel}</span></p><p><Icon name="calendar" /><time className={vencido ? "e-card-vencido" : undefined} dateTime={tarefa.prazo}>{vencido ? "Venceu em " : ""}{formatarData(tarefa.prazo, true)}</time></p></div><p className={`e-read-description ${tarefa.descricao.trim() ? "" : "is-empty"}`}>{tarefa.descricao.trim() ? tarefa.descricao : "Sem descrição."}</p>
       </div>}
     </div>
     {tarefa && <footer className="e-form-footer"><Button color="tertiary-destructive" size="sm" iconLeading={TrashIcon} className="e-read-delete" onClick={() => setConfirmando(true)}>Excluir tarefa</Button><Button color="secondary" size="sm" iconLeading={EditIcon} className="e-read-edit" onClick={() => navegar(`/tarefas/${encodeURIComponent(tarefa.id)}/editar`)}>Editar tarefa</Button><ConfirmarExclusao tarefa={tarefa} aberta={confirmando} onFechar={() => setConfirmando(false)} onExcluir={excluir} /></footer>}
