@@ -4,7 +4,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, TrashIcon } from "../design/icon";
-import { formatarData, prazoVencido } from "../design/formatos";
+import { formatarData, formatarPrazoCartao, prazoVencido } from "../design/formatos";
 import { SeloPrioridade } from "./Selos";
 import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
@@ -43,7 +43,7 @@ export function CartaoTarefa({ tarefa, nomeProjeto, variante = "lista", onMudarS
       <Dropdown.Root><Button color="tertiary" size="sm" className="e-task-menu" aria-label={`Ações de ${tarefa.titulo}`}><Icon name="menu-dots-vertical" /></Button><Dropdown.Popover className="e-popover"><Dropdown.Menu aria-label={`Ações de ${tarefa.titulo}`}><Dropdown.Item id="editar" label="Editar tarefa" icon={EditIcon} onAction={() => navigate(`${caminho}/editar`, { state: estado })} /><Dropdown.Item id="excluir" label="Excluir tarefa" icon={TrashIcon} onAction={() => setConfirmando(true)} /></Dropdown.Menu></Dropdown.Popover></Dropdown.Root>
     </div>;
   const vencido = !concluida && prazoVencido(tarefa.prazo);
-  const pessoaPrazo = <><span className="e-card-pessoa">{tarefa.responsavel}</span><span className="e-card-separador" aria-hidden="true">·</span><time className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`} dateTime={tarefa.prazo} title={`Prazo: ${formatarData(tarefa.prazo, true)}`}>{vencido ? "Venceu " : ""}{formatarData(tarefa.prazo).replace(" de ", " ").replace(".", "")}</time></>;
+  const pessoaPrazo = <><span className="e-card-pessoa">{tarefa.responsavel}</span><span className="e-card-separador" aria-hidden="true">·</span><time className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`} dateTime={tarefa.prazo} title={`Prazo: ${formatarData(tarefa.prazo, true)}`}>{vencido ? "Venceu " : ""}{formatarPrazoCartao(tarefa.prazo)}</time></>;
   return <article ref={raiz} className={classe} data-task-id={tarefa.id}>
     {emQuadro ? <div className="e-task-main">{cabecalho}
       <div className="e-card-contexto">{nomeProjeto ? <span className="e-task-project">{nomeProjeto}</span> : <span />}{seletorStatus}</div>
