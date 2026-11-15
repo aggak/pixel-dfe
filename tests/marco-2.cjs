@@ -4,7 +4,7 @@ const { mkdtemp, copyFile, rm, readFile } = require("node:fs/promises");
 const { tmpdir } = require("node:os");
 const { createServer } = require("node:net");
 const { join } = require("node:path");
-const { lancarNavegador } = require("./ui.cjs");
+const { criarEsperas, lancarNavegador } = require("./ui.cjs");
 
 let origem = "";
 let api = "";
@@ -69,6 +69,7 @@ async function executar() {
     await page.waitForFunction((esperado) => document.title === esperado, `${titulo} · Pixel`);
     assert.equal(await page.title(), `${titulo} · Pixel`);
   };
+  const { segurar } = criarEsperas(page);
 
   await conferir("lista original mantém as cinco tarefas sem duplicações", async () => {
     await abrir("/");
@@ -176,23 +177,24 @@ async function executar() {
   await conferir("troca de parâmetro não mantém dados da tarefa anterior", async () => {
     await abrir("/tarefas/1");
     await conferirTitulo("Criar o repositório");
-    await page.route(`${api}/tarefas/2`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
+    const leitura = await segurar(`${api}/tarefas/2`);
     await page.evaluate(() => { history.pushState({}, "", "/tarefas/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await ficha().getByRole("status").waitFor();
     await conferirTitulo("Tarefa");
     assert.ok(!(await textoFicha()).includes("Criar o repositório"));
+    await leitura.liberar();
     await page.getByRole("heading", { name: "Subir o json-server", exact: true }).waitFor();
     await conferirTitulo("Subir o json-server");
     await page.unrouteAll();
   });
   await conferir("resposta atrasada não substitui o projeto atual", async () => {
-    await page.route(`${api}/projetos/1*`, async (route) => { await new Promise((resolve) => setTimeout(resolve, 400)); await route.continue(); });
+    const leitura = await segurar(`${api}/projetos/1*`);
     await page.goto(`${origem}/projetos/1`);
     await page.getByRole("status").filter({ hasText: /^Carregando projeto…$/ }).waitFor();
     await conferirTitulo("Projeto");
     await page.evaluate(() => { history.pushState({}, "", "/projetos/2"); dispatchEvent(new PopStateEvent("popstate")); });
     await page.getByRole("heading", { name: "Modelagem da Biblioteca", exact: true }).waitFor();
-    await page.waitForTimeout(600);
+    await leitura.liberar();
     await conferirTitulo("Modelagem da Biblioteca");
     assert.equal(await page.locator("article").count(), 1);
     assert.ok(!(await texto()).includes("Criar o repositório"));
@@ -342,6 +344,7 @@ async function executar() {
     await conferirTitulo("Editar: Criar o repositório");
     await page.keyboard.press("Escape");
     await conferirTitulo("Criar o repositório");
+    await page.waitForFunction(() => Boolean(document.activeElement?.closest('[role="dialog"]')));
     await page.keyboard.press("Escape");
     await ficha().waitFor({ state: "detached" });
     await conferirTitulo("Gerenciador de Tarefas");

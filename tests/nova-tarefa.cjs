@@ -6,7 +6,7 @@ const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer: servidorNet } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { comTextos, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarEsperas, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
 const repo = join(__dirname, "..");
 const evidencias = process.env.NOVA_TAREFA_EVIDENCIAS || "";
 const ROTULOS = ["Projeto", "Título", "Descrição", "Status", "Prioridade", "Responsável", "Prazo"];
@@ -91,6 +91,7 @@ async function executar() {
     await aguardarProjetos();
   }
   const preencher = (dados) => ui.preencherTarefa(comTextos(dados, seed.projetos));
+  const { assentar, segurar } = criarEsperas(page);
   const base = { projetoId: "1", titulo: "Tarefa da suíte nova tarefa", descricao: "Criada pela suíte da página nova", status: "em-andamento", prioridade: "alta", responsavel: "Bruno", prazo: "2027-03-15" };
   await conferir("abertura direta e recarga em /tarefas/nova sem GET /tarefas/nova na API", async () => {
     requisicoesApi.length = 0; await abrir("/tarefas/nova");
@@ -170,17 +171,18 @@ async function executar() {
     } finally { await page.unrouteAll(); }
   });
   await conferir("POST pendente bloqueia duplicidade e não navega antes da resposta", async () => {
-    await page.route(`${apiUrl}/tarefas`, async (route) => { if (route.request().method() !== "POST") return route.continue(); await dormir(900); try { await route.continue(); } catch {} });
+    const envio = await segurar(`${apiUrl}/tarefas`, { metodo: "POST" });
     try {
       posts.length = 0; await abrir("/tarefas/nova"); await preencher({ ...base, titulo: "Tarefa com envio pendente" }); await botaoSalvar().click();
       await ate("envio em curso", () => botaoEnvio().isDisabled()); assert.equal(caminho().pathname, "/tarefas/nova");
-      await page.evaluate(() => document.querySelector("form")?.requestSubmit()); await dormir(200);
+      await page.evaluate(() => document.querySelector("form")?.requestSubmit()); await assentar();
       assert.equal(posts.length, 1); assert.equal(caminho().pathname, "/tarefas/nova");
+      await envio.liberar();
       await ate("lista após a resposta", async () => caminho().pathname === "/"); assert.equal(posts.length, 1);
     } finally { await page.unrouteAll(); }
   });
   await conferir("sair pelo histórico durante POST retardado não redireciona ao chegar a resposta", async () => {
-    await page.route(`${apiUrl}/tarefas`, async (route) => { if (route.request().method() !== "POST") return route.continue(); await dormir(900); try { await route.continue(); } catch {} });
+    const envio = await segurar(`${apiUrl}/tarefas`, { metodo: "POST" });
     try {
       await abrir("/tarefas/nova"); await preencher({ ...base, titulo: "Tarefa abandonada no menu" }); await botaoSalvar().click();
       await ate("envio em curso", () => botaoEnvio().isDisabled());
@@ -189,7 +191,7 @@ async function executar() {
       await page.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
       await page.locator('[role="dialog"]').waitFor({ state: "detached" });
       assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
-      await dormir(1300);
+      await envio.liberar();
       assert.equal(caminho().pathname, "/projetos");
     } finally { await page.unrouteAll(); }
   });
@@ -222,7 +224,8 @@ async function executar() {
     await page.getByRole("dialog").waitFor({ state: "detached" });
     await abrirPelaLista();
     await campo("Título").fill("Rascunho que não pode sumir"); await ui.abrirDescricao(); await campo("Descrição").fill("Parágrafo longo digitado");
-    await page.mouse.click(ponto.x, ponto.y); await dormir(400);
+    await page.mouse.click(ponto.x, ponto.y); await assentar();
+    assert.equal(await page.locator(".e-form-overlay[data-exiting]").count(), 0);
     assert.equal(caminho().pathname, "/tarefas/nova");
     assert.equal(await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).count(), 1);
     assert.equal(await campo("Título").inputValue(), "Rascunho que não pode sumir"); assert.equal(await campo("Descrição").inputValue(), "Parágrafo longo digitado");
@@ -264,7 +267,7 @@ async function executar() {
     assert.ok((await ui.seletor("Projeto").innerText()).includes("Projeto não encontrado"));
     await page.getByText("O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.", { exact: true }).waitFor();
     assert.equal(await botaoEnvio().isDisabled(), true); await preencher({ ...base, projetoId: "" });
-    await page.evaluate(() => document.querySelector("form")?.requestSubmit()); await dormir(200);
+    await page.evaluate(() => document.querySelector("form")?.requestSubmit()); await assentar();
     assert.equal(posts.length, 0); assert.equal(caminho().pathname, "/tarefas/nova");
     await ui.escolher("Projeto", seed.projetos[0].nome); assert.equal(await ui.valor("Projeto"), "1");
     await ate("salvar liberado com projeto válido", () => botaoEnvio().isEnabled());
@@ -284,8 +287,8 @@ async function executar() {
   await conferir("foco e Escape após falha de envio: o foco permanece na ficha e Escape retorna à origem", async () => {
     const antes = await lerDb(); posts.length = 0;
     const dados = { ...base, titulo: "Tarefa com falha e foco recuperado" };
-    // O POST nunca chega ao banco: a resposta 500 é simulada depois de um atraso.
-    await page.route(`${apiUrl}/tarefas`, async (route) => { if (route.request().method() !== "POST") return route.continue(); await dormir(500); try { await route.fulfill({ status: 500, json: {} }); } catch {} });
+    // O POST nunca chega ao banco: a resposta 500 é simulada depois que o envio em curso foi visto.
+    const envio = await segurar(`${apiUrl}/tarefas`, { metodo: "POST", responder: (route) => route.fulfill({ status: 500, json: {} }) });
     try {
       await page.goto(`${origem}/`); await page.getByRole("link", { name: seed.tarefas[0].titulo, exact: true }).waitFor();
       await page.getByRole("button", { name: "Nova tarefa", exact: true }).click(); await page.locator("form").waitFor(); await aguardarProjetos();
@@ -298,6 +301,7 @@ async function executar() {
       await ui.escolher("Projeto", seed.projetos[0].nome);
       await botaoSalvar().click();
       await ate("envio em curso", () => botaoEnvio().isDisabled());
+      await envio.liberar();
       await page.getByRole("alert").filter({ hasText: "Não foi possível salvar a tarefa" }).waitFor();
       await ate("botão reabilitado após a falha", () => botaoEnvio().isEnabled());
       // Sem foco manual: a própria ficha devolve o foco a um controle interno.

@@ -4,7 +4,7 @@ const { copyFile, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { comTextos, criarUi, lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarEsperas, criarUi, lancarNavegador } = require("./ui.cjs");
 
 async function portaLivre() {
   const servidor = createServer();
@@ -159,6 +159,7 @@ async function executar() {
     // Tarefa recém-criada que a busca ou os filtros escondem: o aviso diz que ela existe e oferece limpar.
     const ui = criarUi(page);
     const aviso = page.locator(".e-hidden-notice");
+    const { assentar } = criarEsperas(page);
     const criar = async (titulo) => {
       await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
       await page.waitForFunction(() => document.querySelectorAll('form select[name="projetoId"] option:not([value=""])').length >= 2);
@@ -180,7 +181,7 @@ async function executar() {
 
     await criar("Tarefa visível sem filtros");
     await lista.getByRole("link", { name: "Tarefa visível sem filtros" }).waitFor();
-    await page.waitForTimeout(300);
+    await assentar();
     assert.equal(await aviso.count(), 0);
     await busca.fill("sem correspondência");
     await criar("Tarefa escondida pela busca");
