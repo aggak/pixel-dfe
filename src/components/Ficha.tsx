@@ -35,7 +35,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     return () => window.removeEventListener("popstate", cancelarSaida);
   }, []);
   useLayoutEffect(() => {
-    if (/^\/tarefas\/(?!nova(?:\/|$))[^/]+\/?$/.test(location.pathname)) {
+    if (/^\/tarefas\/(?!nova(?:\/|$))[^/]+\/?$/i.test(location.pathname)) {
       const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>(".e-form-header button")?.focus({ preventScroll: true }));
       return () => cancelAnimationFrame(frame);
     }
