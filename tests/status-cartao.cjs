@@ -246,6 +246,62 @@ async function executar() {
   await selecionarFiltro("Status", "Todos");
   console.log("OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai à busca");
 
+  // Ficha de detalhes: o mesmo seletor grava pelo mesmo caminho e o quadro ao fundo acompanha sem recarregar.
+  const naFicha = seed.tarefas.find((t) => t.status === "em-andamento");
+  const urlFicha = `${api}/tarefas/${naFicha.id}`;
+  await page.goto(`${web}/quadro`);
+  await cartao(naFicha.id).locator(".e-task-title").click();
+  const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
+  await ficha.locator(".e-read-title").waitFor();
+  assert.equal(await ficha.locator("[data-status-trigger]").getAttribute("aria-label"), `Mudar status de ${naFicha.titulo} (atual: ${TEXTO_STATUS["em-andamento"]})`);
+  const seletorFicha = ficha.locator("[data-status-trigger]");
+  const escolherNaFicha = async (status) => {
+    await seletorFicha.click();
+    await opcao(naFicha, status).click();
+  };
+  await seletorFicha.click();
+  assert.deepEqual(await menuDe(naFicha).getByRole("menuitemradio").allInnerTexts(), Object.values(TEXTO_STATUS));
+  assert.equal(await menuDe(naFicha).getByRole("menuitemradio", { checked: true }).innerText(), TEXTO_STATUS["em-andamento"]);
+  await opcao(naFicha, "concluida").click();
+  await coluna("concluida").locator(`[data-task-id="${naFicha.id}"]`).waitFor();
+  assert.equal(await tarefasNaTela(naFicha.id), 1);
+  assert.equal(await rodape.innerText(), textoTotal(total));
+  assert.deepEqual(patches.at(-1), { url: urlFicha, corpo: { status: "concluida" } });
+  assert.equal((await lerTarefa(naFicha.id)).status, "concluida");
+  assert.equal(await seletorFicha.innerText(), TEXTO_STATUS.concluida);
+  assert.equal(await cartao(naFicha.id).locator("[data-status-trigger]").innerText(), TEXTO_STATUS.concluida);
+  assert.equal(await ficha.locator("p[role=status]").innerText(), `Status de ${naFicha.titulo} alterado para ${TEXTO_STATUS.concluida}.`);
+  await page.waitForFunction(() => document.activeElement?.matches(".e-read-tags [data-status-trigger]"));
+  console.log("OK: na ficha, o seletor grava o status, anuncia, mantém o foco e o quadro ao fundo muda o cartão de coluna");
+
+  liberar = await segurarPatch(naFicha.id);
+  await escolherNaFicha( "a-fazer");
+  await page.waitForFunction(() => document.querySelector(".e-read-tags [data-pending][data-status-trigger]"));
+  await menuDe(naFicha).waitFor({ state: "detached" });
+  await seletorFicha.click({ force: true });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await menuDe(naFicha).count(), 0);
+  const patchesFicha = patches.length;
+  await liberar(500);
+  await ficha.getByRole("alert").waitFor();
+  assert.equal(await ficha.getByRole("alert").innerText(), "Não foi possível mudar o status. Tente de novo.");
+  assert.equal(patches.length, patchesFicha);
+  assert.equal((await lerTarefa(naFicha.id)).status, "concluida");
+  assert.equal(await seletorFicha.innerText(), TEXTO_STATUS.concluida);
+  assert.equal(await coluna("concluida").locator(`[data-task-id="${naFicha.id}"]`).count(), 1);
+  await page.route(urlFicha, (rota) => (rota.request().method() === "PATCH" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue()));
+  await escolherNaFicha( "a-fazer");
+  await page.waitForFunction(() => document.querySelector(".e-read-task [role=alert]")?.textContent === "Esta tarefa não existe mais. Ela pode ter sido excluída.");
+  await page.unroute(urlFicha);
+  await escolherNaFicha( "em-andamento");
+  await coluna("em-andamento").locator(`[data-task-id="${naFicha.id}"]`).waitFor();
+  assert.equal(await ficha.getByRole("alert").count(), 0);
+  await menuDe(naFicha).waitFor({ state: "detached" });
+  await page.waitForFunction(() => document.activeElement?.matches(".e-read-tags [data-status-trigger]"));
+  await page.keyboard.press("Escape");
+  await ficha.waitFor({ state: "detached" });
+  console.log("OK: na ficha, o envio trava o seletor; 500 e 404 avisam sem mudar nada e a tentativa seguinte grava");
+
   // Recarga, tema escuro e larguras.
   await page.goto(`${web}/quadro`);
   await quadro.locator("[data-task-id]").first().waitFor();
@@ -285,7 +341,7 @@ async function executar() {
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   assert.deepEqual(atuais, originais);
-  console.log("10 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+  console.log("12 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
 executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
