@@ -16,7 +16,7 @@ export function EditarProjeto() {
   const detalhes = (useLocation().state as { detalhes?: boolean } | null)?.detalhes === true;
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
   const { dados: projeto, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
-  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : projeto ? "Editar projeto" : "Projeto");
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Projeto não encontrado" : projeto ? `Editar: ${projeto.nome}` : "Editar projeto");
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/projetos/${encodeURIComponent(id)}`;
 
@@ -40,7 +40,7 @@ export function EditarProjeto() {
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
-          <p className="e-ficha-state e-form-error" role="alert">Projeto não encontrado. Ele pode ter sido excluído.</p>
+          <p className="e-ficha-state e-form-error" role="alert">Este projeto não existe ou foi removido.</p>
         </>
       )}
       {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (

@@ -110,12 +110,12 @@ async function executar() {
   for (const caminho of ["/projetos/999", "/projetos/999/editar"]) {
     await page.goto(`${web}${caminho}`);
     // A edição abre sobre a página do projeto: os dois avisos precisam chegar.
-    await page.getByRole("main").getByRole("alert").filter({ hasText: "Projeto não encontrado" }).waitFor();
-    if (caminho.endsWith("/editar")) await ficha().getByRole("alert").filter({ hasText: "Projeto não encontrado." }).waitFor();
+    await page.getByRole("main").getByRole("alert").filter({ hasText: "Este projeto não existe ou foi removido." }).waitFor();
+    if (caminho.endsWith("/editar")) await ficha().getByRole("alert").filter({ hasText: "Este projeto não existe ou foi removido." }).waitFor();
     assert.equal(await page.title(), "Projeto não encontrado · Pixel");
     assert.equal(await page.getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
     assert.equal(await page.getByRole("button", { name: "Tentar de novo" }).count(), 0, `${caminho}: oferece tentar de novo`);
-    console.log(`OK: ${caminho} encerra o carregamento com "Projeto não encontrado"`);
+    console.log(`OK: ${caminho} encerra o carregamento com "Este projeto não existe ou foi removido."`);
   }
 
   // Resposta lenta: a indicação aparece e some quando o 404 chega.

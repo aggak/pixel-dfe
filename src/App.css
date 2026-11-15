@@ -251,6 +251,7 @@ main h1{scroll-margin-top:71px}
 .e-project-card h2{overflow-wrap:anywhere}
 .e-project-fields{padding:15px 18px 0;display:grid;gap:16px}
 .e-project-fields label{font-size:12px}
+.e-project-fields .e-opcional{font-size:10px;margin-left:3px;font-weight:400;color:var(--e-muted)}
 .e-edit-project-details{margin-top:15px;font-size:12px}
 .e-loading-state{min-height:270px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--e-muted);font-size:14px}
 .e-loading-compact{min-height:0;justify-content:flex-start;white-space:nowrap;font-size:12px}

@@ -15,7 +15,7 @@ export function EditarTarefa() {
   const { navegar, fechar, setOcupada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
   const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
-  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa ? "Editar tarefa" : "Tarefa");
+  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa ? `Editar: ${tarefa.titulo}` : "Editar tarefa");
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 

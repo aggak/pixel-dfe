@@ -208,7 +208,7 @@ async function executar() {
     await conferirTitulo("Projeto não encontrado");
     const alerta = await page.getByRole("alert").innerText();
     assert.ok(alerta.includes("Projeto não encontrado"), alerta);
-    assert.ok(alerta.includes("Este projeto não está disponível."), alerta);
+    assert.ok(alerta.includes("Este projeto não existe ou foi removido."), alerta);
     assert.equal(await page.getByRole("status").count(), 0);
   });
   await conferir("listas vazias e projeto sem tarefas têm mensagens", async () => {
@@ -294,12 +294,40 @@ async function executar() {
     await conferirTitulo("Tarefas");
   });
   await conferir("formulários têm títulos próprios e restauram o destino ao fechar", async () => {
-    for (const [rota, titulo, destino] of [["/tarefas/nova", "Nova tarefa", "Tarefas"], ["/tarefas/1/editar", "Editar tarefa", "Criar o repositório"], ["/projetos/novo", "Novo projeto", "Projetos"], ["/projetos/1/editar", "Editar projeto", "Gerenciador de Tarefas"]]) {
+    for (const [rota, titulo, destino, aba = titulo] of [["/tarefas/nova", "Nova tarefa", "Tarefas"], ["/tarefas/1/editar", "Editar tarefa", "Criar o repositório", "Editar: Criar o repositório"], ["/projetos/novo", "Novo projeto", "Projetos"], ["/projetos/1/editar", "Editar projeto", "Gerenciador de Tarefas", "Editar: Gerenciador de Tarefas"]]) {
       await abrir(rota);
       await ficha().locator("form").waitFor();
-      await conferirTitulo(titulo);
+      await conferirTitulo(aba);
       await ficha().getByRole("button", { name: `Fechar ${titulo.toLocaleLowerCase("pt-BR")}`, exact: true }).click();
       await conferirTitulo(destino);
+    }
+  });
+  await conferir("edição mantém o título genérico enquanto carrega e nomeia o registro depois", async () => {
+    let liberarTarefa;
+    const tarefaBloqueada = new Promise((resolve) => { liberarTarefa = resolve; });
+    await page.route(`${api}/tarefas/1`, async (route) => { await tarefaBloqueada; await route.continue(); });
+    try {
+      await page.goto(`${origem}/tarefas/1/editar`);
+      await conferirTitulo("Editar tarefa");
+      liberarTarefa();
+      await ficha().locator("form").waitFor();
+      await conferirTitulo("Editar: Criar o repositório");
+    } finally {
+      liberarTarefa();
+      await page.unrouteAll({ behavior: "wait" });
+    }
+    let liberarProjeto;
+    const projetoBloqueado = new Promise((resolve) => { liberarProjeto = resolve; });
+    await page.route((url) => url.pathname === "/projetos/1" && url.search === "", async (route) => { await projetoBloqueado; await route.continue(); });
+    try {
+      await page.goto(`${origem}/projetos/1/editar`);
+      await conferirTitulo("Editar projeto");
+      liberarProjeto();
+      await ficha().locator("form").waitFor();
+      await conferirTitulo("Editar: Gerenciador de Tarefas");
+    } finally {
+      liberarProjeto();
+      await page.unrouteAll({ behavior: "wait" });
     }
   });
   await conferir("ficha sobre projeto acompanha edição, fechamento e histórico", async () => {
@@ -311,7 +339,7 @@ async function executar() {
     await page.goForward();
     await conferirTitulo("Criar o repositório");
     await ficha().getByRole("button", { name: "Editar tarefa", exact: true }).click();
-    await conferirTitulo("Editar tarefa");
+    await conferirTitulo("Editar: Criar o repositório");
     await page.keyboard.press("Escape");
     await conferirTitulo("Criar o repositório");
     await page.keyboard.press("Escape");
