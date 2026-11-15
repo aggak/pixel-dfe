@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, type ReactNode } from "react";
+import { Component, lazy, Suspense, useState, type ReactNode } from "react";
 import { Link, Navigate, Route, Routes, useLocation, type Location } from "react-router";
 import { ListaTarefas } from "./pages/ListaTarefas";
 import { QuadroTarefas } from "./pages/QuadroTarefas";
@@ -10,7 +10,7 @@ import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
-import { ContextoAtualizacao } from "./hooks/useConsulta";
+import { ContextoAtualizacao, ContextoTentativaFundo, ContextoAoTentarDeNovo } from "./hooks/useConsulta";
 import "./App.css";
 
 const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
@@ -28,6 +28,7 @@ class FalhaFormulario extends Component<{ children: ReactNode; titulo: string },
 
 function App() {
   const location = useLocation();
+  const [tentativaFundo, setTentativaFundo] = useState(0);
   const caminho = location.pathname.replace(/\/+$/, "") || "/";
   const rota = caminho.toLowerCase();
   const ficha = ehRotaFicha(caminho);
@@ -47,6 +48,7 @@ function App() {
   // Nova tarefa aberta no quadro volta para ele ao fechar.
   const destinoFechar = editando ? caminho.replace(/\/editar$/i, "") : tarefaNova ? (fundo.pathname.replace(/\/+$/, "") || "/").toLowerCase() === "/quadro" ? fundo.pathname.replace(/\/+$/, "") || "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>
+    <ContextoTentativaFundo.Provider value={tentativaFundo}>
     <ContextoPaginaAtiva.Provider value={!ficha}>
     <ContextoAtualizacao.Provider value={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
     <Routes location={fundo}>
@@ -62,7 +64,8 @@ function App() {
     </Routes>
     </ContextoAtualizacao.Provider>
     </ContextoPaginaAtiva.Provider>
-    {ficha && <Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
+    </ContextoTentativaFundo.Provider>
+    {ficha && <ContextoAoTentarDeNovo.Provider value={tarefaNova || projetoNovo ? undefined : () => setTentativaFundo((atual) => atual + 1)}><Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
       <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
       <Routes location={location}>
         <Route path="/tarefas/nova" element={<NovaTarefa />} />
@@ -72,7 +75,7 @@ function App() {
         <Route path="/projetos/:id/editar" element={<EditarProjeto />} />
       </Routes>
       </Suspense></FalhaFormulario>
-    </Ficha>}
+    </Ficha></ContextoAoTentarDeNovo.Provider>}
   </>;
 }
 export default App;

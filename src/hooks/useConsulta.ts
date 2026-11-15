@@ -2,8 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 
 export const ContextoAtualizacao = createContext<string | undefined>(undefined);
 
+export const ContextoTentativaFundo = createContext(0);
+export const ContextoAoTentarDeNovo = createContext<(() => void) | undefined>(undefined);
+
 export function useConsulta<T>(consultar: (signal: AbortSignal) => Promise<T>, ultimosDados?: T) {
   const atualizacao = useContext(ContextoAtualizacao);
+  const tentativaFundo = useContext(ContextoTentativaFundo);
+  const aoTentarDeNovo = useContext(ContextoAoTentarDeNovo);
+  const [ultimaTentativaFundo, setUltimaTentativaFundo] = useState(tentativaFundo);
   const [tentativa, setTentativa] = useState(0);
   const [resultado, setResultado] = useState<{
     consulta: typeof consultar;
@@ -25,7 +31,7 @@ export function useConsulta<T>(consultar: (signal: AbortSignal) => Promise<T>, u
     return () => controller.abort();
   }, [consultar, tentativa, atualizacao]);
 
-  const tentarDeNovo = useCallback(() => setTentativa((atual) => atual + 1), []);
+  const tentarDeNovo = useCallback(() => { setTentativa((atual) => atual + 1); aoTentarDeNovo?.(); }, [aoTentarDeNovo]);
 
   // Uma nova consulta não deve exibir os dados da URL anterior.
   const mesmaConsulta = resultado?.consulta === consultar;
@@ -33,5 +39,9 @@ export function useConsulta<T>(consultar: (signal: AbortSignal) => Promise<T>, u
   const tentando = mesmaConsulta && !atual && resultado?.erro !== undefined;
   const anteriores = mesmaConsulta && resultado.tentativa === tentativa ? resultado.dados : ultimosDados;
   const dados = atual ? atual.dados : tentando ? undefined : anteriores;
+  if (ultimaTentativaFundo !== tentativaFundo) {
+    setUltimaTentativaFundo(tentativaFundo);
+    if (atual?.erro !== undefined) setTentativa((anterior) => anterior + 1);
+  }
   return { dados, erro: tentando ? resultado?.erro : atual?.erro, carregando: !atual && !tentando && dados === undefined, revalidando: !atual, tentando, tentarDeNovo };
 }
