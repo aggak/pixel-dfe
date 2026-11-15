@@ -113,7 +113,7 @@ async function executar() {
   assert.match(indexHtml, /<title>Tarefas · Pixel<\/title>/);
   for (const nome of FICHAS_LAZY) assert.ok(!indexHtml.includes(producao.chunks[nome]), `${nome} não deveria estar no index.html`);
   const metas = Object.fromEntries([...indexHtml.matchAll(/<meta (name|property)="([^"]+)" content="([^"]*)"/g)].map(([, , chave, valor]) => [chave, valor]));
-  assert.equal(metas["theme-color"], "#18161c");
+  assert.equal(metas["theme-color"], "#120c1b");
   assert.ok(metas.description?.length > 50 && metas.description === metas["og:description"], "description ausente ou diferente de og:description");
   assert.equal(metas["og:url"], "https://pixel-dfe-project.up.railway.app/");
   assert.equal(metas["og:image"], "https://pixel-dfe-project.up.railway.app/og-image.png");
