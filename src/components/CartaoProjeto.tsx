@@ -48,8 +48,8 @@ export function Monograma({ nome, className = "e-proj-mono" }: { nome: string; c
   return <span className={className} aria-hidden="true"><svg viewBox={`0 0 ${largura} 9`} width={largura * 2} height="18" shapeRendering="crispEdges" focusable="false"><path fill="currentColor" d={desenho} /></svg></span>;
 }
 
-export function AndamentoProjeto({ tarefas }: { tarefas?: Tarefa[] }) {
-  if (!tarefas) return <div className="e-proj-foot" />;
+export function AndamentoProjeto({ tarefas, carregando = false }: { tarefas?: Tarefa[]; carregando?: boolean }) {
+  if (!tarefas) return <div className="e-proj-foot">{carregando && <><div className="e-proj-foot-txt"><span className="e-proj-prog"><span className="e-loading-dot" aria-hidden="true" />Carregando andamento…</span></div><span className="e-proj-bar e-proj-bar-vazia" aria-hidden="true" /></>}</div>;
   const total = tarefas.length;
   const concluidas = tarefas.filter((tarefa) => tarefa.status === "concluida").length;
   const prazo = tarefas.filter((tarefa) => tarefa.status !== "concluida" && tarefa.prazo).map((tarefa) => tarefa.prazo).sort()[0];
