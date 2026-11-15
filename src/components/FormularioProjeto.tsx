@@ -24,6 +24,7 @@ interface FormularioProjetoProps {
   textoSalvar?: string;
   /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
   onEstadoEnvio?: (ocupada: boolean) => void;
+  onAlteracao?: (alterado: boolean) => void;
   /** Edição de projeto existente: só então um 404 significa que ele foi excluído. */
   edicao?: boolean;
 }
@@ -34,12 +35,15 @@ export function FormularioProjeto({
   onCancelar,
   textoSalvar = "Salvar projeto",
   onEstadoEnvio,
+  onAlteracao,
   edicao = false,
 }: FormularioProjetoProps) {
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
   const [disciplina, setDisciplina] = useState(valoresIniciais?.disciplina ?? "");
   const [criadoEm, setCriadoEm] = useState(valoresIniciais?.criadoEm ?? "");
+  const [iniciais] = useState(valoresIniciais);
+  const alterado = nome !== (iniciais?.nome ?? "") || descricao !== (iniciais?.descricao ?? "") || disciplina !== (iniciais?.disciplina ?? "") || criadoEm !== (iniciais?.criadoEm ?? "");
 
   const [enviando, setEnviando] = useState(false);
   // "inexistente": o projeto foi excluído enquanto a ficha estava aberta; tentar de novo não adianta.
@@ -48,10 +52,17 @@ export function FormularioProjeto({
   const enviandoRef = useRef(false);
 
   const onEstadoEnvioRef = useRef(onEstadoEnvio);
+  const onAlteracaoRef = useRef(onAlteracao);
   const notificadoRef = useRef(false);
   useEffect(() => {
     onEstadoEnvioRef.current = onEstadoEnvio;
+    onAlteracaoRef.current = onAlteracao;
   });
+  useEffect(() => {
+    if (!alterado) return;
+    onAlteracaoRef.current?.(true);
+    return () => onAlteracaoRef.current?.(false);
+  }, [alterado]);
   // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {

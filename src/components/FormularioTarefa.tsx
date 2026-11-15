@@ -38,6 +38,7 @@ interface FormularioTarefaProps {
   textoSalvar?: string;
   /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
   onEstadoEnvio?: (ocupada: boolean) => void;
+  onAlteracao?: (alterado: boolean) => void;
   /** Edição de tarefa existente: só então um 404 significa que ela foi excluída. O cadastro também recebe `valoresIniciais`. */
   edicao?: boolean;
 }
@@ -48,6 +49,7 @@ export function FormularioTarefa({
   onCancelar,
   textoSalvar = "Salvar tarefa",
   onEstadoEnvio,
+  onAlteracao,
   edicao = false,
 }: FormularioTarefaProps) {
   const id = useId();
@@ -62,6 +64,8 @@ export function FormularioTarefa({
   );
   const [responsavel, setResponsavel] = useState(valoresIniciais?.responsavel ?? "");
   const [prazo, setPrazo] = useState(valoresIniciais?.prazo ?? "");
+  const [iniciais] = useState(valoresIniciais);
+  const alterado = projetoId !== (iniciais?.projetoId ?? "") || titulo !== (iniciais?.titulo ?? "") || descricao !== (iniciais?.descricao ?? "") || status !== (iniciais?.status ?? "a-fazer") || prioridade !== (iniciais?.prioridade ?? "media") || responsavel !== (iniciais?.responsavel ?? "") || prazo !== (iniciais?.prazo ?? "");
   // A descrição já preenchida começa visível; recolher apenas esconde o campo, o valor fica no estado.
   const [descricaoAberta, setDescricaoAberta] = useState(Boolean(valoresIniciais?.descricao));
 
@@ -73,10 +77,17 @@ export function FormularioTarefa({
   const seletorProjetoRef = useRef<HTMLDivElement>(null);
 
   const onEstadoEnvioRef = useRef(onEstadoEnvio);
+  const onAlteracaoRef = useRef(onAlteracao);
   const notificadoRef = useRef(false);
   useEffect(() => {
     onEstadoEnvioRef.current = onEstadoEnvio;
+    onAlteracaoRef.current = onAlteracao;
   });
+  useEffect(() => {
+    if (!alterado) return;
+    onAlteracaoRef.current?.(true);
+    return () => onAlteracaoRef.current?.(false);
+  }, [alterado]);
   // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {

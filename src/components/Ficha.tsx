@@ -16,6 +16,7 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
   const location = useLocation();
   const [aberta, setAberta] = useState(true);
   const [ocupada, setOcupada] = useState(false);
+  const [alterada, setAlterada] = useState(false);
   const pendente = useRef<(() => void) | null>(null);
   const origem = useRef(document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null);
   const rolagem = useRef({ caminho: fundo.pathname + fundo.search, y: window.scrollY });
@@ -96,8 +97,8 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     setAberta(false);
   }
   const fechar = () => { if (!ocupada) navegar(destinoFechar); };
-  return <ContextoFicha.Provider value={{ navegar, fechar, destinoFechar, setOcupada }}>
-    <ModalOverlay isOpen={aberta} onOpenChange={(valor) => { if (!valor) fechar(); }} isDismissable={!ocupada} isKeyboardDismissDisabled={ocupada} className="e-form-overlay">
+  return <ContextoFicha.Provider value={{ navegar, fechar, destinoFechar, setOcupada, setAlterada }}>
+    <ModalOverlay isOpen={aberta} onOpenChange={(valor) => { if (!valor) fechar(); }} isDismissable={!ocupada && !alterada} isKeyboardDismissDisabled={ocupada} className="e-form-overlay">
       <Modal className="e-form-modal"><Dialog aria-label={titulo} className="e-form-dialog">
         <Presenca aoSair={concluirSaida}><div className="e-form-shell" ref={casca} onFocusCapture={(e) => { ultimoFoco.current = e.target as HTMLElement; }} aria-busy={ocupada}>
           <header className="e-form-header"><div className="e-form-symbol"><Icon name={icone} /></div><Heading slot="title">{titulo}</Heading><Button color="tertiary" size="sm" aria-label={`Fechar ${titulo.toLocaleLowerCase("pt-BR")}`} onClick={fechar} isDisabled={ocupada}><Icon name="cross-small" /></Button></header>

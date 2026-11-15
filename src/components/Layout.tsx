@@ -4,6 +4,7 @@ import { useConsulta } from "../hooks/useConsulta";
 import { TituloPagina } from "../hooks/useTituloPagina";
 import { Button } from "@/components/base/buttons/button";
 import { BoardIcon, Icon, ListIcon, RefreshIcon } from "../design/icon";
+import { statusTexto } from "../design/formatos";
 import type { Projeto, Tarefa } from "../tipos";
 import { ErroApi, ErroTempoEsgotado } from "../api";
 import { GatinhoDormindo } from "./GatinhoDormindo";
@@ -15,6 +16,7 @@ import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
 import { ALVOS_RESERVA, marcarVolta, primeiroVisivel } from "../hooks/useRetornoFoco";
+import { FILTROS_INICIAIS, type Filtros } from "../derivar";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -147,21 +149,39 @@ export function AlternarVisao() {
     return <Link key={destino} ref={atual ? ativo : undefined} to={destino} state={{ focoVisao: true }} aria-current={atual ? "page" : undefined}><Icone />{nome}</Link>;
   })}</nav>;
 }
-export function AnuncioResultados({ total, filtros }: { total: number; filtros: object }) {
+function fraseResultados(n: number) {
+  return `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+}
+export function AnuncioResultados({ total, filtros }: { total: number; filtros: Filtros }) {
   const [texto, setTexto] = useState("");
   const chave = JSON.stringify(filtros);
   const anterior = useRef(chave);
   const totalAtual = useRef(total);
+  const anunciado = useRef<number | null>(null);
+  const pendente = useRef(false);
+  const ativos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   useEffect(() => { totalAtual.current = total; }, [total]);
   useEffect(() => {
     if (anterior.current === chave) return;
     anterior.current = chave;
+    pendente.current = true;
     const espera = setTimeout(() => {
+      pendente.current = false;
       const n = totalAtual.current;
-      setTexto(`${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`);
+      anunciado.current = n;
+      setTexto(fraseResultados(n));
     }, 700);
-    return () => clearTimeout(espera);
+    return () => { clearTimeout(espera); pendente.current = false; };
   }, [chave]);
+  useEffect(() => {
+    if (pendente.current || anunciado.current === null || anunciado.current === total) return;
+    anunciado.current = total;
+    if (!ativos) return;
+    const n = total;
+    let vigente = true;
+    queueMicrotask(() => { if (vigente) setTexto(fraseResultados(n)); });
+    return () => { vigente = false; };
+  }, [total, ativos]);
   return <p className="sr-only" aria-live="polite" aria-atomic="true">{texto}</p>;
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {
@@ -197,10 +217,14 @@ function focarBuscaSePerdido() {
     if (!ativo || ativo === document.body || !ativo.isConnected) primeiroVisivel(ALVOS_RESERVA)?.focus();
   });
 }
-export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar }: { tarefas: Tarefa[]; exibidas: Tarefa[]; onLimpar: () => void }) {
-  const criada = (useLocation().state as { tarefaCriada?: string } | null)?.tarefaCriada;
+export function AvisoTarefaEscondida({ tarefas, exibidas, onLimpar, saiu, projetoAtual }: { tarefas: Tarefa[]; exibidas: Tarefa[]; onLimpar?: () => void; saiu?: Tarefa; projetoAtual?: string }) {
+  const estado = useLocation().state as { tarefaCriada?: string; projetoCriado?: string } | null;
+  const criada = estado?.tarefaCriada;
+  const saida = saiu && tarefas.some((tarefa) => tarefa.id === saiu.id) && !exibidas.some((tarefa) => tarefa.id === saiu.id) ? saiu : undefined;
+  const outroProjeto = projetoAtual !== undefined && criada !== undefined && estado?.projetoCriado !== undefined && estado.projetoCriado !== projetoAtual && !tarefas.some((tarefa) => tarefa.id === criada) ? estado.projetoCriado : undefined;
   const escondida = criada !== undefined && tarefas.some((tarefa) => tarefa.id === criada) && !exibidas.some((tarefa) => tarefa.id === criada);
-  return <div aria-live="polite" aria-atomic="true">{escondida && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>Tarefa criada, mas escondida pela busca ou pelos filtros.</span>{exibidas.length > 0 && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
+  const texto = saida ? `“${saida.titulo}” agora está em ${statusTexto[saida.status]} e saiu deste filtro.` : outroProjeto !== undefined ? "Tarefa criada em outro projeto." : escondida ? "Tarefa criada, mas escondida pela busca ou pelos filtros." : undefined;
+  return <div aria-live="polite" aria-atomic="true">{texto && <p className="e-hidden-notice"><Icon name="eye-crossed" /><span>{texto}</span>{outroProjeto !== undefined && <Link to={`/projetos/${encodeURIComponent(outroProjeto)}`}>Ver o projeto</Link>}{onLimpar && exibidas.length > 0 && outroProjeto === undefined && <Button color="link-color" size="sm" onClick={() => { onLimpar(); focarBuscaSePerdido(); }}>Limpar busca e filtros</Button>}</p>}</div>;
 }
 export function EstadoVazio({ titulo, descricao, acao, gato = "dormindo", destino, onAcao }: { titulo: string; descricao?: string; acao: string; gato?: "dormindo" | "olhando"; destino?: string; onAcao?: () => void }) {
   const location = useLocation();

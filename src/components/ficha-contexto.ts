@@ -5,7 +5,7 @@ export function ehRotaFicha(caminho: string) {
   return /^\/tarefas\/(nova|[^/]+(?:\/editar)?)\/?$/i.test(caminho) || /^\/projetos\/(novo|[^/]+\/editar)\/?$/i.test(caminho);
 }
 export type EstadoFicha = { fundo?: Location; chaveConteudo?: string };
-type Navegacao = { navegar: (destino: string, atualizar?: boolean, estado?: object, alvos?: string[]) => void; fechar: () => void; destinoFechar: string; setOcupada: (ocupada: boolean) => void };
+type Navegacao = { navegar: (destino: string, atualizar?: boolean, estado?: object, alvos?: string[]) => void; fechar: () => void; destinoFechar: string; setOcupada: (ocupada: boolean) => void; setAlterada: (alterada: boolean) => void };
 export const ContextoFicha = createContext<Navegacao | null>(null);
 export function useFicha() {
   const contexto = useContext(ContextoFicha);

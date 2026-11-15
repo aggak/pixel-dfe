@@ -171,6 +171,28 @@ async function executar() {
     assert.deepEqual(await lerBanco(), antes);
   });
 
+  await conferir("clique fora: sem alteração volta ao detalhe; com alteração fica na edição com os valores", async () => {
+    const fora = async () => {
+      await ate("ficha posicionada", async () => (await page.locator(".e-form-modal").boundingBox())?.x > 200);
+      await page.mouse.click(100, 450);
+    };
+    gravacoes.length = 0;
+    await abrir(); await fora();
+    await ate("detalhe após clique fora sem alteração", async () => caminho() === "/tarefas/1");
+    await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
+    const dados = await abrir();
+    const outroStatus = dados.status === "concluida" ? "A fazer" : "Concluída";
+    await ui.escolher("Status", outroStatus); await fora(); await dormir(400);
+    assert.equal(caminho(), "/tarefas/1/editar");
+    assert.equal(await page.getByRole("dialog", { name: "Editar tarefa", exact: true }).count(), 1);
+    assert.equal(await ui.seletor("Status").innerText().then((texto) => texto.includes(outroStatus)), true);
+    await campo("Título").fill("Rascunho mantido"); await fora(); await dormir(400);
+    assert.equal(caminho(), "/tarefas/1/editar"); assert.equal(await campo("Título").inputValue(), "Rascunho mantido");
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await ate("Cancelar segue voltando ao detalhe", async () => caminho() === "/tarefas/1");
+    assert.equal(gravacoes.length, 0);
+  });
+
   await conferir("ID inexistente encerra carregamento e não abre formulário", async () => {
     await page.goto(`${origem}/tarefas/999/editar`);
     await page.getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
