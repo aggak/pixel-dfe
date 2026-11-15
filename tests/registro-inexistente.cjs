@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawn } = require("node:child_process");
-const { copyFile, mkdtemp, readFile, rm } = require("node:fs/promises");
+const { copyFile, mkdtemp, readFile, rm, writeFile } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
@@ -217,6 +217,109 @@ async function executar() {
   assert.equal(await ficha().locator(".e-read-project").getByRole("link").count(), 0);
   console.log("OK: tarefa com projeto inexistente não oferece link quebrado");
 
+  // A caixa da rota não muda o id: o json-server gera id aleatório, então estes dois são gravados no arquivo.
+  const dadosCaixa = JSON.parse(await readFile(banco, "utf8"));
+  dadosCaixa.tarefas.push({ id: "AbC", projetoId: "1", titulo: "Tarefa com id misto", descricao: "Caixa do id", status: "a-fazer", prioridade: "media", responsavel: "Ana", prazo: "2026-12-01" });
+  dadosCaixa.projetos.push({ id: "XyZ", nome: "Projeto com id misto", descricao: "Caixa", disciplina: "DFE", criadoEm: "2026-10-01" });
+  await writeFile(banco, JSON.stringify(dadosCaixa, null, 2));
+  for (const endereco of [`${api}/tarefas/AbC`, `${api}/projetos/XyZ`]) {
+    let visivel = false;
+    for (let tentativa = 0; tentativa < 50 && !visivel; tentativa++) {
+      visivel = (await fetch(endereco).catch(() => ({ ok: false }))).ok;
+      if (!visivel) await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    assert.equal(visivel, true, endereco);
+  }
+  const pedidosCaixa = [];
+  const ouvirCaixa = (req) => { const url = new URL(req.url()); if (url.origin === api) pedidosCaixa.push(`${req.method()} ${decodeURIComponent(url.pathname)}`); };
+  page.on("request", ouvirCaixa);
+
+  await page.goto(`${web}/Tarefas/AbC`);
+  await ficha().getByRole("heading", { name: "Tarefa com id misto", exact: true }).waitFor();
+  assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC");
+  await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Fechar detalhes da tarefa");
+  assert.ok(pedidosCaixa.includes("GET /tarefas/AbC"), pedidosCaixa.join(", "));
+  assert.equal(pedidosCaixa.includes("GET /tarefas/abc"), false);
+  await page.getByRole("button", { name: "Fechar detalhes da tarefa", exact: true }).click();
+  await ficha().waitFor({ state: "detached" });
+  await page.waitForURL(`${web}/`);
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
+  console.log("OK: /Tarefas/AbC abre a ficha com o id original, foca o fechar e volta à lista");
+
+  pedidosCaixa.length = 0;
+  await page.goto(`${web}/Tarefas/AbC/Editar`);
+  await ficha().getByLabel(/^Título/).waitFor();
+  assert.equal(await ficha().getByLabel(/^Título/).inputValue(), "Tarefa com id misto");
+  assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC/Editar");
+  assert.ok(pedidosCaixa.includes("GET /tarefas/AbC"), pedidosCaixa.join(", "));
+  await page.getByRole("button", { name: "Fechar editar tarefa", exact: true }).click();
+  await ficha().getByRole("heading", { name: "Tarefa com id misto", exact: true }).waitFor();
+  assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC");
+  console.log("OK: /Tarefas/AbC/Editar preserva o id e fechar volta ao detalhe");
+
+  await page.goto(`${web}/Tarefas/6`);
+  await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Página não encontrada", exact: true }).count(), 0);
+  console.log('OK: /Tarefas/6 abre a ficha e não a página "Página não encontrada"');
+
+  await page.goto(`${web}/Tarefas/nova`);
+  await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).click();
+  await page.waitForURL(`${web}/`);
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
+  console.log("OK: /Tarefas/nova abre o formulário e fechar volta à lista");
+
+  await page.goto(`${web}/TAREFAS/NOVA?projetoId=XyZ`);
+  await ficha().locator('select[name="projetoId"]').waitFor();
+  assert.equal(await ficha().locator('select[name="projetoId"]').inputValue(), "XyZ");
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  await page.waitForURL(`${web}/projetos/XyZ`);
+  await page.getByRole("heading", { level: 1, name: "Projeto com id misto", exact: true }).waitFor();
+  console.log("OK: /TAREFAS/NOVA?projetoId=XyZ cancela no projeto sem mudar a caixa do id");
+
+  pedidosCaixa.length = 0;
+  await page.goto(`${web}/Projetos/Novo`);
+  await page.getByRole("dialog", { name: "Novo projeto", exact: true }).waitFor();
+  assert.equal(pedidosCaixa.some((pedido) => /\/projetos\/novo$/i.test(pedido)), false, pedidosCaixa.join(", "));
+  await page.getByRole("button", { name: "Fechar novo projeto", exact: true }).click();
+  await page.waitForURL(`${web}/projetos`);
+  await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+  console.log("OK: /Projetos/Novo abre o cadastro e não trata Novo como id");
+
+  await page.goto(`${web}/Projetos/1/EDITAR`);
+  await ficha().getByLabel(/^Nome/).waitFor();
+  assert.equal(await ficha().getByLabel(/^Nome/).inputValue(), "Gerenciador de Tarefas");
+  await page.getByRole("button", { name: "Fechar editar projeto", exact: true }).click();
+  await page.waitForURL(`${web}/Projetos/1`);
+  await page.getByRole("heading", { level: 1, name: "Gerenciador de Tarefas", exact: true }).waitFor();
+  console.log("OK: /Projetos/1/EDITAR preserva o caminho e fechar volta ao projeto");
+
+  await page.goto(`${web}/Quadro`);
+  await page.getByRole("region", { name: "Quadro de tarefas por status" }).waitFor();
+  await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
+  await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).click();
+  await page.waitForURL(`${web}/Quadro`);
+  await page.getByRole("region", { name: "Quadro de tarefas por status" }).waitFor();
+  console.log("OK: nova tarefa aberta em /Quadro fecha de volta no quadro");
+
+  await page.goto(`${web}/projetos`);
+  await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+  const historicoIndex = await page.evaluate(() => history.length);
+  await page.goto(`${web}/index.html?origem=atalho#lista`);
+  await page.waitForURL(`${web}/?origem=atalho#lista`);
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
+  assert.equal(await ficha().count(), 0);
+  assert.equal(await page.evaluate(() => history.length), historicoIndex + 1, "/index.html empilhou histórico");
+  await page.goBack();
+  await page.waitForURL(`${web}/projetos`);
+  await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
+  await page.goto(`${web}/INDEX.HTML`);
+  await page.waitForURL(`${web}/`);
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
+  console.log("OK: /index.html e /INDEX.HTML redirecionam para / com replace e preservam query/hash");
+
+  page.off("request", ouvirCaixa);
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);

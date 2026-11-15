@@ -80,10 +80,29 @@ async function executar() {
     console.log("OK: cada tarefa aparece uma vez na coluna do seu status, com contador");
 
     await selecionar("Status", "A fazer");
-    for (const status of ORDEM.slice(1)) assert.equal(await coluna(status).getByText("Nenhuma tarefa", { exact: true }).count(), 1);
+    for (const status of ORDEM.slice(1)) assert.equal(await coluna(status).getByText("Nenhuma tarefa encontrada", { exact: true }).count(), 1);
     assert.equal(await page.locator(".e-column").count(), 4);
     assert.deepEqual(await idsDaColuna("a-fazer"), seed.tarefas.filter((t) => t.status === "a-fazer").map((t) => t.id));
-    console.log("OK: colunas vazias continuam visíveis com \"Nenhuma tarefa\"");
+    console.log("OK: colunas filtradas continuam visíveis com texto de busca");
+
+    await selecionar("Status", "Todos");
+    const tarefaBuscada = seed.tarefas.find((t) => t.status === "a-fazer");
+    await busca.fill(tarefaBuscada.titulo);
+    for (const status of ORDEM.slice(1)) assert.equal(await coluna(status).getByText("Nenhuma tarefa encontrada", { exact: true }).count(), 1);
+    await busca.fill("");
+    await page.route(`${api}/tarefas`, (route) => route.fulfill({ json: seed.tarefas.filter((t) => t.status !== "concluida") }));
+    await page.reload();
+    await quadro.locator("[data-task-id]").first().waitFor();
+    assert.equal(await coluna("concluida").getByText("Nenhuma tarefa", { exact: true }).count(), 1);
+    await selecionar("Status", "A fazer");
+    assert.equal(await coluna("concluida").getByText("Nenhuma tarefa", { exact: true }).count(), 1);
+    assert.equal(await coluna("em-revisao").getByText("Nenhuma tarefa encontrada", { exact: true }).count(), 1);
+    await page.unroute(`${api}/tarefas`);
+    await page.reload();
+    await quadro.locator("[data-task-id]").first().waitFor();
+    console.log("OK: busca e filtro distinguem tarefas escondidas de coluna realmente vazia");
+
+    await selecionar("Status", "A fazer");
 
     // Estado único: o que o quadro filtrou chega à lista, e o que a lista filtra volta ao quadro.
     await busca.fill("diagrama");
@@ -169,7 +188,7 @@ async function executar() {
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
     assert.deepEqual(atuais, originais);
-    console.log("8 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
+    console.log("9 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();

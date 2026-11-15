@@ -29,21 +29,23 @@ class FalhaFormulario extends Component<{ children: ReactNode; titulo: string },
 function App() {
   const location = useLocation();
   const caminho = location.pathname.replace(/\/+$/, "") || "/";
+  const rota = caminho.toLowerCase();
   const ficha = ehRotaFicha(caminho);
   const estado = location.state as EstadoFicha | null;
-  const projetoNovo = caminho === "/projetos/novo";
-  const tarefaNova = caminho === "/tarefas/nova";
-  const editando = caminho.endsWith("/editar");
-  const projeto = caminho.startsWith("/projetos/");
+  const projetoNovo = rota === "/projetos/novo";
+  const tarefaNova = rota === "/tarefas/nova";
+  const editando = rota.endsWith("/editar");
+  const projeto = rota.startsWith("/projetos/");
   const projetoOrigem = new URLSearchParams(location.search).get("projetoId");
-  const fallback = projetoNovo ? "/projetos" : projeto ? caminho.replace(/\/editar$/, "") : tarefaNova && projetoOrigem ? `/projetos/${encodeURIComponent(projetoOrigem)}` : "/";
+  const fallback = projetoNovo ? "/projetos" : projeto ? caminho.replace(/\/editar$/i, "") : tarefaNova && projetoOrigem ? `/projetos/${encodeURIComponent(projetoOrigem)}` : "/";
   const candidato = estado?.fundo;
-  const fundo: Location = ficha && candidato && typeof candidato.pathname === "string" && !ehRotaFicha(candidato.pathname) && (candidato.pathname === "/" || candidato.pathname === "/quadro" || candidato.pathname === "/projetos" || /^\/projetos\/[^/]+$/.test(candidato.pathname))
+  const fundoRota = typeof candidato?.pathname === "string" ? candidato.pathname.replace(/\/+$/, "").toLowerCase() || "/" : "";
+  const fundo: Location = ficha && candidato && fundoRota && !ehRotaFicha(candidato.pathname) && (fundoRota === "/" || fundoRota === "/quadro" || fundoRota === "/projetos" || /^\/projetos\/[^/]+$/.test(fundoRota))
     ? candidato : ficha ? { pathname: fallback, search: "", hash: "", state: null, key: `fundo:${fallback}` } : location;
   const titulo = projetoNovo ? "Novo projeto" : tarefaNova ? "Nova tarefa" : editando ? projeto ? "Editar projeto" : "Editar tarefa" : "Detalhes da tarefa";
   const tituloInicial = projetoNovo || tarefaNova || editando ? titulo : projeto ? "Projeto" : "Tarefa";
   // Nova tarefa aberta no quadro volta para ele ao fechar.
-  const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fundo.pathname === "/quadro" ? "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
+  const destinoFechar = editando ? caminho.replace(/\/editar$/i, "") : tarefaNova ? (fundo.pathname.replace(/\/+$/, "") || "/").toLowerCase() === "/quadro" ? fundo.pathname.replace(/\/+$/, "") || "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>
     <ContextoPaginaAtiva.Provider value={!ficha}>
     <ContextoAtualizacao.Provider value={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
@@ -51,6 +53,7 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<ListaTarefas />} />
         <Route path="/tarefas" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
+        <Route path="/index.html" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
         <Route path="/quadro" element={<QuadroTarefas />} />
         <Route path="/projetos" element={<ListaProjetos />} />
         <Route path="/projetos/:id" element={<DetalheProjeto />} />
