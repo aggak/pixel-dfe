@@ -74,6 +74,14 @@ Para verificar o TypeScript e gerar os arquivos de produção em `dist/`:
 npm run build
 ```
 
+Para rodar os testes automatizados, com o Google Chrome instalado:
+
+```bash
+npm test
+```
+
+Cada suíte sobe a própria API e a própria aplicação em portas livres, sobre uma cópia temporária dos dados, sem tocar no `db.json`. Para rodar só algumas, informe os nomes: `npm test -- marco-2 estado-erro`.
+
 ## Equipe
 
 Equipe **Pixel**. Projeto da disciplina **Desenvolvimento Frontend**, ULBRA — 2026.2.
