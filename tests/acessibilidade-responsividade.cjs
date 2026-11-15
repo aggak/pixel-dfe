@@ -256,6 +256,20 @@ async function executar() {
   }
   console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte da web e com a de reserva");
 
+  for (const largura of [375, 320]) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    await prepararFonte(page, "web", "/");
+    await page.locator(".e-task-menu").first().click();
+    await page.getByRole("menuitem", { name: "Excluir tarefa", exact: true }).click();
+    await page.locator(".e-confirm-dialog").waitFor();
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== "running"));
+    const alturas = await page.locator(".e-confirm-actions button").evaluateAll((botoes) => botoes.map((b) => Math.round(b.getBoundingClientRect().height)));
+    assert.equal(alturas.length, 2, `${largura}px: botões da confirmação`);
+    assert.ok(alturas.every((altura) => altura >= 44), `${largura}px: botões da confirmação com ${alturas.join(" e ")} px de altura`);
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+  }
+  console.log("OK: botões da confirmação de exclusão com pelo menos 44 px de altura em 375 e 320 px");
+
   // A área de toque ampliada não pode levar o anel de foco para cima do texto vizinho.
   for (const [fonte, aba] of [["web", page], ["reserva", semFonte]]) {
     await aba.setViewportSize({ width: 375, height: 800 });
