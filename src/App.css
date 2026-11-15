@@ -338,6 +338,9 @@ main h1{scroll-margin-top:71px}
 .e-form-overlay input[type=date]::-webkit-datetime-edit-month-field,
 .e-form-overlay input[type=date]::-webkit-datetime-edit-day-field { padding-block:0; }
 .e-form-overlay input[type=date]::-webkit-calendar-picker-indicator { line-height:1; }
+@supports (-webkit-hyphens:none) {
+ .e-form-overlay input[type=date][value=""]:not(:focus)::-webkit-datetime-edit { color:var(--e-muted); opacity:.55; }
+}
 
 .e-project-fields>.e-form-two { grid-template-columns:minmax(0,1fr); }
 .e-board-content>.e-board{margin-top:18px}
