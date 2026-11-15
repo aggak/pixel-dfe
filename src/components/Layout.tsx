@@ -96,22 +96,34 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
       const resto = nav.scrollWidth - nav.clientWidth - nav.scrollLeft;
       nav.dataset.sobra = `${nav.scrollLeft > 2 ? "ini" : ""} ${resto > 2 ? "fim" : ""}`.trim();
     };
-    const mostrarAtual = () => {
-      medir();
-      const aba = nav.querySelector<HTMLElement>("a[aria-current]");
-      if (!aba || aba === todas) return;
-      const folga = matchMedia("(max-width: 650px)").matches ? 26 : 60;
+    const trazer = (aba: HTMLElement, behavior: ScrollBehavior, folga: number) => {
+      if (aba === todas) return;
       const inicio = aba.offsetLeft - todas.offsetWidth - folga;
       const fim = aba.offsetLeft + aba.offsetWidth + folga - nav.clientWidth;
       const alvo = nav.scrollLeft > inicio ? inicio : nav.scrollLeft < fim ? Math.min(fim, inicio) : nav.scrollLeft;
-      nav.scrollTo({ left: Math.max(alvo, 0), behavior: "auto" });
+      const esquerda = Math.max(alvo, 0);
+      if (Math.abs(esquerda - nav.scrollLeft) > 1) nav.scrollTo({ left: esquerda, behavior });
+      medir();
+    };
+    const folgaAtual = () => matchMedia("(max-width: 650px)").matches ? 26 : 60;
+    const folgaFoco = () => matchMedia("(max-width: 650px)").matches ? 20 : 56;
+    const mostrarAtual = () => {
+      medir();
+      const aba = nav.querySelector<HTMLElement>("a[aria-current]");
+      if (aba) trazer(aba, "auto", folgaAtual());
+    };
+    const aoFocar = (evento: FocusEvent) => {
+      const aba = evento.target instanceof Element ? evento.target.closest("a") : null;
+      if (!aba || !nav.contains(aba)) return;
+      trazer(aba, matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", folgaFoco());
     };
     mostrarAtual();
     document.fonts?.ready.then(mostrarAtual);
     nav.addEventListener("scroll", medir, { passive: true });
+    nav.addEventListener("focusin", aoFocar);
     const observador = new ResizeObserver(mostrarAtual);
     observador.observe(nav);
-    return () => { nav.removeEventListener("scroll", medir); observador.disconnect(); };
+    return () => { nav.removeEventListener("scroll", medir); nav.removeEventListener("focusin", aoFocar); observador.disconnect(); };
   }, [atual, total]);
   const rolar = (sentido: number) => {
     const nav = fileira.current;
