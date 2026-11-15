@@ -1,5 +1,6 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
@@ -9,6 +10,7 @@ import { dataValida } from "../design/formatos";
 import { FolderIcon, Icon, RefreshIcon } from "../design/icon";
 import { useConsulta } from "../hooks/useConsulta";
 import type { NovaTarefa, Prioridade, Status } from "../tipos";
+import { ContextoFicha } from "./ficha-contexto";
 import "./FormularioTarefa.css";
 
 const opcoesStatus: { valor: Status; texto: string }[] = [
@@ -53,6 +55,7 @@ export function FormularioTarefa({
   edicao = false,
 }: FormularioTarefaProps) {
   const id = useId();
+  const ficha = useContext(ContextoFicha);
   const projetos = useConsulta(listarProjetos);
 
   const [projetoId, setProjetoId] = useState(valoresIniciais?.projetoId ?? "");
@@ -257,8 +260,9 @@ export function FormularioTarefa({
               </p>
             )}
             {projetos.dados && !projetosDisponiveis && (
-              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
-                Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.
+              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso formulario-tarefa__aviso--acao" role="status">
+                <span>Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa. </span>
+                <Link to="/projetos/novo" onClick={(evento) => { if (!ficha || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return; evento.preventDefault(); ficha.navegar("/projetos/novo"); }}>Criar projeto</Link>
               </p>
             )}
           </div>

@@ -52,6 +52,7 @@ const FIXTURE_HTML = `<!doctype html>
 const FIXTURE_TSX = `import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nProvider } from "react-aria-components";
+import { MemoryRouter } from "react-router";
 import { FormularioTarefa } from "../src/components/FormularioTarefa";
 import { atualizarTarefa, criarTarefa } from "../src/api";
 import type { NovaTarefa, Tarefa } from "../src/tipos";
@@ -80,7 +81,7 @@ function Pagina() {
   if (modo === "sem-cancelar") formulario = <FormularioTarefa onSalvar={registrar} />;
   return <main><h1>Formulário de tarefa</h1>{formulario}<p data-testid="resultado">{resultado}</p><p data-testid="envios" hidden>{envios}</p></main>;
 }
-createRoot(document.getElementById("root")!).render(<StrictMode><I18nProvider locale="pt-BR"><Pagina /></I18nProvider></StrictMode>);`;
+createRoot(document.getElementById("root")!).render(<StrictMode><I18nProvider locale="pt-BR"><MemoryRouter><Pagina /></MemoryRouter></I18nProvider></StrictMode>);`;
 async function executar() {
   try { await access(join(repo, "src/components/FormularioTarefa.tsx")); } catch { throw new Error("Componente ausente: src/components/FormularioTarefa.tsx"); }
   const bancoRealAntes = await readFile(join(repo, "db.json"), "utf8");
@@ -388,6 +389,7 @@ async function executar() {
     await page.route(`${apiUrl}/projetos`, (route) => route.fulfill({ json: [] }));
     await abrir("novo", false);
     await ate("orientação de lista vazia", async () => /nenhum projeto/i.test(await page.locator("body").innerText()));
+    assert.equal(await page.getByRole("link", { name: "Criar projeto", exact: true }).getAttribute("href"), "/projetos/novo");
     assert.equal(await botaoEnvio().isDisabled(), true);
     assert.equal((await payloads()).length, 0);
     await page.unrouteAll();

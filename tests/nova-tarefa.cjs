@@ -6,7 +6,7 @@ const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
 const { createServer: servidorNet } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { comTextos, criarUi, lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
 const repo = join(__dirname, "..");
 const evidencias = process.env.NOVA_TAREFA_EVIDENCIAS || "";
 const ROTULOS = ["Projeto", "Título", "Descrição", "Status", "Prioridade", "Responsável", "Prazo"];
@@ -342,6 +342,45 @@ async function executar() {
     await page.goForward();
     await ate("lista ao avançar", async () => caminho().pathname === "/");
     await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+  });
+  await conferir("sem projetos, Criar projeto abre a ficha sem recarregar; com projetos, o link não aparece", async () => {
+    await abrir("/tarefas/nova");
+    assert.equal(await page.getByRole("link", { name: "Criar projeto", exact: true }).count(), 0);
+    assert.equal(await page.getByText("Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.").count(), 0);
+    await page.route(`${apiUrl}/projetos`, (route) => route.fulfill({ json: [] }));
+    try {
+      await page.goto(`${origem}/tarefas/nova`);
+      await page.locator("form").waitFor();
+      const aviso = page.getByRole("status").filter({ hasText: "Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa." });
+      await aviso.waitFor();
+      const link = aviso.getByRole("link", { name: "Criar projeto", exact: true });
+      assert.equal(await link.getAttribute("href"), "/projetos/novo");
+      assert.equal(await botaoEnvio().isDisabled(), true);
+      await page.setViewportSize({ width: 375, height: 800 });
+      const alvo = await link.evaluate((el) => { const caixa = el.getBoundingClientRect(); return { largura: caixa.width, altura: caixa.height }; });
+      assert.ok(alvo.largura >= 44 && alvo.altura >= 44, `alvo ${alvo.largura}×${alvo.altura}`);
+      await link.focus();
+      assert.equal(await focoVisivel(link), true);
+      await page.setViewportSize({ width: 1280, height: 900 });
+      const historico = await page.evaluate(() => history.length);
+      await page.evaluate(() => { window.__semRecarga = true; });
+      const popup = page.context().waitForEvent("page", { timeout: 5000 });
+      await link.click({ modifiers: ["Control"] });
+      const aba = await popup;
+      await ate("Ctrl+clique abre /projetos/novo em outra aba", async () => new URL(aba.url()).pathname === "/projetos/novo");
+      assert.equal(new URL(page.url()).pathname, "/tarefas/nova");
+      await aba.close();
+      await link.click();
+      await ate("ficha de novo projeto na mesma aba", async () => caminho().pathname === "/projetos/novo");
+      assert.equal(await page.evaluate(() => window.__semRecarga), true);
+      assert.equal(await page.evaluate(() => history.length), historico);
+      await page.getByRole("dialog", { name: "Novo projeto", exact: true }).waitFor();
+      await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+      await ate("cancelar o novo projeto segue para a lista de projetos", async () => caminho().pathname === "/projetos");
+    } finally {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.unrouteAll();
+    }
   });
   await conferir("sem erros de página ou console e bancos reais intactos", async () => {
     assert.deepEqual(errosPagina, []); assert.deepEqual(errosConsole, []);

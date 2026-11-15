@@ -37,6 +37,27 @@
   color: inherit;
 }
 
+.formulario-tarefa__aviso--acao a {
+  color: var(--e-action);
+  border-radius: 2px;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+}
+
+.formulario-tarefa__aviso--acao a:hover {
+  color: var(--e-ink);
+  text-decoration-color: currentColor;
+}
+
+@media (max-width: 650px), (pointer: coarse) {
+  .formulario-tarefa__aviso--acao a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
 /* Equivale a `.e-description #task-description` (o id aqui é gerado por useId). */
 .e-description-body {
   padding: 4px 0 6px;
