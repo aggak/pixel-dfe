@@ -200,6 +200,32 @@ async function executar() {
     for (const mensagem of ["Informe o título da tarefa.", "Selecione um projeto.", "Informe o responsável.", "Informe o prazo."]) await page.getByText(mensagem, { exact: true }).waitFor();
     if (evidencias) { await mkdir(evidencias, { recursive: true }); await page.screenshot({ path: join(evidencias, "formulario-novo.png") }); }
   });
+  await conferir("projeto vazio expõe estado inválido, descrição do erro e foco até a correção por teclado", async () => {
+    await abrir("novo");
+    const seletor = ui.seletor("Projeto");
+    assert.equal(await seletor.getAttribute("aria-invalid"), null);
+    await campo("Título").fill("Validar projeto obrigatório");
+    await botaoSalvar().click();
+    await page.getByText("Selecione um projeto.", { exact: true }).waitFor();
+    await ate("foco no projeto inválido", () => seletor.evaluate((el) => el === document.activeElement));
+    assert.equal(await seletor.getAttribute("aria-invalid"), "true");
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    assert.equal(await focoVisivel(seletor), true);
+    const descricao = await seletor.getAttribute("aria-describedby");
+    assert.equal(await page.locator(`[id="${descricao}"]`).innerText(), "Selecione um projeto.");
+    assert.equal(await page.locator(`[id="${descricao}"]`).getAttribute("role"), "alert");
+    assert.equal((await payloads()).length, 0);
+    await seletor.press("ArrowDown");
+    await page.getByRole("listbox").waitFor();
+    await page.keyboard.press("Home");
+    await page.keyboard.press("Enter");
+    await page.getByRole("listbox").waitFor({ state: "detached" });
+    assert.equal(await ui.valor("Projeto"), seed.projetos[0].id);
+    assert.equal(await seletor.getAttribute("aria-invalid"), null);
+    assert.equal(await seletor.getAttribute("aria-describedby"), null);
+    assert.equal(await page.getByText("Selecione um projeto.", { exact: true }).count(), 0);
+  });
   await conferir("validação preserva o calendário, reserva espaço para ícones e usa a cor de erro do tema", async () => {
     const corErro = "rgb(238, 152, 172)";
     assert.ok(contraste(corErro, "rgb(44, 39, 50)") >= 4.5);
@@ -420,11 +446,18 @@ async function executar() {
     try {
       await abrir("editar", false);
       await page.getByText("O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.", { exact: true }).waitFor();
+      const seletor = ui.seletor("Projeto");
+      assert.equal(await seletor.getAttribute("aria-invalid"), "true");
+      const descricao = await seletor.getAttribute("aria-describedby");
+      assert.equal(await page.locator(`[id="${descricao}"]`).innerText(), "O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.");
+      assert.equal(await page.locator(`[id="${descricao}"]`).getAttribute("role"), "status");
       assert.equal(await botaoEnvio().isDisabled(), true);
       await page.locator("form").evaluate((f) => f.requestSubmit());
       assert.equal((await payloads()).length, 0);
       await ui.escolher("Projeto", seed.projetos[0].nome);
       assert.equal(await ui.valor("Projeto"), "1");
+      assert.equal(await seletor.getAttribute("aria-invalid"), null);
+      assert.equal(await seletor.getAttribute("aria-describedby"), null);
       await botaoEnvio().click();
       await ate("envio com projeto disponível", async () => (await payloads()).length === 1);
       assert.equal((await payloads())[0].projetoId, "1");
