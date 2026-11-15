@@ -136,7 +136,7 @@ async function executar() {
   await conferirFiltros("a", "A fazer", "Média");
   assert.deepEqual(await ids(quadro), combinadas);
   assert.deepEqual(await marcados(), [null, "page", "page"]);
-  assert.match(await page.locator(".e-sheet-footer").innerText(), new RegExp(`^${combinadas.length} tarefas?$`));
+  assert.match(await page.locator(".e-sheet-footer").innerText(), new RegExp(`^${combinadas.length} de ${seed.tarefas.length} tarefas$`));
   console.log("OK: lista → quadro preserva busca, status e prioridade, sem recarregar o documento");
 
   await busca.fill("");

@@ -224,13 +224,13 @@ async function executar() {
   await selecionarFiltro("Prioridade", "Média");
   await cartao("1").waitFor({ state: "detached" });
   const medias = seed.tarefas.filter((t) => t.prioridade === "media").length;
-  assert.equal(await rodape.innerText(), textoTotal(medias));
+  assert.equal(await rodape.innerText(), `${medias} de ${textoTotal(total)}`);
   await busca.fill("tela");
   await cartao("3").waitFor({ state: "detached" });
-  assert.equal(await rodape.innerText(), textoTotal(1));
+  assert.equal(await rodape.innerText(), `1 de ${textoTotal(total)}`);
   await escolher(alvo, "a-fazer");
   await page.waitForFunction(([id, texto]) => document.querySelector(`[data-task-id="${id}"] [data-status-trigger]`)?.textContent === texto, [alvo.id, TEXTO_STATUS["a-fazer"]]);
-  assert.equal(await rodape.innerText(), textoTotal(1));
+  assert.equal(await rodape.innerText(), `1 de ${textoTotal(total)}`);
   assert.equal(await tarefasNaTela(alvo.id), 1);
   await busca.fill("");
   await selecionarFiltro("Prioridade", "Todas");
@@ -239,7 +239,7 @@ async function executar() {
   const aFazer = (await lista.locator("[data-task-id]").count());
   await escolher(alvo, "concluida");
   await cartao(alvo.id).waitFor({ state: "detached" });
-  assert.equal(await rodape.innerText(), textoTotal(aFazer - 1));
+  assert.equal(await rodape.innerText(), `${aFazer - 1} de ${textoTotal(total)}`);
   assert.equal((await lerTarefa(alvo.id)).status, "concluida");
   // O cartão saiu da tela; o foco vai para a busca, visível, em vez de cair no body ou no título recortado.
   await page.waitForFunction(() => document.activeElement?.closest(".e-task-search") !== null);

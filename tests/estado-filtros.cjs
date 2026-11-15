@@ -57,6 +57,49 @@ async function executar() {
     const titulos = () => lista.locator(".e-task-title").allInnerTexts();
     await lista.getByRole("article").first().waitFor();
 
+    const limpar = page.getByRole("button", { name: "Limpar busca, status e prioridade", exact: true });
+    const rodape = page.locator(".e-sheet-footer");
+    const conferirLimpeza = async () => {
+      await limpar.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(await limpar.count(), 0);
+      assert.equal(await busca.inputValue(), "");
+      assert.match(await seletor("Status").innerText(), /Todos/);
+      assert.match(await seletor("Prioridade").innerText(), /Todas/);
+      assert.equal(await busca.evaluate((el) => el === document.activeElement), true);
+      assert.equal(await rodape.innerText(), `${dados.tarefas.length} tarefas`);
+      await page.waitForFunction((total) => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === `${total} tarefas encontradas.`, dados.tarefas.length);
+      assert.equal(await page.locator("main p[aria-live=polite]").count(), 1);
+    };
+    assert.equal(await limpar.count(), 0);
+    assert.equal(await rodape.innerText(), `${dados.tarefas.length} tarefas`);
+    for (const visao of ["Lista", "Quadro"]) {
+      await page.getByRole("navigation", { name: "Visualização das tarefas" }).getByRole("link", { name: visao, exact: true }).click();
+      await page.getByRole("article").first().waitFor();
+      await busca.fill("JSON");
+      assert.equal(await limpar.count(), 1);
+      assert.equal(await rodape.innerText(), `1 de ${dados.tarefas.length} tarefas`);
+      await conferirLimpeza();
+      await selecionar("Status", "Concluída");
+      assert.equal(await limpar.count(), 1);
+      assert.equal(await rodape.innerText(), `${dados.tarefas.filter((t) => t.status === "concluida").length} de ${dados.tarefas.length} tarefas`);
+      await conferirLimpeza();
+      await selecionar("Prioridade", "Alta");
+      assert.equal(await limpar.count(), 1);
+      await conferirLimpeza();
+      await busca.fill("sem correspondência");
+      await selecionar("Status", "A fazer");
+      await selecionar("Prioridade", "Baixa");
+      assert.equal(await rodape.innerText(), `0 de ${dados.tarefas.length} tarefas`);
+      await conferirLimpeza();
+      await busca.fill(" ");
+      assert.equal(await limpar.count(), 1);
+      await conferirLimpeza();
+    }
+    await page.getByRole("navigation", { name: "Visualização das tarefas" }).getByRole("link", { name: "Lista", exact: true }).click();
+    await lista.getByRole("article").first().waitFor();
+    console.log("OK: Limpar aparece para cada filtro, restaura os três valores, foco e anúncio; rodapé indica exibidas e total na lista e no quadro");
+
     // Mesmo conjunto que a função pura produziria com os dados do banco.
     await busca.fill("a");
     await selecionar("Status", "A fazer");
@@ -147,7 +190,7 @@ async function executar() {
     await page.getByRole("button", { name: "Limpar busca e filtros" }).click();
     await lista.getByRole("link", { name: "Tarefa escondida pela busca" }).waitFor();
     assert.equal(await aviso.count(), 0);
-    console.log("OK: sem aviso quando a tarefa aparece; com a lista vazia, um só botão de limpar");
+    console.log("OK: sem aviso quando a tarefa aparece; com a lista vazia, uma só ação de limpar no conteúdo");
 
     const visoes = page.getByRole("navigation", { name: "Visualização das tarefas" });
     await visoes.getByRole("link", { name: "Quadro" }).click();
@@ -163,10 +206,23 @@ async function executar() {
     assert.equal(await busca.inputValue(), "diagrama");
     console.log("OK: o aviso aparece no quadro e some ao navegar");
 
+    for (const tarefas of [[dados.tarefas[0]], []]) {
+      await page.route(`${api}/tarefas`, (rota) => rota.fulfill({ json: tarefas }));
+      await page.reload();
+      await page.waitForFunction(() => document.querySelector(".e-sheet-footer") !== null);
+      assert.equal(await rodape.innerText(), tarefas.length === 1 ? "1 tarefa" : "0 tarefas");
+      await busca.fill("sem correspondência");
+      assert.equal(await rodape.innerText(), tarefas.length === 1 ? "0 de 1 tarefa" : "0 de 0 tarefas");
+      await limpar.focus();
+      await page.keyboard.press("Enter");
+      assert.equal(await busca.evaluate((el) => el === document.activeElement), true);
+    }
+    console.log("OK: rodapé concorda com total singular e banco vazio; limpar mantém o foco na busca");
+
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
     assert.deepEqual(atuais, originais);
-    console.log("9 cenários aprovados; nenhum erro JavaScript não tratado.");
+    console.log("11 cenários aprovados; nenhum erro JavaScript não tratado.");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();
