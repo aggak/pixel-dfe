@@ -35,7 +35,7 @@ export function EditarTarefa() {
 
   return (
     <>
-      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando tarefa…</p></>}
+      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state e-ficha-loading-tarefa" role="status">Carregando tarefa…</p></>}
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
