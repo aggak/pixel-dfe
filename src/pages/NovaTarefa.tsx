@@ -8,7 +8,7 @@ import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovaTarefa() {
   useTituloPagina("Nova tarefa");
-  const { navegar, fechar, destinoFechar, setOcupada } = useFicha();
+  const { navegar, fechar, destinoFechar, setOcupada, setAlterada } = useFicha();
   const [busca] = useSearchParams();
   const projetoId = busca.get("projetoId") ?? "";
   const controllerRef = useRef<AbortController | null>(null);
@@ -25,7 +25,7 @@ export function NovaTarefa() {
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
     const criada = await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id }, [`[data-task-id="${CSS.escape(criada.id)}"] .e-task-title`, ".e-hidden-notice button", '[data-action="new-task"]']);
+    if (!controller?.signal.aborted) navegar(destinoFechar, true, { tarefaCriada: criada.id, projetoCriado: criada.projetoId }, [`[data-task-id="${CSS.escape(criada.id)}"] .e-task-title`, ".e-hidden-notice button, .e-hidden-notice a", '[data-action="new-task"]']);
   }
 
   return (
@@ -35,6 +35,7 @@ export function NovaTarefa() {
         onSalvar={salvar}
         onCancelar={fechar}
         onEstadoEnvio={setOcupada}
+        onAlteracao={setAlterada}
       />
   );
 }
