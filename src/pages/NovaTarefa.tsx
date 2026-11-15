@@ -8,7 +8,7 @@ import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovaTarefa() {
   useTituloPagina("Nova tarefa");
-  const { navegar, fechar, destinoFechar, setOcupada } = useFicha();
+  const { navegar, fechar, destinoFechar, setOcupada, setAlterada } = useFicha();
   const [busca] = useSearchParams();
   const projetoId = busca.get("projetoId") ?? "";
   const controllerRef = useRef<AbortController | null>(null);
@@ -35,6 +35,7 @@ export function NovaTarefa() {
         onSalvar={salvar}
         onCancelar={fechar}
         onEstadoEnvio={setOcupada}
+        onAlteracao={setAlterada}
       />
   );
 }
