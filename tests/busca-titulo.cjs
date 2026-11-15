@@ -66,14 +66,14 @@ async function executar() {
     await page.keyboard.type("JSON");
     assert.equal(await lista.getByRole("article").count(), 1);
     await lista.getByRole("link", { name: "Subir o json-server" }).waitFor();
-    assert.match(await page.locator(".e-sheet-footer").innerText(), /^1 tarefa$/);
+    assert.match(await page.locator(".e-sheet-footer").innerText(), new RegExp(`^1 de ${dados.tarefas.length} tarefas$`));
 
     const anuncio = page.locator("main p.sr-only[aria-live=polite]");
     await busca.fill("sem correspondência");
     await page.getByText("Nenhuma tarefa encontrada").waitFor();
     await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "0 tarefas encontradas.");
     assert.equal(await page.getByRole("article").count(), 0);
-    assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
+    assert.match(await page.locator(".e-sheet-footer").innerText(), new RegExp(`^0 de ${dados.tarefas.length} tarefas$`));
 
     await busca.press("ControlOrMeta+A");
     await busca.press("Backspace");

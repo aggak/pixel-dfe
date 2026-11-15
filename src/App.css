@@ -24,6 +24,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-search :is(label,[data-label]),.e-task-filter :is(label,[data-label]){font-size:11px;color:var(--e-muted)}
 .e-task-filters{display:flex;gap:10px;align-items:end}
 .e-task-filter{width:165px}
+.e-task-clear{flex-shrink:0}
 .e-project-details{border-bottom:1px solid var(--e-line);padding:0 20px}
 .e-details-trigger{display:flex;gap:8px;align-items:center;background:transparent;border:0;color:var(--e-muted);font-size:12px;min-height:42px}
 .e-details-trigger>i:last-child{margin-left:2px}
@@ -140,6 +141,7 @@ html{scroll-padding-top:71px}
 .e-task-tools .e-task-search{grid-column:1;grid-row:1;min-width:0;width:100%}
 .e-task-tools>.e-task-filters{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
 .e-task-tools .e-task-filter{width:100%;min-width:0}
+.e-task-tools .e-task-clear{grid-column:1/-1;justify-self:end;min-height:44px}
 .e-project-details{padding:0 13px}
 .e-details-trigger{min-height:44px;font-size:12px}
 .e-details-content{font-size:12px}

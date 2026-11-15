@@ -118,7 +118,7 @@ async function executar() {
   await page.getByRole("button", { name: /Status/ }).click();
   await page.getByRole("option", { name: "Concluída" }).click();
   await vazio("Nenhuma tarefa encontrada").waitFor();
-  assert.match(await page.locator(".e-sheet-footer").innerText(), /^0 tarefas$/);
+  assert.equal(await page.locator(".e-sheet-footer").innerText(), `0 de ${seed.tarefas.length - 1} tarefas`);
   await vazio("Nenhuma tarefa encontrada").getByRole("button", { name: "Limpar busca e filtros" }).click();
   await page.locator("[data-task-id]").first().waitFor();
   assert.match(await page.getByRole("button", { name: /Status/ }).innerText(), /Todos/);

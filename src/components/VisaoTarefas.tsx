@@ -11,7 +11,7 @@ import { useConsulta } from "../hooks/useConsulta";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { useRetornoFoco } from "../hooks/useRetornoFoco";
-import { filtrarTarefas } from "../derivar";
+import { FILTROS_INICIAIS, filtrarTarefas } from "../derivar";
 import { PlusIcon } from "../design/icon";
 import type { Projeto, Tarefa } from "../tipos";
 
@@ -31,6 +31,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     setTarefas(dados ?? []);
   }
   const { filtros, limpar } = useFiltros();
+  const filtrosAtivos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   const consultaProjetos = useConsulta(listarProjetos, ultimosProjetos);
   const projetos = consultaProjetos.dados;
   const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
@@ -59,5 +60,5 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio gato="dormindo" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio gato="olhando" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : children(tarefasExibidas, cartao))}
-  </div>{!carregando && !erro && <footer className="e-sheet-footer">{tarefasExibidas.length} {tarefasExibidas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
+  </div>{!carregando && !erro && <footer className="e-sheet-footer">{filtrosAtivos ? `${tarefasExibidas.length} de ${tarefas.length}` : tarefasExibidas.length} {tarefas.length === 1 ? "tarefa" : "tarefas"}</footer>}</main></>;
 }
