@@ -1,17 +1,16 @@
 // Integração da issue #33 com aplicação real e banco temporário.
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
-const { createServer } = require("node:net");
-const { tmpdir } = require("node:os");
+const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { criarEsperas, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
+const { criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
+
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
+const { subir } = apoio;
 
 const raiz = join(__dirname, "..");
-const processos = [];
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let browser;
-let temporario;
 let total = 0;
 
 async function ate(descricao, verificar) {
@@ -28,70 +27,11 @@ async function conferir(nome, executar) {
   console.log(`OK: ${nome}`);
 }
 
-const portasUsadas = new Set();
-
-// O sistema escolhe uma porta livre; portas já entregues nesta execução não se repetem.
-async function portaLivre() {
-  for (;;) {
-    const servidor = createServer();
-    await new Promise((resolve, reject) => {
-      servidor.once("error", reject);
-      servidor.listen(0, "127.0.0.1", resolve);
-    });
-    const { port } = servidor.address();
-    await new Promise((resolve) => servidor.close(resolve));
-    if (!portasUsadas.has(port)) {
-      portasUsadas.add(port);
-      return port;
-    }
-  }
-}
-
-const ativo = (processo) => processo.exitCode === null && processo.signalCode === null;
-
-async function encerrar(processo) {
-  if (!ativo(processo)) return;
-  const fim = new Promise((resolve) => processo.once("exit", resolve));
-  processo.kill();
-  await fim;
-}
-
 async function executar() {
   const bancoOriginal = await readFile(join(raiz, "db.json"), "utf8");
   const seedOriginal = await readFile(join(raiz, "db.seed.json"), "utf8");
   const seed = JSON.parse(seedOriginal);
-  temporario = await mkdtemp(join(tmpdir(), "pixel-projetos-33-"));
-  const banco = join(temporario, "db.json");
-  await copyFile(join(raiz, "db.seed.json"), banco);
-  function iniciar(arquivo, argumentos, env = process.env) {
-    const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
-      cwd: raiz, env, windowsHide: true, stdio: "pipe",
-    });
-    processo.stdout.on("data", () => {});
-    processo.stderr.on("data", (dado) => process.stderr.write(dado));
-    processos.push(processo);
-    return processo;
-  }
-  // A porta é liberada antes de o servidor ocupá-la. Se outro processo a tomar nesse
-  // intervalo, o servidor encerra (ou responde outro conteúdo) e a subida é repetida
-  // com uma nova porta. A resposta é conferida para não aceitar um servidor alheio.
-  async function subir(descricao, arquivo, argumentos, env, caminhoTeste, confirmar) {
-    for (let tentativa = 1; tentativa <= 3; tentativa++) {
-      const porta = await portaLivre();
-      const base = `http://127.0.0.1:${porta}`;
-      const processo = iniciar(arquivo, argumentos(porta), env);
-      for (let espera = 0; espera < 150 && ativo(processo); espera++) {
-        try {
-          const resposta = await fetch(`${base}${caminhoTeste}`);
-          if (resposta.ok && (await confirmar(resposta)) && ativo(processo)) return base;
-        } catch {}
-        await dormir(100);
-      }
-      await encerrar(processo);
-      console.warn(`Aviso: ${descricao} não iniciou na porta ${porta} (tentativa ${tentativa}).`);
-    }
-    throw new Error(`Não foi possível iniciar ${descricao}.`);
-  }
+  const { banco } = await apoio.criarBanco({ prefixo: "pixel-projetos-33-" });
   const idsSeed = JSON.stringify(seed.projetos.map((p) => p.id));
   const api = await subir(
     "a API temporária",
@@ -109,7 +49,7 @@ async function executar() {
     "/",
     async (resposta) => (await resposta.text()).includes("/src/main.tsx"),
   );
-  browser = await lancarNavegador();
+  browser = await apoio.abrirNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
@@ -584,8 +524,4 @@ async function executar() {
   console.log(`${total} cenários aprovados; bancos originais preservados.`);
 }
 
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close().catch(() => {});
-  for (const processo of processos) await encerrar(processo);
-  if (temporario) await rm(temporario, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());

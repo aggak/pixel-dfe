@@ -1,52 +1,21 @@
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdtemp, readFile, rm } = require("node:fs/promises");
-const { createServer } = require("node:net");
-const { tmpdir } = require("node:os");
+const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { contraste, focoVisivel, lancarNavegador, TEXTO_STATUS } = require("./ui.cjs");
+const { contraste, focoVisivel, TEXTO_STATUS } = require("./ui.cjs");
 
-async function portaLivre() {
-  const servidor = createServer();
-  await new Promise((resolve) => servidor.listen(0, "127.0.0.1", resolve));
-  const porta = servidor.address().port;
-  await new Promise((resolve) => servidor.close(resolve));
-  return porta;
-}
-
-async function pronto(url) {
-  for (let tentativa = 0; tentativa < 300; tentativa++) {
-    try { if ((await fetch(url)).ok) return; } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error(`Servidor indisponível: ${url}`);
-}
-
-function iniciar(processos, argumentos, env = process.env) {
-  const processo = spawn(process.execPath, argumentos, { windowsHide: true, stdio: "pipe", env });
-  processo.stdout.on("data", () => {});
-  processo.stderr.on("data", (erro) => process.stderr.write(erro));
-  processos.push(processo);
-}
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
 
 let browser;
-let temporario;
-const processos = [];
 
 async function executar() {
-  temporario = await mkdtemp(join(tmpdir(), "pixel-status-"));
+  const { banco } = await apoio.criarBanco({ prefixo: "pixel-status-" });
   const originais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
   const evidencias = process.env.STATUS_EVIDENCIAS;
   const seed = JSON.parse(await readFile("db.seed.json", "utf8"));
-  await copyFile("db.seed.json", join(temporario, "db.json"));
-  const [portaApi, portaWeb] = [await portaLivre(), await portaLivre()];
-  const api = `http://127.0.0.1:${portaApi}`;
-  const web = `http://127.0.0.1:${portaWeb}`;
-  iniciar(processos, ["node_modules/json-server/lib/bin.js", join(temporario, "db.json"), "--host", "127.0.0.1", "--port", String(portaApi)]);
-  iniciar(processos, ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
-  await Promise.all([pronto(`${api}/tarefas`), pronto(web)]);
+  const { api, web } = await apoio.subirAmbiente({ banco, tentativas: 300 });
 
-  browser = await lancarNavegador();
+  browser = await apoio.abrirNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errosJs = [];
   page.on("pageerror", (erro) => errosJs.push(erro));
@@ -418,14 +387,4 @@ async function executar() {
   console.log("Cenários de status e cartão inexistente aprovados; nenhum erro JavaScript não tratado e bancos preservados.");
 }
 
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close();
-  for (const processo of processos) {
-    if (processo.exitCode === null) {
-      const terminou = new Promise((resolve) => processo.once("exit", resolve));
-      processo.kill();
-      await terminou;
-    }
-  }
-  if (temporario) await rm(temporario, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());

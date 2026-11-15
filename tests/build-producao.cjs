@@ -5,65 +5,19 @@
 // navegador, e o fluxo de escrita roda num segundo build apontado para um json-server
 // sobre cópia temporária do db.seed.json.
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdtemp, readFile, readdir, rm, stat } = require("node:fs/promises");
-const { createServer } = require("node:net");
-const { tmpdir } = require("node:os");
+const { readFile, readdir, stat } = require("node:fs/promises");
 const { join, relative, sep } = require("node:path");
-const { comTextos, criarUi, lancarNavegador, TEXTO_STATUS } = require("./ui.cjs");
+const { comTextos, criarUi, TEXTO_STATUS } = require("./ui.cjs");
+
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
+const { portaLivre, iniciar, rodar } = apoio;
+const esperar = (url) => apoio.esperar(url, { tentativas: 150 });
 
 const raiz = join(__dirname, "..");
 const API_PRODUCAO = "https://pixel-dfe-production.up.railway.app";
 const FICHAS_LAZY = ["NovaTarefa", "EditarTarefa", "NovoProjeto", "EditarProjeto"];
-const processos = [];
 let browser;
-let temporario;
-
-async function portaLivre() {
-  const servidor = createServer();
-  await new Promise((resolve) => servidor.listen(0, "127.0.0.1", resolve));
-  const porta = servidor.address().port;
-  await new Promise((resolve) => servidor.close(resolve));
-  return porta;
-}
-
-async function esperar(url) {
-  for (let tentativa = 0; tentativa < 150; tentativa++) {
-    if (processos.some((processo) => processo.exitCode !== null)) {
-      throw new Error("Servidor encerrou antes do teste.");
-    }
-    try {
-      if ((await fetch(url)).ok) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error(`Servidor indisponível: ${url}`);
-}
-
-function iniciar(arquivo, argumentos, env = process.env) {
-  const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
-    cwd: raiz,
-    env,
-    windowsHide: true,
-    stdio: "pipe",
-  });
-  processo.stdout.on("data", () => {});
-  processo.stderr.on("data", (dado) => process.stderr.write(dado));
-  processos.push(processo);
-  return processo;
-}
-
-// Processo que precisa terminar com sucesso antes do próximo passo (tsc -b, vite build).
-function rodar(descricao, arquivo, argumentos, env) {
-  return new Promise((resolve, reject) => {
-    const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], { cwd: raiz, env, windowsHide: true, stdio: "pipe" });
-    let saida = "";
-    processo.stdout.on("data", (dado) => { saida += dado; });
-    processo.stderr.on("data", (dado) => { saida += dado; });
-    processo.once("error", reject);
-    processo.once("exit", (codigo) => (codigo === 0 ? resolve() : reject(new Error(`${descricao} terminou com código ${codigo}:\n${saida}`))));
-  });
-}
 
 // Ambiente sem VITE_API_URL herdada do shell: variáveis do processo
 // têm prioridade sobre os arquivos .env, então só assim o Vite lê .env.production sozinho.
@@ -135,7 +89,7 @@ async function executar() {
   const favicon = await readFile(join(raiz, "public/favicon.svg"), "utf8");
   const robots = await readFile(join(raiz, "public/robots.txt"), "utf8");
   const imagemOg = await readFile(join(raiz, "public/og-image.png"));
-  temporario = await mkdtemp(join(tmpdir(), "pixel-build-producao-"));
+  const { temporario, banco } = await apoio.criarBanco({ prefixo: "pixel-build-producao-" });
 
   // 1. Compilação real com .env.production, fora do dist/ da raiz.
   await rodar("tsc -b", "node_modules/typescript/bin/tsc", ["-b"], ambienteLimpo());
@@ -159,7 +113,7 @@ async function executar() {
   assert.match(indexHtml, /<title>Tarefas · Pixel<\/title>/);
   for (const nome of FICHAS_LAZY) assert.ok(!indexHtml.includes(producao.chunks[nome]), `${nome} não deveria estar no index.html`);
   const metas = Object.fromEntries([...indexHtml.matchAll(/<meta (name|property)="([^"]+)" content="([^"]*)"/g)].map(([, , chave, valor]) => [chave, valor]));
-  assert.equal(metas["theme-color"], "#18161c");
+  assert.equal(metas["theme-color"], "#120c1b");
   assert.ok(metas.description?.length > 50 && metas.description === metas["og:description"], "description ausente ou diferente de og:description");
   assert.equal(metas["og:url"], "https://pixel-dfe-project.up.railway.app/");
   assert.equal(metas["og:image"], "https://pixel-dfe-project.up.railway.app/og-image.png");
@@ -174,7 +128,7 @@ async function executar() {
   console.log("OK: o index.html do build traz description, theme-color e Open Graph com a imagem de 1200×630 do endereço publicado");
   console.log(`OK: os bundles embutem ${API_PRODUCAO} (.env.production) e nenhum arquivo cita localhost:3000`);
 
-  browser = await lancarNavegador();
+  browser = await apoio.abrirNavegador();
   const errosPagina = [];
 
   // 2. O build padrão servido pelo vite preview chama a API de produção (interceptada).
@@ -206,8 +160,6 @@ async function executar() {
   console.log(`OK: o build padrão no vite preview pede GET ${API_PRODUCAO}/tarefas e /projetos (interceptados) e renderiza os ${seed.tarefas.length} cartões`);
 
   // 3. Segundo build apontado para um json-server isolado, servido pelo vite preview.
-  const banco = join(temporario, "db.json");
-  await copyFile(join(raiz, "db.seed.json"), banco);
   const portaApi = await portaLivre();
   const api = `http://127.0.0.1:${portaApi}`;
   iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
@@ -481,14 +433,4 @@ executar()
     console.error(erro);
     process.exitCode = 1;
   })
-  .finally(async () => {
-    await browser?.close().catch(() => {});
-    for (const processo of processos) {
-      if (processo.exitCode === null && processo.signalCode === null) {
-        const encerrado = new Promise((resolve) => processo.once("exit", resolve));
-        processo.kill();
-        await encerrado;
-      }
-    }
-    if (temporario) await rm(temporario, { recursive: true, force: true });
-  });
+  .finally(() => apoio.encerrar());

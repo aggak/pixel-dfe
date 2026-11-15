@@ -1,21 +1,18 @@
 // Suíte da página Nova tarefa em navegador real.
 // Sobe a aplicação real (Vite) e o json-server com cópia temporária de db.seed.json; os bancos reais nunca são alterados.
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
-const { createServer: servidorNet } = require("node:net");
-const { tmpdir } = require("node:os");
+const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { comTextos, criarEsperas, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
+
 const repo = join(__dirname, "..");
 const evidencias = process.env.NOVA_TAREFA_EVIDENCIAS || "";
 const ROTULOS = ["Projeto", "Título", "Descrição", "Status", "Prioridade", "Responsável", "Prazo"];
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let total = 0;
 let browser;
-let processoApi;
-let processoWeb;
-let dadosTemp;
 let apiUrl = "";
 let origem = "";
 async function conferir(nome, executar) {
@@ -30,40 +27,13 @@ async function ate(descricao, verificar, tentativas = 150) {
   }
   throw new Error(`Tempo esgotado aguardando: ${descricao}`);
 }
-async function portaLivre() {
-  const servidor = servidorNet();
-  await new Promise((resolve, reject) => { servidor.once("error", reject); servidor.listen(0, "127.0.0.1", resolve); });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
-}
-async function encerrar(processo) {
-  if (processo && processo.exitCode === null) {
-    const fim = new Promise((resolve) => processo.once("exit", resolve));
-    processo.kill();
-    await fim;
-  }
-}
 async function executar() {
   const bancoRealAntes = await readFile(join(repo, "db.json"), "utf8");
   const seedAntes = await readFile(join(repo, "db.seed.json"), "utf8");
   const seed = JSON.parse(seedAntes);
-  dadosTemp = await mkdtemp(join(tmpdir(), "pixel-nova-tarefa-"));
-  const caminhoDb = join(dadosTemp, "db.json");
-  await copyFile(join(repo, "db.seed.json"), caminhoDb);
-  const portaApi = await portaLivre();
-  const portaWeb = await portaLivre();
-  apiUrl = `http://127.0.0.1:${portaApi}`;
-  origem = `http://127.0.0.1:${portaWeb}`;
-  processoApi = spawn(process.execPath, [join(repo, "node_modules/json-server/lib/bin.js"), caminhoDb, "--host", "127.0.0.1", "--port", String(portaApi)], { cwd: repo, windowsHide: true, stdio: "pipe" });
-  processoWeb = spawn(process.execPath, [join(repo, "node_modules/vite/bin/vite.js"), "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { cwd: repo, windowsHide: true, stdio: "pipe", env: { ...process.env, VITE_API_URL: apiUrl } });
-  for (const processo of [processoApi, processoWeb]) {
-    processo.stdout.on("data", () => {});
-    processo.stderr.on("data", (dado) => process.stderr.write(dado));
-  }
-  await ate("API temporária", async () => processoApi.exitCode === null && (await fetch(`${apiUrl}/projetos`)).ok);
-  await ate("aplicação real", async () => processoWeb.exitCode === null && (await fetch(origem)).ok);
-  try { browser = await lancarNavegador(); }
+  const { banco: caminhoDb } = await apoio.criarBanco({ prefixo: "pixel-nova-tarefa-" });
+  ({ api: apiUrl, web: origem } = await apoio.subirAmbiente({ banco: caminhoDb, rotaApi: "/projetos", tentativas: 150 }));
+  try { browser = await apoio.abrirNavegador(); }
   catch (erro) { throw new Error(`Não foi possível abrir o navegador (${process.env.TEST_BROWSER || "chrome"}): ${erro.message}`); }
   const page = await browser.newPage();
   page.setDefaultTimeout(10000);
@@ -393,7 +363,4 @@ async function executar() {
   });
   console.log(`${total} cenários aprovados; banco real intacto.`);
 }
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close().catch(() => {}); await encerrar(processoWeb).catch(() => {}); await encerrar(processoApi).catch(() => {});
-  if (dadosTemp) await rm(dadosTemp, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());

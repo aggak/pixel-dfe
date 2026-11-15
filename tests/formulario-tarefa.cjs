@@ -2,13 +2,13 @@
 // Sobe json-server com banco temporário e Vite com página de teste
 // temporária fora das rotas de produção; nada é gravado no banco real.
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } = require("node:fs/promises");
-const { createServer: servidorNet } = require("node:net");
-const { tmpdir } = require("node:os");
+const { access, mkdir, readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { associacoes, comTextos, contraste, criarEsperas, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
+const { associacoes, comTextos, contraste, criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
+
 const repo = join(__dirname, "..");
 const evidencias = process.env.FORMULARIO_EVIDENCIAS || "";
 const ROTULOS = ["Projeto", "Título", "Descrição", "Status", "Prioridade", "Responsável", "Prazo"];
@@ -16,10 +16,8 @@ const OBRIGATORIOS = ["Projeto", "Título", "Responsável", "Prazo"];
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let total = 0;
 let vite;
-let processoApi;
 let browser;
 let paginaTeste;
-let dadosTemp;
 let apiUrl = "";
 let origem = "";
 
@@ -30,20 +28,6 @@ async function ate(descricao, verificar, tentativas = 150) {
     await dormir(100);
   }
   throw new Error(`Tempo esgotado aguardando: ${descricao}`);
-}
-async function portaLivre() {
-  const servidor = servidorNet();
-  await new Promise((resolve, reject) => { servidor.once("error", reject); servidor.listen(0, "127.0.0.1", resolve); });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
-}
-async function encerrarApi() {
-  if (processoApi && processoApi.exitCode === null) {
-    const fim = new Promise((resolve) => processoApi.once("exit", resolve));
-    processoApi.kill();
-    await fim;
-  }
 }
 const FIXTURE_HTML = `<!doctype html>
 <html lang="pt-BR" class="dark dark-mode"><head><meta charset="UTF-8" />
@@ -87,23 +71,19 @@ async function executar() {
   const bancoRealAntes = await readFile(join(repo, "db.json"), "utf8");
   const seedAntes = await readFile(join(repo, "db.seed.json"), "utf8");
   const seed = JSON.parse(seedAntes);
-  dadosTemp = await mkdtemp(join(tmpdir(), "pixel-formulario-"));
-  const caminhoDb = join(dadosTemp, "db.json");
-  await copyFile(join(repo, "db.seed.json"), caminhoDb);
-  const portaApi = await portaLivre();
+  const { banco: caminhoDb } = await apoio.criarBanco({ prefixo: "pixel-formulario-" });
+  const portaApi = await apoio.portaLivre();
   apiUrl = `http://127.0.0.1:${portaApi}`;
-  processoApi = spawn(process.execPath, [join(repo, "node_modules/json-server/lib/bin.js"), caminhoDb, "--host", "127.0.0.1", "--port", String(portaApi)], { windowsHide: true, stdio: "pipe" });
-  processoApi.stdout.on("data", () => {});
-  processoApi.stderr.on("data", (dado) => process.stderr.write(dado));
-  await ate("API temporária", async () => processoApi.exitCode === null && (await fetch(`${apiUrl}/projetos`)).ok);
-  paginaTeste = await mkdtemp(join(repo, ".teste-formulario-"));
+  apoio.iniciarApi(caminhoDb, portaApi);
+  await apoio.esperar(`${apiUrl}/projetos`, { tentativas: 150 });
+  paginaTeste = await apoio.criarTemporario(".teste-formulario-", repo);
   await writeFile(join(paginaTeste, "index.html"), FIXTURE_HTML);
   await writeFile(join(paginaTeste, "fixture.tsx"), FIXTURE_TSX);
   const apiAnterior = process.env.VITE_API_URL;
   process.env.VITE_API_URL = apiUrl;
   try {
     const { createServer } = await import("vite");
-    vite = await createServer({ root: paginaTeste, configFile: join(repo, "vite.config.ts"), cacheDir: join(paginaTeste, ".vite"), publicDir: false, logLevel: "silent", server: { host: "127.0.0.1", port: 0, fs: { allow: [repo] } } });
+    vite = apoio.registrar(await createServer({ root: paginaTeste, configFile: join(repo, "vite.config.ts"), cacheDir: join(paginaTeste, ".vite"), publicDir: false, logLevel: "silent", server: { host: "127.0.0.1", port: 0, fs: { allow: [repo] } } }));
     await vite.listen();
     const endereco = vite.httpServer && vite.httpServer.address();
     if (!endereco || typeof endereco === "string") throw new Error("Vite não informou a porta da página de teste.");
@@ -111,7 +91,7 @@ async function executar() {
   } finally {
     if (apiAnterior === undefined) delete process.env.VITE_API_URL; else process.env.VITE_API_URL = apiAnterior;
   }
-  try { browser = await lancarNavegador(); }
+  try { browser = await apoio.abrirNavegador(); }
   catch (erro) { throw new Error(`Não foi possível abrir o navegador (${process.env.TEST_BROWSER || "chrome"}): ${erro.message}`); }
   const page = await browser.newPage();
   page.setDefaultTimeout(10000);
@@ -229,8 +209,8 @@ async function executar() {
     assert.equal(await page.getByText("Selecione um projeto.", { exact: true }).count(), 0);
   });
   await conferir("validação preserva o calendário, reserva espaço para ícones e usa a cor de erro do tema", async () => {
-    const corErro = "rgb(238, 152, 172)";
-    assert.ok(contraste(corErro, "rgb(44, 39, 50)") >= 4.5);
+    const corErro = "rgb(250, 155, 145)";
+    assert.ok(contraste(corErro, "rgb(59, 45, 69)") >= 4.5);
     for (const largura of [320, 375, 1280]) for (const modo of ["novo", "editar"]) {
       await page.setViewportSize({ width: largura, height: 900 });
       await abrir(modo);
@@ -258,7 +238,7 @@ async function executar() {
         assert.equal(estado.invalido, "true", rotulo);
         assert.ok(estado.mensagem, rotulo);
         assert.equal(estado.corMensagem, corErro, rotulo);
-        assert.equal(estado.corContorno, rotulo === "Título" ? corErro : "#ee98ac", `${rotulo}, foco: ${focado}`);
+        assert.equal(estado.corContorno, rotulo === "Título" ? corErro : "#fa9b91", `${rotulo}, foco: ${focado}`);
         assert.equal(estado.iconeVisivel, rotulo !== "Prazo", rotulo);
         if (focado) assert.equal(await focoVisivel(campo(rotulo)), true, rotulo);
         if (rotulo !== "Prazo") {
@@ -487,7 +467,7 @@ async function executar() {
       await page.waitForFunction(() => document.getAnimations().length === 0);
       const cores = await botaoEnvio().evaluate((el) => ({ texto: getComputedStyle(el).color, fundo: getComputedStyle(el).backgroundColor }));
       assert.ok(contraste(cores.texto, cores.fundo) >= 4.5, `${tema}: ${cores.texto} sobre ${cores.fundo}`);
-      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(24, 22, 28)", tema);
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(18, 12, 27)", tema);
       if (evidencias && tema === "dark") await page.screenshot({ path: join(evidencias, "formulario-escuro.png"), fullPage: true });
     }
   });
@@ -515,10 +495,4 @@ async function executar() {
   });
   console.log(`${total} cenários aprovados; banco real intacto.`);
 }
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close().catch(() => {});
-  await vite?.close().catch(() => {});
-  await encerrarApi().catch(() => {});
-  if (paginaTeste) await rm(paginaTeste, { recursive: true, force: true });
-  if (dadosTemp) await rm(dadosTemp, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());
