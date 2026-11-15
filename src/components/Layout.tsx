@@ -16,6 +16,7 @@ import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
+import { FILTROS_INICIAIS, type Filtros } from "../derivar";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -97,22 +98,34 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
       const resto = nav.scrollWidth - nav.clientWidth - nav.scrollLeft;
       nav.dataset.sobra = `${nav.scrollLeft > 2 ? "ini" : ""} ${resto > 2 ? "fim" : ""}`.trim();
     };
-    const mostrarAtual = () => {
-      medir();
-      const aba = nav.querySelector<HTMLElement>("a[aria-current]");
-      if (!aba || aba === todas) return;
-      const folga = matchMedia("(max-width: 650px)").matches ? 26 : 60;
+    const trazer = (aba: HTMLElement, behavior: ScrollBehavior, folga: number) => {
+      if (aba === todas) return;
       const inicio = aba.offsetLeft - todas.offsetWidth - folga;
       const fim = aba.offsetLeft + aba.offsetWidth + folga - nav.clientWidth;
       const alvo = nav.scrollLeft > inicio ? inicio : nav.scrollLeft < fim ? Math.min(fim, inicio) : nav.scrollLeft;
-      nav.scrollTo({ left: Math.max(alvo, 0), behavior: "auto" });
+      const esquerda = Math.max(alvo, 0);
+      if (Math.abs(esquerda - nav.scrollLeft) > 1) nav.scrollTo({ left: esquerda, behavior });
+      medir();
+    };
+    const folgaAtual = () => matchMedia("(max-width: 650px)").matches ? 26 : 60;
+    const folgaFoco = () => matchMedia("(max-width: 650px)").matches ? 20 : 56;
+    const mostrarAtual = () => {
+      medir();
+      const aba = nav.querySelector<HTMLElement>("a[aria-current]");
+      if (aba) trazer(aba, "auto", folgaAtual());
+    };
+    const aoFocar = (evento: FocusEvent) => {
+      const aba = evento.target instanceof Element ? evento.target.closest("a") : null;
+      if (!aba || !nav.contains(aba)) return;
+      trazer(aba, matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", folgaFoco());
     };
     mostrarAtual();
     document.fonts?.ready.then(mostrarAtual);
     nav.addEventListener("scroll", medir, { passive: true });
+    nav.addEventListener("focusin", aoFocar);
     const observador = new ResizeObserver(mostrarAtual);
     observador.observe(nav);
-    return () => { nav.removeEventListener("scroll", medir); observador.disconnect(); };
+    return () => { nav.removeEventListener("scroll", medir); nav.removeEventListener("focusin", aoFocar); observador.disconnect(); };
   }, [atual, total]);
   const rolar = (sentido: number) => {
     const nav = fileira.current;
@@ -135,21 +148,39 @@ export function AlternarVisao() {
     return <Link key={destino} ref={atual ? ativo : undefined} to={destino} state={{ focoVisao: true }} aria-current={atual ? "page" : undefined}><Icone />{nome}</Link>;
   })}</nav>;
 }
-export function AnuncioResultados({ total, filtros }: { total: number; filtros: object }) {
+function fraseResultados(n: number) {
+  return `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+}
+export function AnuncioResultados({ total, filtros }: { total: number; filtros: Filtros }) {
   const [texto, setTexto] = useState("");
   const chave = JSON.stringify(filtros);
   const anterior = useRef(chave);
   const totalAtual = useRef(total);
+  const anunciado = useRef<number | null>(null);
+  const pendente = useRef(false);
+  const ativos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   useEffect(() => { totalAtual.current = total; }, [total]);
   useEffect(() => {
     if (anterior.current === chave) return;
     anterior.current = chave;
+    pendente.current = true;
     const espera = setTimeout(() => {
+      pendente.current = false;
       const n = totalAtual.current;
-      setTexto(`${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`);
+      anunciado.current = n;
+      setTexto(fraseResultados(n));
     }, 700);
-    return () => clearTimeout(espera);
+    return () => { clearTimeout(espera); pendente.current = false; };
   }, [chave]);
+  useEffect(() => {
+    if (pendente.current || anunciado.current === null || anunciado.current === total) return;
+    anunciado.current = total;
+    if (!ativos) return;
+    const n = total;
+    let vigente = true;
+    queueMicrotask(() => { if (vigente) setTexto(fraseResultados(n)); });
+    return () => { vigente = false; };
+  }, [total, ativos]);
   return <p className="sr-only" aria-live="polite" aria-atomic="true">{texto}</p>;
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {

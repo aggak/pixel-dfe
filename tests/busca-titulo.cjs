@@ -46,6 +46,7 @@ async function executar() {
     const busca = page.getByRole("searchbox", { name: "Buscar por título" });
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
+    assert.equal(await page.locator("main p.sr-only[aria-live=polite]").innerText(), "");
 
     const painel = await page.locator(".e-sheet").boundingBox();
     const campoDesktop = await busca.boundingBox();
@@ -132,6 +133,34 @@ async function executar() {
     await lista.getByRole("article").first().waitFor();
     assert.equal(await lista.getByRole("article").count(), dados.tarefas.length);
     console.log("OK: busca sem acentos e com espaços repetidos, filtros combinados, limpeza e abas de projeto");
+
+    // A contagem anunciada acompanha a exclusão quando a busca está ativa, sem anúncio no carregamento e sem inventar o aviso de exclusão do menu.
+    const excluirPeloMenu = async (titulo) => {
+      await lista.getByRole("button", { name: `Ações de ${titulo}` }).click();
+      await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
+      await page.getByRole("dialog", { name: `Excluir ${titulo}` }).getByRole("button", { name: "Excluir tarefa" }).click();
+    };
+    await busca.fill("json-server");
+    await lista.getByRole("link", { name: "Subir o json-server" }).waitFor();
+    assert.equal(await lista.getByRole("article").count(), 1);
+    await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "1 tarefa encontrada.");
+    await excluirPeloMenu("Subir o json-server");
+    await page.waitForFunction(() => document.querySelectorAll("[data-task-id]").length === 0);
+    await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "0 tarefas encontradas.");
+    assert.equal(await page.locator("main p[role=status]").count(), 0);
+    console.log("OK: excluir o único resultado da busca atualiza a contagem anunciada, sem anúncio de exclusão");
+
+    await busca.fill("repositório");
+    await lista.getByRole("link", { name: "Criar o repositório", exact: true }).waitFor();
+    await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "1 tarefa encontrada.");
+    await lista.getByRole("link", { name: "Criar o repositório", exact: true }).click();
+    const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
+    await ficha.getByRole("button", { name: "Excluir tarefa" }).click();
+    await page.getByRole("dialog", { name: "Excluir Criar o repositório" }).getByRole("button", { name: "Excluir tarefa" }).click();
+    await ficha.waitFor({ state: "detached" });
+    await page.waitForFunction(() => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === "0 tarefas encontradas." && [...document.querySelectorAll("main p[role=status]")].map((p) => p.textContent).join("\n") === "Tarefa Criar o repositório excluída.");
+    assert.equal(await page.locator("main p[role=status]").count(), 1);
+    console.log("OK: excluir pela ficha mantém um único anúncio de exclusão e atualiza a contagem");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();
