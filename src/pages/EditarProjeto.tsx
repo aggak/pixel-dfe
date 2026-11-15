@@ -12,7 +12,7 @@ import { GatinhoAbanando } from "../components/GatinhoAbanando";
 
 export function EditarProjeto() {
   const { id = "" } = useParams();
-  const { navegar, fechar, setOcupada } = useFicha();
+  const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const detalhes = (useLocation().state as { detalhes?: boolean } | null)?.detalhes === true;
   const consultar = useCallback((signal: AbortSignal) => buscarProjeto(id, signal), [id]);
   const { dados: projeto, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
@@ -36,7 +36,7 @@ export function EditarProjeto() {
 
   return (
     <>
-      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando projeto…</p></>}
+      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state e-ficha-loading-projeto" role="status">Carregando projeto…</p></>}
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
@@ -54,6 +54,7 @@ export function EditarProjeto() {
           onSalvar={salvar}
           onCancelar={fechar}
           onEstadoEnvio={setOcupada}
+          onAlteracao={setAlterada}
           textoSalvar="Salvar alterações"
         />
       )}

@@ -12,7 +12,7 @@ import { GatinhoAbanando } from "../components/GatinhoAbanando";
 
 export function EditarTarefa() {
   const { id = "" } = useParams();
-  const { navegar, fechar, setOcupada } = useFicha();
+  const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
   const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
   useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa ? `Editar: ${tarefa.titulo}` : "Editar tarefa");
@@ -35,7 +35,7 @@ export function EditarTarefa() {
 
   return (
     <>
-      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state" role="status">Carregando tarefa…</p></>}
+      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state e-ficha-loading-tarefa" role="status">Carregando tarefa…</p></>}
       {erro instanceof ErroApi && erro.status === 404 && (
         <>
           <div className="e-ficha-gato"><GatinhoCochilando /></div>
@@ -53,6 +53,7 @@ export function EditarTarefa() {
           onSalvar={salvar}
           onCancelar={fechar}
           onEstadoEnvio={setOcupada}
+          onAlteracao={setAlterada}
           textoSalvar="Salvar alterações"
         />
       )}

@@ -5,7 +5,7 @@ import { buscarProjetoComTarefas, excluirTarefaSeExistir, listarProjetos, ErroAp
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { AcaoCabecalho } from "../components/Cabecalho";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
-import { AbasProjetos, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
+import { AbasProjetos, AvisoTarefaEscondida, Carregando, ErroCarregamento, EstadoVazio } from "../components/Layout";
 import { useConsulta } from "../hooks/useConsulta";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
@@ -33,7 +33,7 @@ export function DetalheProjeto() {
     setOrigem(dados);
     setTarefas(dados?.tarefas ?? []);
   }
-  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
+  const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(tarefas, setTarefas);
   useRetornoFoco(dados !== undefined && !revalidando);
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
@@ -42,7 +42,7 @@ export function DetalheProjeto() {
   const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;
   return <><AbasProjetos atual={id} projetos={consultaProjetos} mostrarErro={erro === undefined} /><main className="e-sheet"><header className="e-tools"><h1 tabIndex={-1}>{dados?.projeto.nome ?? "Projeto"}</h1><AcaoCabecalho>{dados && <Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Nova tarefa" data-action="new-task" onClick={() => navigate(novaTarefa, { state: { fundo: location } })}>Nova tarefa</Button>}</AcaoCabecalho></header>
     {(dados || carregando) && <div className={`e-project-details ${detalhes ? "is-open" : ""}`}><button className="e-details-trigger" aria-expanded={detalhes} aria-controls="project-details" disabled={!dados} onClick={() => setDetalhes(!detalhes)}><FolderIcon /><span>Detalhes do projeto</span><Icon name={detalhes ? "angle-small-up" : "angle-small-down"} /></button>{detalhes && dados && <div id="project-details" className="e-details-content"><h2 className="e-project-name">{dados.projeto.nome}</h2><p>{dados.projeto.descricao}</p><dl><div><dt>Disciplina</dt><dd>{dados.projeto.disciplina}</dd></div><div><dt>Criado em</dt><dd><time dateTime={dados.projeto.criadoEm}>{formatarData(dados.projeto.criadoEm, true)}</time></dd></div></dl><Button color="link-color" size="sm" className="e-edit-project-details" iconLeading={EditIcon} onClick={() => navigate(`/projetos/${encodeURIComponent(id)}/editar`, { state: { fundo: location, detalhes: true } })}>Editar projeto</Button></div>}</div>}
-    {aviso && <p className="sr-only" role="status">{aviso}</p>}<div className="e-content">{carregando && <Carregando>Carregando projeto…</Carregando>}{erro instanceof ErroApi && erro.status === 404 ? <div className="e-load-error" role="alert"><GatinhoCochilando /><h2>Projeto não encontrado</h2><p>Este projeto não existe ou foi removido.</p><Link to="/projetos">Voltar para projetos</Link></div> : erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar o projeto" erro={erro} onTentarDeNovo={tentarTudo} tentando={tentando} />}{dados && <section aria-label="Tarefas do projeto">{tarefas.length === 0 ? <EstadoVazio gato="dormindo" titulo="Este projeto ainda não tem tarefas" destino={novaTarefa} acao="Criar tarefa" /> : <div className="e-list">{tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} />)}</div>}</section>}</div>
+    {aviso && <p className="sr-only" role="status">{aviso}</p>}<div className="e-content">{inexistente && <p ref={alertaInexistente} className="e-task-error" role="alert" tabIndex={-1}>{inexistente}</p>}{dados && <AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefas} projetoAtual={id} />}{carregando && <Carregando>Carregando projeto…</Carregando>}{erro instanceof ErroApi && erro.status === 404 ? <div className="e-load-error" role="alert"><GatinhoCochilando /><h2>Projeto não encontrado</h2><p>Este projeto não existe ou foi removido.</p><Link to="/projetos">Voltar para projetos</Link></div> : erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar o projeto" erro={erro} onTentarDeNovo={tentarTudo} tentando={tentando} />}{dados && <section aria-label="Tarefas do projeto">{tarefas.length === 0 ? <EstadoVazio gato="dormindo" titulo="Este projeto ainda não tem tarefas" destino={novaTarefa} acao="Criar tarefa" /> : <div className="e-list">{tarefas.map((tarefa) => <CartaoTarefa key={tarefa.id} tarefa={tarefa} onMudarStatus={mudarStatus} onExcluir={excluir} />)}</div>}</section>}</div>
     {dados && <footer className="e-sheet-footer">{tarefas.length} {tarefas.length === 1 ? "tarefa" : "tarefas"}</footer>}
   </main></>;
 }

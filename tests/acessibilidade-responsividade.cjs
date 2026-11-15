@@ -120,6 +120,55 @@ async function executar() {
     await page.unroute(rotaDadosLongos);
     console.log(`OK: ${tema}: textos sem espaços cabem na lista, quadro, projetos, projeto, ficha e confirmação em 320, 375, 768 e 1280 px; prazos continuam visíveis`);
 
+    for (const largura of [1280, 375, 320]) {
+      await page.setViewportSize({ width: largura, height: 900 });
+      for (const caminho of ["/", "/tarefas/nova"]) {
+        await abrir(page, caminho);
+        await page.evaluate(() => {
+          const tamanhos = [...document.querySelectorAll("body, body *")].map((el) => [el, parseFloat(getComputedStyle(el).fontSize) / 16]);
+          for (const [el, tamanho] of tamanhos) el.style.setProperty("font-size", `${tamanho}rem`, "important");
+          document.documentElement.style.setProperty("font-size", "32px", "important");
+        });
+        const problemas = await page.evaluate(() => {
+          const problemas = [];
+          const seletores = [".e-top nav a", ".e-form-two [data-label]", ".e-form-footer button"];
+          for (const seletor of seletores) for (const el of document.querySelectorAll(seletor)) {
+            const caixa = el.getBoundingClientRect();
+            const pai = el.parentElement.getBoundingClientRect();
+            const texto = document.createRange();
+            texto.selectNodeContents(el);
+            const retangulos = [...texto.getClientRects()].filter((r) => r.width && r.height);
+            if (caixa.left < 0 || caixa.right > innerWidth + 1 || caixa.left < pai.left - 1 || caixa.right > pai.right + 1) problemas.push(`${seletor}: fora do contêiner`);
+            if (retangulos.some((r) => r.left < caixa.left - 1 || r.right > caixa.right + 1 || r.top < caixa.top - 1 || r.bottom > caixa.bottom + 1)) problemas.push(`${seletor}: texto cortado`);
+          }
+          const sobrepoe = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+          for (const seletor of [".e-top nav a", ".e-top > *", ".e-form-two", ".e-form-footer"]) {
+            const grupos = seletor === ".e-form-two" || seletor === ".e-form-footer" ? [...document.querySelectorAll(seletor)].map((el) => [...el.children]) : [[...document.querySelectorAll(seletor)]];
+            for (const grupo of grupos) for (let i = 0; i < grupo.length; i++) for (let j = i + 1; j < grupo.length; j++) {
+              if (sobrepoe(grupo[i].getBoundingClientRect(), grupo[j].getBoundingClientRect())) problemas.push(`${seletor}: sobreposição`);
+            }
+          }
+          return problemas;
+        });
+        assert.deepEqual(problemas, [], `${largura}px ${caminho}: texto ampliado a 200%`);
+        if (caminho === "/tarefas/nova") {
+          const cancelar = page.getByRole("button", { name: "Cancelar", exact: true });
+          await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).focus();
+          let alcancou = false;
+          for (let i = 0; i < 20; i++) {
+            await page.keyboard.press("Tab");
+            if (await cancelar.evaluate((el) => el === document.activeElement)) { alcancou = true; break; }
+          }
+          assert.equal(alcancou, true, `${largura}px: Cancelar alcançável por Tab com texto 200%`);
+          assert.equal(await focoVisivel(cancelar), true, `${largura}px: Cancelar sem foco visível com texto 200%`);
+          await page.getByLabel(/^Responsável/).fill("Ana");
+          await cancelar.click();
+          await page.waitForURL(`${web}/`);
+        }
+      }
+    }
+    console.log("OK: texto 200% por fontes computadas em rem e raiz 32px; navegação, rótulos e ações sem sobreposição/corte em 1280, 375 e 320 px; Cancelar acessível e funcional");
+
     // Telas pequenas: nada rola na horizontal e nenhum elemento sai da tela, salvo dentro de uma faixa rolável (abas de projetos).
     for (const largura of larguras) {
       await page.setViewportSize({ width: largura, height: 800 });

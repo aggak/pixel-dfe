@@ -33,7 +33,13 @@ export function DetalheTarefa() {
   const [aviso, setAviso] = useState("");
   const [confirmando, setConfirmando] = useState(false);
   const mudarStatus = async (atual: Tarefa, status: Status) => {
-    const nova = await atualizarTarefa(atual.id, { status });
+    let nova: Tarefa;
+    try {
+      nova = await atualizarTarefa(atual.id, { status });
+    } catch (erro) {
+      if (erro instanceof ErroApi && erro.status === 404) avisarTarefaExcluida(atual, true);
+      throw erro;
+    }
     setGravada(nova);
     avisarTarefaGravada(nova);
     setAviso(avisoStatus(atual.titulo, nova.status));
