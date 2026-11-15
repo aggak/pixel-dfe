@@ -203,12 +203,61 @@ async function executar() {
     await ate("lista de tarefas pelo fechar", async () => caminho().pathname === "/");
     await abrir("/tarefas/nova"); await page.getByRole("button", { name: "Cancelar", exact: true }).click(); await ate("lista de tarefas", async () => caminho().pathname === "/");
   });
+  await conferir("clique fora sobre um cartão: com rascunho a ficha fica aberta com o texto; sem rascunho fecha; Escape e Voltar continuam fechando", async () => {
+    const abrirPelaLista = async () => {
+      await page.getByRole("button", { name: "Nova tarefa", exact: true }).click(); await page.locator("form").waitFor(); await aguardarProjetos();
+      await ate("ficha aberta", async () => (await page.locator(".e-form-modal").boundingBox())?.x > 0);
+    };
+    await page.goto(`${origem}/`); const cartao = page.getByRole("link", { name: seed.tarefas[0].titulo, exact: true }); await cartao.waitFor();
+    const caixa = await cartao.boundingBox(); const ponto = { x: caixa.x + 8, y: caixa.y + caixa.height / 2 };
+    await abrirPelaLista();
+    assert.ok(ponto.x < (await page.locator(".e-form-modal").boundingBox()).x, "o ponto do cartão fica fora da ficha");
+    await page.mouse.click(ponto.x, ponto.y);
+    await ate("sem rascunho, clique fora fecha", async () => caminho().pathname === "/");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await abrirPelaLista();
+    await campo("Título").fill("x"); await campo("Título").fill("");
+    await page.mouse.click(ponto.x, ponto.y);
+    await ate("de volta aos valores iniciais, clique fora fecha", async () => caminho().pathname === "/");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await abrirPelaLista();
+    await campo("Título").fill("Rascunho que não pode sumir"); await ui.abrirDescricao(); await campo("Descrição").fill("Parágrafo longo digitado");
+    await page.mouse.click(ponto.x, ponto.y); await dormir(400);
+    assert.equal(caminho().pathname, "/tarefas/nova");
+    assert.equal(await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).count(), 1);
+    assert.equal(await campo("Título").inputValue(), "Rascunho que não pode sumir"); assert.equal(await campo("Descrição").inputValue(), "Parágrafo longo digitado");
+    assert.equal(await page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))), true);
+    await page.keyboard.press("Escape");
+    await ate("Escape fecha com rascunho", async () => caminho().pathname === "/");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+    await abrirPelaLista(); await campo("Título").fill("Rascunho e Voltar");
+    await page.goBack();
+    await ate("Voltar fecha com rascunho", async () => caminho().pathname === "/");
+    await page.getByRole("dialog").waitFor({ state: "detached" });
+  });
   await conferir("sucesso com contexto de projeto volta para a lista do projeto", async () => {
     const dados = { ...base, projetoId: "2", titulo: "Tarefa contextual da suíte" };
     await abrir("/tarefas/nova?projetoId=2"); assert.equal(await ui.valor("Projeto"), "2");
     await preencher(dados); await botaoSalvar().click();
     await ate("projeto após sucesso contextual", async () => caminho().pathname === "/projetos/2");
     assert.equal(caminho().pathname + caminho().search, "/projetos/2"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+  });
+  await conferir("criada na página de um projeto mas atribuída a outro: aviso com link para o projeto dela", async () => {
+    const dados = { ...base, projetoId: "1", titulo: "Tarefa criada em outro projeto da suíte" };
+    await abrir("/tarefas/nova?projetoId=2"); await preencher(dados); await botaoSalvar().click();
+    await ate("projeto de origem após sucesso", async () => caminho().pathname === "/projetos/2");
+    const aviso = page.locator(".e-hidden-notice"); await aviso.waitFor();
+    assert.equal(await aviso.locator("span").innerText(), "Tarefa criada em outro projeto.");
+    assert.equal(await page.getByRole("link", { name: dados.titulo, exact: true }).count(), 0);
+    assert.equal(await page.locator('[aria-live="polite"]').filter({ hasText: "Tarefa criada em outro projeto." }).count(), 1);
+    assert.equal(await page.getByRole("status").filter({ hasText: "outro projeto" }).count(), 0);
+    await ate("foco no link do aviso", () => page.evaluate(() => document.activeElement?.closest(".e-hidden-notice") !== null && document.activeElement?.textContent === "Ver o projeto"));
+    await aviso.getByRole("link", { name: "Ver o projeto" }).click();
+    await ate("projeto da tarefa", async () => caminho().pathname === "/projetos/1"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+    assert.equal(await page.locator(".e-hidden-notice").count(), 0);
+    await abrir("/tarefas/nova?projetoId=2"); await preencher({ ...base, projetoId: "2", titulo: "Tarefa do mesmo projeto da suíte" }); await botaoSalvar().click();
+    await page.getByRole("link", { name: "Tarefa do mesmo projeto da suíte", exact: true }).waitFor();
+    assert.equal(await page.locator(".e-hidden-notice").count(), 0);
   });
   await conferir("projeto inexistente na query bloqueia até escolher um válido", async () => {
     posts.length = 0; await abrir("/tarefas/nova?projetoId=999"); assert.equal(await ui.valor("Projeto"), "999");

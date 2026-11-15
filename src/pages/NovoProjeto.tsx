@@ -7,7 +7,7 @@ import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovoProjeto() {
   useTituloPagina("Novo projeto");
-  const { navegar, fechar, setOcupada } = useFicha();
+  const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
 
   // Ao sair da página, o envio pendente é cancelado e a resposta tardia não redireciona.
@@ -29,6 +29,7 @@ export function NovoProjeto() {
         onSalvar={salvar}
         onCancelar={fechar}
         onEstadoEnvio={setOcupada}
+        onAlteracao={setAlterada}
       />
   );
 }

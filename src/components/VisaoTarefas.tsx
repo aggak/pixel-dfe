@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { excluirTarefaSeExistir, listarTarefas, listarProjetos } from "../api";
@@ -34,7 +34,15 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
   const filtrosAtivos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   const consultaProjetos = useConsulta(listarProjetos, ultimosProjetos);
   const projetos = consultaProjetos.dados;
-  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
+  const [saiu, setSaiu] = useState<{ tarefa: Tarefa; filtros: typeof filtros }>();
+  const filtrosAtuais = useRef(filtros);
+  useEffect(() => { filtrosAtuais.current = filtros; }, [filtros]);
+  const aoGravar = useCallback((gravada: Tarefa) => {
+    if (filtrarTarefas([gravada], filtrosAtuais.current).length > 0) return false;
+    setSaiu({ tarefa: gravada, filtros: filtrosAtuais.current });
+    return true;
+  }, []);
+  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas, aoGravar);
   const location = useLocation();
   const navigate = useNavigate();
   const excluir = async (tarefa: Tarefa) => {
@@ -56,7 +64,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     <FiltrosTarefas />
     <AlternarVisao />
     <AcaoCabecalho><Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Nova tarefa" data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button></AcaoCabecalho>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
+  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} saiu={saiu?.filtros === filtros ? saiu.tarefa : undefined} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio gato="dormindo" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio gato="olhando" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : children(tarefasExibidas, cartao, tarefas))}

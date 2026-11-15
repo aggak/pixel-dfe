@@ -206,6 +206,41 @@ async function executar() {
     assert.equal(await busca.inputValue(), "diagrama");
     console.log("OK: o aviso aparece no quadro e some ao navegar");
 
+    await limpar.click();
+    await selecionar("Status", "A fazer");
+    const alvo = lista.getByRole("article").first();
+    const tituloAlvo = await alvo.locator(".e-task-title").innerText();
+    const totalAntes = await lista.getByRole("article").count();
+    const status = page.getByRole("status").filter({ hasText: /^Status de / });
+    await alvo.getByRole("button", { name: /^Mudar status de / }).click();
+    await page.getByRole("menuitemradio", { name: "Em andamento", exact: true }).click();
+    await aviso.waitFor();
+    assert.equal(await aviso.locator("span").first().innerText(), `“${tituloAlvo}” agora está em Em andamento e saiu deste filtro.`);
+    assert.equal(await lista.getByRole("article").count(), totalAntes - 1);
+    assert.equal(await status.count(), 0);
+    assert.equal(await page.locator('[aria-live="polite"]').filter({ hasText: "saiu deste filtro." }).count(), 1);
+    assert.equal(await page.evaluate(() => document.activeElement !== document.body && document.activeElement !== null), true);
+    await aviso.getByRole("button", { name: "Limpar busca e filtros" }).click();
+    await lista.getByRole("link", { name: tituloAlvo, exact: true }).waitFor();
+    assert.equal(await aviso.count(), 0);
+    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true);
+    await selecionar("Status", "A fazer");
+    await lista.getByRole("article").first().getByRole("button", { name: /^Mudar status de / }).click();
+    await page.getByRole("menuitemradio", { name: "Em revisão", exact: true }).click();
+    await aviso.waitFor();
+    await selecionar("Status", "Todos");
+    await aviso.waitFor({ state: "detached" });
+    assert.equal(await status.count(), 0);
+    await visoes.getByRole("link", { name: "Quadro" }).click();
+    await quadro.getByRole("article").first().waitFor();
+    await selecionar("Status", "A fazer");
+    const noQuadro = quadro.getByRole("article").first();
+    await noQuadro.getByRole("button", { name: /^Mudar status de / }).click();
+    await page.getByRole("menuitemradio", { name: "Concluída", exact: true }).click();
+    await aviso.waitFor();
+    assert.match(await aviso.locator("span").first().innerText(), /agora está em Concluída e saiu deste filtro\.$/);
+    console.log("OK: mudar o status para fora do filtro mostra o aviso, sem repetir o anúncio de status, e limpar revela a tarefa");
+    await visoes.getByRole("link", { name: "Lista" }).click();
     // Contagem anunciada quando o status tira a tarefa do filtro, sem repetir o aviso de status.
     const fraseContagem = (n) => `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
     const anuncioContagem = () => page.locator("main p.sr-only[aria-live=polite]").innerText();
@@ -226,9 +261,10 @@ async function executar() {
     await page.locator(`[data-task-id="${idStatus}"]`).waitFor({ state: "detached" });
     const contagemNova = fraseContagem(antesStatus - 1);
     await page.waitForFunction((texto) => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === texto, contagemNova);
-    assert.equal(await page.locator("main p[role=status]").count(), 1);
-    assert.equal(await page.locator("main p[role=status]").innerText(), `Status de ${tituloStatus} alterado para Concluída.`);
-    console.log("OK: status fora do filtro atualiza a contagem anunciada e não duplica o anúncio de status");
+    assert.equal(await page.locator("main p[role=status]").count(), 0);
+    await aviso.waitFor();
+    assert.equal(await aviso.locator("span").first().innerText(), `“${tituloStatus}” agora está em Concluída e saiu deste filtro.`);
+    console.log("OK: status fora do filtro atualiza a contagem anunciada, com o aviso visível e sem anúncio de status repetido");
 
     await selecionar("Status", "Todos");
     await selecionar("Prioridade", "Média");
@@ -279,7 +315,7 @@ async function executar() {
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
     assert.deepEqual(atuais, originais);
-    console.log("14 cenários aprovados; nenhum erro JavaScript não tratado.");
+    console.log("15 cenários aprovados; nenhum erro JavaScript não tratado.");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();
