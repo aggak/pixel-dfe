@@ -19,7 +19,7 @@ export function avisoStatus(titulo: string, status: Status) {
 }
 
 // Grava o status na API e só então troca a tarefa no estado da página: o cartão muda de coluna com o valor confirmado.
-export function useMudarStatus(tarefas: Tarefa[], setTarefas: Dispatch<SetStateAction<Tarefa[]>>) {
+export function useMudarStatus(tarefas: Tarefa[], setTarefas: Dispatch<SetStateAction<Tarefa[]>>, aoGravar?: (gravada: Tarefa) => boolean) {
   const [aviso, setAviso] = useState("");
   const focar = useRef<string | null>(null);
   const carimbar = useRef<string | null>(null);
@@ -69,7 +69,7 @@ export function useMudarStatus(tarefas: Tarefa[], setTarefas: Dispatch<SetStateA
     focar.current = gravada.id;
     carimbar.current = tarefa.status !== "concluida" && gravada.status === "concluida" ? gravada.id : null;
     avisarTarefaGravada(gravada);
-    setAviso(avisoStatus(tarefa.titulo, gravada.status));
-  }, []);
+    setAviso(aoGravar?.(gravada) ? "" : avisoStatus(tarefa.titulo, gravada.status));
+  }, [aoGravar]);
   return { mudarStatus, aviso };
 }

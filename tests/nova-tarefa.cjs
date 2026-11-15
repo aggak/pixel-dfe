@@ -242,6 +242,23 @@ async function executar() {
     await ate("projeto após sucesso contextual", async () => caminho().pathname === "/projetos/2");
     assert.equal(caminho().pathname + caminho().search, "/projetos/2"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
   });
+  await conferir("criada na página de um projeto mas atribuída a outro: aviso com link para o projeto dela", async () => {
+    const dados = { ...base, projetoId: "1", titulo: "Tarefa criada em outro projeto da suíte" };
+    await abrir("/tarefas/nova?projetoId=2"); await preencher(dados); await botaoSalvar().click();
+    await ate("projeto de origem após sucesso", async () => caminho().pathname === "/projetos/2");
+    const aviso = page.locator(".e-hidden-notice"); await aviso.waitFor();
+    assert.equal(await aviso.locator("span").innerText(), "Tarefa criada em outro projeto.");
+    assert.equal(await page.getByRole("link", { name: dados.titulo, exact: true }).count(), 0);
+    assert.equal(await page.locator('[aria-live="polite"]').filter({ hasText: "Tarefa criada em outro projeto." }).count(), 1);
+    assert.equal(await page.getByRole("status").filter({ hasText: "outro projeto" }).count(), 0);
+    await ate("foco no link do aviso", () => page.evaluate(() => document.activeElement?.closest(".e-hidden-notice") !== null && document.activeElement?.textContent === "Ver o projeto"));
+    await aviso.getByRole("link", { name: "Ver o projeto" }).click();
+    await ate("projeto da tarefa", async () => caminho().pathname === "/projetos/1"); await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+    assert.equal(await page.locator(".e-hidden-notice").count(), 0);
+    await abrir("/tarefas/nova?projetoId=2"); await preencher({ ...base, projetoId: "2", titulo: "Tarefa do mesmo projeto da suíte" }); await botaoSalvar().click();
+    await page.getByRole("link", { name: "Tarefa do mesmo projeto da suíte", exact: true }).waitFor();
+    assert.equal(await page.locator(".e-hidden-notice").count(), 0);
+  });
   await conferir("projeto inexistente na query bloqueia até escolher um válido", async () => {
     posts.length = 0; await abrir("/tarefas/nova?projetoId=999"); assert.equal(await ui.valor("Projeto"), "999");
     assert.ok((await ui.seletor("Projeto").innerText()).includes("Projeto não encontrado"));
