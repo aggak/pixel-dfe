@@ -34,7 +34,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
   const filtrosAtivos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   const consultaProjetos = useConsulta(listarProjetos, ultimosProjetos);
   const projetos = consultaProjetos.dados;
-  const { mudarStatus, aviso } = useMudarStatus(tarefas, setTarefas);
+  const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(tarefas, setTarefas);
   const location = useLocation();
   const navigate = useNavigate();
   const excluir = async (tarefa: Tarefa) => {
@@ -56,7 +56,7 @@ export function VisaoTarefas({ titulo, classeConteudo = "e-content", children }:
     <FiltrosTarefas />
     <AlternarVisao />
     <AcaoCabecalho><Button className="e-top-acao-botao" color="primary" size="sm" iconLeading={PlusIcon} aria-label="Nova tarefa" data-action="new-task" onClick={() => navigate("/tarefas/nova", { state: { fundo: location } })}>Nova tarefa</Button></AcaoCabecalho>
-  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}><AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
+  </header>{aviso && <p className="sr-only" role="status">{aviso}</p>}<AnuncioResultados total={tarefasExibidas.length} filtros={filtros} /><div className={classeConteudo}>{inexistente && <p ref={alertaInexistente} className="e-task-error" role="alert" tabIndex={-1}>{inexistente}</p>}<AvisoTarefaEscondida tarefas={tarefas} exibidas={tarefasExibidas} onLimpar={limpar} />
     {carregando && <Carregando>Carregando tarefas…</Carregando>}
     {erro !== undefined && <ErroCarregamento titulo="Não foi possível carregar as tarefas" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />}
     {!carregando && !erro && (tarefas.length === 0 ? <EstadoVazio gato="dormindo" titulo="Nenhuma tarefa por aqui" destino="/tarefas/nova" acao="Criar tarefa" /> : tarefasExibidas.length === 0 ? <EstadoVazio gato="olhando" titulo="Nenhuma tarefa encontrada" acao="Limpar busca e filtros" onAcao={limpar} /> : children(tarefasExibidas, cartao, tarefas))}
