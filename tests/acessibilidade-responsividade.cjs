@@ -290,6 +290,91 @@ async function executar() {
   await page.waitForFunction(() => document.activeElement?.textContent === "Criar o repositório");
   console.log("OK: Enter abre a ficha e Esc fecha devolvendo o foco ao link");
 
+  // Atalho "Pular para o conteúdo": primeira parada do Tab, visível só no foco, leva ao título sem mexer na URL.
+  for (const largura of [1280, 375]) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    for (const caminho of paginas) {
+      await abrir(page, caminho);
+      const antes = await page.evaluate(() => ({ href: location.href, entradas: history.length, idx: history.state?.idx ?? null }));
+      await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+      const escondido = await page.locator(".e-pular").evaluate((el) => {
+        const estilo = getComputedStyle(el);
+        const caixa = el.getBoundingClientRect();
+        return estilo.position === "absolute" && estilo.clip !== "auto" && caixa.width <= 2 && caixa.height <= 2;
+      });
+      assert.equal(escondido, true, `${largura}px ${caminho}: o atalho aparece sem foco`);
+      await page.keyboard.press("Tab");
+      const link = page.locator(".e-pular");
+      assert.equal(await link.evaluate((el) => el === document.activeElement), true, `${largura}px ${caminho}: o atalho não é a primeira parada`);
+      assert.equal((await link.innerText()).trim(), "Pular para o conteúdo");
+      assert.equal(await focoVisivel(link), true, `${largura}px ${caminho}: atalho sem foco visível`);
+      const sobreOHeader = await link.evaluate((el) => {
+        const caixa = el.getBoundingClientRect();
+        const header = document.querySelector(".e-top").getBoundingClientRect();
+        return caixa.height >= 44 && caixa.width >= 44 && caixa.top >= 0 && caixa.left >= 0 && caixa.right <= innerWidth && caixa.bottom > header.top && caixa.top < header.bottom;
+      });
+      assert.equal(sobreOHeader, true, `${largura}px ${caminho}: o atalho focado não fica sobre o header ou tem menos de 44 px`);
+      await page.keyboard.press("Enter");
+      await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+      const destino = await page.evaluate(() => {
+        const titulo = document.querySelector("main h1");
+        const caixa = titulo.getBoundingClientRect();
+        const header = document.querySelector(".e-top").getBoundingClientRect();
+        const escondido = titulo.classList.contains("e-task-page-title");
+        return { coberto: !escondido && caixa.top < header.bottom - 1, hash: location.hash };
+      });
+      assert.equal(destino.coberto, false, `${largura}px ${caminho}: o título ficou sob o header`);
+      assert.equal(destino.hash, "");
+      const depois = await page.evaluate(() => ({ href: location.href, entradas: history.length, idx: history.state?.idx ?? null }));
+      assert.deepEqual(depois, antes, `${largura}px ${caminho}: o atalho alterou a URL ou o histórico`);
+      if (caminho === "/" || caminho === "/quadro") {
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true, `${largura}px ${caminho}: o Tab seguinte não caiu na busca`);
+        const buscaLivre = await page.evaluate(() => {
+          const busca = document.querySelector(".e-task-search").getBoundingClientRect();
+          const header = document.querySelector(".e-top").getBoundingClientRect();
+          return busca.top >= header.bottom - 1 && busca.bottom > busca.top;
+        });
+        assert.equal(buscaLivre, true, `${largura}px ${caminho}: a busca ficou sob o header`);
+      }
+    }
+    await abrir(page, "/");
+    await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+    await page.keyboard.press("Tab");
+    await page.locator(".e-pular").click();
+    await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+    assert.equal(new URL(page.url()).hash, "", `${largura}px: o clique pôs um hash na URL`);
+    await page.keyboard.press("Tab");
+    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true, `${largura}px: depois do clique, o Tab não caiu na busca`);
+    await abrir(page, "/tarefas/1");
+    const interferiu = await page.evaluate(() => {
+      const link = document.querySelector(".e-pular");
+      const caixa = link.getBoundingClientRect();
+      return link.closest("[inert]") === null || caixa.height > 2 || document.activeElement === link;
+    });
+    assert.equal(interferiu, false, `${largura}px: o atalho interfere na ficha`);
+    await page.keyboard.press("Tab");
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains("e-pular") ?? false), false, `${largura}px: o Tab na ficha caiu no atalho`);
+    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-form-overlay") !== null), true, `${largura}px: o Tab saiu da ficha`);
+  }
+  await abrir(page, "/projetos");
+  await abrir(page, "/");
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+  const aposRolagem = await page.evaluate(() => {
+    const busca = document.querySelector(".e-task-search").getBoundingClientRect();
+    const header = document.querySelector(".e-top").getBoundingClientRect();
+    return busca.top >= header.bottom - 1 && busca.bottom <= innerHeight && location.pathname === "/";
+  });
+  assert.equal(aposRolagem, true, "depois de rolar a lista, o atalho não trouxe a busca para baixo do header");
+  await page.goBack();
+  await page.waitForURL(/\/projetos$/);
+  assert.equal(new URL(page.url()).hash, "");
+  console.log("OK: Pular para o conteúdo é a primeira parada, leva o foco ao título sem mexer na URL e o Tab seguinte cai na busca");
+
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);

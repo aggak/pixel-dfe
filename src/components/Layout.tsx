@@ -20,6 +20,19 @@ import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
 }
+function pularParaConteudo(evento: { preventDefault(): void }) {
+  evento.preventDefault();
+  const titulo = document.querySelector<HTMLElement>("main h1");
+  const principal = titulo?.closest("main") ?? document.querySelector<HTMLElement>("main");
+  const alvo = titulo ?? principal;
+  if (!alvo || !principal) return;
+  if (!alvo.hasAttribute("tabindex")) alvo.tabIndex = -1;
+  const altura = document.querySelector(".e-top")?.getBoundingClientRect().height ?? 0;
+  const limite = altura + 12;
+  const caixa = principal.getBoundingClientRect();
+  if (caixa.top < limite || caixa.top > window.innerHeight) window.scrollTo({ top: Math.max(0, caixa.top + window.scrollY - limite), behavior: "instant" });
+  alvo.focus({ preventScroll: true });
+}
 class FalhaPagina extends Component<{ children: ReactNode }, { falhou: boolean }> {
   state = { falhou: false };
   static getDerivedStateFromError() { return { falhou: true }; }
@@ -38,6 +51,7 @@ export function Layout() {
   const emTarefas = caminho === "/" || caminho === "/quadro";
   useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [caminho]);
   return <div id="pixel-encaixe" className="e-app">
+    <a className="e-pular" href="#conteudo" onClick={pularParaConteudo}>Pular para o conteúdo</a>
     <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
     {abas && <FaixaProjetos {...abas} />}
     <ContextoAcaoCabecalho.Provider value={areaAcao}><ContextoAbas.Provider value={setAbas}><FalhaPagina key={caminho}><Outlet /></FalhaPagina></ContextoAbas.Provider></ContextoAcaoCabecalho.Provider>
