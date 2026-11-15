@@ -307,6 +307,14 @@ async function executar() {
     assert.ok(!("id" in dados));
     assert.deepEqual(dados, valido);
   });
+  await conferir("prazo vazio mantém valor vazio e o esmaecimento é só do WebKit", async () => {
+    await campo("Prazo").fill("");
+    assert.equal(await campo("Prazo").inputValue(), "");
+    assert.equal(await campo("Prazo").getAttribute("value"), "");
+    assert.equal(await page.evaluate(() => CSS.supports("(-webkit-hyphens:none)")), false);
+    const regra = await page.evaluate(() => [...document.styleSheets].flatMap((f) => [...f.cssRules]).some((r) => r.cssText.includes('input[type="date"][value=""]') && r.cssText.includes("-webkit-hyphens")));
+    assert.equal(regra, true, "regra do campo de data vazio fica atrás de @supports do WebKit");
+  });
   await conferir("prazo com ano de mais de quatro dígitos é recusado ao salvar, no cadastro e na edição", async () => {
     const invalida = "Informe uma data válida.";
     const focoNoPrazo = () => campo("Prazo").evaluate((el) => el === document.activeElement);

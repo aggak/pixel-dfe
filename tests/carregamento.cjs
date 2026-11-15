@@ -52,7 +52,7 @@ async function executar() {
   await Promise.all([esperar(`${api}/tarefas`), esperar(web)]);
 
   browser = await lancarNavegador();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark", reducedMotion: "reduce" });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
@@ -103,21 +103,81 @@ async function executar() {
   await conferirRota("nova tarefa mostra e retira carregamento dos projetos", "/tarefas/nova", (url) => url.pathname === "/projetos", () => statusFicha("Carregando projetos"));
   await conferirRota("edição do projeto mostra e retira carregamento", "/projetos/1/editar", (url) => url.pathname === "/projetos/1", () => statusFicha("Carregando projeto"));
 
-  async function reter(caminho) {
+  async function reter(caminho, transformar) {
     let iniciou;
     let liberar;
+    let concluir;
+    const conclusao = new Promise((resolve) => { concluir = resolve; });
     const requisicao = new Promise((resolve) => { iniciou = resolve; });
     const bloqueio = new Promise((resolve) => { liberar = resolve; });
     const interceptar = async (rota) => {
       if (rota.request().method() === "GET" && new URL(rota.request().url()).pathname === caminho) {
         iniciou();
         await bloqueio;
+        if (transformar) {
+          try {
+            const resposta = await rota.fetch();
+            await rota.fulfill({ response: resposta, json: transformar(await resposta.json()) });
+          } catch (erro) {
+            if (!String(erro).includes("Route is already handled")) throw erro;
+          } finally {
+            concluir();
+          }
+          return;
+        }
       }
       await rota.continue().catch(() => {});
     };
     await page.route(`${api}/**`, interceptar);
-    return { requisicao, liberar: async () => { liberar(); await page.unroute(`${api}/**`, interceptar); } };
+    return { requisicao, liberar: async () => { liberar(); if (transformar) await conclusao; await page.unroute(`${api}/**`, interceptar); } };
   }
+
+  for (const width of [320, 375, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const [caminho, consulta, anuncio, nome, semDescricao = false] of [
+      ["/tarefas/1/editar", "/tarefas/1", "Carregando tarefa", "Editar tarefa"],
+      ["/tarefas/1/editar", "/tarefas/1", "Carregando tarefa", "Editar tarefa", true],
+      ["/projetos/1/editar", "/projetos/1", "Carregando projeto", "Editar projeto"],
+      ["/tarefas/nova", "/projetos", "Carregando projetos", "Nova tarefa"],
+      ["/projetos/novo", "/projetos", "", "Novo projeto"],
+    ]) {
+      const consultaPendente = await reter(consulta, semDescricao ? (dados) => ({ ...dados, descricao: "" }) : undefined);
+      try {
+        await page.goto(`${web}${caminho}`);
+        const ficha = page.getByRole("dialog", { name: nome, exact: true });
+        await ficha.waitFor();
+        if (anuncio) await statusFicha(anuncio).waitFor();
+        else await ficha.locator("form").waitFor();
+        await page.evaluate(() => document.fonts.ready);
+        const cabecalho = ficha.locator(".e-form-header");
+        const topo = await cabecalho.evaluate((el) => el.getBoundingClientRect().top);
+        const fechar = ficha.getByRole("button", { name: `Fechar ${nome.toLocaleLowerCase("pt-BR")}`, exact: true });
+        await fechar.focus();
+        await consultaPendente.liberar();
+        await ficha.locator("form").waitFor();
+        if (anuncio) await statusFicha(anuncio).waitFor({ state: "detached" });
+        if (caminho === "/tarefas/1/editar") {
+          await page.waitForFunction(() => ![...document.querySelectorAll('[role="status"]')].some((el) => el.textContent.includes("Carregando projetos")));
+        }
+        const limite = width >= 650 ? 1 : caminho === "/tarefas/1/editar" ? 54 : caminho === "/tarefas/nova" ? 22 : 1;
+        assert.ok(Math.abs(await cabecalho.evaluate((el) => el.getBoundingClientRect().top) - topo) < limite, `${caminho} em ${width}px: deslocamento deve ficar abaixo de ${limite}px`);
+        assert.equal(await ficha.locator(".e-ficha-loading-tarefa,.e-ficha-loading-projeto").count(), 0, "formulário pronto não mantém a reserva de carregamento");
+        if (width < 650 && (semDescricao || caminho === "/tarefas/nova")) {
+          assert.ok((await ficha.boundingBox()).height < 500, "tarefa sem descrição mantém a altura natural, sem vão até o rodapé");
+        }
+        assert.equal(await fechar.isVisible(), true);
+        assert.equal(await ficha.locator(":focus").count(), 1, "foco permanece dentro da ficha após carregar");
+        if (width < 650) {
+          const caixa = await fechar.boundingBox();
+          assert.ok(caixa.width >= 44 && caixa.height >= 44, "fechar mantém alvo de toque móvel");
+        }
+      } finally {
+        await consultaPendente.liberar();
+      }
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  console.log("OK: reserva só nas edições carregando, resíduo limitado com/sem descrição e formulários prontos na altura natural em 320, 375 e 1280px");
 
   const andamento = await reter("/tarefas");
   await page.goto(`${web}/projetos`);

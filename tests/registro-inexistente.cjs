@@ -152,7 +152,7 @@ async function executar() {
   await removerNaApi("tarefas", "4");
   await page.getByRole("button", { name: /^Mudar status de Listar as tarefas na tela/ }).click();
   await page.getByRole("menuitemradio", { name: "Concluída" }).click();
-  await alerta("Esta tarefa não existe mais. Ela pode ter sido excluída.").waitFor();
+  await alerta("“Listar as tarefas na tela” não existe mais. Ela pode ter sido excluída.").waitFor();
   assert.equal(await alerta("Tente de novo").count(), 0);
   console.log("OK: mudar status de tarefa excluída avisa que ela não existe mais");
 

@@ -181,6 +181,126 @@ async function executar() {
   await conferirFaixa();
   console.log(`OK: em desktop, as duas setas rolam a faixa e somem no limite correspondente (${depois} → ${retorno} px)`);
 
+  async function geometriaFoco() {
+    return page.evaluate(() => {
+      const el = document.activeElement;
+      if (!(el instanceof HTMLElement) || !el.closest(".e-tabs")) return null;
+      const nav = el.closest(".e-tabs");
+      const todas = nav.querySelector("a");
+      const caixa = el.getBoundingClientRect();
+      const faixa = nav.getBoundingClientRect();
+      const fixa = todas.getBoundingClientRect();
+      const movel = matchMedia("(max-width: 650px)").matches;
+      const sobra = nav.dataset.sobra || "";
+      const recuoIni = sobra.includes("ini") ? (movel ? 20 : 56) : 0;
+      const recuoFim = sobra.includes("fim") ? (movel ? 20 : 56) : 0;
+      const utilEsq = fixa.right + recuoIni;
+      const utilDir = faixa.right - recuoFim;
+      return {
+        tag: el.tagName, nome: el.textContent.trim(), todas: el === todas, scroll: nav.scrollLeft,
+        left: caixa.left, right: caixa.right, utilEsq, utilDir, faixaEsq: faixa.left, faixaDir: faixa.right,
+        cabe: caixa.width <= utilDir - utilEsq + 1, paginaX: window.scrollX,
+      };
+    });
+  }
+
+  function afirmarAbaInteira(medida, contexto) {
+    assert.ok(medida, `${contexto}: o foco saiu das abas`);
+    assert.equal(medida.tag, "A", `${contexto}: o foco não está num link`);
+    assert.equal(medida.paginaX, 0, `${contexto}: a página rolou na horizontal`);
+    if (medida.todas) {
+      assert.ok(medida.left >= medida.faixaEsq - 1 && medida.right <= medida.faixaDir + 1, `${contexto}: Todas fora da faixa`);
+      return;
+    }
+    assert.ok(medida.left >= medida.utilEsq - 1, `${contexto}: «${medida.nome}» começa em ${medida.left.toFixed(1)} e a área útil em ${medida.utilEsq.toFixed(1)}`);
+    if (medida.cabe) assert.ok(medida.right <= medida.utilDir + 1, `${contexto}: «${medida.nome}» termina em ${medida.right.toFixed(1)} e a área útil em ${medida.utilDir.toFixed(1)}`);
+  }
+
+  async function conferirFocoTeclado(largura) {
+    await page.setViewportSize({ width: largura, height: 800 });
+    await abrir("/");
+    const haviaCorte = await abas.evaluate((nav) => {
+      nav.scrollTo({ left: 0, behavior: "instant" });
+      const faixa = nav.getBoundingClientRect();
+      return [...nav.querySelectorAll("a")].some((aba, indice) => indice > 0 && aba.getBoundingClientRect().right > faixa.right + 1);
+    });
+    assert.equal(haviaCorte, true, `${largura}px: o cenário precisa de uma aba cortada no começo da faixa`);
+    await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+    const ida = [];
+    for (let passo = 0; passo < 40; passo++) {
+      await page.keyboard.press("Tab");
+      const medida = await geometriaFoco();
+      if (!medida) {
+        if (ida.length) break;
+        continue;
+      }
+      afirmarAbaInteira(medida, `Tab ${largura}px`);
+      ida.push(medida);
+    }
+    assert.ok(ida.length >= 8, `${largura}px: só ${ida.length} abas no Tab`);
+    assert.equal(ida[0].todas, true, `${largura}px: a primeira aba do percurso é Todas`);
+    assert.ok(ida.some((medida) => medida.scroll > 1), `${largura}px: focar a aba cortada não rolou a faixa`);
+    const volta = [];
+    for (let passo = 0; passo < ida.length; passo++) {
+      await page.keyboard.press("Shift+Tab");
+      const medida = await geometriaFoco();
+      if (!medida) break;
+      afirmarAbaInteira(medida, `Shift+Tab ${largura}px`);
+      volta.push(medida);
+    }
+    assert.equal(volta.length, ida.length, `${largura}px: o Shift+Tab não refez as abas`);
+    console.log(`OK: em ${largura}px, Tab e Shift+Tab deixam cada aba focada inteira na área útil`);
+  }
+
+  await conferirFocoTeclado(320);
+  await conferirFocoTeclado(1280);
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 320, height: 800 });
+  await abrir("/");
+  await abas.evaluate((nav) => {
+    const vistos = [];
+    const nativo = HTMLElement.prototype.scrollTo;
+    nav.scrollTo = function (opcoes) {
+      if (opcoes && typeof opcoes === "object") vistos.push(opcoes.behavior);
+      return nativo.call(this, opcoes);
+    };
+    nav.__vistos = vistos;
+  });
+  await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  let rolouSuave = false;
+  for (let passo = 0; passo < 24 && !rolouSuave; passo++) {
+    await page.keyboard.press("Tab");
+    rolouSuave = await abas.evaluate((nav) => nav.__vistos.includes("smooth"));
+  }
+  assert.equal(rolouSuave, true, "sem movimento reduzido, focar a aba cortada rola a faixa com suavidade");
+  await page.waitForFunction(() => {
+    const el = document.activeElement;
+    const nav = el?.closest?.(".e-tabs");
+    if (!nav || el === nav.querySelector("a")) return false;
+    const caixa = el.getBoundingClientRect();
+    const faixa = nav.getBoundingClientRect();
+    const fixa = nav.querySelector("a").getBoundingClientRect();
+    const sobra = nav.dataset.sobra || "";
+    const utilEsq = fixa.right + (sobra.includes("ini") ? 20 : 0);
+    const utilDir = faixa.right - (sobra.includes("fim") ? 20 : 0);
+    return caixa.left >= utilEsq - 1 && (caixa.width > utilDir - utilEsq + 1 || caixa.right <= utilDir + 1);
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await abas.evaluate((nav) => {
+    nav.scrollTo({ left: 0, behavior: "instant" });
+    nav.__vistos.length = 0;
+  });
+  await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  let rolouNaHora = false;
+  for (let passo = 0; passo < 24 && !rolouNaHora; passo++) {
+    await page.keyboard.press("Tab");
+    rolouNaHora = await abas.evaluate((nav) => nav.__vistos.includes("auto") && !nav.__vistos.includes("smooth"));
+  }
+  assert.equal(rolouNaHora, true, "com movimento reduzido, a faixa rola na hora, sem suavidade");
+  await abas.evaluate((nav) => { delete nav.scrollTo; delete nav.__vistos; });
+  console.log("OK: a rolagem do foco é suave só quando o movimento reduzido está desligado");
+
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
