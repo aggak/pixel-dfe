@@ -132,6 +132,117 @@ async function executar() {
   assert.equal(await page.evaluate(() => { const caixa = document.activeElement.getBoundingClientRect(); return caixa.width > 1 && caixa.height > 1; }), true);
   console.log("OK: excluir o único resultado da busca leva o foco à busca, visível");
 
+  // Ficha de detalhes: a mesma confirmação, pela ficha aberta sobre a lista, o quadro e a página do projeto.
+  const criar = async (titulo) => (await fetch(`${api}/tarefas`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projetoId: "1", titulo, descricao: "", status: "a-fazer", prioridade: "media", responsavel: "Ana", prazo: "2026-12-01" }) })).json();
+  const pelaFicha = [];
+  for (let n = 1; n <= 4; n++) pelaFicha.push(await criar(`Excluir pela ficha ${n}`));
+  const [daLista, doQuadro, doProjeto, direta] = pelaFicha;
+  let restantes = tarefas.length - 4 + pelaFicha.length;
+  const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
+  const botaoFicha = ficha.getByRole("button", { name: "Excluir tarefa" });
+  const rodape = page.locator(".e-sheet-footer");
+  const total = (n) => `${n} ${n === 1 ? "tarefa" : "tarefas"}`;
+  const abrirFicha = async (tarefa) => {
+    await cartao(tarefa).locator(".e-task-title").click();
+    await ficha.locator(".e-read-title").waitFor();
+  };
+  const vizinhoDe = (tarefa) => page.evaluate((id) => {
+    const cartoes = [...document.querySelectorAll("[data-task-id]")];
+    const posicao = cartoes.findIndex((cartao) => cartao.dataset.taskId === id);
+    return (cartoes[posicao + 1] ?? cartoes[posicao - 1])?.dataset.taskId;
+  }, tarefa.id);
+  const focoNoTitulo = (id) => page.waitForFunction((alvo) => document.activeElement?.matches(".e-task-title") && document.activeElement.closest("[data-task-id]")?.dataset.taskId === alvo, id);
+  const anunciado = (tarefa) => page.waitForFunction((texto) => [...document.querySelectorAll("main p[role=status]")].some((p) => p.textContent === texto), `Tarefa ${tarefa.titulo} excluída.`);
+
+  await page.goto(web);
+  await cartao(daLista).waitFor();
+  assert.equal(await rodape.innerText(), total(restantes));
+  await abrirFicha(daLista);
+  assert.deepEqual(await ficha.locator("footer button").allInnerTexts(), ["Excluir tarefa", "Editar tarefa"]);
+  await botaoFicha.click();
+  await dialogo(daLista).waitFor();
+  assert.match(await dialogo(daLista).innerText(), /Excluir tarefa\?[\s\S]*“Excluir pela ficha 1”\? Esta ação não pode ser desfeita\./);
+  await dialogo(daLista).getByRole("button", { name: "Cancelar" }).click();
+  await dialogo(daLista).waitFor({ state: "detached" });
+  await page.waitForFunction(() => document.activeElement?.textContent === "Excluir tarefa" && document.activeElement.closest(".e-read-task") !== null);
+  assert.equal(await ficha.count(), 1);
+  assert.equal(exclusoes.filter((url) => url.endsWith(`/${daLista.id}`)).length, 0);
+  console.log("OK: na ficha, Excluir tarefa abre a mesma confirmação; cancelar mantém a ficha e devolve o foco ao botão");
+
+  const urlDaLista = `${api}/tarefas/${daLista.id}`;
+  let decidir;
+  const decisao = new Promise((resolve) => { decidir = resolve; });
+  await page.route(urlDaLista, async (rota) => rota.request().method() === "DELETE" && (await decisao) === 500 ? rota.fulfill({ status: 500, body: "{}" }) : rota.continue());
+  await botaoFicha.click();
+  await confirmar(daLista);
+  await dialogo(daLista).getByRole("button", { name: "Excluindo…" }).waitFor();
+  assert.equal(await ficha.getByRole("button", { name: "Fechar detalhes da tarefa" }).isDisabled(), true);
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  assert.equal(await dialogo(daLista).count(), 1);
+  assert.equal(await ficha.count(), 1);
+  decidir(500);
+  await dialogo(daLista).getByRole("alert").waitFor();
+  assert.equal(await dialogo(daLista).getByRole("alert").innerText(), "Não foi possível excluir a tarefa. Tente de novo.");
+  assert.equal(await cartao(daLista).count(), 1);
+  assert.equal(await existeNaApi(daLista), true);
+  assert.equal(await rodape.innerText(), total(restantes));
+  await page.unroute(urlDaLista);
+  console.log("OK: na ficha, com o DELETE pendente nada fecha; a falha avisa e mantém tarefa, ficha e contagem");
+
+  const vizinhoDaLista = await vizinhoDe(daLista);
+  await confirmar(daLista);
+  await ficha.waitFor({ state: "detached" });
+  await cartao(daLista).waitFor({ state: "detached" });
+  assert.equal(await existeNaApi(daLista), false);
+  assert.equal(await rodape.innerText(), total(--restantes));
+  assert.equal(new URL(page.url()).pathname, "/");
+  await focoNoTitulo(vizinhoDaLista);
+  await anunciado(daLista);
+  console.log("OK: na ficha, o sucesso fecha a ficha, tira a tarefa da lista e do rodapé, anuncia e leva o foco ao cartão vizinho");
+
+  await page.goto(`${web}/quadro`);
+  await abrirFicha(doQuadro);
+  await botaoFicha.click();
+  await dialogo(doQuadro).getByRole("button", { name: "Excluir tarefa" }).dblclick();
+  await ficha.waitFor({ state: "detached" });
+  await cartao(doQuadro).waitFor({ state: "detached" });
+  assert.equal(exclusoes.filter((url) => url.endsWith(`/${doQuadro.id}`)).length, 1);
+  assert.equal(await rodape.innerText(), total(--restantes));
+  await anunciado(doQuadro);
+  assert.notEqual(await page.evaluate(() => document.activeElement === document.body), true);
+  console.log("OK: na ficha sobre o quadro, duplo clique gera um só DELETE e o cartão sai do quadro e da contagem");
+
+  await page.goto(`${web}/projetos/1`);
+  await cartao(doProjeto).waitFor();
+  const noProjetoAntes = await page.locator(".e-list [data-task-id]").count();
+  const urlDoProjeto = `${api}/tarefas/${doProjeto.id}`;
+  await page.route(urlDoProjeto, (rota) => rota.request().method() === "DELETE" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue());
+  await abrirFicha(doProjeto);
+  await botaoFicha.click();
+  await confirmar(doProjeto);
+  await ficha.waitFor({ state: "detached" });
+  await cartao(doProjeto).waitFor({ state: "detached" });
+  await page.unroute(urlDoProjeto);
+  assert.equal(await rodape.innerText(), total(noProjetoAntes - 1));
+  assert.equal(new URL(page.url()).pathname, "/projetos/1");
+  await anunciado(doProjeto);
+  assert.notEqual(await page.evaluate(() => document.activeElement === document.body), true);
+  await fetch(urlDoProjeto, { method: "DELETE" });
+  console.log("OK: na ficha sobre o projeto, o 404 conta como sucesso e o cartão sai da página e do rodapé");
+
+  await page.goto(`${web}/tarefas/${direta.id}`);
+  await ficha.locator(".e-read-title").waitFor();
+  await botaoFicha.click();
+  await confirmar(direta);
+  await ficha.waitFor({ state: "detached" });
+  await cartao(direta).waitFor({ state: "detached" });
+  assert.equal(await existeNaApi(direta), false);
+  assert.equal(await rodape.innerText(), total(restantes - 2));
+  await page.waitForFunction(() => { const ativo = document.activeElement; const caixa = ativo?.getBoundingClientRect(); return ativo && ativo !== document.body && caixa.width > 1 && caixa.height > 1; });
+  console.log("OK: na ficha aberta pelo endereço, excluir volta à lista sem a tarefa e com o foco num lugar visível");
+
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
   assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
