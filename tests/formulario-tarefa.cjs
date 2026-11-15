@@ -228,8 +228,8 @@ async function executar() {
     assert.equal(await page.getByText("Selecione um projeto.", { exact: true }).count(), 0);
   });
   await conferir("validação preserva o calendário, reserva espaço para ícones e usa a cor de erro do tema", async () => {
-    const corErro = "rgb(238, 152, 172)";
-    assert.ok(contraste(corErro, "rgb(44, 39, 50)") >= 4.5);
+    const corErro = "rgb(250, 155, 145)";
+    assert.ok(contraste(corErro, "rgb(59, 45, 69)") >= 4.5);
     for (const largura of [320, 375, 1280]) for (const modo of ["novo", "editar"]) {
       await page.setViewportSize({ width: largura, height: 900 });
       await abrir(modo);
@@ -257,7 +257,7 @@ async function executar() {
         assert.equal(estado.invalido, "true", rotulo);
         assert.ok(estado.mensagem, rotulo);
         assert.equal(estado.corMensagem, corErro, rotulo);
-        assert.equal(estado.corContorno, rotulo === "Título" ? corErro : "#ee98ac", `${rotulo}, foco: ${focado}`);
+        assert.equal(estado.corContorno, rotulo === "Título" ? corErro : "#fa9b91", `${rotulo}, foco: ${focado}`);
         assert.equal(estado.iconeVisivel, rotulo !== "Prazo", rotulo);
         if (focado) assert.equal(await focoVisivel(campo(rotulo)), true, rotulo);
         if (rotulo !== "Prazo") {
@@ -484,7 +484,7 @@ async function executar() {
       await page.waitForFunction(() => document.getAnimations().length === 0);
       const cores = await botaoEnvio().evaluate((el) => ({ texto: getComputedStyle(el).color, fundo: getComputedStyle(el).backgroundColor }));
       assert.ok(contraste(cores.texto, cores.fundo) >= 4.5, `${tema}: ${cores.texto} sobre ${cores.fundo}`);
-      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(24, 22, 28)", tema);
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(18, 12, 27)", tema);
       if (evidencias && tema === "dark") await page.screenshot({ path: join(evidencias, "formulario-escuro.png"), fullPage: true });
     }
   });

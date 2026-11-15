@@ -1,4 +1,4 @@
-:root{--e-back:#18161c;--e-sheet:#232028;--e-ink:#eee9f1;--e-muted:#b1a7ba;--e-line:#443b4c;--e-control:#8c7d98;--e-action:#bb91ca;--e-mark:#3b2c44;--e-error:#ee98ac;font-synthesis:none;color-scheme:dark}
+:root{--e-back:#120c1b;--e-sheet:#2e2337;--e-ink:#f4ebf7;--e-muted:#bcaec7;--e-line:#503e5d;--e-control:#9d86ae;--e-action:#d19bef;--e-mark:#473052;--e-error:#fa9b91;font-synthesis:none;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--e-back);color:var(--e-ink);font-family:Commissioner,Arial,sans-serif;font-size:14px}
 html{scroll-padding-top:76px}
@@ -54,7 +54,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-task-tags .e-priority{box-shadow:none;gap:3px;border:0;--tw-ring-color:transparent!important;padding:3px 0}
 .e-priority-alta{color:#e59ba9!important}
 .e-priority-media{color:#d5b683!important}
-.e-priority-baixa{color:#99bdce!important}
+.e-priority-baixa{color:#95c4ca!important}
 .e-card-status>.e-paw{width:8px;height:8px;flex-shrink:0;transform-box:fill-box;transform-origin:center}
 .e-task-project{display:flex;gap:5px;align-items:center;font-size:11px;margin-top:5px;color:var(--e-muted);min-width:0;overflow-wrap:anywhere}
 .e-sheet-footer{display:flex;justify-content:space-between;padding:11px 16px;color:var(--e-muted);font-size:11px;border-top:1px solid var(--e-line);margin-top:auto}
@@ -78,8 +78,8 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-project-card h2{font-size:19px;font-weight:500;margin:0 0 8px}
 .e-project-card>p{color:var(--e-muted);font-size:13px;min-height:40px;line-height:1.6;margin:0 0 25px}
 .e-popover{min-width:208px}
-.e-form-overlay{padding:14px 20px!important;align-items:flex-start!important;justify-content:flex-end!important;backdrop-filter:none!important;background:rgb(12 9 16 / 22%)!important;--modal-pt:14px;--modal-pb:14px}
-.e-form-modal{width:438px!important;max-width:100%;margin-top:89px;max-height:calc(100dvh - 125px)!important;border-radius:13px!important;border:1px solid #66576f;--e-sheet:#2c2732;background:var(--e-sheet)!important;box-shadow:0 14px 48px rgb(10 7 14 / 32%)!important;overflow:auto}
+.e-form-overlay{padding:14px 20px!important;align-items:flex-start!important;justify-content:flex-end!important;backdrop-filter:none!important;background:rgb(12 7 19 / 26%)!important;--modal-pt:14px;--modal-pb:14px}
+.e-form-modal{width:438px!important;max-width:100%;margin-top:89px;max-height:calc(100dvh - 125px)!important;border-radius:13px!important;border:1px solid #7c608b;--e-sheet:#3b2d45;background:var(--e-sheet)!important;box-shadow:0 14px 48px rgb(10 7 14 / 32%)!important;overflow:auto}
 .e-form-dialog{overflow:visible!important}
 .e-task-form{color:var(--e-ink)}
 :is(.e-task-form,.e-project-form) input[type=date]~.text-fg-error-secondary{display:none}
@@ -367,8 +367,8 @@ main h1{scroll-margin-top:71px}
 .e-card-status{display:inline-flex;align-items:center;gap:3px;color:var(--e-muted);font-size:12px;line-height:18px;white-space:nowrap}
 .e-card-status>.e-uicon{width:14px;height:14px;font-size:14px}
 .e-status-trigger:hover .e-card-status>.e-uicon,.e-status-trigger[aria-expanded=true] .e-card-status>.e-uicon{color:var(--e-ink)}
-.e-card-status-em-andamento{color:#a7bedb}
-.e-card-status-em-revisao{color:var(--e-action)}
+.e-card-status-em-andamento{color:#acb9e5}
+.e-card-status-em-revisao{color:#c69bdc}
 .e-card-status-concluida{color:#a6c8b1}
 .e-card .e-task-meta{flex-wrap:nowrap;align-items:center;gap:8px;margin-top:5px;line-height:18px}
 .e-card .e-task-meta>.e-card-pessoa{display:block;min-width:0;overflow-wrap:anywhere}
@@ -470,7 +470,7 @@ main h1{scroll-margin-top:71px}
 .e-task-error{margin:10px 0 0;color:var(--e-error);font-size:12px}
 .e-task-error[tabindex]{margin:0 0 16px;overflow-wrap:anywhere}
 .e-task-error:focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
-.e-confirm-overlay{background:rgb(24 24 27 / 35%)!important;backdrop-filter:none!important}
+.e-confirm-overlay{background:rgb(12 7 19 / 52%)!important;backdrop-filter:none!important}
 .e-confirm-modal{width:420px!important;max-width:100%;border:1px solid var(--e-line);background:var(--e-sheet)!important;color:var(--e-ink);border-radius:13px!important;box-shadow:0 14px 48px rgb(24 24 27 / 20%)!important}
 .e-confirm-dialog{padding:22px;overflow:visible!important}
 .e-confirm-dialog h2{margin:0 0 10px;font-size:18px;font-weight:600}
