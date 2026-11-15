@@ -14,7 +14,7 @@ import { Cabecalho } from "./Cabecalho";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
-import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
+import { ALVOS_RESERVA, marcarVolta, primeiroVisivel } from "../hooks/useRetornoFoco";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -33,6 +33,7 @@ function pularParaConteudo(evento: { preventDefault(): void }) {
   if (caixa.top < limite || caixa.top > window.innerHeight) window.scrollTo({ top: Math.max(0, caixa.top + window.scrollY - limite), behavior: "instant" });
   alvo.focus({ preventScroll: true });
 }
+const rolagens = new Map<string, number>();
 class FalhaPagina extends Component<{ children: ReactNode }, { falhou: boolean }> {
   state = { falhou: false };
   static getDerivedStateFromError() { return { falhou: true }; }
@@ -46,10 +47,22 @@ const ContextoAbas = createContext<Dispatch<SetStateAction<DadosAbas | null>> | 
 export function Layout() {
   const [abas, setAbas] = useState<DadosAbas | null>(null);
   const [areaAcao, setAreaAcao] = useState<HTMLDivElement | null>(null);
-  const caminho = caminhoNormalizado(useLocation().pathname);
+  const { pathname, key } = useLocation();
+  const caminho = caminhoNormalizado(pathname);
+  const chave = useRef(key);
   // Lista e quadro são duas visões da mesma seção: "Tarefas" fica marcado nas duas.
   const emTarefas = caminho === "/" || caminho === "/quadro";
-  useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, [caminho]);
+  useLayoutEffect(() => { chave.current = key; }, [key]);
+  useEffect(() => {
+    const guardar = () => rolagens.set(chave.current, window.scrollY);
+    window.addEventListener("scroll", guardar, { passive: true });
+    return () => window.removeEventListener("scroll", guardar);
+  }, []);
+  useLayoutEffect(() => {
+    const y = rolagens.get(chave.current);
+    if (y) marcarVolta(chave.current, y);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [caminho]);
   return <div id="pixel-encaixe" className="e-app">
     <a className="e-pular" href="#conteudo" onClick={pularParaConteudo}>Pular para o conteúdo</a>
     <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />

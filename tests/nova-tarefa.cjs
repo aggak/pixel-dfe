@@ -278,6 +278,22 @@ async function executar() {
     await page.keyboard.press("Enter");
     await ate("busca limpa com foco na busca", () => page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null));
   });
+  await conferir("depois de criar, o primeiro Voltar do navegador sai da lista, como se a ficha nunca tivesse sido aberta", async () => {
+    const dados = { ...base, titulo: "Tarefa criada sem entrada duplicada" };
+    await page.goto(`${origem}/projetos`); await page.locator("[data-project-id] h2 a").first().waitFor();
+    await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Tarefas", exact: true }).click();
+    await page.getByRole("link", { name: seed.tarefas[0].titulo, exact: true }).waitFor();
+    await page.getByRole("button", { name: "Nova tarefa", exact: true }).click(); await page.locator("form").waitFor(); await aguardarProjetos();
+    await preencher(dados); await botaoSalvar().click();
+    await ate("foco no cartão criado", () => page.evaluate((titulo) => document.activeElement?.matches("[data-task-id] .e-task-title") === true && document.activeElement.textContent === titulo, dados.titulo));
+    assert.equal(caminho().pathname, "/");
+    await page.goBack();
+    await ate("Projetos no primeiro Voltar", async () => caminho().pathname === "/projetos");
+    await page.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
+    await page.goForward();
+    await ate("lista ao avançar", async () => caminho().pathname === "/");
+    await page.getByRole("link", { name: dados.titulo, exact: true }).waitFor();
+  });
   await conferir("sem erros de página ou console e bancos reais intactos", async () => {
     assert.deepEqual(errosPagina, []); assert.deepEqual(errosConsole, []);
     assert.equal(await readFile(join(repo, "db.json"), "utf8"), bancoRealAntes);
