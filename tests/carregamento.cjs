@@ -103,6 +103,71 @@ async function executar() {
   await conferirRota("nova tarefa mostra e retira carregamento dos projetos", "/tarefas/nova", (url) => url.pathname === "/projetos", () => statusFicha("Carregando projetos"));
   await conferirRota("edição do projeto mostra e retira carregamento", "/projetos/1/editar", (url) => url.pathname === "/projetos/1", () => statusFicha("Carregando projeto"));
 
+  async function reter(caminho) {
+    let iniciou;
+    let liberar;
+    const requisicao = new Promise((resolve) => { iniciou = resolve; });
+    const bloqueio = new Promise((resolve) => { liberar = resolve; });
+    const interceptar = async (rota) => {
+      if (rota.request().method() === "GET" && new URL(rota.request().url()).pathname === caminho) {
+        iniciou();
+        await bloqueio;
+      }
+      await rota.continue().catch(() => {});
+    };
+    await page.route(`${api}/**`, interceptar);
+    return { requisicao, liberar: async () => { liberar(); await page.unroute(`${api}/**`, interceptar); } };
+  }
+
+  const andamento = await reter("/tarefas");
+  await page.goto(`${web}/projetos`);
+  await andamento.requisicao;
+  await page.locator(".e-project-card").first().waitFor();
+  const cartoes = await page.locator(".e-project-card").count();
+  assert.equal(await page.locator(".e-project-card .e-proj-foot").filter({ hasText: "Carregando andamento…" }).count(), cartoes);
+  assert.equal(await page.locator(".e-project-card .e-proj-foot .e-proj-bar-vazia").count(), cartoes);
+  assert.equal(await page.locator(".e-project-card [role=status]").count(), 0, "cada cartão não deve anunciar o carregamento");
+  assert.deepEqual(await page.getByRole("status").allTextContents(), ["Carregando o andamento dos projetos…"]);
+  const alturaCarregando = await page.locator(".e-project-card").first().evaluate((cartao) => cartao.getBoundingClientRect().height);
+  await andamento.liberar();
+  await status("Carregando o andamento").waitFor({ state: "detached" });
+  await page.locator(".e-project-card .e-proj-bar:not(.e-proj-bar-vazia)").first().waitFor();
+  assert.equal(await page.getByText("Carregando andamento…").count(), 0);
+  assert.equal(await page.locator(".e-project-card").first().evaluate((cartao) => cartao.getBoundingClientRect().height), alturaCarregando);
+  console.log("OK: andamento dos cartões de projeto mostra um único anúncio de carregamento");
+
+  await page.route(`${api}/tarefas`, (rota) => rota.fulfill({ status: 500, body: "{}" }));
+  await page.goto(`${web}/projetos`);
+  await page.getByText("O andamento dos projetos não carregou.").waitFor();
+  assert.equal(await page.getByText("Carregando andamento…").count(), 0);
+  assert.equal(await status("Carregando o andamento").count(), 0);
+  await page.unroute(`${api}/tarefas`);
+  console.log("OK: falha do andamento retira a indicação de carregamento dos cartões");
+
+  const projeto = await reter("/projetos/1");
+  await page.goto(`${web}/projetos/1`);
+  await projeto.requisicao;
+  await page.locator(".e-content").getByRole("status").waitFor();
+  const detalhes = page.getByRole("button", { name: "Detalhes do projeto" });
+  assert.equal(await detalhes.isDisabled(), true, "detalhes do projeto deve ficar desabilitado enquanto carrega");
+  const topoCarregando = await page.locator(".e-content").evaluate((conteudo) => conteudo.getBoundingClientRect().top);
+  await projeto.liberar();
+  await page.locator(".e-list").waitFor();
+  assert.equal(await detalhes.isEnabled(), true);
+  assert.equal(await page.locator(".e-content").evaluate((conteudo) => conteudo.getBoundingClientRect().top), topoCarregando, "a faixa de detalhes não deve empurrar o conteúdo");
+  await detalhes.click();
+  await page.locator("#project-details").waitFor();
+  console.log("OK: faixa de detalhes do projeto reservada desde o carregamento, sem salto");
+
+  for (const [rota, resposta] of [["/projetos/1", 500], ["/projetos/999", 404]]) {
+    await page.route(`${api}${rota}?*`, (r) => r.fulfill({ status: resposta, body: "{}" }));
+    await page.goto(`${web}${rota}`);
+    await page.getByRole("alert").waitFor();
+    assert.equal(await page.getByRole("button", { name: "Detalhes do projeto" }).count(), 0, `${rota}: erro sem faixa de detalhes`);
+    await page.unroute(`${api}${rota}?*`);
+  }
+  console.log("OK: erro e projeto inexistente continuam sem a faixa de detalhes");
+
   await page.route(`${api}/projetos`, (rota) => rota.fulfill({ status: 500, body: "{}" }));
   await page.goto(`${web}/projetos`);
   await page.getByRole("alert").waitFor();

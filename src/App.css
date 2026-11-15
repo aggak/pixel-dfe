@@ -29,7 +29,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-project-details{border-bottom:1px solid var(--e-line);padding:0 20px}
 .e-details-trigger{display:flex;gap:8px;align-items:center;background:transparent;border:0;color:var(--e-muted);font-size:12px;min-height:42px}
 .e-details-trigger>i:last-child{margin-left:2px}
-.e-details-trigger:hover{color:var(--e-ink)}
+.e-details-trigger:hover:not(:disabled){color:var(--e-ink)}
 .e-details-content{padding:0 0 18px;max-width:650px;color:var(--e-muted);font-size:13px;overflow-wrap:anywhere}
 .e-details-content>p{color:var(--e-ink);margin:1px 0 15px;font-size:14px}
 .e-details-content dl{display:flex;gap:35px;margin:0}
