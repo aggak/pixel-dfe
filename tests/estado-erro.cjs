@@ -50,7 +50,7 @@ async function executar() {
   await esperar(web);
 
   browser = await lancarNavegador();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
@@ -133,6 +133,86 @@ async function executar() {
   await conferirRota("detalhes da tarefa avisam e carregam ao tentar de novo", "/tarefas/1", "Não foi possível carregar a tarefa", () => ficha().locator(".e-read-title"), ficha);
   await conferirRota("edição da tarefa avisa e carrega ao tentar de novo", "/tarefas/1/editar", "Não foi possível carregar a tarefa", () => ficha().locator("form"), ficha);
   await conferirRota("edição do projeto avisa e carrega ao tentar de novo", "/projetos/1/editar", "Não foi possível carregar o projeto", () => ficha().locator("form"), ficha);
+
+  for (const [caminho, carregado, fundoCarregado, requisicaoFundo] of [
+    ["/tarefas/1", ".e-read-title", "[data-task-id]", "/tarefas"],
+    ["/tarefas/1/editar", "form", "[data-task-id]", "/tarefas"],
+    ["/projetos/1/editar", "form", "[data-task-id]", "/projetos/1?_embed=tarefas"],
+  ]) {
+    for (const fundoFalhou of [true, false]) {
+      let falhar = true;
+      const chamadasFundo = [];
+      const interceptar = (rota) => {
+        const url = new URL(rota.request().url());
+        const ehFundo = url.pathname + url.search === requisicaoFundo;
+        if (ehFundo) chamadasFundo.push(url.href);
+        const ehFicha = url.pathname === (caminho.startsWith("/tarefas") ? "/tarefas/1" : "/projetos/1") && !url.search;
+        return falhar && (fundoFalhou || ehFicha) ? rota.abort() : rota.continue();
+      };
+      await page.route(`${api}/**`, interceptar);
+      try {
+        await page.goto(`${web}${caminho}`);
+        await ficha().getByRole("alert").waitFor();
+        const fundo = page.locator("main");
+        if (fundoFalhou) await fundo.getByRole("alert").waitFor({ state: "attached" });
+        else await fundo.locator(fundoCarregado).first().waitFor({ state: "attached" });
+        const chamadasIniciais = chamadasFundo.length;
+        assert.ok(chamadasIniciais > 0);
+        if (fundoFalhou) {
+          const falhaFundo = page.waitForEvent("requestfailed", { predicate: (pedido) => pedido.url().endsWith(requisicaoFundo) });
+          await ficha().getByRole("button", { name: "Tentar de novo" }).focus();
+          await page.keyboard.press("Enter");
+          await falhaFundo;
+          await page.waitForFunction(() => !document.querySelector('[role="dialog"] [data-pending]') && !document.querySelector('main [data-pending]'));
+          assert.equal(chamadasFundo.length, chamadasIniciais + 1, `${caminho}: uma nova falha não deve iniciar um laço`);
+          assert.equal(await ficha().getByRole("button", { name: "Tentar de novo" }).evaluate((el) => el === document.activeElement), true);
+        }
+        falhar = false;
+        await ficha().getByRole("button", { name: "Tentar de novo" }).click();
+        await ficha().locator(carregado).waitFor();
+        await fundo.locator(fundoCarregado).first().waitFor({ state: "attached" });
+        assert.equal(await fundo.getByRole("alert").count(), 0);
+        assert.equal(chamadasFundo.length, chamadasIniciais + (fundoFalhou ? 2 : 0), `${caminho}: só recarregar o fundo em erro`);
+        await ficha().locator(".e-form-header button").click();
+        if (caminho === "/tarefas/1/editar") {
+          await ficha().locator(".e-read-title").waitFor();
+          await ficha().locator(".e-form-header button").click();
+        }
+        await ficha().waitFor({ state: "detached" });
+        await page.getByRole("main").locator(fundoCarregado).first().waitFor();
+        await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
+        assert.equal(await page.getByRole("main").getByRole("alert").count(), 0);
+        assert.equal(chamadasFundo.length, chamadasIniciais + (fundoFalhou ? 2 : 0), `${caminho}: fechar não deve repetir a consulta`);
+        console.log(`OK: ${caminho} tenta de novo com fundo ${fundoFalhou ? "em erro, sem laço e recuperado ao fechar" : "carregado, sem recarregá-lo"}`);
+      } finally {
+        await page.unroute(`${api}/**`, interceptar);
+      }
+    }
+  }
+
+  for (const [caminho, aviso] of [["/tarefas/1", "Nome do projeto indisponível."], ["/tarefas/1/editar", "Não foi possível carregar os projetos."]]) {
+    let falhar = true;
+    let chamadasTarefas = 0;
+    const interceptar = (rota) => {
+      if (rota.request().url() === `${api}/tarefas`) chamadasTarefas++;
+      return falhar && rota.request().url() === `${api}/projetos` ? rota.abort() : rota.continue();
+    };
+    await page.route(`${api}/**`, interceptar);
+    try {
+      await page.goto(`${web}${caminho}`);
+      await ficha().getByText(aviso).waitFor();
+      await page.locator("main [data-task-id]").first().waitFor({ state: "attached" });
+      const chamadasIniciais = chamadasTarefas;
+      falhar = false;
+      await ficha().getByRole("button", { name: "Tentar de novo" }).click();
+      await ficha().getByText(aviso).waitFor({ state: "detached" });
+      await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor({ state: "attached" });
+      assert.equal(chamadasTarefas, chamadasIniciais, `${caminho}: recuperar projetos não deve recarregar as tarefas do fundo`);
+      console.log(`OK: ${caminho} recupera os projetos da ficha e do fundo sem recarregar tarefas`);
+    } finally {
+      await page.unroute(`${api}/**`, interceptar);
+    }
+  }
 
   let falharProjetos = true;
   const interceptarProjetos = (rota) => (falharProjetos ? rota.abort() : rota.continue());
