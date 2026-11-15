@@ -2,10 +2,11 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--e-back);color:var(--e-ink);font-family:Commissioner,Arial,sans-serif;font-size:14px}
 html{scroll-padding-top:76px}
+main h1{scroll-margin-top:76px}
 button,input,textarea{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:wait}
-button:focus-visible,a:focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
+button:focus-visible,a:focus-visible,main h1:focus-visible{outline:2px solid var(--e-action);outline-offset:3px}
 button, input,textarea{ -webkit-tap-highlight-color:transparent}
 .e-app{--e-page-gutter:20px;min-height:100dvh;display:flex;flex-direction:column;padding:0 var(--e-page-gutter) 12px}
 .e-top{display:flex;align-items:center;gap:30px;height:64px;flex-shrink:0}
@@ -128,6 +129,7 @@ button, input,textarea{ -webkit-tap-highlight-color:transparent}
 @media(max-width:650px){
 .e-app{--e-page-gutter:10px;padding-bottom:10px}
 html{scroll-padding-top:71px}
+main h1{scroll-margin-top:71px}
 .e-top{height:59px;gap:26px;padding-left:3px}
 .e-logo{font-size:24px}
 .e-top nav{gap:19px}
@@ -489,6 +491,8 @@ html{scroll-padding-top:71px}
 .e-gato-abanando{display:block;flex-shrink:0;width:72px;height:72px;background:var(--e-gato) 0 0/1296px 100% no-repeat;image-rendering:pixelated}
 @media(prefers-reduced-motion:no-preference){.e-gato-abanando{animation:e-gato-abanando-quadros 1.5s steps(18) infinite}}
 @keyframes e-gato-abanando-quadros{to{background-position-x:-1296px}}
+.e-pular{position:absolute;top:0;left:0;width:1px;height:1px;padding:0;margin:0;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0}
+.e-pular:focus{position:fixed;z-index:30;top:8px;left:12px;width:auto;height:auto;min-height:44px;margin:0;padding:0 14px;overflow:visible;clip:auto;clip-path:none;display:inline-flex;align-items:center;background:var(--e-sheet);color:var(--e-ink);border:1px solid var(--e-line);border-radius:8px;font-size:14px;font-weight:500;line-height:1.2;text-decoration:none;outline:2px solid var(--e-action);outline-offset:3px}
 .e-top{position:sticky;top:0;z-index:20;gap:16px;isolation:isolate;background:var(--e-back);margin-inline:calc(-1 * var(--e-page-gutter));padding-inline:var(--e-page-gutter)}
 .e-top[data-rolada]{box-shadow:inset 0 -1px var(--e-line)}
 .e-top-acao{display:flex;align-items:center;flex:none;margin-left:auto}
