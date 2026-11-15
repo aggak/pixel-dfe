@@ -1,20 +1,18 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
-import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { createServer as criarServidorHttp } from "node:http";
 import { once } from "node:events";
-import { createServer as criarServidorNet } from "node:net";
-import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 
+import apoioCompartilhado from "./apoio.cjs";
+
+const apoio = apoioCompartilhado.criarApoio();
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let total = 0;
 let vite;
-let processoApi;
-let temporario;
 const urlAnterior = process.env.VITE_API_URL;
 const limiteAnterior = process.env.VITE_API_TEMPO_LIMITE_MS;
 
@@ -22,28 +20,6 @@ async function conferir(nome, executar) {
   await executar();
   console.log(`OK: ${nome}`);
   total++;
-}
-
-async function portaLivre() {
-  const servidor = criarServidorNet();
-  await new Promise((resolve, reject) => {
-    servidor.once("error", reject);
-    servidor.listen(0, "127.0.0.1", resolve);
-  });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
-}
-
-async function esperarApi(url) {
-  for (let tentativa = 0; tentativa < 100; tentativa++) {
-    if (processoApi.exitCode !== null) throw new Error("json-server encerrou antes do teste.");
-    try {
-      if ((await fetch(url)).ok) return;
-    } catch {}
-    await dormir(100);
-  }
-  throw new Error(`API indisponível: ${url}`);
 }
 
 async function esperarGravacao(caminhoDb, condicao) {
@@ -57,30 +33,18 @@ async function esperarGravacao(caminhoDb, condicao) {
   throw new Error("Arquivo temporário não refletiu as escritas.");
 }
 
-async function encerrarApi() {
-  if (processoApi && processoApi.exitCode === null) {
-    const fim = new Promise((resolve) => processoApi.once("exit", resolve));
-    processoApi.kill();
-    await fim;
-  }
-}
-
 async function executar() {
   const bancoRealAntes = await readFile(join(raiz, "db.json"), "utf8");
   const seedAntes = await readFile(join(raiz, "db.seed.json"), "utf8");
-  temporario = await mkdtemp(join(tmpdir(), "pixel-api-escrita-"));
-  const caminhoDb = join(temporario, "db.json");
-  await copyFile(join(raiz, "db.seed.json"), caminhoDb);
-  const porta = await portaLivre();
+  const { temporario, banco: caminhoDb } = await apoio.criarBanco({ prefixo: "pixel-api-escrita-" });
+  const porta = await apoio.portaLivre();
   const apiUrl = `http://127.0.0.1:${porta}`;
-  const binJsonServer = join(raiz, "node_modules/json-server/lib/bin.js");
-  processoApi = spawn(process.execPath, [binJsonServer, caminhoDb, "--host", "127.0.0.1", "--port", String(porta)], { windowsHide: true, stdio: "pipe" });
-  processoApi.stdout.on("data", () => {});
-  processoApi.stderr.on("data", (dado) => process.stderr.write(dado));
-  await esperarApi(`${apiUrl}/tarefas`);
+  const processoApi = apoio.iniciarApi(caminhoDb, porta);
+  const encerrarApi = () => apoio.encerrarProcesso(processoApi);
+  await apoio.esperar(`${apiUrl}/tarefas`);
   process.env.VITE_API_URL = apiUrl;
   process.env.VITE_API_TEMPO_LIMITE_MS = "500";
-  vite = await createServer({ root: raiz, mode: "test", cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } });
+  vite = apoio.registrar(await createServer({ root: raiz, mode: "test", cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } }));
   const api = await vite.ssrLoadModule("/src/api.ts");
   for (const nome of ["criarTarefa", "atualizarTarefa", "excluirTarefa", "criarProjeto", "atualizarProjeto"]) {
     if (typeof api[nome] !== "function") throw new Error(`Função ausente em src/api.ts: ${nome}`);
@@ -283,11 +247,9 @@ executar()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await vite?.close().catch(() => {});
-    await encerrarApi().catch(() => {});
+    await apoio.encerrar();
     if (urlAnterior === undefined) delete process.env.VITE_API_URL;
     else process.env.VITE_API_URL = urlAnterior;
     if (limiteAnterior === undefined) delete process.env.VITE_API_TEMPO_LIMITE_MS;
     else process.env.VITE_API_TEMPO_LIMITE_MS = limiteAnterior;
-    if (temporario) await rm(temporario, { recursive: true, force: true });
   });

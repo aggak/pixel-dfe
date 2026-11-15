@@ -1,35 +1,12 @@
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { mkdtemp, copyFile, rm, readFile } = require("node:fs/promises");
-const { tmpdir } = require("node:os");
-const { createServer } = require("node:net");
-const { join } = require("node:path");
-const { lancarNavegador } = require("./ui.cjs");
+const { readFile } = require("node:fs/promises");
 
 let origem = "";
 let api = "";
-const processos = [];
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
 let browser;
-let temporario;
 let total = 0;
-
-// O sistema escolhe portas livres, como nas demais suítes, sem tomar as de outros processos.
-async function portaLivre() {
-  const servidor = createServer();
-  await new Promise((resolve, reject) => { servidor.once("error", reject); servidor.listen(0, "127.0.0.1", resolve); });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
-}
-
-async function pronto(url) {
-  for (let tentativa = 0; tentativa < 100; tentativa++) {
-    if (processos.some((processo) => processo.exitCode !== null)) throw new Error("Servidor encerrou antes do teste.");
-    try { if ((await fetch(url)).ok) return; } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error(`Servidor indisponível: ${url}`);
-}
 
 async function conferir(nome, executar) {
   await executar();
@@ -38,21 +15,10 @@ async function conferir(nome, executar) {
 }
 
 async function executar() {
-  temporario = await mkdtemp(join(tmpdir(), "pixel-marco2-"));
-  await copyFile("db.seed.json", join(temporario, "db.json"));
+  const { banco } = await apoio.criarBanco({ prefixo: "pixel-marco2-" });
   const seed = JSON.parse(await readFile("db.seed.json", "utf8"));
-  const portaApi = await portaLivre();
-  const portaWeb = await portaLivre();
-  api = `http://127.0.0.1:${portaApi}`;
-  origem = `http://127.0.0.1:${portaWeb}`;
-  processos.push(spawn(process.execPath, ["node_modules/json-server/lib/bin.js", join(temporario, "db.json"), "--host", "127.0.0.1", "--port", String(portaApi)], { windowsHide: true, stdio: "pipe" }));
-  processos.push(spawn(process.execPath, ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { windowsHide: true, stdio: "pipe", env: { ...process.env, VITE_API_URL: api } }));
-  for (const processo of processos) {
-    processo.stdout.on("data", () => {});
-    processo.stderr.on("data", (data) => process.stderr.write(data));
-  }
-  await Promise.all([pronto(origem), pronto(`${api}/tarefas`)]);
-  browser = await lancarNavegador();
+  ({ api, web: origem } = await apoio.subirAmbiente({ banco }));
+  browser = await apoio.abrirNavegador();
   const page = await browser.newPage();
   page.setDefaultTimeout(10000);
   const erros = [];
@@ -378,14 +344,4 @@ async function executar() {
   console.log(`${total} cenários aprovados; nenhum erro JavaScript não tratado.`);
 }
 
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close();
-  for (const processo of processos) {
-    if (processo.exitCode === null) {
-      const terminou = new Promise((resolve) => processo.once("exit", resolve));
-      processo.kill();
-      await terminou;
-    }
-  }
-  if (temporario) await rm(temporario, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());

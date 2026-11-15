@@ -1,17 +1,15 @@
 // Integração da issue #30 com aplicação real e banco temporário.
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdir, mkdtemp, readFile, rm } = require("node:fs/promises");
-const { createServer } = require("node:net");
-const { tmpdir } = require("node:os");
+const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { comTextos, criarUi, focoVisivel, lancarNavegador } = require("./ui.cjs");
+const { comTextos, criarUi, focoVisivel } = require("./ui.cjs");
+
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
-const processos = [];
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let browser;
-let temporario;
 let total = 0;
 
 async function ate(descricao, verificar) {
@@ -28,45 +26,13 @@ async function conferir(nome, executar) {
   console.log(`OK: ${nome}`);
 }
 
-async function portaLivre() {
-  const servidor = createServer();
-  await new Promise((resolve, reject) => {
-    servidor.once("error", reject);
-    servidor.listen(0, "127.0.0.1", resolve);
-  });
-  const { port } = servidor.address();
-  await new Promise((resolve) => servidor.close(resolve));
-  return port;
-}
-
 async function executar() {
   const bancoOriginal = await readFile(join(raiz, "db.json"), "utf8");
   const seedOriginal = await readFile(join(raiz, "db.seed.json"), "utf8");
   const seed = JSON.parse(seedOriginal);
-  temporario = await mkdtemp(join(tmpdir(), "pixel-editar-tarefa-"));
-  const banco = join(temporario, "db.json");
-  await copyFile(join(raiz, "db.seed.json"), banco);
-  const portaApi = await portaLivre();
-  const portaWeb = await portaLivre();
-  const api = `http://127.0.0.1:${portaApi}`;
-  const origem = `http://127.0.0.1:${portaWeb}`;
-  function iniciar(arquivo, argumentos, env = process.env) {
-    const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
-      cwd: raiz, env, windowsHide: true, stdio: "pipe",
-    });
-    processo.stdout.on("data", () => {});
-    processo.stderr.on("data", (dado) => process.stderr.write(dado));
-    processos.push(processo);
-  }
-  iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
-  for (const url of [`${api}/tarefas`, origem]) {
-    await ate(`servidor ${url}`, async () => {
-      if (processos.some((p) => p.exitCode !== null)) throw new Error("Servidor encerrou antes dos testes.");
-      try { return (await fetch(url)).ok; } catch { return false; }
-    });
-  }
-  browser = await lancarNavegador();
+  const { banco } = await apoio.criarBanco({ prefixo: "pixel-editar-tarefa-" });
+  const { api, web: origem } = await apoio.subirAmbiente({ banco });
+  browser = await apoio.abrirNavegador();
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
@@ -355,14 +321,4 @@ async function executar() {
   console.log(`${total} cenários aprovados; bancos originais preservados.`);
 }
 
-executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(async () => {
-  await browser?.close().catch(() => {});
-  for (const processo of processos) {
-    if (processo.exitCode === null) {
-      const fim = new Promise((resolve) => processo.once("exit", resolve));
-      processo.kill();
-      await fim;
-    }
-  }
-  if (temporario) await rm(temporario, { recursive: true, force: true });
-});
+executar().catch((erro) => { console.error(erro); process.exitCode = 1; }).finally(() => apoio.encerrar());
