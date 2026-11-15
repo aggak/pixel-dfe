@@ -167,6 +167,8 @@ main h1{scroll-margin-top:71px}
 .e-project-card{padding:20px}
 .e-form-overlay{padding:10px!important;align-items:flex-end!important;justify-content:center!important;--modal-pt:10px;--modal-pb:10px}
 .e-form-modal{margin-top:0;width:438px!important;max-height:calc(100dvh - 20px)!important}
+.e-form-modal:has(.e-ficha-loading-tarefa){height:min(537px,calc(100dvh - 20px))}
+.e-form-modal:has(.e-ficha-loading-projeto){height:min(510px,calc(100dvh - 20px))}
 .e-form-header{padding:12px 13px 2px}
 .e-form-header>button{width:44px;height:44px;padding:10px}
 .e-form-header h2{font-size:13px}
