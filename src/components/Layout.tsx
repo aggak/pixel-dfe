@@ -15,6 +15,7 @@ import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
 import { Monograma } from "./CartaoProjeto";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
+import { FILTROS_INICIAIS, type Filtros } from "../derivar";
 
 // Caminho como o roteador casa as rotas: sem barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
@@ -134,21 +135,39 @@ export function AlternarVisao() {
     return <Link key={destino} ref={atual ? ativo : undefined} to={destino} state={{ focoVisao: true }} aria-current={atual ? "page" : undefined}><Icone />{nome}</Link>;
   })}</nav>;
 }
-export function AnuncioResultados({ total, filtros }: { total: number; filtros: object }) {
+function fraseResultados(n: number) {
+  return `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+}
+export function AnuncioResultados({ total, filtros }: { total: number; filtros: Filtros }) {
   const [texto, setTexto] = useState("");
   const chave = JSON.stringify(filtros);
   const anterior = useRef(chave);
   const totalAtual = useRef(total);
+  const anunciado = useRef<number | null>(null);
+  const pendente = useRef(false);
+  const ativos = filtros.busca !== FILTROS_INICIAIS.busca || filtros.status !== FILTROS_INICIAIS.status || filtros.prioridade !== FILTROS_INICIAIS.prioridade;
   useEffect(() => { totalAtual.current = total; }, [total]);
   useEffect(() => {
     if (anterior.current === chave) return;
     anterior.current = chave;
+    pendente.current = true;
     const espera = setTimeout(() => {
+      pendente.current = false;
       const n = totalAtual.current;
-      setTexto(`${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`);
+      anunciado.current = n;
+      setTexto(fraseResultados(n));
     }, 700);
-    return () => clearTimeout(espera);
+    return () => { clearTimeout(espera); pendente.current = false; };
   }, [chave]);
+  useEffect(() => {
+    if (pendente.current || anunciado.current === null || anunciado.current === total) return;
+    anunciado.current = total;
+    if (!ativos) return;
+    const n = total;
+    let vigente = true;
+    queueMicrotask(() => { if (vigente) setTexto(fraseResultados(n)); });
+    return () => { vigente = false; };
+  }, [total, ativos]);
   return <p className="sr-only" aria-live="polite" aria-atomic="true">{texto}</p>;
 }
 export function Carregando({ children, compacto = false }: { children: string; compacto?: boolean }) {

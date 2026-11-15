@@ -206,6 +206,63 @@ async function executar() {
     assert.equal(await busca.inputValue(), "diagrama");
     console.log("OK: o aviso aparece no quadro e some ao navegar");
 
+    // Contagem anunciada quando o status tira a tarefa do filtro, sem repetir o aviso de status.
+    const fraseContagem = (n) => `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+    const anuncioContagem = () => page.locator("main p.sr-only[aria-live=polite]").innerText();
+    const esperarContagemDaLista = () => page.waitForFunction(() => {
+      const n = document.querySelectorAll('[aria-label="Lista de tarefas"] [data-task-id]').length;
+      return document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+    });
+    if (await limpar.count()) await limpar.click();
+    await lista.getByRole("article").first().waitFor();
+    await selecionar("Status", "A fazer");
+    await esperarContagemDaLista();
+    const antesStatus = Number((await anuncioContagem()).match(/\d+/)[0]);
+    const artigo = lista.getByRole("article").first();
+    const idStatus = await artigo.getAttribute("data-task-id");
+    const tituloStatus = await artigo.locator(".e-task-title").innerText();
+    await artigo.getByRole("button", { name: /Mudar status de / }).click();
+    await page.getByRole("menuitemradio", { name: "Concluída", exact: true }).click();
+    await page.locator(`[data-task-id="${idStatus}"]`).waitFor({ state: "detached" });
+    const contagemNova = fraseContagem(antesStatus - 1);
+    await page.waitForFunction((texto) => document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === texto, contagemNova);
+    assert.equal(await page.locator("main p[role=status]").count(), 1);
+    assert.equal(await page.locator("main p[role=status]").innerText(), `Status de ${tituloStatus} alterado para Concluída.`);
+    console.log("OK: status fora do filtro atualiza a contagem anunciada e não duplica o anúncio de status");
+
+    await selecionar("Status", "Todos");
+    await selecionar("Prioridade", "Média");
+    await esperarContagemDaLista();
+    const contagemPrioridade = await anuncioContagem();
+    const permanece = lista.getByRole("article").first();
+    const tituloPermanece = await permanece.locator(".e-task-title").innerText();
+    const statusAtual = (await permanece.locator("[data-status-trigger]").innerText()).trim();
+    const outroStatus = statusAtual === "Em revisão" ? "Em andamento" : "Em revisão";
+    await permanece.getByRole("button", { name: /Mudar status de / }).click();
+    await page.getByRole("menuitemradio", { name: outroStatus, exact: true }).click();
+    await page.waitForFunction(([titulo, status]) => document.querySelector("main p[role=status]")?.textContent === `Status de ${titulo} alterado para ${status}.`, [tituloPermanece, outroStatus]);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await anuncioContagem(), contagemPrioridade);
+    assert.equal(await page.locator("main p[role=status]").count(), 1);
+    console.log("OK: status que mantém a tarefa no filtro não reanuncia a contagem");
+
+    await limpar.click();
+    await page.waitForFunction((anterior) => {
+      const n = document.querySelectorAll('[aria-label="Lista de tarefas"] [data-task-id]').length;
+      const frase = `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
+      const rodape = document.querySelector(".e-sheet-footer")?.textContent ?? "";
+      return frase !== anterior && document.querySelector("main p.sr-only[aria-live=polite]")?.textContent === frase && !rodape.includes(" de ");
+    }, contagemPrioridade);
+    const contagemSemFiltro = await anuncioContagem();
+    const tituloExcluir = await lista.locator(".e-task-title").first().innerText();
+    await lista.getByRole("article").first().getByRole("button", { name: `Ações de ${tituloExcluir}` }).click();
+    await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
+    await page.getByRole("dialog", { name: `Excluir ${tituloExcluir}` }).getByRole("button", { name: "Excluir tarefa" }).click();
+    await page.waitForFunction((titulo) => [...document.querySelectorAll(".e-task-title")].every((el) => el.textContent !== titulo), tituloExcluir);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.equal(await anuncioContagem(), contagemSemFiltro);
+    console.log("OK: sem busca nem filtro ativo, excluir não anuncia outra contagem");
+
     for (const tarefas of [[dados.tarefas[0]], []]) {
       await page.route(`${api}/tarefas`, (rota) => rota.fulfill({ json: tarefas }));
       await page.reload();
@@ -222,7 +279,7 @@ async function executar() {
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) => readFile(arquivo, "utf8")));
     assert.deepEqual(atuais, originais);
-    console.log("11 cenários aprovados; nenhum erro JavaScript não tratado.");
+    console.log("14 cenários aprovados; nenhum erro JavaScript não tratado.");
   } finally {
     if (browser) await browser.close();
     for (const processo of processos) processo.kill();
