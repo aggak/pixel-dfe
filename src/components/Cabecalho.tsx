@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, type CSSProperties, type ReactNode, type
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
+import { movimentoReduzido, observarMovimento } from "../hooks/useMovimento";
 import gatoEscuro from "../assets/gatinho/cabecalho-gato-escuro.svg";
 import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
 
@@ -28,8 +29,7 @@ function useLogoAnimado() {
   useEffect(() => {
     const elLogo = logo.current, elPalavra = palavra.current, elGato = gato.current;
     if (!elLogo || !elPalavra || !elGato) return;
-    const movimento = matchMedia("(prefers-reduced-motion: reduce)");
-    const parado = () => movimento.matches || document.hidden;
+    const parado = () => movimentoReduzido() || document.hidden;
     const mostrarPalavra = (quadro: number) => { elPalavra.style.backgroundPositionX = `${-quadro * LARGURA_LOGO}px`; };
     const mostrarGato = (quadro: number) => { elGato.style.backgroundPositionX = `${-quadro * LARGURA_GATO}px`; };
     let fase: keyof typeof sequencias = "entrada";
@@ -109,7 +109,7 @@ function useLogoAnimado() {
     elLogo.addEventListener("focus", aoFocar);
     elLogo.addEventListener("blur", aoDesfocar);
     document.addEventListener("visibilitychange", aoOcultar);
-    movimento.addEventListener("change", aoMudarMovimento);
+    const pararDeObservar = observarMovimento(aoMudarMovimento);
     if (!parado()) { avancar(); animarGato(gatoEntrada); }
     return () => {
       trocar.current = null;
@@ -119,7 +119,7 @@ function useLogoAnimado() {
       elLogo.removeEventListener("focus", aoFocar);
       elLogo.removeEventListener("blur", aoDesfocar);
       document.removeEventListener("visibilitychange", aoOcultar);
-      movimento.removeEventListener("change", aoMudarMovimento);
+      pararDeObservar();
       mostrarPalavra(0); mostrarGato(0);
     };
   }, []);
