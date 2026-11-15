@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
@@ -99,6 +99,12 @@ export function FormularioTarefa({
     projetoId !== "" && projetosDisponiveis && !listaProjetos.some((p) => p.id === projetoId);
   const podeSalvar = projetosDisponiveis && !projetoDesconhecido;
   const avisoProjeto = !podeSalvar || projetoDesconhecido ? `${id}-projeto-aviso` : undefined;
+
+  useLayoutEffect(() => {
+    const botao = seletorProjetoRef.current?.querySelector("button");
+    if (erros.projetoId || projetoDesconhecido) botao?.setAttribute("aria-invalid", "true");
+    else botao?.removeAttribute("aria-invalid");
+  }, [erros.projetoId, projetoDesconhecido]);
 
   const itensProjeto = [
     ...(projetoDesconhecido ? [{ id: projetoId, label: "Projeto não encontrado" }] : []),
