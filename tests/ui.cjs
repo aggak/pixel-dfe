@@ -11,8 +11,8 @@ function lancarNavegador() {
 
 // `escopo` devolve o formulário alvo (o primeiro por padrão; use outro índice com mais de uma instância).
 function criarUi(page, escopo = () => page.locator("form").first()) {
-  // O rótulo acessível termina com o asterisco de obrigatório: "Nome*".
-  const campo = (nome) => escopo().getByLabel(new RegExp(`^${escapar(nome)}\\s*\\*?$`));
+  // O rótulo acessível termina com o asterisco de obrigatório ("Nome*") ou com "opcional".
+  const campo = (nome) => escopo().getByLabel(new RegExp(`^${escapar(nome)}(?:\\s*opcional)?\\s*\\*?$`));
   // Select real: o botão visível é o que recebe clique; o <select> oculto só é lido para conferir o contrato.
   const seletor = (nome) => escopo().getByRole("button", { name: new RegExp(`(?:^|\\s)${escapar(nome)}\\s*\\*?$`) });
   const oculto = (nome) => escopo().locator(`select[name="${CONTROLES_SELECT[nome]}"]`);

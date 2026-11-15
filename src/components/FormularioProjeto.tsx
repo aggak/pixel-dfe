@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
-import { TextArea } from "@/components/base/textarea/textarea";
+import { Label } from "@/components/base/input/label";
+import { TextAreaBase } from "@/components/base/textarea/textarea";
+import { TextField } from "react-aria-components";
 import { ErroApi } from "../api";
 import { dataValida } from "../design/formatos";
 import { Icon } from "../design/icon";
@@ -139,7 +141,7 @@ export function FormularioProjeto({
             <Input
               name="disciplina"
               label="Disciplina"
-              placeholder="Disciplina"
+              placeholder="Ex.: Banco de Dados"
               isRequired
               validationBehavior="aria"
               size="sm"
@@ -163,15 +165,13 @@ export function FormularioProjeto({
             />
           </div>
 
-          <TextArea
-            name="descricao"
-            label="Descrição"
-            placeholder="O que este projeto reúne?"
-            rows={3}
-            size="sm"
-            value={descricao}
-            onChange={setDescricao}
-          />
+          <TextField name="descricao" value={descricao} onChange={setDescricao} className="group flex h-max w-full flex-col items-start justify-start gap-1.5">
+            <Label>
+              Descrição
+              <span className="e-opcional">opcional</span>
+            </Label>
+            <TextAreaBase placeholder="O que este projeto reúne?" rows={3} size="sm" />
+          </TextField>
         </div>
       </div>
 

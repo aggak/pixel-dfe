@@ -156,6 +156,7 @@ async function executar() {
   assert.ok(js.length >= 5 && css.length >= 1, `chunks insuficientes: ${producao.lista.join(", ")}`);
   for (const nome of FICHAS_LAZY) assert.ok(producao.chunks[nome], `chunk React.lazy de ${nome} ausente`);
   const indexHtml = await readFile(join(saidaProducao, "index.html"), "utf8");
+  assert.match(indexHtml, /<title>Tarefas · Pixel<\/title>/);
   for (const nome of FICHAS_LAZY) assert.ok(!indexHtml.includes(producao.chunks[nome]), `${nome} não deveria estar no index.html`);
   const metas = Object.fromEntries([...indexHtml.matchAll(/<meta (name|property)="([^"]+)" content="([^"]*)"/g)].map(([, , chave, valor]) => [chave, valor]));
   assert.equal(metas["theme-color"], "#18161c");

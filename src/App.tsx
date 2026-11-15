@@ -41,7 +41,7 @@ function App() {
   const fundo: Location = ficha && candidato && typeof candidato.pathname === "string" && !ehRotaFicha(candidato.pathname) && (candidato.pathname === "/" || candidato.pathname === "/quadro" || candidato.pathname === "/projetos" || /^\/projetos\/[^/]+$/.test(candidato.pathname))
     ? candidato : ficha ? { pathname: fallback, search: "", hash: "", state: null, key: `fundo:${fallback}` } : location;
   const titulo = projetoNovo ? "Novo projeto" : tarefaNova ? "Nova tarefa" : editando ? projeto ? "Editar projeto" : "Editar tarefa" : "Detalhes da tarefa";
-  const tituloInicial = projetoNovo || tarefaNova ? titulo : projeto ? "Projeto" : "Tarefa";
+  const tituloInicial = projetoNovo || tarefaNova || editando ? titulo : projeto ? "Projeto" : "Tarefa";
   // Nova tarefa aberta no quadro volta para ele ao fechar.
   const destinoFechar = editando ? caminho.replace(/\/editar$/, "") : tarefaNova ? fundo.pathname === "/quadro" ? "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
   return <>

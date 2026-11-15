@@ -161,6 +161,8 @@ async function executar() {
       assert.equal(await campo(rotulo).count(), 1, rotulo);
       assert.equal(await campo(rotulo).inputValue(), "", rotulo);
     }
+    assert.equal(await page.getByRole("textbox", { name: "Descrição opcional", exact: true }).count(), 1);
+    assert.equal(await campo("Disciplina").getAttribute("placeholder"), "Ex.: Banco de Dados");
     assert.equal(await salvarNovo().count(), 1);
     await page.reload();
     await page.locator("form").waitFor();
@@ -409,6 +411,7 @@ async function executar() {
     await page.getByRole("dialog", { name: "Editar projeto", exact: true }).waitFor();
     assert.equal(caminho(), "/projetos/1/editar");
     const projeto = await esperarEdicao("1");
+    assert.equal(await page.title(), `Editar: ${projeto.nome} · Pixel`);
     const campos = { Nome: "nome", Descrição: "descricao", Disciplina: "disciplina", "Criado em": "criadoEm" };
     for (const [rotulo, atributo] of Object.entries(campos)) {
       assert.equal(await campo(rotulo).inputValue(), projeto[atributo], rotulo);
@@ -482,7 +485,8 @@ async function executar() {
 
   await conferir("ID inexistente encerra carregamento e não abre formulário", async () => {
     await page.goto(`${origem}/projetos/999/editar`);
-    await page.getByRole("alert").filter({ hasText: "Projeto não encontrado." }).waitFor();
+    await page.getByRole("dialog").getByRole("alert").filter({ hasText: "Este projeto não existe ou foi removido." }).waitFor();
+    assert.equal(await page.title(), "Projeto não encontrado · Pixel");
     assert.equal(await page.locator("form").count(), 0);
     assert.equal(await page.getByRole("status").count(), 0);
   });
@@ -491,6 +495,7 @@ async function executar() {
     await page.route(`${api}/projetos/1`, (route) => route.abort("connectionrefused"));
     await page.goto(`${origem}/projetos/1/editar`);
     await page.getByRole("dialog").getByRole("alert").filter({ hasText: "Não foi possível carregar o projeto" }).waitFor();
+    assert.equal(await page.title(), "Editar projeto · Pixel");
     assert.equal(await page.locator("form").count(), 0);
     assert.equal(await page.getByRole("status").count(), 0);
     await page.unrouteAll();

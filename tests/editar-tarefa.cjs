@@ -107,6 +107,7 @@ async function executar() {
     await page.getByRole("dialog", { name: "Editar tarefa", exact: true }).waitFor();
     assert.equal(caminho(), "/tarefas/1/editar");
     const tarefa = await esperarFormulario("1");
+    assert.equal(await page.title(), `Editar: ${tarefa.titulo} · Pixel`);
     const campos = { Projeto: "projetoId", Título: "titulo", Descrição: "descricao", Status: "status", Prioridade: "prioridade", Responsável: "responsavel", Prazo: "prazo" };
     // A descrição já preenchida começa aberta; fechar e reabrir mantém o texto.
     assert.equal(await ui.alternarDescricao().getAttribute("aria-expanded"), "true");
@@ -173,6 +174,7 @@ async function executar() {
   await conferir("ID inexistente encerra carregamento e não abre formulário", async () => {
     await page.goto(`${origem}/tarefas/999/editar`);
     await page.getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+    assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
     assert.equal(await page.locator("form").count(), 0);
     assert.equal(await page.getByRole("status").count(), 0);
   });
@@ -181,6 +183,7 @@ async function executar() {
     await page.route(`${api}/tarefas/1`, (route) => route.abort("connectionrefused"));
     await page.goto(`${origem}/tarefas/1/editar`);
     await page.getByRole("alert").filter({ hasText: "Não foi possível carregar a tarefa" }).waitFor();
+    assert.equal(await page.title(), "Editar tarefa · Pixel");
     assert.equal(await page.locator("form").count(), 0);
     assert.equal(await page.getByRole("status").count(), 0);
     await page.unrouteAll();
