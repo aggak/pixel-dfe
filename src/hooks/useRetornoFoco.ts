@@ -6,6 +6,7 @@ export const ALVOS_RESERVA = [".e-task-search input", "main h1", '[data-action="
 
 type Retorno = { origem?: HTMLElement | null; alvos: string[]; rolagem: { caminho: string; y: number } };
 let retorno: Retorno | null = null;
+let volta: { chave: string; y: number } | null = null;
 
 export function marcarRetorno(alvos: string[], rolagem: Retorno["rolagem"], origem?: HTMLElement | null) {
   retorno = { alvos, rolagem, origem };
@@ -15,6 +16,9 @@ export function descartarRetorno() {
 }
 export function retornoPendente() {
   return retorno !== null;
+}
+export function marcarVolta(chave: string, y: number) {
+  volta = { chave, y };
 }
 
 export function primeiroVisivel(seletores: string[]) {
@@ -28,7 +32,12 @@ export function primeiroVisivel(seletores: string[]) {
 
 export function useRetornoFoco(pronto: boolean) {
   const ativa = useContext(ContextoPaginaAtiva);
-  const { pathname, search } = useLocation();
+  const { pathname, search, key } = useLocation();
+  useEffect(() => {
+    if (!pronto || volta?.chave !== key) return;
+    window.scrollTo({ top: volta.y, behavior: "instant" });
+    volta = null;
+  }, [pronto, key]);
   useEffect(() => {
     const atual = retorno;
     if (!pronto || !atual) return;

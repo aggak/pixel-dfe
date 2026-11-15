@@ -73,10 +73,19 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     pendente.current = () => {
       // Só percorre o histórico quando a própria aplicação registrou a origem.
       const indice = window.history.state?.idx;
-      if (!atualizar && origemInterna && destino === fundo.pathname + fundo.search && Number.isInteger(indice) && indice > 0) {
+      const estadoDestino = atualizar ? estado ?? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key };
+      if (origemInterna && destino === fundo.pathname + fundo.search && Number.isInteger(indice) && indice > 0) {
+        if (atualizar) {
+          descartarRetorno();
+          window.addEventListener("popstate", () => {
+            if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
+            navigate(destino, { replace: true, state: estadoDestino });
+          }, { once: true });
+        }
         navigate(-1);
+        if (atualizar) return;
       } else {
-        navigate(destino, { replace: true, state: atualizar ? estado ?? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key } });
+        navigate(destino, { replace: true, state: estadoDestino });
       }
       if (retornoPendente()) return;
       requestAnimationFrame(() => {
