@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const pasta = dirname(fileURLToPath(import.meta.url));
 const raiz = join(pasta, "..");
 const SOB_DEMANDA = ["auditoria-lighthouse.mjs", "rotas-publicadas.mjs", "verificar-publicacao.mjs"];
-const FORA = new Set([basename(fileURLToPath(import.meta.url)), "ui.cjs", ...SOB_DEMANDA]);
+const FORA = new Set([basename(fileURLToPath(import.meta.url)), "ui.cjs", "apoio.cjs", ...SOB_DEMANDA]);
 const LIMITE_MS = 600_000;
 const TENTATIVAS = 2;
 const LINHAS_DE_FALHA = 40;

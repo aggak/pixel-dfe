@@ -1,72 +1,27 @@
 const assert = require("node:assert/strict");
-const { spawn } = require("node:child_process");
-const { copyFile, mkdtemp, readFile, rm, writeFile } = require("node:fs/promises");
-const { createServer } = require("node:net");
+const { readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { lancarNavegador } = require("./ui.cjs");
+
+const { criarApoio } = require("./apoio.cjs");
+const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
-const processos = [];
-const portasUsadas = new Set();
 let browser;
-let temporario;
-
-async function portaLivre() {
-  for (;;) {
-    const servidor = createServer();
-    await new Promise((resolve, reject) => {
-      servidor.once("error", reject);
-      servidor.listen(0, "127.0.0.1", resolve);
-    });
-    const porta = servidor.address().port;
-    await new Promise((resolve) => servidor.close(resolve));
-    if (!portasUsadas.has(porta)) {
-      portasUsadas.add(porta);
-      return porta;
-    }
-  }
-}
-
-async function esperar(url) {
-  for (let tentativa = 0; tentativa < 100; tentativa++) {
-    if (processos.some((processo) => processo.exitCode !== null || processo.signalCode !== null)) throw new Error("Servidor encerrou antes do teste.");
-    try { if ((await fetch(url, { signal: AbortSignal.timeout(1000) })).ok) return; } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-  throw new Error(`Servidor indisponível: ${url}`);
-}
-
-function iniciar(arquivo, argumentos, env = process.env) {
-  const processo = spawn(process.execPath, [join(raiz, arquivo), ...argumentos], {
-    cwd: raiz, env, windowsHide: true, stdio: "pipe",
-  });
-  processo.stdout.on("data", () => {});
-  processo.stderr.on("data", (dado) => process.stderr.write(dado));
-  processos.push(processo);
-}
 
 async function executar() {
   const bancoOriginal = await readFile(join(raiz, "db.json"), "utf8");
   const seedOriginal = await readFile(join(raiz, "db.seed.json"), "utf8");
-  temporario = await mkdtemp(join(raiz, ".testes-abas-"));
-  const banco = join(temporario, "db.json");
-  await copyFile(join(raiz, "db.json"), banco);
+  const { banco } = await apoio.criarBanco({ prefixo: ".testes-abas-", pasta: raiz, semente: "db.json" });
   const dados = JSON.parse(await readFile(banco, "utf8"));
   for (let numero = 1; numero <= 12; numero++) dados.projetos.push({
     id: `teste-abas-${numero}`, nome: `Projeto de teste ${numero}`, descricao: "", disciplina: "Testes", criadoEm: "2026-11-12",
   });
   await writeFile(banco, JSON.stringify(dados));
   const ultimo = dados.projetos.at(-1);
-  const portaApi = await portaLivre();
-  const portaWeb = await portaLivre();
-  const api = `http://127.0.0.1:${portaApi}`;
-  const web = `http://127.0.0.1:${portaWeb}`;
-  iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort"], { ...process.env, VITE_API_URL: api });
-  await Promise.all([esperar(`${api}/projetos`), esperar(web)]);
+  const { api, web } = await apoio.subirAmbiente({ banco, rotaApi: "/projetos" });
   assert.deepEqual((await (await fetch(`${api}/projetos`)).json()).map((projeto) => projeto.id), dados.projetos.map((projeto) => projeto.id));
 
-  browser = await lancarNavegador();
+  browser = await apoio.abrirNavegador();
   const page = await browser.newPage({ viewport: { width: 375, height: 800 }, reducedMotion: "reduce" });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
@@ -309,14 +264,4 @@ async function executar() {
 
 executar()
   .catch((erro) => { console.error(erro); process.exitCode = 1; })
-  .finally(async () => {
-    await browser?.close().catch(() => {});
-    for (const processo of processos) {
-      if (processo.exitCode === null && processo.signalCode === null) {
-        const encerrado = new Promise((resolve) => processo.once("exit", resolve));
-        processo.kill();
-        await encerrado;
-      }
-    }
-    if (temporario) await rm(temporario, { recursive: true, force: true });
-  });
+  .finally(() => apoio.encerrar());
