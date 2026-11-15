@@ -354,6 +354,7 @@ main h1{scroll-margin-top:71px}
 .e-task .e-status-trigger:hover,.e-task .e-status-trigger[aria-expanded=true],.e-read-tags>.e-status-trigger:hover,.e-read-tags>.e-status-trigger[aria-expanded=true]{background:var(--e-back)}
 .e-card-status{display:inline-flex;align-items:center;gap:3px;color:var(--e-muted);font-size:12px;line-height:18px;white-space:nowrap}
 .e-card-status>.e-uicon{width:14px;height:14px;font-size:14px}
+.e-status-trigger:hover .e-card-status>.e-uicon,.e-status-trigger[aria-expanded=true] .e-card-status>.e-uicon{color:var(--e-ink)}
 .e-card-status-em-andamento{color:#a7bedb}
 .e-card-status-em-revisao{color:var(--e-action)}
 .e-card-status-concluida{color:#a6c8b1}
