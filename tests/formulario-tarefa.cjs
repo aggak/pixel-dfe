@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const { access, mkdir, readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { associacoes, comTextos, contraste, criarUi, focoVisivel } = require("./ui.cjs");
+const { associacoes, comTextos, contraste, criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
 const { criarApoio } = require("./apoio.cjs");
 const apoio = criarApoio();
 
@@ -42,7 +42,7 @@ import { atualizarTarefa, criarTarefa } from "../src/api";
 import type { NovaTarefa, Tarefa } from "../src/tipos";
 import "../src/index.css";
 import "../src/App.css";
-type Janela = Window & { __payloads?: NovaTarefa[]; __cancelamentos?: number };
+type Janela = Window & { __payloads?: NovaTarefa[]; __cancelamentos?: number; __liberarEnvio?: () => void };
 const janela = window as Janela;
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const edicao: Tarefa = { id: "fixture-edicao-1", projetoId: "2", titulo: "Revisar modelagem", descricao: "Conferir entidades e relacionamentos", status: "em-revisao", prioridade: "alta", responsavel: "Carla", prazo: "2026-12-01" };
@@ -57,7 +57,7 @@ function Pagina() {
   if (modo === "editar") formulario = <FormularioTarefa valoresIniciais={edicao as unknown as Partial<NovaTarefa>} textoSalvar="Atualizar tarefa" onSalvar={registrar} onCancelar={cancelar} />;
   if (modo === "editar-prazo-invalido") formulario = <FormularioTarefa valoresIniciais={{ ...edicao, prazo: "20265-12-20" } as unknown as Partial<NovaTarefa>} textoSalvar="Atualizar tarefa" onSalvar={registrar} onCancelar={cancelar} />;
   if (modo === "erro-salvar") formulario = <FormularioTarefa onSalvar={async (dados) => { janela.__payloads = [...(janela.__payloads || []), dados]; setEnvios((n) => n + 1); await dormir(30); throw new Error("Falha simulada ao salvar"); }} onCancelar={cancelar} />;
-  if (modo === "lento") formulario = <FormularioTarefa onSalvar={async (dados) => { registrar(dados); await dormir(1000); setResultado("Concluído: " + dados.titulo); }} onCancelar={cancelar} />;
+  if (modo === "lento") formulario = <FormularioTarefa onSalvar={async (dados) => { registrar(dados); await new Promise<void>((r) => { janela.__liberarEnvio = r; }); setResultado("Concluído: " + dados.titulo); }} onCancelar={cancelar} />;
   if (modo === "criar-real") formulario = <FormularioTarefa onSalvar={async (dados) => { const criada = await criarTarefa(dados); registrar(dados); setResultado("Criada: " + criada.id); }} onCancelar={cancelar} />;
   if (modo === "editar-real") formulario = <FormularioTarefa valoresIniciais={existente} textoSalvar="Atualizar tarefa" onSalvar={async (dados) => { const atualizada = await atualizarTarefa("1", dados); registrar(dados); setResultado("Atualizada: " + atualizada.id); }} onCancelar={cancelar} />;
   if (modo === "contexto") formulario = <FormularioTarefa valoresIniciais={{ projetoId: "2" }} onSalvar={registrar} />;
@@ -122,6 +122,7 @@ async function executar() {
     if (aguardar) await ate("projetos carregados", () => ui.projetosCarregados(seed.projetos.length));
   }
   const preencher = (dados) => ui.preencherTarefa(comTextos(dados, seed.projetos));
+  const { segurar } = criarEsperas(page);
   const valido = { projetoId: "2", titulo: "Organizar referências", descricao: "Separar materiais por disciplina", status: "em-andamento", prioridade: "alta", responsavel: "Bruno", prazo: "2027-02-10" };
   await conferir("sete campos com rótulos exatos, enums, required e ids únicos", async () => {
     await abrir("novo");
@@ -351,14 +352,16 @@ async function executar() {
     await botaoSalvar().click();
     await ate("botão bloqueado durante o envio", () => botaoEnvio().isDisabled());
     await page.evaluate(() => { const f = document.querySelector("form"); if (f) f.requestSubmit(); });
+    await page.evaluate(() => window.__liberarEnvio());
     await ate("envio concluído", async () => (await resultado()).includes("Concluído"));
     assert.equal(await envios(), 1);
     assert.equal((await payloads()).length, 1);
   });
   await conferir("projetos em carregamento, falha ou vazio bloqueiam o salvar", async () => {
-    await page.route(`${apiUrl}/projetos`, async (route) => { await dormir(1200); await route.continue(); });
+    const projetosLentos = await segurar(`${apiUrl}/projetos`);
     await abrir("novo", false);
     await ate("bloqueado enquanto carrega", () => botaoEnvio().isDisabled());
+    await projetosLentos.liberar();
     await ate("liberado após carregar", () => botaoEnvio().isEnabled());
     await page.unrouteAll();
     await page.route(`${apiUrl}/projetos`, (route) => route.fulfill({ status: 500, json: {} }));

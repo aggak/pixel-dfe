@@ -112,4 +112,33 @@ function contraste(a, b) {
   return (maior + 0.05) / (menor + 0.05);
 }
 
-module.exports = { associacoes, lancarNavegador, criarUi, comTextos, focoVisivel, contraste, escapar, TEXTO_STATUS, TEXTO_PRIORIDADE };
+function criarEsperas(page) {
+  let marcas = 0;
+  async function assentar() {
+    const marca = new URL(`/__assentar-${++marcas}`, page.url()).href;
+    const registrada = page.waitForRequest(marca);
+    await page.evaluate((url) => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { fetch(url).catch(() => {}); resolve(); })))), marca);
+    await registrada;
+  }
+  async function segurar(url, { metodo, responder = (rota) => rota.continue() } = {}) {
+    let soltar;
+    const solta = new Promise((resolve) => { soltar = resolve; });
+    const pedidos = [];
+    const entregas = [];
+    await page.route(url, (rota) => {
+      if (metodo && rota.request().method() !== metodo) return rota.continue().catch(() => {});
+      pedidos.push(rota.request());
+      entregas.push(solta.then(() => responder(rota)).catch(() => {}));
+    });
+    async function liberar() {
+      soltar();
+      await Promise.all(entregas);
+      await Promise.all(pedidos.map(async (pedido) => { const resposta = await pedido.response().catch(() => null); await resposta?.finished().catch(() => {}); }));
+      await assentar();
+    }
+    return { pedidos, liberar };
+  }
+  return { assentar, segurar };
+}
+
+module.exports = { associacoes, lancarNavegador, criarUi, criarEsperas, comTextos, focoVisivel, contraste, escapar, TEXTO_STATUS, TEXTO_PRIORIDADE };

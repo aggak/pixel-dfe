@@ -192,6 +192,7 @@ async function executar() {
   falharProjetos = false;
   await ficha().getByRole("button", { name: "Tentar de novo" }).click();
   await alerta("Não foi possível carregar os projetos").waitFor({ state: "detached" });
+  await alerta("Tentando de novo…").waitFor({ state: "detached" });
   assert.equal(await ficha().getByRole("button", { name: "Tentar de novo" }).count(), 0);
   await page.unroute(`${api}/projetos`, interceptarProjetos);
   console.log("OK: formulário avisa e recarrega os projetos ao tentar de novo");
@@ -228,8 +229,10 @@ async function executar() {
   await page.goto(`${web}/tarefas/1`);
   await alerta("Não foi possível carregar a tarefa").waitFor();
   await ficha().getByRole("button", { name: "Tentar de novo" }).focus();
+  const novaFalhaFicha = page.waitForEvent("requestfailed", { predicate: (pedido) => pedido.url() === `${api}/tarefas/1` });
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(300);
+  await novaFalhaFicha;
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"] [data-pending]'));
   assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Tentar de novo");
   assert.equal(await ficha().count(), 1);
   await page.unroute(`${api}/**`, interceptarFichaFoco);

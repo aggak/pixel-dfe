@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict");
 const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { criarUi, focoVisivel } = require("./ui.cjs");
+const { criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
 
 const { criarApoio } = require("./apoio.cjs");
 const apoio = criarApoio();
@@ -87,6 +87,7 @@ async function executar() {
       dispatchEvent(new PopStateEvent("popstate"));
     }, rota);
   }
+  const { assentar, segurar } = criarEsperas(page);
 
   await conferir("acesso a /projetos/novo pela lista, direto e recarga sem interpretar novo como ID", async () => {
     await page.goto(`${origem}/projetos`);
@@ -296,15 +297,15 @@ async function executar() {
     await page.locator("form").waitFor();
     const dados = { nome: "Projeto com envio lento", descricao: "Teste de bloqueio", disciplina: "Redes", criadoEm: "2026-10-21" };
     await preencherProjeto(dados);
-    await page.route(`${api}/projetos`, async (route) => {
-      if (route.request().method() === "POST") await dormir(800);
-      try { await route.continue(); } catch {}
-    });
+    const envioNovo = await segurar(`${api}/projetos`, { metodo: "POST" });
     gravacoes.length = 0;
     await salvarNovo().click();
     await ate("botão bloqueado no POST", () => page.locator('form button[type="submit"]').isDisabled());
     await page.evaluate(() => document.querySelector("form").requestSubmit());
+    await assentar();
     assert.equal(caminho(), "/projetos/novo");
+    assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 1);
+    await envioNovo.liberar();
     await ate("lista após POST lento", async () => caminho() === "/projetos");
     assert.equal(gravacoes.filter((g) => g.metodo === "POST").length, 1);
     await page.unrouteAll();
@@ -312,11 +313,7 @@ async function executar() {
     await page.goto(`${origem}/projetos/novo`);
     await page.locator("form").waitFor();
     await preencherProjeto({ ...dados, nome: "Projeto abandonado no menu" });
-    await page.route(`${api}/projetos`, async (route) => {
-      if (route.request().method() !== "POST") return route.continue();
-      await dormir(800);
-      try { await route.fulfill({ status: 201, json: { id: "simulado", ...dados } }); } catch {}
-    });
+    const envioAbandonado = await segurar(`${api}/projetos`, { metodo: "POST", responder: (route) => route.fulfill({ status: 201, json: { id: "simulado", ...dados } }) });
     await salvarNovo().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
     // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
@@ -324,7 +321,7 @@ async function executar() {
     await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor();
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
-    await dormir(1000);
+    await envioAbandonado.liberar();
     assert.equal(caminho(), "/");
     await page.unrouteAll();
   });
@@ -447,18 +444,13 @@ async function executar() {
     await trocarRota("/projetos/2/editar");
     await esperarEdicao("2");
     assert.equal(await campo("Nome").inputValue(), seed.projetos[1].nome);
-    let iniciou = false;
-    await page.route(`${api}/projetos/1`, async (route) => {
-      iniciou = true;
-      await dormir(800);
-      try { await route.fulfill({ json: seed.projetos[0] }); } catch {}
-    });
+    const leitura = await segurar(`${api}/projetos/1`, { responder: (route) => route.fulfill({ json: seed.projetos[0] }) });
     await trocarRota("/projetos/1/editar");
-    await ate("leitura atrasada iniciada", async () => iniciou);
+    await ate("leitura atrasada iniciada", async () => leitura.pedidos.length > 0);
     assert.equal(await page.locator("form").count(), 0);
     await trocarRota("/projetos/2/editar");
     await esperarEdicao("2");
-    await dormir(1000);
+    await leitura.liberar();
     assert.equal(await campo("Nome").inputValue(), seed.projetos[1].nome);
     await page.unrouteAll();
   });
@@ -475,15 +467,15 @@ async function executar() {
     assert.equal(await campo("Nome").inputValue(), "Projeto preservado após falha");
     await ate("envio liberado após erro", () => salvarEdicao().isEnabled());
     await page.unrouteAll();
-    await page.route(`${api}/projetos/2`, async (route) => {
-      if (route.request().method() === "PATCH") await dormir(800);
-      try { await route.continue(); } catch {}
-    });
+    const envioEdicao = await segurar(`${api}/projetos/2`, { metodo: "PATCH" });
     gravacoes.length = 0;
     await salvarEdicao().click();
     await ate("botão bloqueado", () => page.locator('form button[type="submit"]').isDisabled());
     await page.evaluate(() => document.querySelector("form").requestSubmit());
+    await assentar();
     assert.equal(caminho(), "/projetos/2/editar");
+    assert.equal(gravacoes.length, 1);
+    await envioEdicao.liberar();
     await ate("detalhe após nova tentativa", async () => caminho() === "/projetos/2");
     assert.equal(gravacoes.length, 1);
     await page.getByRole("heading", { name: "Projeto preservado após falha", exact: true }).waitFor();
@@ -491,11 +483,7 @@ async function executar() {
 
     await abrirEdicao("1");
     const projeto1 = (await lerBanco()).projetos.find((p) => p.id === "1");
-    await page.route(`${api}/projetos/1`, async (route) => {
-      if (route.request().method() !== "PATCH") return route.continue();
-      await dormir(800);
-      try { await route.fulfill({ json: projeto1 }); } catch {}
-    });
+    const envioSaida = await segurar(`${api}/projetos/1`, { metodo: "PATCH", responder: (route) => route.fulfill({ json: projeto1 }) });
     await salvarEdicao().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
     // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
@@ -503,7 +491,7 @@ async function executar() {
     await page.getByRole("heading", { name: "Tarefas", exact: true }).waitFor();
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
-    await dormir(1000);
+    await envioSaida.liberar();
     assert.equal(caminho(), "/");
     await page.unrouteAll();
   });

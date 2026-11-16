@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict");
 const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { comTextos, criarUi, focoVisivel } = require("./ui.cjs");
+const { comTextos, criarUi, focoVisivel, criarEsperas } = require("./ui.cjs");
 
 const { criarApoio } = require("./apoio.cjs");
 const apoio = criarApoio();
@@ -65,6 +65,7 @@ async function executar() {
       dispatchEvent(new PopStateEvent("popstate"));
     }, rota);
   }
+  const { assentar, segurar } = criarEsperas(page);
 
   await conferir("botão de edição, acesso direto e recarga com todos os campos preenchidos", async () => {
     await page.goto(`${origem}/tarefas/1`);
@@ -148,11 +149,13 @@ async function executar() {
     await page.getByRole("dialog", { name: "Detalhes da tarefa", exact: true }).waitFor();
     const dados = await abrir();
     const outroStatus = dados.status === "concluida" ? "A fazer" : "Concluída";
-    await ui.escolher("Status", outroStatus); await fora(); await dormir(400);
+    await ui.escolher("Status", outroStatus); await fora(); await assentar();
+    assert.equal(await page.locator(".e-form-overlay[data-exiting]").count(), 0);
     assert.equal(caminho(), "/tarefas/1/editar");
     assert.equal(await page.getByRole("dialog", { name: "Editar tarefa", exact: true }).count(), 1);
     assert.equal(await ui.seletor("Status").innerText().then((texto) => texto.includes(outroStatus)), true);
-    await campo("Título").fill("Rascunho mantido"); await fora(); await dormir(400);
+    await campo("Título").fill("Rascunho mantido"); await fora(); await assentar();
+    assert.equal(await page.locator(".e-form-overlay[data-exiting]").count(), 0);
     assert.equal(caminho(), "/tarefas/1/editar"); assert.equal(await campo("Título").inputValue(), "Rascunho mantido");
     await page.getByRole("button", { name: "Cancelar", exact: true }).click();
     await ate("Cancelar segue voltando ao detalhe", async () => caminho() === "/tarefas/1");
@@ -183,18 +186,13 @@ async function executar() {
     await trocarRota("/tarefas/2/editar");
     await esperarFormulario("2");
     assert.equal(await campo("Título").inputValue(), seed.tarefas[1].titulo);
-    let iniciou = false;
-    await page.route(`${api}/tarefas/1`, async (route) => {
-      iniciou = true;
-      await dormir(800);
-      try { await route.fulfill({ json: seed.tarefas[0] }); } catch {}
-    });
+    const leitura = await segurar(`${api}/tarefas/1`, { responder: (route) => route.fulfill({ json: seed.tarefas[0] }) });
     await trocarRota("/tarefas/1/editar");
-    await ate("leitura atrasada iniciada", async () => iniciou);
+    await ate("leitura atrasada iniciada", async () => leitura.pedidos.length > 0);
     assert.equal(await page.locator("form").count(), 0);
     await trocarRota("/tarefas/2/editar");
     await esperarFormulario("2");
-    await dormir(1000);
+    await leitura.liberar();
     assert.equal(await campo("Título").inputValue(), seed.tarefas[1].titulo);
     await page.unrouteAll();
   });
@@ -216,15 +214,15 @@ async function executar() {
 
   await conferir("envio pendente bloqueia duplicação e só navega após a resposta", async () => {
     await abrir();
-    await page.route(`${api}/tarefas/1`, async (route) => {
-      if (route.request().method() === "PATCH") await dormir(800);
-      try { await route.continue(); } catch {}
-    });
+    const envio = await segurar(`${api}/tarefas/1`, { metodo: "PATCH" });
     gravacoes.length = 0;
     await salvar().click();
     await ate("botão bloqueado", () => page.locator('form button[type="submit"]').isDisabled());
     await page.evaluate(() => document.querySelector("form").requestSubmit());
+    await assentar();
     assert.equal(caminho(), "/tarefas/1/editar");
+    assert.equal(gravacoes.length, 1);
+    await envio.liberar();
     await ate("detalhe após gravação", async () => caminho() === "/tarefas/1");
     assert.equal(gravacoes.length, 1);
     await page.unrouteAll();
@@ -233,11 +231,7 @@ async function executar() {
   await conferir("sair durante gravação não permite redirecionamento atrasado", async () => {
     await abrir();
     const tarefa = (await lerBanco()).tarefas.find((t) => t.id === "1");
-    await page.route(`${api}/tarefas/1`, async (route) => {
-      if (route.request().method() !== "PATCH") return route.continue();
-      await dormir(800);
-      try { await route.fulfill({ json: tarefa }); } catch {}
-    });
+    const envio = await segurar(`${api}/tarefas/1`, { metodo: "PATCH", responder: (route) => route.fulfill({ json: tarefa }) });
     await salvar().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
     // A ficha bloqueia o fundo (inert): a saída durante o envio é feita pelo histórico real.
@@ -245,7 +239,7 @@ async function executar() {
     await page.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
     await page.locator('[role="dialog"]').waitFor({ state: "detached" });
     assert.equal(await page.locator("form").count(), 0, "o formulário foi desmontado antes da resposta tardia");
-    await dormir(1000);
+    await envio.liberar();
     assert.equal(caminho(), "/projetos");
     await page.unrouteAll();
   });
@@ -253,16 +247,12 @@ async function executar() {
   await conferir("trocar tarefa durante gravação não altera o novo contexto", async () => {
     await abrir();
     const tarefa = (await lerBanco()).tarefas.find((t) => t.id === "1");
-    await page.route(`${api}/tarefas/1`, async (route) => {
-      if (route.request().method() !== "PATCH") return route.continue();
-      await dormir(800);
-      try { await route.fulfill({ json: tarefa }); } catch {}
-    });
+    const envio = await segurar(`${api}/tarefas/1`, { metodo: "PATCH", responder: (route) => route.fulfill({ json: tarefa }) });
     await salvar().click();
     await ate("envio em curso", () => page.locator('form button[type="submit"]').isDisabled());
     await trocarRota("/tarefas/2/editar");
     const atual = await esperarFormulario("2");
-    await dormir(1000);
+    await envio.liberar();
     assert.equal(caminho(), "/tarefas/2/editar");
     assert.equal(await campo("Título").inputValue(), atual.titulo);
     assert.equal(await salvar().isEnabled(), true);

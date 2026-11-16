@@ -4,6 +4,7 @@ const { join } = require("node:path");
 
 const { criarApoio } = require("./apoio.cjs");
 const apoio = criarApoio();
+const { criarEsperas } = require("./ui.cjs");
 
 const raiz = join(__dirname, "..");
 let browser;
@@ -21,6 +22,7 @@ async function executar() {
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
   const ficha = () => page.locator(".e-form-overlay").getByRole("dialog");
+  const { segurar } = criarEsperas(page);
   // Outro usuário (ou outra aba) remove o registro direto na API enquanto a tela está aberta.
   const removerNaApi = async (colecao, id) => assert.equal((await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok, true);
   const criarNaApi = async (colecao, dados) => (await fetch(`${api}/${colecao}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })).json();
@@ -83,15 +85,15 @@ async function executar() {
   }
 
   // Resposta lenta: a indicação aparece e some quando o 404 chega.
-  const atrasar = async (rota) => { await new Promise((resolve) => setTimeout(resolve, 600)); await rota.continue().catch(() => {}); };
-  await page.route(`${api}/tarefas/998`, atrasar);
+  const lenta = await segurar(`${api}/tarefas/998`);
   await page.goto(`${web}/tarefas/998`);
   await ficha().getByRole("status").filter({ hasText: "Carregando tarefa" }).waitFor();
   assert.equal(await page.title(), "Tarefa · Pixel");
+  await lenta.liberar();
   await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
   assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
   assert.equal(await ficha().getByRole("status").count(), 0);
-  await page.unroute(`${api}/tarefas/998`, atrasar);
+  await page.unroute(`${api}/tarefas/998`);
   console.log("OK: resposta lenta com 404 encerra a indicação de carregamento");
 
   async function abrirExclusao(titulo) {
