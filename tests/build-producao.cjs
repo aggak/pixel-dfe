@@ -204,10 +204,9 @@ async function executar() {
     "/rota-inexistente": () => page.getByRole("heading", { level: 1, name: "Página não encontrada", exact: true }).waitFor(),
   };
 
-  // Assets estáticos servidos pelo preview, incluindo o link "Licenças" do rodapé.
   await page.goto(`${web}/`);
   await telas["/"]();
-  const hrefLicencas = await page.getByRole("link", { name: "Licenças", exact: true }).getAttribute("href");
+  const hrefLicencas = await page.getByRole("link", { name: "Créditos e licenças", exact: true }).getAttribute("href");
   assert.equal(hrefLicencas, "/design-licenses/THIRD_PARTY_NOTICES.txt");
   const respostaFavicon = await fetch(`${web}/favicon.svg`);
   assert.equal(respostaFavicon.status, 200);
@@ -227,7 +226,7 @@ async function executar() {
   const respostaLicencasExecucao = await fetch(new URL("RUNTIME_LICENSES.txt", new URL(hrefLicencas, web)));
   assert.equal(respostaLicencasExecucao.status, 200);
   assert.equal(await respostaLicencasExecucao.text(), licencasExecucao);
-  console.log("OK: o preview serve /favicon.svg, /robots.txt, /og-image.png e o link Licenças (THIRD_PARTY_NOTICES.txt, com RUNTIME_LICENSES.txt ao lado) com HTTP 200 e o conteúdo de public/");
+  console.log("OK: o preview serve /favicon.svg, /robots.txt, /og-image.png e o link Créditos e licenças (THIRD_PARTY_NOTICES.txt, com RUNTIME_LICENSES.txt ao lado) com HTTP 200 e o conteúdo de public/");
 
   // Navegação SPA: cliques trocam de tela sem novo documento.
   await page.evaluate(() => { window.semRecarga = true; });
