@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDrag } from "react-aria-components";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
@@ -13,6 +14,7 @@ import { SeloPrioridade } from "./Selos";
 import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { useSeletorStatus } from "../hooks/useSeletorStatus";
+import { ouvirSoltura, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
 
 export function CartaoTarefa({
   tarefa,
@@ -34,13 +36,30 @@ export function CartaoTarefa({
   const estado = { fundo: location };
   const emQuadro = variante === "quadro";
   const concluida = tarefa.status === "concluida";
-  const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}`;
-  const { seletorStatus, alerta } = useSeletorStatus(
+  const { dragProps, isDragging } = useDrag({
+    getItems: () => [{ [TIPO_TAREFA]: tarefa.id, "text/plain": tarefa.titulo }],
+  });
+  const arrastavel = emQuadro
+    ? {
+        draggable: true,
+        onDragStart: dragProps.onDragStart,
+        onDrag: dragProps.onDrag,
+        onDragEnd: dragProps.onDragEnd,
+      }
+    : {};
+  const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}${isDragging ? " e-card-arrastando" : ""}`;
+  const { seletorStatus, alerta, mudar } = useSeletorStatus(
     tarefa,
     onMudarStatus,
     emQuadro ? "bottom end" : "bottom start",
   );
   const raiz = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!emQuadro) return;
+    return ouvirSoltura(({ id, status }) => {
+      if (id === tarefa.id) void mudar(status);
+    });
+  });
   const focarVizinho = () => {
     const cartoes = [
       ...document.querySelectorAll<HTMLElement>("[data-task-id]"),
@@ -67,7 +86,12 @@ export function CartaoTarefa({
   );
   const cabecalho = (
     <div className="e-task-heading">
-      <Link className="e-task-title" to={caminho} state={estado}>
+      <Link
+        className="e-task-title"
+        to={caminho}
+        state={estado}
+        draggable={false}
+      >
         {tarefa.titulo}
       </Link>
       <Dropdown.Root>
@@ -116,7 +140,12 @@ export function CartaoTarefa({
     </>
   );
   return (
-    <article ref={raiz} className={classe} data-task-id={tarefa.id}>
+    <article
+      {...arrastavel}
+      ref={raiz}
+      className={classe}
+      data-task-id={tarefa.id}
+    >
       {emQuadro ? (
         <div className="e-task-main">
           {cabecalho}
