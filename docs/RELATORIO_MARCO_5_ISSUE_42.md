@@ -11,7 +11,7 @@ Implementei a [issue #42 — Excluir tarefa com confirmação](https://github.co
 - `src/api.ts`: acrescentei `excluirTarefa`, que envia `DELETE /tarefas/:id`, codifica o identificador na URL e lança `ErroApi` quando a resposta não é bem-sucedida.
 - `src/components/CartaoTarefa.tsx` e `src/App.css`: acrescentei **Excluir tarefa** ao menu de ações e uma caixa de confirmação no padrão visual do projeto. O envio fica bloqueado enquanto a exclusão está pendente. Se a API falha, a caixa permanece aberta com uma mensagem para tentar novamente.
 - `src/pages/ListaTarefas.tsx`, `src/pages/QuadroTarefas.tsx` e `src/pages/DetalheProjeto.tsx`: cada tela chama a função da API e retira a tarefa de sua lista apenas depois do sucesso. As contagens da lista, das colunas e do projeto acompanham os dados exibidos.
-- `tests/api-escrita.mjs` e `tests/exclusao-tarefa.cjs`: ampliei a verificação da API e criei um teste de navegador para cancelamento, falha e sucesso nas três telas. O teste usa uma cópia temporária de `db.seed.json`.
+- `tests/api-escrita.mts` e `tests/exclusao-tarefa.cts`: ampliei a verificação da API e criei um teste de navegador para cancelamento, falha e sucesso nas três telas. O teste usa uma cópia temporária de `db.seed.json`.
 
 Reutilizei o cartão, o menu e os componentes de diálogo existentes. Não alterei o contrato das tarefas nem os bancos do projeto.
 
@@ -23,7 +23,7 @@ Simulei uma resposta `500` para a exclusão. A tarefa e a contagem permaneceram 
 
 ## Validação e resultados
 
-**Na entrega da issue:** `npm run build` e `npm run lint` passaram. `tests/api-escrita.mjs` aprovou 13 cenários, incluindo exclusão, identificador especial, resposta `404` e cancelamento por sinal. `tests/exclusao-tarefa.cjs` confirmou que **Cancelar** não envia `DELETE`, que a falha não remove a tarefa e que o sucesso atualiza lista, quadro e página do projeto. A suíte existente `tests/status-cartao.cjs` aprovou 10 cenários, sem regressão na mudança de status.
+**Na entrega da issue:** `npm run build` e `npm run lint` passaram. `tests/api-escrita.mts` aprovou 13 cenários, incluindo exclusão, identificador especial, resposta `404` e cancelamento por sinal. `tests/exclusao-tarefa.cts` confirmou que **Cancelar** não envia `DELETE`, que a falha não remove a tarefa e que o sucesso atualiza lista, quadro e página do projeto. A suíte existente `tests/status-cartao.cts` aprovou 10 cenários, sem regressão na mudança de status.
 
 **Executado agora na `main` integrada, commit `4d061fd`:** o build, o lint, os 13 cenários da API e o teste de exclusão passaram novamente. Os testes informaram ausência de erros JavaScript não tratados e preservação de `db.json` e `db.seed.json`.
 

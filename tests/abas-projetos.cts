@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
@@ -62,7 +62,8 @@ async function executar() {
 
   async function sobra(esperado) {
     await page.waitForFunction(
-      (valor) => document.querySelector(".e-tabs")?.dataset.sobra === valor,
+      (valor) =>
+        document.querySelector<HTMLElement>(".e-tabs")?.dataset.sobra === valor,
       esperado,
     );
     assert.equal(await abas.getAttribute("data-sobra"), esperado);
@@ -224,7 +225,7 @@ async function executar() {
     return page.evaluate(() => {
       const el = document.activeElement;
       if (!(el instanceof HTMLElement) || !el.closest(".e-tabs")) return null;
-      const nav = el.closest(".e-tabs");
+      const nav = el.closest(".e-tabs") as HTMLElement;
       const todas = nav.querySelector("a");
       const caixa = el.getBoundingClientRect();
       const faixa = nav.getBoundingClientRect();
@@ -369,7 +370,7 @@ async function executar() {
   );
   await page.waitForFunction(() => {
     const el = document.activeElement;
-    const nav = el?.closest?.(".e-tabs");
+    const nav = el?.closest?.(".e-tabs") as HTMLElement;
     if (!nav || el === nav.querySelector("a")) return false;
     const caixa = el.getBoundingClientRect();
     const faixa = nav.getBoundingClientRect();

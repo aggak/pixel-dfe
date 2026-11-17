@@ -16,7 +16,7 @@ Segui o enunciado dos marcos, o material da Aula 12 (slides 15 a 21) e o guia t�
 4. Criei `src/pages/QuadroTarefas.tsx`. A página busca as tarefas na API como a lista, lê `useFiltros()`, aplica `filtrarTarefas` e depois `agruparPorStatus`, os dois em `useMemo`. O cabeçalho reutiliza `FiltrosTarefas` da #37, então busca e filtros do quadro alteram o mesmo estado da lista. Cada coluna mostra ícone, nome, contador e "Nenhuma tarefa" quando está vazia; os cartões usam o `id` como chave.
 5. Registrei `/quadro` dentro do `Layout` em `src/App.tsx` e incluí `/quadro` entre as rotas de fundo aceitas pela ficha. Assim, detalhe, edição e nova tarefa abrem sobre o quadro. Fechar uma nova tarefa aberta no quadro volta para `/quadro`.
 6. Em `NovaTarefa.tsx`, a tarefa criada a partir do quadro volta para `/quadro`. Nos outros casos, o retorno à lista continua como antes.
-7. Criei `tests/quadro-filtros.cjs`, conferi capturas em 1280 px e 320 px e repeti todas as suítes do projeto.
+7. Criei `tests/quadro-filtros.cts`, conferi capturas em 1280 px e 320 px e repeti todas as suítes do projeto.
 
 ## Estrutura utilizada
 
@@ -28,7 +28,7 @@ Segui o enunciado dos marcos, o material da Aula 12 (slides 15 a 21) e o guia t�
 | `src/pages/QuadroTarefas.tsx` | Página do quadro com estados de carregando, erro, banco vazio e busca sem resultado. |
 | `src/App.tsx` | Rota `/quadro` e quadro aceito como fundo da ficha. |
 | `src/pages/NovaTarefa.tsx` | Retorno a `/quadro` depois de salvar uma tarefa criada no quadro. |
-| `tests/quadro-filtros.cjs` | Suíte de navegador com API real e banco temporário. |
+| `tests/quadro-filtros.cts` | Suíte de navegador com API real e banco temporário. |
 
 Não adicionei dependências. Reaproveitei `Badge`, `Button`, `Icon`, `statusTexto`, `listarTarefas`, `listarProjetos`, `useConsulta`, `AbasProjetos`, `Carregando` e `EstadoVazio`. Não alterei `src/tipos.ts`, `db.json` nem `db.seed.json`.
 
@@ -52,18 +52,18 @@ Não adicionei dependências. Reaproveitei `Badge`, `Button`, `Icon`, `statusTex
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado; `oxlint --deny-warnings` sem avisos. |
-| `node tests/quadro-filtros.cjs` | 8 cenários aprovados. |
-| `node tests/estado-filtros.cjs` | 6 cenários aprovados. |
-| `node tests/busca-titulo.cjs` | Aprovado. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados. |
-| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
-| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados. |
-| `node tests/nova-tarefa.cjs` | 15 cenários aprovados. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados. |
-| `node tests/projetos-cadastro-edicao.cjs` | 15 cenários aprovados. |
+| `node tests/quadro-filtros.cts` | 8 cenários aprovados. |
+| `node tests/estado-filtros.cts` | 6 cenários aprovados. |
+| `node tests/busca-titulo.cts` | Aprovado. |
+| `node tests/marco-2.cts` | 12 cenários aprovados. |
+| `node tests/api-escrita.mts` | 12 cenários aprovados. |
+| `node tests/formulario-tarefa.cts` | 17 cenários aprovados. |
+| `node tests/nova-tarefa.cts` | 15 cenários aprovados. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados. |
+| `node tests/projetos-cadastro-edicao.cts` | 15 cenários aprovados. |
 | `git diff --check` | Aprovado. |
 
-A suíte `quadro-filtros.cjs` verifica:
+A suíte `quadro-filtros.cts` verifica:
 
 1. `/quadro` abre com as quatro colunas na ordem do contrato.
 2. Cada tarefa aparece uma vez na coluna do seu status, com título clicável, `data-task-id` e contador correto.
@@ -87,8 +87,8 @@ npm ci
 npm run build
 npm run lint
 npm install --no-save --package-lock=false playwright
-node tests/quadro-filtros.cjs
-node tests/estado-filtros.cjs
+node tests/quadro-filtros.cts
+node tests/estado-filtros.cts
 ```
 
 As suítes usam o Google Chrome instalado (ou o canal de `TEST_BROWSER`) e sobem os próprios servidores em portas livres. Para salvar capturas do quadro em 1280 px e 320 px, defina `QUADRO_EVIDENCIAS` com uma pasta existente.
@@ -99,7 +99,7 @@ Para conferir manualmente, siga o README: `npx json-server db.json` em um termin
 
 - `Agrupa tarefas por status e adapta o cartão ao quadro`: derivação por status, variante do cartão e CSS.
 - `Cria a visão de quadro na rota /quadro`: página, rota, fundo da ficha e retorno da nova tarefa.
-- `Testa o quadro por status e o estado compartilhado com a lista`: suíte `tests/quadro-filtros.cjs`.
+- `Testa o quadro por status e o estado compartilhado com a lista`: suíte `tests/quadro-filtros.cts`.
 - `Documenta a implementação da issue 38`: este relatório.
 
 ## Limites

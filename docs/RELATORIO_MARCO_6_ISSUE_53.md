@@ -15,21 +15,21 @@ Publiquei o build como um serviço estático separado na Railway, em `https://pi
    - `/`, `/quadro` e `/tarefas/2` do frontend respondem 200 com o `index.html`, então o servidor estático devolve a SPA nas rotas internas.
    - O bundle publicado contém `https://pixel-dfe-production.up.railway.app` e nenhum arquivo cita `localhost:3000`.
    - A API responde `GET /tarefas` (46 tarefas) e `GET /projetos` (7 projetos) com 200, e libera CORS para qualquer origem nos métodos `GET`, `POST`, `PATCH` e `DELETE`.
-3. Escrevi `tests/verificar-publicacao.mjs` antes de mudar o `README.md`. Na primeira execução ele falhou com `README.md sem link clicável para https://pixel-dfe-project.up.railway.app`, antes de qualquer acesso à rede.
+3. Escrevi `tests/verificar-publicacao.mts` antes de mudar o `README.md`. Na primeira execução ele falhou com `README.md sem link clicável para https://pixel-dfe-project.up.railway.app`, antes de qualquer acesso à rede.
 4. Atualizei o `README.md`, com o link em destaque logo abaixo do parágrafo de apresentação e uma menção à API hospedada. Não removi nem reordenei nenhuma linha: o script confere que as 78 linhas do README da `main` continuam presentes, na mesma ordem.
 5. Rodei a verificação ao vivo, que passou. O ciclo de escrita está detalhado em "Critérios da issue".
 6. Para provar a limpeza defensiva, rodei uma cópia temporária do script, não commitada, que lança um erro logo depois do `POST`. O `finally` encontrou a sobra pelo título, apagou-a (`DELETE` com HTTP 200), o estado final voltou às 46 tarefas originais e o script terminou com código 1, mostrando a falha simulada.
-7. Rodei a verificação ao vivo mais duas vezes, `tests/build-producao.cjs` e a validação completa de entrega.
+7. Rodei a verificação ao vivo mais duas vezes, `tests/build-producao.cts` e a validação completa de entrega.
 
 ## Estrutura utilizada
 
 | Arquivo | Alteração |
 | --- | --- |
 | `README.md` | Link público da aplicação em destaque após o parágrafo inicial e menção à API hospedada; o restante ficou intacto. |
-| `tests/verificar-publicacao.mjs` | Script sob demanda: confere o `README.md` e, no Playwright, a aplicação publicada com a API hospedada, incluindo um ciclo próprio de criar, mudar o status e excluir uma tarefa temporária. |
+| `tests/verificar-publicacao.mts` | Script sob demanda: confere o `README.md` e, no Playwright, a aplicação publicada com a API hospedada, incluindo um ciclo próprio de criar, mudar o status e excluir uma tarefa temporária. |
 | `docs/RELATORIO_MARCO_6_ISSUE_53.md` | Este relatório. |
 
-O script fica fora da lista offline do `validate-delivery.mjs`, como `tests/auditoria-lighthouse.mjs`, porque depende da rede e escreve na API pública.
+O script fica fora da lista offline do `validate-delivery.mjs`, como `tests/auditoria-lighthouse.mts`, porque depende da rede e escreve na API pública.
 
 ### Dependências externas
 
@@ -44,9 +44,9 @@ O script fica fora da lista offline do `validate-delivery.mjs`, como `tests/audi
 
 | Critério | Resultado | Evidência |
 | --- | --- | --- |
-| Publicar o build da aplicação em uma hospedagem estática. | Serviço estático na Railway em `https://pixel-dfe-project.up.railway.app`, separado do serviço da API, sem arquivos de configuração no repositório. As rotas internas respondem 200 com a SPA. | Sondagem do item 2 e `tests/verificar-publicacao.mjs` |
-| Conferir o funcionamento da aplicação publicada com a API hospedada. | `GET /tarefas` e `GET /projetos` com 200, lista e quadro com as 46 tarefas, navegação pelo menu por `/`, `/quadro` e `/projetos`. A ficha publicada criou uma tarefa temporária, que a API devolveu com os sete campos; o selo do cartão mudou o status para "Em andamento" (`PATCH` 200, mantido após recarregar); a exclusão confirmada pela interface a removeu (`DELETE` 200 e `GET` 404). Não houve chamada a `localhost` nem erro JavaScript, e o conjunto de tarefas e de projetos ficou idêntico ao inicial. | `tests/verificar-publicacao.mjs`, 3 de 3 execuções |
-| Adicionar o link público ao README, preservando as informações da equipe. | Link clicável após a apresentação; `## Como rodar`, `**Framework:** React com TypeScript.`, `## Equipe` (Desenvolvimento Frontend, ULBRA — 2026.2, os três integrantes) e o link de créditos e licenças preservados. | Commit `8abb150` e a etapa do README em `tests/verificar-publicacao.mjs` |
+| Publicar o build da aplicação em uma hospedagem estática. | Serviço estático na Railway em `https://pixel-dfe-project.up.railway.app`, separado do serviço da API, sem arquivos de configuração no repositório. As rotas internas respondem 200 com a SPA. | Sondagem do item 2 e `tests/verificar-publicacao.mts` |
+| Conferir o funcionamento da aplicação publicada com a API hospedada. | `GET /tarefas` e `GET /projetos` com 200, lista e quadro com as 46 tarefas, navegação pelo menu por `/`, `/quadro` e `/projetos`. A ficha publicada criou uma tarefa temporária, que a API devolveu com os sete campos; o selo do cartão mudou o status para "Em andamento" (`PATCH` 200, mantido após recarregar); a exclusão confirmada pela interface a removeu (`DELETE` 200 e `GET` 404). Não houve chamada a `localhost` nem erro JavaScript, e o conjunto de tarefas e de projetos ficou idêntico ao inicial. | `tests/verificar-publicacao.mts`, 3 de 3 execuções |
+| Adicionar o link público ao README, preservando as informações da equipe. | Link clicável após a apresentação; `## Como rodar`, `**Framework:** React com TypeScript.`, `## Equipe` (Desenvolvimento Frontend, ULBRA — 2026.2, os três integrantes) e o link de créditos e licenças preservados. | Commit `8abb150` e a etapa do README em `tests/verificar-publicacao.mts` |
 
 ## Falhas encontradas e correções
 
@@ -58,9 +58,9 @@ O script fica fora da lista offline do `validate-delivery.mjs`, como `tests/audi
 
 | Verificação | Resultado |
 | --- | --- |
-| `node tests/verificar-publicacao.mjs` | 8 verificações aprovadas; 3 de 3 execuções, sem limpeza defensiva acionada. |
+| `node tests/verificar-publicacao.mts` | 8 verificações aprovadas; 3 de 3 execuções, sem limpeza defensiva acionada. |
 | Falha simulada após o `POST` | Limpeza defensiva removeu a sobra; estado final igual ao inicial; código de saída 1. |
-| `node tests/build-producao.cjs` | 15 verificações aprovadas. |
+| `node tests/build-producao.cts` | 15 verificações aprovadas. |
 | `node .claude/skills/testing-pixel-dfe/scripts/validate-delivery.mjs` | Aprovado: arquivos protegidos intactos, build, lint, `git diff --check` e as 18 suítes existentes. |
 | `git diff --cached --check` | Aprovado. |
 
@@ -71,8 +71,8 @@ npm ci
 npm install --no-save --package-lock=false playwright
 npm run build
 npm run lint
-node tests/build-producao.cjs
-node tests/verificar-publicacao.mjs
+node tests/build-producao.cts
+node tests/verificar-publicacao.mts
 ```
 
 ## Commits e limites

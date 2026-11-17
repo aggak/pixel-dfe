@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { focoVisivel } = require("./ui.cjs");
+const { focoVisivel } = require("./ui.cts");
 
 function gerarBuild(saida, api) {
   return apoio.rodar(
@@ -13,7 +13,7 @@ function gerarBuild(saida, api) {
   );
 }
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 let browser;
@@ -561,9 +561,9 @@ async function executar() {
   });
   await page.waitForFunction(
     (nome) =>
-      [...document.querySelectorAll('[role="dialog"] input')].some(
-        (campo) => campo.value === nome,
-      ),
+      [
+        ...document.querySelectorAll<HTMLInputElement>('[role="dialog"] input'),
+      ].some((campo) => campo.value === nome),
     seed.projetos[0].nome,
   );
   await fichaEdicao

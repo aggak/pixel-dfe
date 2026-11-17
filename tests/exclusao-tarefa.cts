@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
@@ -165,7 +165,9 @@ async function executar() {
   };
   const vizinhoDe = (tarefa) =>
     page.evaluate((id) => {
-      const cartoes = [...document.querySelectorAll("[data-task-id]")];
+      const cartoes = [
+        ...document.querySelectorAll<HTMLElement>("[data-task-id]"),
+      ];
       const posicao = cartoes.findIndex(
         (cartao) => cartao.dataset.taskId === id,
       );
@@ -175,8 +177,8 @@ async function executar() {
     page.waitForFunction(
       (alvo) =>
         document.activeElement?.matches(".e-task-title") &&
-        document.activeElement.closest("[data-task-id]")?.dataset.taskId ===
-          alvo,
+        document.activeElement.closest<HTMLElement>("[data-task-id]")?.dataset
+          .taskId === alvo,
       id,
     );
   const anunciado = (tarefa) =>

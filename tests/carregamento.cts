@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
@@ -137,7 +137,7 @@ async function executar() {
     () => statusFicha("Carregando projeto"),
   );
 
-  async function reter(caminho, transformar) {
+  async function reter(caminho, transformar?) {
     let iniciou;
     let liberar;
     let concluir;
@@ -221,7 +221,7 @@ async function executar() {
           (el) => el.getBoundingClientRect().top,
         );
         const fechar = ficha.getByRole("button", {
-          name: `Fechar ${nome.toLocaleLowerCase("pt-BR")}`,
+          name: `Fechar ${(nome as string).toLocaleLowerCase("pt-BR")}`,
           exact: true,
         });
         await fechar.focus();

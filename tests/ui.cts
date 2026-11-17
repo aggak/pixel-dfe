@@ -178,7 +178,7 @@ function criarEsperas(page) {
     const registrada = page.waitForRequest(marca);
     await page.evaluate(
       (url) =>
-        new Promise((resolve) =>
+        new Promise<void>((resolve) =>
           requestAnimationFrame(() =>
             requestAnimationFrame(() =>
               setTimeout(() => {
@@ -194,7 +194,7 @@ function criarEsperas(page) {
   }
   async function segurar(
     url,
-    { metodo, responder = (rota) => rota.continue() } = {},
+    { metodo, responder = (rota) => rota.continue() }: any = {},
   ) {
     let soltar;
     const solta = new Promise((resolve) => {

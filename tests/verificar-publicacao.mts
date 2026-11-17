@@ -11,7 +11,7 @@ const {
   escapar,
   lancarNavegador,
   TEXTO_STATUS,
-} = require("./ui.cjs");
+} = require("./ui.cts");
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const APP_PUBLICADO = "https://pixel-dfe-project.up.railway.app";
@@ -87,7 +87,7 @@ async function conferirPublicacao() {
     projetoId: projeto.id,
     titulo,
     descricao:
-      "Tarefa temporária criada e excluída por tests/verificar-publicacao.mjs",
+      "Tarefa temporária criada e excluída por tests/verificar-publicacao.mts",
     status: "a-fazer",
     prioridade: "baixa",
     responsavel: "Verificação automática",

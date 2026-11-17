@@ -2,13 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createServer as criarServidorHttp } from "node:http";
 import { once } from "node:events";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
 
-import apoioCompartilhado from "./apoio.cjs";
+const require = createRequire(import.meta.url);
+const { criarApoio } = require("./apoio.cts");
 
-const apoio = apoioCompartilhado.criarApoio();
+const apoio = criarApoio();
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let total = 0;
@@ -267,7 +269,7 @@ async function executar() {
       await api.excluirTarefa(tarefaCriada.id);
       await assert.rejects(
         api.buscarTarefa(tarefaCriada.id),
-        (erro) => erro instanceof api.ErroApi && erro.status === 404,
+        (erro: any) => erro instanceof api.ErroApi && erro.status === 404,
       );
       const db = await esperarGravacao(
         caminhoDb,
@@ -290,11 +292,11 @@ async function executar() {
       resposta.write("{");
     }
   });
-  await new Promise((resolve) =>
+  await new Promise<void>((resolve) =>
     servidorTravado.listen(porta, "127.0.0.1", resolve),
   );
   try {
-    const chamadas = [
+    const chamadas: [string, (signal?: AbortSignal) => Promise<unknown>][] = [
       ["listarTarefas", (signal) => api.listarTarefas(signal)],
       ["listarProjetos", (signal) => api.listarProjetos(signal)],
       ["buscarTarefa", (signal) => api.buscarTarefa("1", signal)],
@@ -332,7 +334,7 @@ async function executar() {
           try {
             await assert.rejects(
               chamar(indice % 2 ? undefined : controle.signal),
-              (erro) =>
+              (erro: any) =>
                 erro.name === "Error" &&
                 erro.message ===
                   "O servidor demorou para responder. Tente de novo." &&
@@ -353,7 +355,7 @@ async function executar() {
         const recebida = once(servidorTravado, "request");
         const rejeitada = assert.rejects(
           api.listarTarefas(controle.signal),
-          (erro) => erro.name === "AbortError",
+          (erro: any) => erro.name === "AbortError",
         );
         await recebida;
         controle.abort();
@@ -375,7 +377,7 @@ async function executar() {
           try {
             await assert.rejects(
               chamar(),
-              (erro) =>
+              (erro: any) =>
                 erro.name === "Error" &&
                 erro.message ===
                   "O servidor demorou para responder. Tente de novo." &&

@@ -30,7 +30,7 @@ Mantidos React, TypeScript, Vite, React Router e json-server, sem adicionar depe
 - `src/hooks/useConsulta.ts`: compartilha os estados de leitura entre as três telas novas. Cancela requisições ao sair da tela ou trocar o ID e ignora respostas de consultas canceladas. Uma nova consulta não mostra os dados do endereço anterior.
 - `src/api.ts`: mantém a API pública de leitura existente e acrescenta `ErroApi`, que preserva o status HTTP para distinguir registros inexistentes de indisponibilidade.
 - `src/App.css`: mantém o padrão visual existente e acrescenta estilos do cabeçalho, dos dados complementares e do foco de links.
-- `tests/marco-2.cjs`: suíte de integração em navegador com dados temporários, servidores próprios e encerramento dos processos ao final.
+- `tests/marco-2.cts`: suíte de integração em navegador com dados temporários, servidores próprios e encerramento dos processos ao final.
 
 ## Falhas e lacunas tratadas
 
@@ -92,7 +92,7 @@ Para repetir as verificações:
 ```powershell
 npm.cmd run build
 npm.cmd run lint
-node tests/marco-2.cjs
+node tests/marco-2.cts
 ```
 
 A suíte requer Windows com Microsoft Edge e o pacote `playwright` resolvível pelo Node. Caso não esteja disponível, ele pode ser instalado apenas para validação com `npm.cmd install --no-save --package-lock=false playwright`. A execução desta entrega utilizou o pacote já disponível no ambiente, sem modificar `package.json` ou o lockfile para esse fim. As portas `3100` e `4174` devem estar livres. Não é necessário iniciar os servidores manualmente para a suíte.

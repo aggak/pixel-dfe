@@ -14,9 +14,9 @@ Segui o enunciado dos marcos, o material da Aula 12 (estado compartilhado e vis�
 2. Criei `src/derivar.ts` com o tipo de tela `Filtros`, os valores iniciais e a função pura `filtrarTarefas`, sem importar React e sem alterar `src/tipos.ts`. A regra de filtragem é a mesma que a #36 aplicava dentro da página.
 3. Separei o contexto do componente, no mesmo padrão da ficha: `filtros-contexto.ts` exporta `ContextoFiltros` e o hook `useFiltros`; `FiltrosProvider.tsx` exporta apenas o provedor. As mudanças passam por funções com nome, `alterar(parcial)` e `limpar()`.
 4. Montei o `FiltrosProvider` em `src/main.tsx`, dentro do roteador e acima de `App`. Assim ele funciona com `BrowserRouter` e com `HashRouter` (GitHub Pages) e não é desmontado quando a rota de fundo é recriada pela ficha.
-5. Extraí o campo de busca e os dois seletores para `FiltrosTarefas.tsx`, ligados ao estado compartilhado. A estrutura e as classes do DOM continuam as mesmas da #36, o que preserva o layout e o teste `busca-titulo.cjs`. O quadro da #38 reutiliza esse componente.
+5. Extraí o campo de busca e os dois seletores para `FiltrosTarefas.tsx`, ligados ao estado compartilhado. A estrutura e as classes do DOM continuam as mesmas da #36, o que preserva o layout e o teste `busca-titulo.cts`. O quadro da #38 reutiliza esse componente.
 6. Em `ListaTarefas.tsx`, troquei os três `useState` por `useFiltros()` e calculo `tarefasExibidas` com `useMemo(() => filtrarTarefas(tarefas, filtros))`, sem `useEffect`, como pede a Aula 12. A mensagem "Nenhuma tarefa encontrada." ganhou o botão **Limpar busca e filtros**, que usa `limpar()`.
-7. Criei a suíte `tests/estado-filtros.cjs` e repeti as suítes dos Marcos 2 e 3.
+7. Criei a suíte `tests/estado-filtros.cts` e repeti as suítes dos Marcos 2 e 3.
 
 ## Estrutura utilizada
 
@@ -29,7 +29,7 @@ Segui o enunciado dos marcos, o material da Aula 12 (estado compartilhado e vis�
 | `src/main.tsx` | `FiltrosProvider` entre o roteador e `App`. |
 | `src/pages/ListaTarefas.tsx` | Lista derivada do estado compartilhado e botão de limpeza no resultado vazio. |
 | `src/App.css` | Espaçamento da mensagem de resultado vazio com o botão. |
-| `tests/estado-filtros.cjs` | Suíte de navegador com API real e banco temporário. |
+| `tests/estado-filtros.cts` | Suíte de navegador com API real e banco temporário. |
 
 Não adicionei dependências ao `package.json`. Usei `createContext`, `useContext`, `useState`, `useCallback` e `useMemo` do React 19, que dispensa o `.Provider` no contexto.
 
@@ -47,8 +47,8 @@ A Aula 12 compara três lugares. Escolhi o provedor acima das rotas: busca e fil
 
 ## Falhas encontradas e correções
 
-- Na primeira execução de `tests/busca-titulo.cjs`, o json-server não respondeu dentro de 10 s, o limite da suíte. Iniciei a API manualmente com uma cópia do `db.seed.json` e ela respondeu normalmente; repeti a suíte e ela passou. Foi demora na primeira partida dos servidores, não falha da aplicação. Na suíte nova, deixei o limite de espera em 30 s.
-- No cenário da ficha de detalhe, o localizador `getByRole("dialog")` encontrou dois elementos: a ficha e o popover do seletor de prioridade, que ainda fazia a animação de saída. Restringi o localizador ao nome **Detalhes da tarefa** e passei a esperar o fechamento da opção escolhida, como faz `tests/ui.cjs`.
+- Na primeira execução de `tests/busca-titulo.cts`, o json-server não respondeu dentro de 10 s, o limite da suíte. Iniciei a API manualmente com uma cópia do `db.seed.json` e ela respondeu normalmente; repeti a suíte e ela passou. Foi demora na primeira partida dos servidores, não falha da aplicação. Na suíte nova, deixei o limite de espera em 30 s.
+- No cenário da ficha de detalhe, o localizador `getByRole("dialog")` encontrou dois elementos: a ficha e o popover do seletor de prioridade, que ainda fazia a animação de saída. Restringi o localizador ao nome **Detalhes da tarefa** e passei a esperar o fechamento da opção escolhida, como faz `tests/ui.cts`.
 
 ## Validação
 
@@ -56,16 +56,16 @@ A Aula 12 compara três lugares. Escolhi o provedor acima das rotas: busca e fil
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado, sem erros e sem avisos. |
-| `node tests/estado-filtros.cjs` | 6 cenários aprovados. |
-| `node tests/busca-titulo.cjs` | Aprovado. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados. |
-| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
-| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados. |
-| `node tests/nova-tarefa.cjs` | 15 cenários aprovados. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados. |
-| `node tests/projetos-cadastro-edicao.cjs` | 15 cenários aprovados. |
+| `node tests/estado-filtros.cts` | 6 cenários aprovados. |
+| `node tests/busca-titulo.cts` | Aprovado. |
+| `node tests/marco-2.cts` | 12 cenários aprovados. |
+| `node tests/api-escrita.mts` | 12 cenários aprovados. |
+| `node tests/formulario-tarefa.cts` | 17 cenários aprovados. |
+| `node tests/nova-tarefa.cts` | 15 cenários aprovados. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados. |
+| `node tests/projetos-cadastro-edicao.cts` | 15 cenários aprovados. |
 
-A suíte `estado-filtros.cjs` verifica:
+A suíte `estado-filtros.cts` verifica:
 
 1. A lista mostra exatamente o conjunto que a busca e o status produzem sobre o `db.seed.json`.
 2. Ir para **Projetos** pelo menu desmonta a lista; ao voltar, busca, status e cartões continuam iguais.
@@ -85,9 +85,9 @@ npm ci
 npm run build
 npm run lint
 npm install --no-save --package-lock=false playwright
-node tests/estado-filtros.cjs
-node tests/busca-titulo.cjs
-node tests/marco-2.cjs
+node tests/estado-filtros.cts
+node tests/busca-titulo.cts
+node tests/marco-2.cts
 ```
 
 As suítes de navegador usam o Google Chrome instalado (ou o canal definido em `TEST_BROWSER`), sobem os próprios servidores em portas livres e gravam apenas em uma cópia temporária do banco. A suíte do Marco 2 precisa das portas 3100 e 4174 livres.
@@ -95,7 +95,7 @@ As suítes de navegador usam o Google Chrome instalado (ou o canal definido em `
 ## Commits
 
 - `Centraliza busca e filtros em um provedor acima das rotas`: derivação pura, contexto, provedor, componente de filtros e integração na lista.
-- `Testa a permanência de busca e filtros entre rotas`: suíte `tests/estado-filtros.cjs`.
+- `Testa a permanência de busca e filtros entre rotas`: suíte `tests/estado-filtros.cts`.
 - `Documenta a implementação da issue 37`: este relatório.
 
 ## Limites

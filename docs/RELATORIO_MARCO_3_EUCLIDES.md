@@ -13,7 +13,7 @@ Consultei o contrato de dados, o enunciado dos marcos e o fluxograma na pasta De
 1. Conferi a atribuição da issue e a ausência de pull requests abertos para esta entrega.
 2. Reaproveitei `buscarTarefa`, `atualizarTarefa`, `useConsulta` e `FormularioTarefa` na rota de edição. O formulário só aparece depois da leitura e recebe os dados atuais por propriedade.
 3. Adicionei o acesso à edição no detalhe da tarefa e o retorno ao detalhe após salvar. A troca de ID reinicia o formulário; ao sair da página, a gravação em andamento deixa de controlar a navegação.
-4. Criei a suíte `tests/editar-tarefa.cjs` com API real e cópia temporária do banco. Conferi os dados enviados no PATCH e os dados persistidos, além da navegação e dos estados de erro.
+4. Criei a suíte `tests/editar-tarefa.cts` com API real e cópia temporária do banco. Conferi os dados enviados no PATCH e os dados persistidos, além da navegação e dos estados de erro.
 5. Durante os testes, identifiquei que o título ocupava parte da área do link de retorno. O clique chegava ao título em vez de acionar o link. Ajustei `line-height` no seletor de cabeçalho existente e repeti os testes de edição, cadastro e Marco 2.
 6. Registrei a implementação e a suíte no commit `6d0c82b`. A entrega segue para revisão por pull request, com fechamento da #30 vinculado à integração.
 
@@ -25,7 +25,7 @@ Consultei o contrato de dados, o enunciado dos marcos e o fluxograma na pasta De
 | `src/App.tsx` | Registro de `/tarefas/:id/editar` dentro do layout compartilhado. |
 | `src/pages/DetalheTarefa.tsx` | Link de edição exibido quando a tarefa foi carregada. |
 | `src/App.css` | Ajuste da altura da linha do título para manter a área dos links acessível ao clique. |
-| `tests/editar-tarefa.cjs` | Suíte de integração da edição com servidores próprios e banco temporário. |
+| `tests/editar-tarefa.cts` | Suíte de integração da edição com servidores próprios e banco temporário. |
 | `docs/RELATORIO_MARCO_3_EUCLIDES.md` | Registro do processo, decisões e resultados. |
 
 Mantive React, TypeScript, React Router e json-server, sem acrescentar dependências ao projeto. Reutilizei o formulário, o módulo da API e o hook de consulta já integrados à equipe.
@@ -46,9 +46,9 @@ A reutilização de `FormularioTarefa` na edição atende à integração penden
 | --- | --- |
 | `npm run build` | Aprovado. Verificação TypeScript por `tsc -b` e geração do pacote de produção. |
 | `npm run lint` | Aprovado, sem erros. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados no Microsoft Edge. |
-| `node tests/nova-tarefa.cjs` | 14 cenários aprovados no Google Chrome. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/nova-tarefa.cts` | 14 cenários aprovados no Google Chrome. |
+| `node tests/marco-2.cts` | 12 cenários aprovados no Microsoft Edge. |
 | `git diff --check` | Aprovado, sem problemas de espaços no diff. |
 
 **Resultado final: 38 cenários de integração aprovados.** As suítes não registraram erros JavaScript não tratados. O cadastro, os detalhes, a navegação e a consulta de tarefas por projeto continuaram funcionando.
@@ -78,9 +78,9 @@ Com Node.js 24 ou superior e as dependências instaladas:
 npm ci
 npm run build
 npm run lint
-node tests/editar-tarefa.cjs
-node tests/nova-tarefa.cjs
-node tests/marco-2.cjs
+node tests/editar-tarefa.cts
+node tests/nova-tarefa.cts
+node tests/marco-2.cts
 ```
 
 As suítes de navegador requerem `playwright` resolvível pelo Node, Microsoft Edge e Google Chrome instalados. Nesta execução, utilizei o pacote de testes já disponível no ambiente. Se necessário, ele pode ser instalado somente para a validação com `npm install --no-save --package-lock=false playwright`, seguindo o procedimento do relatório anterior.

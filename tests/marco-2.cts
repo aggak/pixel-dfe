@@ -1,10 +1,10 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
-const { criarEsperas } = require("./ui.cjs");
+const { criarEsperas } = require("./ui.cts");
 
 let origem = "";
 let api = "";
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 let browser;
 let total = 0;

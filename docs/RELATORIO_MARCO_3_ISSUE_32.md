@@ -9,7 +9,7 @@ Implementei a [issue #32 — Tornar o formulário acessível](https://github.com
 ## Estrutura utilizada
 
 - `src/components/FormularioTarefa.tsx`: mantive o formulário compartilhado entre cadastro e edição e usei os identificadores gerados por `useId` para relacionar cada campo à sua mensagem.
-- `tests/formulario-tarefa.cjs`, `tests/nova-tarefa.cjs` e `tests/editar-tarefa.cjs`: usei as suítes existentes para conferir labels, navegação por Tab, envio por Enter, cadastro e edição.
+- `tests/formulario-tarefa.cts`, `tests/nova-tarefa.cts` e `tests/editar-tarefa.cts`: usei as suítes existentes para conferir labels, navegação por Tab, envio por Enter, cadastro e edição.
 
 ## Falhas encontradas e correções
 

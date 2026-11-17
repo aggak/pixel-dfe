@@ -6,25 +6,25 @@ import { fileURLToPath } from "node:url";
 const pasta = dirname(fileURLToPath(import.meta.url));
 const raiz = join(pasta, "..");
 const SOB_DEMANDA = [
-  "auditoria-lighthouse.mjs",
-  "rotas-publicadas.mjs",
-  "verificar-publicacao.mjs",
+  "auditoria-lighthouse.mts",
+  "rotas-publicadas.mts",
+  "verificar-publicacao.mts",
 ];
 const FORA = new Set([
   basename(fileURLToPath(import.meta.url)),
-  "ui.cjs",
-  "apoio.cjs",
+  "ui.cts",
+  "apoio.cts",
   ...SOB_DEMANDA,
 ]);
 const LIMITE_MS = 600_000;
 const TENTATIVAS = 2;
 const LINHAS_DE_FALHA = 40;
 
-const nome = (arquivo) => arquivo.replace(/\.[cm]js$/, "");
+const nome = (arquivo) => arquivo.replace(/\.[cm]ts$/, "");
 const segundos = (ms) => `${Math.round(ms / 1000)} s`;
 
 const suites = readdirSync(pasta)
-  .filter((arquivo) => /\.[cm]js$/.test(arquivo) && !FORA.has(arquivo))
+  .filter((arquivo) => /\.[cm]ts$/.test(arquivo) && !FORA.has(arquivo))
   .sort();
 const pedidas = process.argv.slice(2).map((pedido) => nome(basename(pedido)));
 const desconhecidas = pedidas.filter(

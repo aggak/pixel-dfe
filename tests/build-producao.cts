@@ -1,9 +1,9 @@
 const assert = require("node:assert/strict");
 const { readFile, readdir, stat } = require("node:fs/promises");
 const { join, relative, sep } = require("node:path");
-const { comTextos, criarUi, TEXTO_STATUS } = require("./ui.cjs");
+const { comTextos, criarUi, TEXTO_STATUS } = require("./ui.cts");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 const { portaLivre, iniciar, rodar } = apoio;
 const esperar = (url) => apoio.esperar(url, { tentativas: 150 });
@@ -18,7 +18,7 @@ const FICHAS_LAZY = [
 ];
 let browser;
 
-function ambienteLimpo(extra = {}) {
+function ambienteLimpo(extra: Record<string, string> = {}) {
   const env = { ...process.env, ...extra };
   if (!("VITE_API_URL" in extra)) delete env.VITE_API_URL;
   return env;
@@ -93,7 +93,7 @@ async function subirPreview(saida) {
   return web;
 }
 
-async function isolarRede(contexto, externos, responderProducao) {
+async function isolarRede(contexto, externos, responderProducao?) {
   await contexto.route("**/*", (rota) => {
     const url = rota.request().url();
     if (url.startsWith(`${API_PRODUCAO}/`)) {
@@ -619,7 +619,9 @@ async function executar() {
   await fichaAberta("Editar projeto").waitFor();
   await esperarChunk("EditarProjeto");
   await page.waitForFunction(
-    (nome) => document.querySelector(".e-form-overlay input")?.value === nome,
+    (nome) =>
+      document.querySelector<HTMLInputElement>(".e-form-overlay input")
+        ?.value === nome,
     projeto1.nome,
   );
   await ui.campo("Nome").fill(edicaoProjeto.nome);
@@ -702,9 +704,9 @@ async function executar() {
   await esperarChunk("EditarTarefa");
   await page.waitForFunction(
     (titulo) =>
-      [...document.querySelectorAll(".e-form-overlay input")].some(
-        (el) => el.value === titulo,
-      ),
+      [
+        ...document.querySelectorAll<HTMLInputElement>(".e-form-overlay input"),
+      ].some((el) => el.value === titulo),
     tarefa1.titulo,
   );
   const edicaoTarefa = {

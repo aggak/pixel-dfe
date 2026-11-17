@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 const { portaLivre, esperar, iniciar } = apoio;
 
@@ -407,7 +407,7 @@ async function executar() {
   await page.waitForFunction(
     () =>
       document.activeElement?.textContent === "Tentar de novo" &&
-      !document.activeElement.disabled,
+      !(document.activeElement as HTMLButtonElement).disabled,
   );
   assert.equal(await page.locator(".e-task-project").count(), 0);
   falharAbas = false;
@@ -491,7 +491,7 @@ async function executar() {
   await page.waitForFunction(
     () =>
       document.activeElement?.textContent === "Tentar de novo" &&
-      !document.activeElement.disabled,
+      !(document.activeElement as HTMLButtonElement).disabled,
   );
   falharAndamento = false;
   await page.keyboard.press("Enter");
