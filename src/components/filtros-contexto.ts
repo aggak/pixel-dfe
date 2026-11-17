@@ -9,6 +9,7 @@ export interface ContextoFiltrosValor {
 export const ContextoFiltros = createContext<ContextoFiltrosValor | null>(null);
 export function useFiltros() {
   const contexto = useContext(ContextoFiltros);
-  if (!contexto) throw new Error("useFiltros deve ser usado dentro de um FiltrosProvider.");
+  if (!contexto)
+    throw new Error("useFiltros deve ser usado dentro de um FiltrosProvider.");
   return contexto;
 }

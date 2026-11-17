@@ -6,7 +6,11 @@ const ouvintes = new Set<() => void>();
 let pausadas = lerEscolha();
 
 function lerEscolha() {
-  try { return localStorage.getItem(CHAVE) === "pausadas"; } catch { return false; }
+  try {
+    return localStorage.getItem(CHAVE) === "pausadas";
+  } catch {
+    return false;
+  }
 }
 function guardarEscolha() {
   try {
@@ -31,7 +35,9 @@ export function movimentoReduzido() {
 }
 export function observarMovimento(ouvinte: () => void) {
   ouvintes.add(ouvinte);
-  return () => { ouvintes.delete(ouvinte); };
+  return () => {
+    ouvintes.delete(ouvinte);
+  };
 }
 export function pausarAnimacoes(pausar: boolean) {
   pausadas = pausar;
@@ -40,5 +46,7 @@ export function pausarAnimacoes(pausar: boolean) {
   avisar();
 }
 export function useMovimento() {
-  return useSyncExternalStore(observarMovimento, () => (sistema.matches ? "sistema" : pausadas ? "pausadas" : "livres"));
+  return useSyncExternalStore(observarMovimento, () =>
+    sistema.matches ? "sistema" : pausadas ? "pausadas" : "livres",
+  );
 }

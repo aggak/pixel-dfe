@@ -1,25 +1,69 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Heading } from "react-aria-components";
 import { useLocation, useNavigate, type Location } from "react-router";
 import { Button } from "@/components/base/buttons/button";
-import { ModalOverlay, Modal, Dialog } from "@/components/application/modals/modal";
+import {
+  ModalOverlay,
+  Modal,
+  Dialog,
+} from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
 import { ContextoFicha, ehRotaFicha, type EstadoFicha } from "./ficha-contexto";
-import { descartarRetorno, marcarRetorno, primeiroVisivel, retornoPendente } from "../hooks/useRetornoFoco";
+import {
+  descartarRetorno,
+  marcarRetorno,
+  primeiroVisivel,
+  retornoPendente,
+} from "../hooks/useRetornoFoco";
 
-function Presenca({ aoSair, children }: { aoSair: () => void; children: ReactNode }) {
+function Presenca({
+  aoSair,
+  children,
+}: {
+  aoSair: () => void;
+  children: ReactNode;
+}) {
   useLayoutEffect(() => () => aoSair(), [aoSair]);
   return children;
 }
-export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origemInterna = false, children }: { titulo: string; icone?: string; destinoFechar: string; fundo: Location; origemInterna?: boolean; children: ReactNode }) {
+export function Ficha({
+  titulo,
+  icone = "document",
+  destinoFechar,
+  fundo,
+  origemInterna = false,
+  children,
+}: {
+  titulo: string;
+  icone?: string;
+  destinoFechar: string;
+  fundo: Location;
+  origemInterna?: boolean;
+  children: ReactNode;
+}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [aberta, setAberta] = useState(true);
   const [ocupada, setOcupada] = useState(false);
   const [alterada, setAlterada] = useState(false);
   const pendente = useRef<(() => void) | null>(null);
-  const origem = useRef(document.activeElement instanceof HTMLElement && document.activeElement !== document.body ? document.activeElement : null);
-  const rolagem = useRef({ caminho: fundo.pathname + fundo.search, y: window.scrollY });
+  const origem = useRef(
+    document.activeElement instanceof HTMLElement &&
+      document.activeElement !== document.body
+      ? document.activeElement
+      : null,
+  );
+  const rolagem = useRef({
+    caminho: fundo.pathname + fundo.search,
+    y: window.scrollY,
+  });
   useEffect(() => descartarRetorno(), []);
   const concluirSaida = useCallback(() => {
     const continuar = pendente.current;
@@ -37,7 +81,11 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
   }, []);
   useLayoutEffect(() => {
     if (/^\/tarefas\/(?!nova(?:\/|$))[^/]+\/?$/i.test(location.pathname)) {
-      const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>(".e-form-header button")?.focus({ preventScroll: true }));
+      const frame = requestAnimationFrame(() =>
+        document
+          .querySelector<HTMLElement>(".e-form-header button")
+          ?.focus({ preventScroll: true }),
+      );
       return () => cancelAnimationFrame(frame);
     }
   }, [location.pathname]);
@@ -48,24 +96,47 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     const voltou = eraOcupada.current && !ocupada;
     eraOcupada.current = ocupada;
     if (!voltou || !aberta) return;
-    // Controle desabilitado durante o envio faz o foco cair no body; recupera sem roubar foco válido.
+    // Controle desabilitado durante o envio faz o foco
+    // cair no body; recupera sem roubar foco válido.
     const recuperar = () => {
       const raiz = casca.current;
       const ativo = document.activeElement;
       if (!raiz?.isConnected || pendente.current) return;
-      if (ativo && ativo !== document.body && ativo !== document.documentElement) return;
+      if (
+        ativo &&
+        ativo !== document.body &&
+        ativo !== document.documentElement
+      )
+        return;
       const anterior = ultimoFoco.current;
-      const alvo = anterior?.isConnected && raiz.contains(anterior) && !(anterior as HTMLButtonElement).disabled ? anterior : raiz.closest<HTMLElement>('[role="dialog"]');
+      const alvo =
+        anterior?.isConnected &&
+        raiz.contains(anterior) &&
+        !(anterior as HTMLButtonElement).disabled
+          ? anterior
+          : raiz.closest<HTMLElement>('[role="dialog"]');
       alvo?.focus({ preventScroll: true });
     };
     recuperar();
     const frame = requestAnimationFrame(recuperar);
     return () => cancelAnimationFrame(frame);
   }, [ocupada, aberta, location.pathname]);
-  function navegar(destino: string, atualizar = false, estado?: object, alvos?: string[]) {
+  function navegar(
+    destino: string,
+    atualizar = false,
+    estado?: object,
+    alvos?: string[],
+  ) {
     if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
     if (ehRotaFicha(destino.split("?")[0])) {
-      const fundoAtualizado = atualizar ? { ...fundo, state: { chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado` } } : fundo;
+      const fundoAtualizado = atualizar
+        ? {
+            ...fundo,
+            state: {
+              chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado`,
+            },
+          }
+        : fundo;
       navigate(destino, { state: { fundo: fundoAtualizado }, replace: true });
       return;
     }
@@ -73,14 +144,28 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
     pendente.current = () => {
       // Só percorre o histórico quando a própria aplicação registrou a origem.
       const indice = window.history.state?.idx;
-      const estadoDestino = atualizar ? estado ?? null : { chaveConteudo: (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key };
-      if (origemInterna && destino === fundo.pathname + fundo.search && Number.isInteger(indice) && indice > 0) {
+      const estadoDestino = atualizar
+        ? (estado ?? null)
+        : {
+            chaveConteudo:
+              (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key,
+          };
+      if (
+        origemInterna &&
+        destino === fundo.pathname + fundo.search &&
+        Number.isInteger(indice) &&
+        indice > 0
+      ) {
         if (atualizar) {
           descartarRetorno();
-          window.addEventListener("popstate", () => {
-            if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
-            navigate(destino, { replace: true, state: estadoDestino });
-          }, { once: true });
+          window.addEventListener(
+            "popstate",
+            () => {
+              if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
+              navigate(destino, { replace: true, state: estadoDestino });
+            },
+            { once: true },
+          );
         }
         navigate(-1);
         if (atualizar) return;
@@ -91,20 +176,69 @@ export function Ficha({ titulo, icone = "document", destinoFechar, fundo, origem
       requestAnimationFrame(() => {
         const anterior = origem.current;
         if (anterior?.isConnected) anterior.focus({ preventScroll: true });
-        else primeiroVisivel(['[data-action="new-task"]', '[data-action="new-project"]', "main h1"])?.focus({ preventScroll: true });
+        else
+          primeiroVisivel([
+            '[data-action="new-task"]',
+            '[data-action="new-project"]',
+            "main h1",
+          ])?.focus({ preventScroll: true });
       });
     };
     setAberta(false);
   }
-  const fechar = () => { if (!ocupada) navegar(destinoFechar); };
-  return <ContextoFicha.Provider value={{ navegar, fechar, destinoFechar, setOcupada, setAlterada }}>
-    <ModalOverlay isOpen={aberta} onOpenChange={(valor) => { if (!valor) fechar(); }} isDismissable={!ocupada && !alterada} isKeyboardDismissDisabled={ocupada} className="e-form-overlay">
-      <Modal className="e-form-modal"><Dialog aria-label={titulo} className="e-form-dialog">
-        <Presenca aoSair={concluirSaida}><div className="e-form-shell" ref={casca} onFocusCapture={(e) => { ultimoFoco.current = e.target as HTMLElement; }} aria-busy={ocupada}>
-          <header className="e-form-header"><div className="e-form-symbol"><Icon name={icone} /></div><Heading slot="title">{titulo}</Heading><Button color="tertiary" size="sm" aria-label={`Fechar ${titulo.toLocaleLowerCase("pt-BR")}`} onClick={fechar} isDisabled={ocupada}><Icon name="cross-small" /></Button></header>
-          <div className="e-ficha-content" key={location.pathname + location.search}>{children}</div>
-        </div></Presenca>
-      </Dialog></Modal>
-    </ModalOverlay>
-  </ContextoFicha.Provider>;
+  const fechar = () => {
+    if (!ocupada) navegar(destinoFechar);
+  };
+  return (
+    <ContextoFicha.Provider
+      value={{ navegar, fechar, destinoFechar, setOcupada, setAlterada }}
+    >
+      <ModalOverlay
+        isOpen={aberta}
+        onOpenChange={(valor) => {
+          if (!valor) fechar();
+        }}
+        isDismissable={!ocupada && !alterada}
+        isKeyboardDismissDisabled={ocupada}
+        className="e-form-overlay"
+      >
+        <Modal className="e-form-modal">
+          <Dialog aria-label={titulo} className="e-form-dialog">
+            <Presenca aoSair={concluirSaida}>
+              <div
+                className="e-form-shell"
+                ref={casca}
+                onFocusCapture={(e) => {
+                  ultimoFoco.current = e.target as HTMLElement;
+                }}
+                aria-busy={ocupada}
+              >
+                <header className="e-form-header">
+                  <div className="e-form-symbol">
+                    <Icon name={icone} />
+                  </div>
+                  <Heading slot="title">{titulo}</Heading>
+                  <Button
+                    color="tertiary"
+                    size="sm"
+                    aria-label={`Fechar ${titulo.toLocaleLowerCase("pt-BR")}`}
+                    onClick={fechar}
+                    isDisabled={ocupada}
+                  >
+                    <Icon name="cross-small" />
+                  </Button>
+                </header>
+                <div
+                  className="e-ficha-content"
+                  key={location.pathname + location.search}
+                >
+                  {children}
+                </div>
+              </div>
+            </Presenca>
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+    </ContextoFicha.Provider>
+  );
 }

@@ -1,5 +1,12 @@
 import { Component, lazy, Suspense, useState, type ReactNode } from "react";
-import { Link, Navigate, Route, Routes, useLocation, type Location } from "react-router";
+import {
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  type Location,
+} from "react-router";
 import { ListaTarefas } from "./pages/ListaTarefas";
 import { QuadroTarefas } from "./pages/QuadroTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
@@ -10,19 +17,55 @@ import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
-import { ContextoAtualizacao, ContextoTentativaFundo, ContextoAoTentarDeNovo } from "./hooks/useConsulta";
+import {
+  ContextoAtualizacao,
+  ContextoTentativaFundo,
+  ContextoAoTentarDeNovo,
+} from "./hooks/useConsulta";
 import "./App.css";
 
-const NovaTarefa = lazy(() => import("./pages/NovaTarefa").then((pagina) => ({ default: pagina.NovaTarefa })));
-const EditarTarefa = lazy(() => import("./pages/EditarTarefa").then((pagina) => ({ default: pagina.EditarTarefa })));
-const NovoProjeto = lazy(() => import("./pages/NovoProjeto").then((pagina) => ({ default: pagina.NovoProjeto })));
-const EditarProjeto = lazy(() => import("./pages/EditarProjeto").then((pagina) => ({ default: pagina.EditarProjeto })));
+const NovaTarefa = lazy(() =>
+  import("./pages/NovaTarefa").then((pagina) => ({
+    default: pagina.NovaTarefa,
+  })),
+);
+const EditarTarefa = lazy(() =>
+  import("./pages/EditarTarefa").then((pagina) => ({
+    default: pagina.EditarTarefa,
+  })),
+);
+const NovoProjeto = lazy(() =>
+  import("./pages/NovoProjeto").then((pagina) => ({
+    default: pagina.NovoProjeto,
+  })),
+);
+const EditarProjeto = lazy(() =>
+  import("./pages/EditarProjeto").then((pagina) => ({
+    default: pagina.EditarProjeto,
+  })),
+);
 
-class FalhaFormulario extends Component<{ children: ReactNode; titulo: string }, { falhou: boolean }> {
+class FalhaFormulario extends Component<
+  { children: ReactNode; titulo: string },
+  { falhou: boolean }
+> {
   state = { falhou: false };
-  static getDerivedStateFromError() { return { falhou: true }; }
+  static getDerivedStateFromError() {
+    return { falhou: true };
+  }
   render() {
-    return this.state.falhou ? <><TituloPagina titulo={this.props.titulo} /><ErroCarregamento compacto titulo="Não foi possível abrir o formulário" onTentarDeNovo={() => window.location.reload()} /></> : this.props.children;
+    return this.state.falhou ? (
+      <>
+        <TituloPagina titulo={this.props.titulo} />
+        <ErroCarregamento
+          compacto
+          titulo="Não foi possível abrir o formulário"
+          onTentarDeNovo={() => window.location.reload()}
+        />
+      </>
+    ) : (
+      this.props.children
+    );
   }
 }
 
@@ -38,44 +81,175 @@ function App() {
   const editando = rota.endsWith("/editar");
   const projeto = rota.startsWith("/projetos/");
   const projetoOrigem = new URLSearchParams(location.search).get("projetoId");
-  const fallback = projetoNovo ? "/projetos" : projeto ? caminho.replace(/\/editar$/i, "") : tarefaNova && projetoOrigem ? `/projetos/${encodeURIComponent(projetoOrigem)}` : "/";
+  const fallback = projetoNovo
+    ? "/projetos"
+    : projeto
+      ? caminho.replace(/\/editar$/i, "")
+      : tarefaNova && projetoOrigem
+        ? `/projetos/${encodeURIComponent(projetoOrigem)}`
+        : "/";
   const candidato = estado?.fundo;
-  const fundoRota = typeof candidato?.pathname === "string" ? candidato.pathname.replace(/\/+$/, "").toLowerCase() || "/" : "";
-  const fundo: Location = ficha && candidato && fundoRota && !ehRotaFicha(candidato.pathname) && (fundoRota === "/" || fundoRota === "/quadro" || fundoRota === "/projetos" || /^\/projetos\/[^/]+$/.test(fundoRota))
-    ? candidato : ficha ? { pathname: fallback, search: "", hash: "", state: null, key: `fundo:${fallback}` } : location;
-  const titulo = projetoNovo ? "Novo projeto" : tarefaNova ? "Nova tarefa" : editando ? projeto ? "Editar projeto" : "Editar tarefa" : "Detalhes da tarefa";
-  const tituloInicial = projetoNovo || tarefaNova || editando ? titulo : projeto ? "Projeto" : "Tarefa";
+  const fundoRota =
+    typeof candidato?.pathname === "string"
+      ? candidato.pathname.replace(/\/+$/, "").toLowerCase() || "/"
+      : "";
+  const fundo: Location =
+    ficha &&
+    candidato &&
+    fundoRota &&
+    !ehRotaFicha(candidato.pathname) &&
+    (fundoRota === "/" ||
+      fundoRota === "/quadro" ||
+      fundoRota === "/projetos" ||
+      /^\/projetos\/[^/]+$/.test(fundoRota))
+      ? candidato
+      : ficha
+        ? {
+            pathname: fallback,
+            search: "",
+            hash: "",
+            state: null,
+            key: `fundo:${fallback}`,
+          }
+        : location;
+  const titulo = projetoNovo
+    ? "Novo projeto"
+    : tarefaNova
+      ? "Nova tarefa"
+      : editando
+        ? projeto
+          ? "Editar projeto"
+          : "Editar tarefa"
+        : "Detalhes da tarefa";
+  const tituloInicial =
+    projetoNovo || tarefaNova || editando
+      ? titulo
+      : projeto
+        ? "Projeto"
+        : "Tarefa";
   // Nova tarefa aberta no quadro volta para ele ao fechar.
-  const destinoFechar = editando ? caminho.replace(/\/editar$/i, "") : tarefaNova ? (fundo.pathname.replace(/\/+$/, "") || "/").toLowerCase() === "/quadro" ? fundo.pathname.replace(/\/+$/, "") || "/quadro" : fallback : projetoNovo ? "/projetos" : fundo.pathname + fundo.search;
-  return <>
-    <ContextoTentativaFundo.Provider value={tentativaFundo}>
-    <ContextoPaginaAtiva.Provider value={!ficha}>
-    <ContextoAtualizacao.Provider value={(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}>
-    <Routes location={fundo}>
-      <Route element={<Layout />}>
-        <Route path="/" element={<ListaTarefas />} />
-        <Route path="/tarefas" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
-        <Route path="/index.html" element={<Navigate to={{ pathname: "/", search: location.search, hash: location.hash }} replace />} />
-        <Route path="/quadro" element={<QuadroTarefas />} />
-        <Route path="/projetos" element={<ListaProjetos />} />
-        <Route path="/projetos/:id" element={<DetalheProjeto />} />
-        <Route path="*" element={<><TituloPagina titulo="Página não encontrada" /><main className="e-sheet e-not-found"><GatinhoCostas /><h1 tabIndex={-1}>Página não encontrada</h1><p>Este endereço não existe ou mudou.</p><Link to="/">Voltar para tarefas</Link></main></>} />
-      </Route>
-    </Routes>
-    </ContextoAtualizacao.Provider>
-    </ContextoPaginaAtiva.Provider>
-    </ContextoTentativaFundo.Provider>
-    {ficha && <ContextoAoTentarDeNovo.Provider value={tarefaNova || projetoNovo ? undefined : () => setTentativaFundo((atual) => atual + 1)}><Ficha titulo={titulo} icone={projeto ? "folder" : editando ? "pencil" : tarefaNova ? "add-document" : "document"} destinoFechar={destinoFechar} fundo={fundo} origemInterna={candidato === fundo}>
-      <FalhaFormulario key={location.pathname} titulo={tituloInicial}><Suspense fallback={<><TituloPagina titulo={tituloInicial} /><p className="e-ficha-state" role="status">Carregando formulário…</p></>}>
-      <Routes location={location}>
-        <Route path="/tarefas/nova" element={<NovaTarefa />} />
-        <Route path="/tarefas/:id/editar" element={<EditarTarefa />} />
-        <Route path="/tarefas/:id" element={<DetalheTarefa />} />
-        <Route path="/projetos/novo" element={<NovoProjeto />} />
-        <Route path="/projetos/:id/editar" element={<EditarProjeto />} />
-      </Routes>
-      </Suspense></FalhaFormulario>
-    </Ficha></ContextoAoTentarDeNovo.Provider>}
-  </>;
+  const destinoFechar = editando
+    ? caminho.replace(/\/editar$/i, "")
+    : tarefaNova
+      ? (fundo.pathname.replace(/\/+$/, "") || "/").toLowerCase() === "/quadro"
+        ? fundo.pathname.replace(/\/+$/, "") || "/quadro"
+        : fallback
+      : projetoNovo
+        ? "/projetos"
+        : fundo.pathname + fundo.search;
+  return (
+    <>
+      <ContextoTentativaFundo.Provider value={tentativaFundo}>
+        <ContextoPaginaAtiva.Provider value={!ficha}>
+          <ContextoAtualizacao.Provider
+            value={
+              (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key
+            }
+          >
+            <Routes location={fundo}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<ListaTarefas />} />
+                <Route
+                  path="/tarefas"
+                  element={
+                    <Navigate
+                      to={{
+                        pathname: "/",
+                        search: location.search,
+                        hash: location.hash,
+                      }}
+                      replace
+                    />
+                  }
+                />
+                <Route
+                  path="/index.html"
+                  element={
+                    <Navigate
+                      to={{
+                        pathname: "/",
+                        search: location.search,
+                        hash: location.hash,
+                      }}
+                      replace
+                    />
+                  }
+                />
+                <Route path="/quadro" element={<QuadroTarefas />} />
+                <Route path="/projetos" element={<ListaProjetos />} />
+                <Route path="/projetos/:id" element={<DetalheProjeto />} />
+                <Route
+                  path="*"
+                  element={
+                    <>
+                      <TituloPagina titulo="Página não encontrada" />
+                      <main className="e-sheet e-not-found">
+                        <GatinhoCostas />
+                        <h1 tabIndex={-1}>Página não encontrada</h1>
+                        <p>Este endereço não existe ou mudou.</p>
+                        <Link to="/">Voltar para tarefas</Link>
+                      </main>
+                    </>
+                  }
+                />
+              </Route>
+            </Routes>
+          </ContextoAtualizacao.Provider>
+        </ContextoPaginaAtiva.Provider>
+      </ContextoTentativaFundo.Provider>
+      {ficha && (
+        <ContextoAoTentarDeNovo.Provider
+          value={
+            tarefaNova || projetoNovo
+              ? undefined
+              : () => setTentativaFundo((atual) => atual + 1)
+          }
+        >
+          <Ficha
+            titulo={titulo}
+            icone={
+              projeto
+                ? "folder"
+                : editando
+                  ? "pencil"
+                  : tarefaNova
+                    ? "add-document"
+                    : "document"
+            }
+            destinoFechar={destinoFechar}
+            fundo={fundo}
+            origemInterna={candidato === fundo}
+          >
+            <FalhaFormulario key={location.pathname} titulo={tituloInicial}>
+              <Suspense
+                fallback={
+                  <>
+                    <TituloPagina titulo={tituloInicial} />
+                    <p className="e-ficha-state" role="status">
+                      Carregando formulário…
+                    </p>
+                  </>
+                }
+              >
+                <Routes location={location}>
+                  <Route path="/tarefas/nova" element={<NovaTarefa />} />
+                  <Route
+                    path="/tarefas/:id/editar"
+                    element={<EditarTarefa />}
+                  />
+                  <Route path="/tarefas/:id" element={<DetalheTarefa />} />
+                  <Route path="/projetos/novo" element={<NovoProjeto />} />
+                  <Route
+                    path="/projetos/:id/editar"
+                    element={<EditarProjeto />}
+                  />
+                </Routes>
+              </Suspense>
+            </FalhaFormulario>
+          </Ficha>
+        </ContextoAoTentarDeNovo.Provider>
+      )}
+    </>
+  );
 }
 export default App;

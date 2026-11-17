@@ -7,9 +7,18 @@ export interface Filtros {
   prioridade: Prioridade | "todas";
 }
 
-export const FILTROS_INICIAIS: Filtros = { busca: "", status: "todos", prioridade: "todas" };
+export const FILTROS_INICIAIS: Filtros = {
+  busca: "",
+  status: "todos",
+  prioridade: "todas",
+};
 
-const comparavel = (texto: string) => texto.normalize("NFD").replace(/\p{M}/gu, "").replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+const comparavel = (texto: string) =>
+  texto
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("pt-BR");
 
 export function filtrarTarefas(tarefas: Tarefa[], f: Filtros): Tarefa[] {
   const termo = comparavel(f.busca.trim());
@@ -21,8 +30,14 @@ export function filtrarTarefas(tarefas: Tarefa[], f: Filtros): Tarefa[] {
   );
 }
 
-// Lista fixa na ordem do contrato: o quadro mantém as quatro colunas mesmo vazias (Object.groupBy as perderia).
-export const STATUS: Status[] = ["a-fazer", "em-andamento", "em-revisao", "concluida"];
+// Lista fixa na ordem do contrato: o quadro mantém as
+// quatro colunas mesmo vazias (Object.groupBy as perderia).
+export const STATUS: Status[] = [
+  "a-fazer",
+  "em-andamento",
+  "em-revisao",
+  "concluida",
+];
 
 export interface ColunaStatus {
   status: Status;
@@ -30,5 +45,8 @@ export interface ColunaStatus {
 }
 
 export function agruparPorStatus(tarefas: Tarefa[]): ColunaStatus[] {
-  return STATUS.map((status) => ({ status, tarefas: tarefas.filter((t) => t.status === status) }));
+  return STATUS.map((status) => ({
+    status,
+    tarefas: tarefas.filter((t) => t.status === status),
+  }));
 }
