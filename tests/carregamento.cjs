@@ -1,5 +1,3 @@
-// Estados de carregamento da issue #43 com
-// requisições controladas no navegador.
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -51,7 +49,6 @@ async function executar() {
       try {
         await rota.continue();
       } catch (erro) {
-        // A navegação pode cancelar uma consulta ainda retida pelo teste.
         if (!String(erro).includes("Route is already handled")) throw erro;
       }
     };

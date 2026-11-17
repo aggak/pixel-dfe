@@ -1,13 +1,7 @@
-/*
- * A aparência da ficha (e-task-form, e-project-form,
- * e-properties, e-form-footer…) vem do CSS global da prévia.
- * Aqui ficam apenas os complementos do markup real do Pixel.
- */
 .formulario-tarefa {
   text-align: left;
 }
 
-/* O invólucro acomoda os avisos sem alterar o contorno do seletor real. */
 .formulario-tarefa__projeto {
   display: flex;
   flex-direction: column;
@@ -58,8 +52,6 @@
   }
 }
 
-/* Equivale a `.e-description #task-description`
-   (o id aqui é gerado por useId). */
 .e-description-body {
   padding: 4px 0 6px;
 }

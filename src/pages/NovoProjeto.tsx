@@ -10,8 +10,6 @@ export function NovoProjeto() {
   const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Ao sair da página, o envio pendente é
-  // cancelado e a resposta tardia não redireciona.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;

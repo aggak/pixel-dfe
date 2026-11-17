@@ -40,9 +40,7 @@ const sizes = {
 
 interface SelectItemProps
   extends Omit<AriaListBoxItemProps<SelectItemType>, "id">, SelectItemType {
-  /** The selection indicator to be displayed on the item. */
   selectionIndicator?: "checkmark" | "checkbox" | "none";
-  /** The alignment of the selection indicator. */
   selectionIndicatorAlign?: "left" | "right";
 }
 
@@ -105,7 +103,6 @@ export const SelectItem = ({
             state.isDisabled && "cursor-not-allowed opacity-50",
             state.isFocusVisible && "ring-2 ring-focus-ring ring-inset",
 
-            // Icon styles
             "*:data-icon:shrink-0 *:data-icon:text-fg-quaternary",
 
             sizes[size].root,

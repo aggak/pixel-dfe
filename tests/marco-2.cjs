@@ -24,8 +24,6 @@ async function executar() {
   page.setDefaultTimeout(10000);
   const erros = [];
   page.on("pageerror", (erro) => erros.push(erro.message));
-  // Espera a tela renderizar e todos os indicadores
-  // de carregamento (fundo e ficha) saírem.
   const abrir = async (rota) => {
     await page.goto(`${origem}${rota}`);
     await page.waitForFunction(
@@ -70,8 +68,6 @@ async function executar() {
         .waitFor();
       await conferirTitulo("Subir o json-server");
       const conteudo = await textoFicha();
-      // A data agora é apresentada por extenso; o
-      // valor ISO fica no atributo do elemento <time>.
       for (const valor of [
         "Subir o json-server",
         "API local a partir do db.json",
@@ -190,8 +186,6 @@ async function executar() {
       await page.evaluate(() => {
         window.marcadorNavegacao = "preservado";
       });
-      // A ficha bloqueia o fundo: fecha-se o detalhe
-      // (navegação interna) antes de usar o menu principal.
       await page.keyboard.press("Escape");
       await ficha().waitFor({ state: "detached" });
       await conferirTitulo("Tarefas");
@@ -251,8 +245,6 @@ async function executar() {
           (tarefa) => tarefa.projetoId === projeto.id,
         );
         assert.equal(await page.locator("article").count(), tarefas.length);
-        // Descrição, disciplina e data de criação ficam
-        // em "Detalhes do projeto", recolhido por padrão.
         await page
           .getByRole("button", { name: "Detalhes do projeto", exact: true })
           .click();
@@ -321,8 +313,6 @@ async function executar() {
   await conferir(
     "IDs inexistentes encerram carregamento com mensagem",
     async () => {
-      // Tarefa abre na ficha com a mensagem exata; o
-      // projeto mostra título e explicação na própria tela.
       await abrir("/tarefas/999");
       await conferirTitulo("Tarefa não encontrada");
       assert.equal(

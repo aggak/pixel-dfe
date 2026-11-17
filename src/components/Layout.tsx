@@ -38,8 +38,6 @@ import {
   useMovimento,
 } from "../hooks/useMovimento";
 
-// Caminho como o roteador casa as rotas: sem
-// barra final e sem diferença de maiúsculas.
 function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
 }
@@ -105,8 +103,6 @@ export function Layout() {
   const { pathname, key } = useLocation();
   const caminho = caminhoNormalizado(pathname);
   const chave = useRef(key);
-  // Lista e quadro são duas visões da mesma
-  // seção: "Tarefas" fica marcado nas duas.
   const emTarefas = caminho === "/" || caminho === "/quadro";
   useLayoutEffect(() => {
     chave.current = key;
@@ -260,9 +256,6 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
   const lista =
     projetos.dados ?? (projetos.carregando ? ultimaLista : undefined);
   const total = lista?.length ?? 0;
-  // Quando as abas não cabem, a fileira rola por dentro: data-sobra
-  // diz ao CSS de que lado há abas escondidas (esmaecimento e setas) e
-  // a aba atual é trazida para a vista. "Todas" fica presa à esquerda.
   useEffect(() => {
     const nav = fileira.current;
     const todas = nav?.querySelector<HTMLElement>("a");
@@ -379,14 +372,10 @@ const visoes = [
   { destino: "/", nome: "Lista", Icone: ListIcon },
   { destino: "/quadro", nome: "Quadro", Icone: BoardIcon },
 ];
-// Links, e não botões: cada visão tem sua rota. Busca e filtros
-// ficam no FiltrosProvider, acima das rotas, e sobrevivem à troca.
 export function AlternarVisao() {
   const location = useLocation();
   const caminho = caminhoNormalizado(location.pathname);
   const ativo = useRef<HTMLAnchorElement>(null);
-  // A troca remonta a página; quem alternou pelo controle
-  // continua com o foco nele, agora no link da nova visão.
   const veioDoControle = (location.state as { focoVisao?: boolean } | null)
     ?.focoVisao;
   useEffect(() => {

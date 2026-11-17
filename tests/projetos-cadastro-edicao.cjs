@@ -1,4 +1,3 @@
-// Integração da issue #33 com aplicação real e banco temporário.
 const assert = require("node:assert/strict");
 const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -315,7 +314,6 @@ async function executar() {
           (o) => o.texto === novo.nome && o.value === criado.id,
         ),
       );
-      // A opção também aparece no seletor visível.
       await criarUi(page).seletor("Projeto").click();
       await page
         .getByRole("option", { name: novo.nome, exact: true })
@@ -409,8 +407,6 @@ async function executar() {
         .waitFor();
       await page.unrouteAll();
 
-      // Outra aba cria um projeto com exatamente os
-      // mesmos campos enquanto o formulário segue aberto.
       const respOutraAba = await fetch(`${api}/projetos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -487,8 +483,6 @@ async function executar() {
       await ate("envio em curso", () =>
         page.locator('form button[type="submit"]').isDisabled(),
       );
-      // A ficha bloqueia o fundo (inert): a saída
-      // durante o envio é feita pelo histórico real.
       await trocarRota("/");
       await page
         .getByRole("heading", { name: "Tarefas", exact: true })
@@ -790,8 +784,6 @@ async function executar() {
       await ate("envio em curso", () =>
         page.locator('form button[type="submit"]').isDisabled(),
       );
-      // A ficha bloqueia o fundo (inert): a saída
-      // durante o envio é feita pelo histórico real.
       await trocarRota("/");
       await page
         .getByRole("heading", { name: "Tarefas", exact: true })
@@ -819,8 +811,6 @@ async function executar() {
         ),
         true,
       );
-      // Na ficha a ordem é Nome, Disciplina, Criado
-      // em e Descrição; o Tab segue essa ordem.
       await campo("Nome").focus();
       assert.equal(await focoVisivel(campo("Nome")), true);
       await page.keyboard.press("Tab");

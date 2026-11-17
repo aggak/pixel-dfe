@@ -1,6 +1,3 @@
-// Suíte do componente FormularioTarefa em navegador real.
-// Sobe json-server com banco temporário e Vite com página de teste
-// temporária fora das rotas de produção; nada é gravado no banco real.
 const assert = require("node:assert/strict");
 const { access, mkdir, readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -148,7 +145,6 @@ async function executar() {
     ["Projeto", "Status", "Prioridade"].includes(rotulo)
       ? ui.seletor(rotulo)
       : campo(rotulo);
-  // Opções do select real, lidas na lista visível aberta pelo botão.
   async function opcoesVisiveis(nome) {
     await ui.seletor(nome).click();
     await page.getByRole("listbox").waitFor();
@@ -192,8 +188,6 @@ async function executar() {
     async () => {
       await abrir("novo");
       assert.equal(await page.locator("form").count(), 1);
-      // A descrição é opcional e começa recolhida;
-      // só depois de aberta o campo existe.
       assert.equal(await campo("Descrição").count(), 0);
       await ui.abrirDescricao();
       for (const rotulo of ROTULOS)
@@ -239,8 +233,6 @@ async function executar() {
         await opcoes("Projeto"),
         seed.projetos.map((p) => ({ value: String(p.id), texto: p.nome })),
       );
-      // As mesmas opções aparecem, na mesma
-      // ordem, na lista visível de cada select.
       assert.deepEqual(await opcoesVisiveis("Status"), [
         "A fazer",
         "Em andamento",
@@ -458,7 +450,6 @@ async function executar() {
       assert.equal(await page.locator("form").count(), 1);
       assert.equal(await ui.valor("Projeto"), "2");
       assert.equal(await campo("Título").inputValue(), "Revisar modelagem");
-      // A descrição preenchida começa aberta; fechar e reabrir mantém o texto.
       assert.equal(
         await ui.alternarDescricao().getAttribute("aria-expanded"),
         "true",
@@ -756,8 +747,6 @@ async function executar() {
         criarUi(page, () => page.locator("form").nth(n)),
       );
       for (const instancia of instancias) await instancia.abrirDescricao();
-      // Cada instância tem os sete campos, com rótulos e
-      // controles próprios e ids únicos em toda a página.
       const porInstancia = [
         await associacoes(page, 0),
         await associacoes(page, 1),
@@ -802,7 +791,6 @@ async function executar() {
             rotulo,
           );
         }
-      // Digitar em uma instância não altera a outra.
       await instancias[0].campo("Título").fill("Somente na primeira");
       assert.equal(await instancias[1].campo("Título").inputValue(), "");
     },

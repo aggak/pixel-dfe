@@ -47,8 +47,6 @@ async function executar() {
       await item.click();
       await item.waitFor({ state: "detached" });
     };
-    // A troca usa o controle Lista/Quadro da faixa
-    // de ações (#39), como a pessoa usuária faria.
     const irPara = (caminho) =>
       page
         .getByRole("navigation", { name: "Visualização das tarefas" })
@@ -159,8 +157,6 @@ async function executar() {
 
     await selecionar("Status", "A fazer");
 
-    // Estado único: o que o quadro filtrou chega à
-    // lista, e o que a lista filtra volta ao quadro.
     await busca.fill("diagrama");
     const doQuadro = await quadro
       .locator("[data-task-id]")
@@ -217,8 +213,6 @@ async function executar() {
       "OK: busca sem resultado esconde as colunas e a limpeza restaura o quadro",
     );
 
-    // Detalhe e edição abrem na ficha sobre o
-    // quadro; a nova coluna vem do status gravado.
     const alvo = seed.tarefas.find((t) => t.status === "a-fazer");
     await coluna("a-fazer").getByRole("link", { name: alvo.titulo }).click();
     const detalhe = page.getByRole("dialog", {
@@ -229,8 +223,6 @@ async function executar() {
     assert.equal(await quadro.count(), 1);
     await detalhe.getByRole("button", { name: /^Fechar/ }).click();
     await detalhe.waitFor({ state: "detached" });
-    // O dialog sai do DOM antes do history.back()
-    // terminar; espera a URL em vez de lê-la na hora.
     await page.waitForURL((url) => url.pathname === "/quadro");
     await coluna("a-fazer")
       .getByRole("button", { name: `Ações de ${alvo.titulo}` })

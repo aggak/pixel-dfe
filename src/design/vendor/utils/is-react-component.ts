@@ -1,24 +1,15 @@
 import type React from "react";
 
-// Below the import on purpose: the shadcn CLI drops comments that come before a file's first
-// statement, which would drop this directive and fail lint in projects installed that way.
-// `any` is required here: with `unknown`, the type guards below stop narrowing to component types.
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type ReactComponent = React.FC<any> | React.ComponentClass<any, any>;
 
-/**
- * Checks if a given value is a function component.
- */
 export const isFunctionComponent = (
   component: any,
 ): component is React.FC<any> => {
   return typeof component === "function";
 };
 
-/**
- * Checks if a given value is a class component.
- */
 export const isClassComponent = (
   component: any,
 ): component is React.ComponentClass<any, any> => {
@@ -29,9 +20,6 @@ export const isClassComponent = (
   );
 };
 
-/**
- * Checks if a given value is a forward ref component.
- */
 export const isForwardRefComponent = (
   component: any,
 ): component is React.ForwardRefExoticComponent<any> => {
@@ -42,9 +30,6 @@ export const isForwardRefComponent = (
   );
 };
 
-/**
- * Checks if a given value is a valid React component.
- */
 export const isReactComponent = (
   component: any,
 ): component is ReactComponent => {

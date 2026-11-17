@@ -1,5 +1,3 @@
-// Apoio compartilhado das suítes de navegador: localizadores da interface atual
-// (React Aria + ficha modal) sem alterar o contrato de negócio de cada teste.
 const { chromium } = require("playwright");
 
 const CONTROLES_SELECT = {
@@ -16,17 +14,11 @@ function lancarNavegador() {
   });
 }
 
-// `escopo` devolve o formulário alvo (o primeiro por
-// padrão; use outro índice com mais de uma instância).
 function criarUi(page, escopo = () => page.locator("form").first()) {
-  // O rótulo acessível termina com o asterisco
-  // de obrigatório ("Nome*") ou com "opcional".
   const campo = (nome) =>
     escopo().getByLabel(
       new RegExp(`^${escapar(nome)}(?:\\s*opcional)?\\s*\\*?$`),
     );
-  // Select real: o botão visível é o que recebe clique; o
-  // <select> oculto só é lido para conferir o contrato.
   const seletor = (nome) =>
     escopo().getByRole("button", {
       name: new RegExp(`(?:^|\\s)${escapar(nome)}\\s*\\*?$`),
@@ -36,8 +28,6 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
   const alternarDescricao = () =>
     escopo().locator("button.e-description-toggle");
 
-  // Obrigatoriedade exposta ao usuário: aria-required no campo
-  // ou data-required no select, mais o asterisco do rótulo.
   async function obrigatorio(nome) {
     if (CONTROLES_SELECT[nome]) {
       const raiz = seletor(nome).locator("xpath=..");
@@ -70,8 +60,6 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
       await alternador.click();
     await campo("Descrição").waitFor({ state: "detached" });
   }
-  // Valor de qualquer um dos sete campos; a
-  // descrição é aberta antes de ser lida.
   async function valor(nome) {
     if (CONTROLES_SELECT[nome]) return oculto(nome).inputValue();
     if (nome === "Descrição") await abrirDescricao();
@@ -115,8 +103,6 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
   };
 }
 
-// Rótulos de um formulário e os controles que apontam
-// para eles (aria-labelledby), um por rótulo.
 function associacoes(page, indice = 0) {
   return page.evaluate((i) => {
     const form = document.querySelectorAll("form")[i];
@@ -145,8 +131,6 @@ const TEXTO_STATUS = {
 };
 const TEXTO_PRIORIDADE = { baixa: "Baixa", media: "Média", alta: "Alta" };
 
-// Acrescenta os textos exibidos nas opções ao
-// payload de negócio (nome do projeto vem do banco).
 function comTextos(dados, projetos) {
   return {
     ...dados,
@@ -157,8 +141,6 @@ function comTextos(dados, projetos) {
   };
 }
 
-// Foco visível: contorno do controle ou
-// anel desenhado pelo envoltório do campo.
 async function focoVisivel(locator) {
   return locator.evaluate((el) => {
     const proprio = getComputedStyle(el);

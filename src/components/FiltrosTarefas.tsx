@@ -22,8 +22,6 @@ const opcoesPrioridade: { id: Filtros["prioridade"]; label: string }[] = [
   })),
 ];
 
-// Campos de busca e filtros ligados ao estado compartilhado;
-// qualquer visão que os mostre altera o mesmo valor.
 export function FiltrosTarefas() {
   const { filtros, alterar, limpar } = useFiltros();
   const busca = useRef<HTMLInputElement>(null);

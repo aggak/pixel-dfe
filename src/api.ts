@@ -220,8 +220,6 @@ export async function excluirTarefa(
   });
 }
 
-// Para a tela, excluir o que outra aba já excluiu
-// é sucesso: o pedido do usuário já está cumprido.
 export async function excluirTarefaSeExistir(
   id: string,
   signal?: AbortSignal,

@@ -1,11 +1,3 @@
-// Issue #53: verificação sob demanda da aplicação publicada (fora da lista
-// offline do validate-delivery.mjs, como tests/auditoria-lighthouse.mjs).
-// Confere o README e, ao vivo, o frontend da Railway integrado à API
-// hospedada (ou PIXEL_APP_URL e PIXEL_API_URL).
-// O link do README continua apontando para a publicação. A API
-// pública aceita escrita sem autenticação: o script só cria, muda e
-// exclui uma tarefa própria, identificada pelo título, e no `finally`
-// apaga qualquer sobra dela antes de comparar o estado final.
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -42,7 +34,6 @@ async function lerApi(caminho) {
   return resposta.json();
 }
 
-// 1. README: link clicável no início e conteúdo necessário para a entrega.
 async function conferirReadme() {
   const readme = await readFile(join(raiz, "README.md"), "utf8");
   const destino = escapar(APP_PUBLICADO);
@@ -83,8 +74,6 @@ async function conferirReadme() {
   );
 }
 
-// 2. Aplicação publicada integrada à API
-// hospedada, com um ciclo de escrita próprio.
 async function conferirPublicacao() {
   const tarefasIniciais = await lerApi("/tarefas");
   const projetos = await lerApi("/projetos");
@@ -137,7 +126,6 @@ async function conferirPublicacao() {
     const rodape = page.locator(".e-sheet-footer");
     const textoTotal = (n) => `${n} ${n === 1 ? "tarefa" : "tarefas"}`;
 
-    // Leitura e navegação pelo menu.
     await page.goto(`${APP}/`);
     await lista
       .getByRole("link", { name: tarefasIniciais[0].titulo, exact: true })
@@ -185,7 +173,6 @@ async function conferirPublicacao() {
       `OK: ${APP} lê GET /tarefas e /projetos com 200 da API hospedada e navega por /, /quadro e /projetos`,
     );
 
-    // Criação pela ficha publicada.
     const ui = criarUi(page);
     await page
       .getByRole("button", { name: "Nova tarefa", exact: true })
@@ -226,7 +213,6 @@ async function conferirPublicacao() {
       `OK: a ficha publicada cria a tarefa temporária ${criada.id} e a API hospedada a devolve com os sete campos`,
     );
 
-    // Mudança de status pelo selo do cartão, persistida após recarregar.
     await page.goto(`${APP}/quadro`);
     const cartao = page.locator(`[data-task-id="${criada.id}"]`);
     await cartao.waitFor();
@@ -269,7 +255,6 @@ async function conferirPublicacao() {
       "OK: o selo do cartão muda o status para Em andamento, a API hospedada grava e o quadro mantém após recarregar",
     );
 
-    // Exclusão pela interface, com confirmação.
     const dialogo = page.getByRole("dialog", { name: `Excluir ${titulo}` });
     await cartao.getByRole("button", { name: `Ações de ${titulo}` }).click();
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
@@ -309,8 +294,6 @@ async function conferirPublicacao() {
     falha = erro;
   } finally {
     await browser.close().catch(() => {});
-    // Limpeza defensiva: remove qualquer tarefa com
-    // o título desta execução que tenha sobrado.
     const sobras = (await lerApi("/tarefas")).filter(
       (tarefa) => tarefa.titulo === titulo,
     );
@@ -325,10 +308,6 @@ async function conferirPublicacao() {
     }
   }
 
-  // Estado final idêntico ao inicial: mesmos IDs
-  // e nenhuma tarefa pré-existente alterada.
-  // Se o ciclo já falhou, essa falha é a que
-  // importa; a do estado final só é mostrada.
   try {
     const tarefasFinais = await lerApi("/tarefas");
     assert.deepEqual(

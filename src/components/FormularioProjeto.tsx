@@ -17,23 +17,12 @@ type CampoObrigatorio = "nome" | "disciplina" | "criadoEm";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
 
 interface FormularioProjetoProps {
-  /**
-   * Lido apenas na montagem; use `key` no pai para trocar o projeto editado.
-   */
   valoresIniciais?: Partial<DadosProjeto>;
   onSalvar: (dados: DadosProjeto) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
-  /**
-   * Avisa o pai quando um envio começa (`true`) e quando
-   * termina ou o formulário é desmontado (`false`).
-   */
   onEstadoEnvio?: (ocupada: boolean) => void;
   onAlteracao?: (alterado: boolean) => void;
-  /**
-   * Edição de projeto existente: só então
-   * um 404 significa que ele foi excluído.
-   */
   edicao?: boolean;
 }
 
@@ -60,8 +49,6 @@ export function FormularioProjeto({
     criadoEm !== (iniciais?.criadoEm ?? "");
 
   const [enviando, setEnviando] = useState(false);
-  // "inexistente": o projeto foi excluído enquanto a
-  // ficha estava aberta; tentar de novo não adianta.
   const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
     false,
   );
@@ -80,8 +67,6 @@ export function FormularioProjeto({
     onAlteracaoRef.current?.(true);
     return () => onAlteracaoRef.current?.(false);
   }, [alterado]);
-  // Se o formulário sair da tela durante um envio,
-  // o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {
       if (!notificadoRef.current) return;
@@ -117,8 +102,6 @@ export function FormularioProjeto({
     else if (!dataValida(criadoEm))
       novosErros.criadoEm = "Informe uma data válida.";
     setErros(novosErros);
-    // A ordem de inserção acima é a ordem dos campos
-    // na ficha (nome, disciplina, criado em).
     const primeiroErro = Object.keys(novosErros)[0] as
       | CampoObrigatorio
       | undefined;
@@ -134,9 +117,6 @@ export function FormularioProjeto({
       return;
     }
 
-    // Monta o objeto campo a campo para nunca repassar `id` ou extras.
-    // Nome e disciplina são validados sem espaços
-    // nas pontas e gravados da mesma forma.
     const dados: DadosProjeto = {
       nome: nome.trim(),
       descricao,
@@ -211,8 +191,6 @@ export function FormularioProjeto({
                 ) : undefined
               }
             />
-            {/* Mantido visível, editável e obrigatório:
-                faz parte dos dados do projeto. */}
             <Input
               name="criadoEm"
               label="Criado em"

@@ -107,7 +107,6 @@ async function executar() {
       "OK: Limpar aparece para cada filtro, restaura os três valores, foco e anúncio; rodapé indica exibidas e total na lista e no quadro",
     );
 
-    // Mesmo conjunto que a função pura produziria com os dados do banco.
     await busca.fill("a");
     await selecionar("Status", "A fazer");
     const esperado = dados.tarefas
@@ -120,7 +119,6 @@ async function executar() {
     assert.deepEqual(await titulos(), esperado);
     console.log("OK: lista exibe o conjunto derivado de busca e status");
 
-    // Troca de rota pelo menu desmonta a lista; o estado mora acima das rotas.
     const menu = page.getByRole("navigation", { name: "Navegação principal" });
     await menu.getByRole("link", { name: "Projetos" }).click();
     await page.getByRole("heading", { name: "Projetos" }).waitFor();
@@ -160,7 +158,6 @@ async function executar() {
     );
     console.log("OK: filtros combinam entre si depois de visitar um projeto");
 
-    // A ficha de detalhe abre sobre a lista sem perder o que foi filtrado.
     const primeiro = (await titulos())[0];
     await lista.getByRole("link", { name: primeiro }).click();
     const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
@@ -186,8 +183,6 @@ async function executar() {
       "OK: limpar volta busca, status e prioridade aos valores iniciais",
     );
 
-    // O estado fica na memória do JavaScript:
-    // recarregar a página começa do zero.
     await busca.fill("json");
     await page.reload();
     await lista.getByRole("article").first().waitFor();
@@ -198,8 +193,6 @@ async function executar() {
     );
     console.log("OK: recarregar a página reinicia os filtros");
 
-    // Tarefa recém-criada que a busca ou os filtros
-    // escondem: o aviso diz que ela existe e oferece limpar.
     const ui = criarUi(page);
     const aviso = page.locator(".e-hidden-notice");
     const { assentar } = criarEsperas(page);
@@ -385,8 +378,6 @@ async function executar() {
       "OK: mudar o status para fora do filtro mostra o aviso, sem repetir o anúncio de status, e limpar revela a tarefa",
     );
     await visoes.getByRole("link", { name: "Lista" }).click();
-    // Contagem anunciada quando o status tira a tarefa
-    // do filtro, sem repetir o aviso de status.
     const fraseContagem = (n) =>
       `${n} ${n === 1 ? "tarefa encontrada" : "tarefas encontradas"}.`;
     const anuncioContagem = () =>

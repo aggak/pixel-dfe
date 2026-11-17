@@ -7,76 +7,22 @@ import { AvatarOnlineIndicator, VerifiedTick } from "./base-components";
 import { AvatarCount } from "./base-components/avatar-count";
 
 export interface AvatarProps {
-  /**
-   * The dimensions of the avatar, which also scale the initials, placeholder icon and status indicator.
-   */
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
-  /**
-   * The class name for the outer wrapper of the avatar.
-   */
   className?: string;
-  /**
-   * The class name for the main child of the avatar.
-   */
   contentClassName?: string;
-  /**
-   * The URL of the avatar image. Falls back to the initials, placeholder icon or placeholder if it is missing or fails to load.
-   */
   src?: string | null;
-  /**
-   * The alternative text for the avatar image.
-   */
   alt?: string;
-  /**
-   * Display an inner contrast border around the avatar image.
-   */
   contrastBorder?: boolean;
-  /**
-   * Whether the avatar should be rounded.
-   * @default true
-   */
   rounded?: boolean;
-  /**
-   * Display an outer border around the avatar.
-   */
   border?: boolean;
-  /**
-   * Display a badge (i.e. company logo).
-   */
   badge?: ReactNode;
-  /**
-   * Display a status indicator.
-   */
   status?: "online" | "offline";
-  /**
-   * Display a verified tick icon.
-   *
-   * @default false
-   */
   verified?: boolean;
-  /**
-   * Display a count badge.
-   */
   count?: number;
-  /**
-   * The initials of the user to display if no image is available.
-   */
   initials?: string;
-  /**
-   * An icon to display if no image is available.
-   */
   placeholderIcon?: FC<{ className?: string }>;
-  /**
-   * A placeholder to display if no image is available.
-   */
   placeholder?: ReactNode;
 
-  /**
-   * Whether the avatar should show a focus ring when the parent group is in focus.
-   * For example, when the avatar is wrapped inside a link.
-   *
-   * @default false
-   */
   focusable?: boolean;
 }
 
@@ -206,7 +152,6 @@ export const Avatar = ({
       className={cx(
         "relative inline-flex shrink-0 rounded-[7px]",
         rounded && "rounded-full",
-        // Focus styles
         focusable &&
           "outline-transparent group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-focus-ring",
         border && "ring-1 ring-secondary_alt",

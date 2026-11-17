@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { FILTROS_INICIAIS, type Filtros } from "../derivar";
 import { ContextoFiltros } from "./filtros-contexto";
 
-// Fica acima das rotas: a troca entre lista e quadro não desmonta o estado.
 export function FiltrosProvider({ children }: { children: ReactNode }) {
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_INICIAIS);
   const alterar = useCallback(

@@ -41,7 +41,6 @@ async function executar() {
     page.getByRole("button", {
       name: new RegExp(`^Mudar status de ${tarefa.titulo} \\(atual:`),
     });
-  // O React Aria nomeia o menu pelo botão que o abre.
   const menuDe = (tarefa) =>
     page.getByRole("menu", {
       name: new RegExp(`^Mudar status de ${tarefa.titulo}`),
@@ -79,8 +78,6 @@ async function executar() {
     await seletorDe(tarefa).click();
     await opcao(tarefa, status).click();
   };
-  // Segura o PATCH da tarefa no navegador até `liberar`
-  // decidir entre deixar passar e responder 500.
   const segurarPatch = async (id) => {
     let decidir;
     const decisao = new Promise((resolve) => {
@@ -122,8 +119,6 @@ async function executar() {
   const [alvo, outra] = seed.tarefas.filter((t) => t.status === "a-fazer");
   const total = seed.tarefas.length;
 
-  // Seletor no quadro e na lista; na página
-  // do projeto o selo segue só informativo.
   await page.goto(`${web}/quadro`);
   await quadro.locator("[data-task-id]").first().waitFor();
   assert.equal(await page.locator("[data-status-trigger]").count(), total);
@@ -176,8 +171,6 @@ async function executar() {
     "OK: quadro, lista e página do projeto abrem o menu com os quatro status e o atual marcado",
   );
 
-  // Quadro: grava só o status e o cartão muda de coluna,
-  // sem duplicar, com contadores e rodapé coerentes.
   await page.goto(`${web}/quadro`);
   await quadro.locator("[data-task-id]").first().waitFor();
   const contar = async (status) =>
@@ -204,8 +197,6 @@ async function executar() {
     "OK: no quadro, o PATCH grava só o status e o cartão vai, uma única vez, para a coluna nova",
   );
 
-  // Foco segue o cartão até a coluna nova; o
-  // anúncio confirma a mudança e fica fora da tela.
   await focoNoSeletor(alvo.id);
   assert.equal(
     await anuncio.innerText(),
@@ -220,8 +211,6 @@ async function executar() {
     "OK: o foco volta ao seletor do cartão movido e a mudança é anunciada só ao leitor de tela",
   );
 
-  // Teclado: Enter abre o menu, a seta desce
-  // até "Em andamento" e Enter confirma.
   await seletorDe(alvo).focus();
   await page.keyboard.press("Enter");
   await menuDe(alvo).waitFor();
@@ -247,7 +236,6 @@ async function executar() {
   assert.equal(await focoVisivel(seletorDe(alvo)), true);
   console.log("OK: o seletor funciona só pelo teclado, com foco visível");
 
-  // Escolher o status atual não chama a API.
   const semPatch = page
     .waitForRequest((r) => r.method() === "PATCH", { timeout: 1500 })
     .then(
@@ -260,8 +248,6 @@ async function executar() {
   assert.equal(await semPatch, "nenhum PATCH");
   console.log("OK: escolher o status atual não chama a API");
 
-  // Envio pendente: o botão trava, o cartão fica onde está e um
-  // segundo clique não sai; depois a falha avisa e devolve o foco.
   const anuncioAntes = await anuncio.innerText();
   let liberar = await segurarPatch(alvo.id);
   await seletorDe(alvo).focus();
@@ -318,7 +304,6 @@ async function executar() {
     "OK: com o PATCH pendente o seletor trava; a falha não move o cartão, avisa, devolve o foco e permite tentar de novo",
   );
 
-  // Resposta atrasada não tira o foco de quem já foi digitar na busca.
   liberar = await segurarPatch(outra.id);
   await escolher(outra, "em-andamento");
   await busca.click();
@@ -336,8 +321,6 @@ async function executar() {
     "OK: a resposta atrasada move o cartão sem roubar o foco da busca",
   );
 
-  // Trocar de visão com a resposta pendente: a
-  // lista recém-aberta recebe o status gravado.
   liberar = await segurarPatch(outra.id);
   await escolher(outra, "concluida");
   await page
@@ -361,8 +344,6 @@ async function executar() {
     "OK: trocar de visão com o PATCH pendente não deixa a lista com o status antigo",
   );
 
-  // Lista com filtros: prioridade e busca que continuam valendo
-  // mantêm o cartão; o filtro de status o tira da tela.
   await selecionarFiltro("Prioridade", "Média");
   await cartao("1").waitFor({ state: "detached" });
   const medias = seed.tarefas.filter((t) => t.prioridade === "media").length;
@@ -391,8 +372,6 @@ async function executar() {
     `${aFazer - 1} de ${textoTotal(total)}`,
   );
   assert.equal((await lerTarefa(alvo.id)).status, "concluida");
-  // O cartão saiu da tela; o foco vai para a busca,
-  // visível, em vez de cair no body ou no título recortado.
   await page.waitForFunction(
     () => document.activeElement?.closest(".e-task-search") !== null,
   );
@@ -401,8 +380,6 @@ async function executar() {
     "OK: na lista, prioridade e busca mantêm o cartão; o filtro de status o tira e o foco vai à busca",
   );
 
-  // Ficha de detalhes: o mesmo seletor grava pelo mesmo
-  // caminho e o quadro ao fundo acompanha sem recarregar.
   const naFicha = seed.tarefas.find((t) => t.status === "em-andamento");
   const urlFicha = `${api}/tarefas/${naFicha.id}`;
   await page.goto(`${web}/quadro`);
@@ -511,7 +488,6 @@ async function executar() {
     "OK: 500 na ficha mantém a tarefa; 404 mantém o aviso na ficha e remove a tarefa e a contagem do fundo, inclusive ao fechar",
   );
 
-  // Recarga, tema escuro e larguras.
   await page.goto(`${web}/quadro`);
   await quadro.locator("[data-task-id]").first().waitFor();
   assert.equal(
@@ -534,8 +510,6 @@ async function executar() {
   await escolher(alvo, "a-fazer");
   const alerta = cartao(alvo.id).getByRole("alert");
   await alerta.waitFor();
-  // O menu ainda sai com animação perto da borda; medir
-  // larguras com ele no DOM acusaria rolagem que não fica.
   await menuDe(alvo).waitFor({ state: "detached" });
   const cores = await alerta.evaluate((el) => ({
     texto: getComputedStyle(el).color,

@@ -14,8 +14,6 @@ export function NovaTarefa() {
   const projetoId = busca.get("projetoId") ?? "";
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Um controller por contexto: ao sair da página ou trocar o projeto de
-  // origem, o envio pendente é cancelado e a resposta tardia não redireciona.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;

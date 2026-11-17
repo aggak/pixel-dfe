@@ -13,11 +13,7 @@ export function useSeletorStatus(
   posicao: "bottom start" | "bottom end",
 ) {
   const [salvando, setSalvando] = useState(false);
-  // "inexistente": a tarefa foi excluída em
-  // outro lugar e tentar de novo não adianta.
   const [falhou, setFalhou] = useState<false | "falha" | "inexistente">(false);
-  // Trava síncrona: o estado `salvando` só vale no próximo
-  // render, e uma segunda escolha rápida passaria antes dele.
   const enviando = useRef(false);
   const gatilho = useRef<HTMLButtonElement>(null);
   const mudar = async (status: Status) => {
@@ -38,8 +34,6 @@ export function useSeletorStatus(
       setSalvando(false);
     }
   };
-  // Se o foco se perdeu durante o envio (o menu fecha e o devolve ao botão
-  // pendente), a falha o traz de volta, sem tirá-lo de outro controle.
   useEffect(() => {
     if (
       falhou &&

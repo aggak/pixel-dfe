@@ -1,6 +1,3 @@
-// Issue #54: abre e recarrega as rotas na
-// aplicação publicada, sem gravar na API.
-// Execução sob demanda porque depende dos serviços hospedados.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
