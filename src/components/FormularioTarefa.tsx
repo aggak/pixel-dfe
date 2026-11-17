@@ -1,4 +1,11 @@
-import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
@@ -29,8 +36,14 @@ const opcoesPrioridade: { valor: Prioridade; texto: string }[] = [
 type CampoObrigatorio = "projetoId" | "titulo" | "responsavel" | "prazo";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
 
-// Ordem em que os campos aparecem na ficha: o foco de erro vai para o primeiro inválido nesta ordem.
-const ordemCampos: CampoObrigatorio[] = ["titulo", "projetoId", "responsavel", "prazo"];
+// Ordem em que os campos aparecem na ficha: o foco
+// de erro vai para o primeiro inválido nesta ordem.
+const ordemCampos: CampoObrigatorio[] = [
+  "titulo",
+  "projetoId",
+  "responsavel",
+  "prazo",
+];
 
 interface FormularioTarefaProps {
   /** Lido apenas na montagem; use `key` no pai para trocar a tarefa editada. */
@@ -38,10 +51,16 @@ interface FormularioTarefaProps {
   onSalvar: (dados: NovaTarefa) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
-  /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
+  /**
+   * Avisa o pai quando um envio começa (`true`) e quando
+   * termina ou o formulário é desmontado (`false`).
+   */
   onEstadoEnvio?: (ocupada: boolean) => void;
   onAlteracao?: (alterado: boolean) => void;
-  /** Edição de tarefa existente: só então um 404 significa que ela foi excluída. O cadastro também recebe `valoresIniciais`. */
+  /**
+   * Edição de tarefa existente: só então um 404 significa que ela
+   * foi excluída. O cadastro também recebe `valoresIniciais`.
+   */
   edicao?: boolean;
 }
 
@@ -61,20 +80,37 @@ export function FormularioTarefa({
   const [projetoId, setProjetoId] = useState(valoresIniciais?.projetoId ?? "");
   const [titulo, setTitulo] = useState(valoresIniciais?.titulo ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
-  const [status, setStatus] = useState<Status>(valoresIniciais?.status ?? "a-fazer");
+  const [status, setStatus] = useState<Status>(
+    valoresIniciais?.status ?? "a-fazer",
+  );
   const [prioridade, setPrioridade] = useState<Prioridade>(
     valoresIniciais?.prioridade ?? "media",
   );
-  const [responsavel, setResponsavel] = useState(valoresIniciais?.responsavel ?? "");
+  const [responsavel, setResponsavel] = useState(
+    valoresIniciais?.responsavel ?? "",
+  );
   const [prazo, setPrazo] = useState(valoresIniciais?.prazo ?? "");
   const [iniciais] = useState(valoresIniciais);
-  const alterado = projetoId !== (iniciais?.projetoId ?? "") || titulo !== (iniciais?.titulo ?? "") || descricao !== (iniciais?.descricao ?? "") || status !== (iniciais?.status ?? "a-fazer") || prioridade !== (iniciais?.prioridade ?? "media") || responsavel !== (iniciais?.responsavel ?? "") || prazo !== (iniciais?.prazo ?? "");
-  // A descrição já preenchida começa visível; recolher apenas esconde o campo, o valor fica no estado.
-  const [descricaoAberta, setDescricaoAberta] = useState(Boolean(valoresIniciais?.descricao));
+  const alterado =
+    projetoId !== (iniciais?.projetoId ?? "") ||
+    titulo !== (iniciais?.titulo ?? "") ||
+    descricao !== (iniciais?.descricao ?? "") ||
+    status !== (iniciais?.status ?? "a-fazer") ||
+    prioridade !== (iniciais?.prioridade ?? "media") ||
+    responsavel !== (iniciais?.responsavel ?? "") ||
+    prazo !== (iniciais?.prazo ?? "");
+  // A descrição já preenchida começa visível; recolher
+  // apenas esconde o campo, o valor fica no estado.
+  const [descricaoAberta, setDescricaoAberta] = useState(
+    Boolean(valoresIniciais?.descricao),
+  );
 
   const [enviando, setEnviando] = useState(false);
-  // "inexistente": a tarefa foi excluída enquanto a ficha estava aberta; tentar de novo não adianta.
-  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(false);
+  // "inexistente": a tarefa foi excluída enquanto a
+  // ficha estava aberta; tentar de novo não adianta.
+  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
+    false,
+  );
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
   const seletorProjetoRef = useRef<HTMLDivElement>(null);
@@ -91,7 +127,8 @@ export function FormularioTarefa({
     onAlteracaoRef.current?.(true);
     return () => onAlteracaoRef.current?.(false);
   }, [alterado]);
-  // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
+  // Se o formulário sair da tela durante um envio,
+  // o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {
       if (!notificadoRef.current) return;
@@ -110,22 +147,37 @@ export function FormularioTarefa({
   const listaProjetos = projetos.dados ?? [];
   const projetosDisponiveis = listaProjetos.length > 0;
   const projetoDesconhecido =
-    projetoId !== "" && projetosDisponiveis && !listaProjetos.some((p) => p.id === projetoId);
+    projetoId !== "" &&
+    projetosDisponiveis &&
+    !listaProjetos.some((p) => p.id === projetoId);
   const podeSalvar = projetosDisponiveis && !projetoDesconhecido;
-  const avisoProjeto = !podeSalvar || projetoDesconhecido ? `${id}-projeto-aviso` : undefined;
+  const avisoProjeto =
+    !podeSalvar || projetoDesconhecido ? `${id}-projeto-aviso` : undefined;
 
   useLayoutEffect(() => {
     const botao = seletorProjetoRef.current?.querySelector("button");
-    if (erros.projetoId || projetoDesconhecido) botao?.setAttribute("aria-invalid", "true");
+    if (erros.projetoId || projetoDesconhecido)
+      botao?.setAttribute("aria-invalid", "true");
     else botao?.removeAttribute("aria-invalid");
   }, [erros.projetoId, projetoDesconhecido]);
 
   const itensProjeto = [
-    ...(projetoDesconhecido ? [{ id: projetoId, label: "Projeto não encontrado" }] : []),
-    ...listaProjetos.map((projeto) => ({ id: projeto.id, label: projeto.nome })),
+    ...(projetoDesconhecido
+      ? [{ id: projetoId, label: "Projeto não encontrado" }]
+      : []),
+    ...listaProjetos.map((projeto) => ({
+      id: projeto.id,
+      label: projeto.nome,
+    })),
   ];
-  const itensStatus = opcoesStatus.map((opcao) => ({ id: opcao.valor, label: opcao.texto }));
-  const itensPrioridade = opcoesPrioridade.map((opcao) => ({ id: opcao.valor, label: opcao.texto }));
+  const itensStatus = opcoesStatus.map((opcao) => ({
+    id: opcao.valor,
+    label: opcao.texto,
+  }));
+  const itensPrioridade = opcoesPrioridade.map((opcao) => ({
+    id: opcao.valor,
+    label: opcao.texto,
+  }));
 
   function limparErro(campo: CampoObrigatorio) {
     setErros((atuais) => {
@@ -142,7 +194,8 @@ export function FormularioTarefa({
 
     const novosErros: ErrosCampos = {};
     if (!projetoId) novosErros.projetoId = "Selecione um projeto.";
-    else if (projetoDesconhecido) novosErros.projetoId = "Escolha um projeto disponível.";
+    else if (projetoDesconhecido)
+      novosErros.projetoId = "Escolha um projeto disponível.";
     if (!titulo.trim()) novosErros.titulo = "Informe o título da tarefa.";
     if (!responsavel.trim()) novosErros.responsavel = "Informe o responsável.";
     if (!prazo) novosErros.prazo = "Informe o prazo.";
@@ -152,7 +205,8 @@ export function FormularioTarefa({
     if (primeiroErro) {
       const formulario = evento.currentTarget;
       window.setTimeout(() => {
-        // O `name` do Select real fica no <select> oculto; o foco vai para o botão do combobox.
+        // O `name` do Select real fica no <select>
+        // oculto; o foco vai para o botão do combobox.
         const alvo =
           primeiroErro === "projetoId"
             ? seletorProjetoRef.current?.querySelector<HTMLElement>("button")
@@ -180,7 +234,11 @@ export function FormularioTarefa({
     try {
       await onSalvar(dados);
     } catch (erro) {
-      setErroEnvio(edicao && erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
+      setErroEnvio(
+        edicao && erro instanceof ErroApi && erro.status === 404
+          ? "inexistente"
+          : "falha",
+      );
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -189,7 +247,12 @@ export function FormularioTarefa({
   }
 
   return (
-    <form className="e-task-form formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
+    <form
+      className="e-task-form formulario-tarefa"
+      onSubmit={enviar}
+      noValidate
+      aria-busy={enviando}
+    >
       <div className="e-panel-scroll">
         <div className="e-title-field">
           <Input
@@ -201,9 +264,16 @@ export function FormularioTarefa({
             validationBehavior="aria"
             size="md"
             value={titulo}
-            onChange={(valor) => { setTitulo(valor); limparErro("titulo"); }}
+            onChange={(valor) => {
+              setTitulo(valor);
+              limparErro("titulo");
+            }}
             isInvalid={Boolean(erros.titulo)}
-            hint={erros.titulo ? <span role="alert">{erros.titulo}</span> : undefined}
+            hint={
+              erros.titulo ? (
+                <span role="alert">{erros.titulo}</span>
+              ) : undefined
+            }
           />
         </div>
 
@@ -227,7 +297,11 @@ export function FormularioTarefa({
               }}
               isDisabled={!projetosDisponiveis}
               isInvalid={Boolean(erros.projetoId || projetoDesconhecido)}
-              aria-describedby={[avisoProjeto, erros.projetoId && `${id}-projeto-erro`].filter(Boolean).join(" ") || undefined}
+              aria-describedby={
+                [avisoProjeto, erros.projetoId && `${id}-projeto-erro`]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
             >
               {(item) => (
                 <Select.Item id={item.id} textValue={item.label}>
@@ -235,14 +309,31 @@ export function FormularioTarefa({
                 </Select.Item>
               )}
             </Select>
-            {erros.projetoId && <p id={`${id}-projeto-erro`} className="formulario-tarefa__aviso formulario-tarefa__aviso--erro" role="alert">{erros.projetoId}</p>}
+            {erros.projetoId && (
+              <p
+                id={`${id}-projeto-erro`}
+                className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
+                role="alert"
+              >
+                {erros.projetoId}
+              </p>
+            )}
             {projetoDesconhecido && (
-              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
-                O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.
+              <p
+                id={`${id}-projeto-aviso`}
+                className="formulario-tarefa__aviso"
+                role="status"
+              >
+                O projeto desta tarefa não foi encontrado. Escolha um projeto
+                disponível.
               </p>
             )}
             {projetos.carregando && (
-              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso" role="status">
+              <p
+                id={`${id}-projeto-aviso`}
+                className="formulario-tarefa__aviso"
+                role="status"
+              >
                 Carregando projetos…
               </p>
             )}
@@ -253,16 +344,49 @@ export function FormularioTarefa({
                 role="alert"
               >
                 <Icon name="cloud-disabled" />
-                {projetos.tentando ? "Tentando de novo…" : "Não foi possível carregar os projetos."}
-                <Button type="button" color="link-color" size="sm" iconLeading={RefreshIcon} isLoading={projetos.tentando} showTextWhileLoading onClick={projetos.tentarDeNovo}>
+                {projetos.tentando
+                  ? "Tentando de novo…"
+                  : "Não foi possível carregar os projetos."}
+                <Button
+                  type="button"
+                  color="link-color"
+                  size="sm"
+                  iconLeading={RefreshIcon}
+                  isLoading={projetos.tentando}
+                  showTextWhileLoading
+                  onClick={projetos.tentarDeNovo}
+                >
                   Tentar de novo
                 </Button>
               </p>
             )}
             {projetos.dados && !projetosDisponiveis && (
-              <p id={`${id}-projeto-aviso`} className="formulario-tarefa__aviso formulario-tarefa__aviso--acao" role="status">
-                <span>Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa. </span>
-                <Link to="/projetos/novo" onClick={(evento) => { if (!ficha || evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey) return; evento.preventDefault(); ficha.navegar("/projetos/novo"); }}>Criar projeto</Link>
+              <p
+                id={`${id}-projeto-aviso`}
+                className="formulario-tarefa__aviso formulario-tarefa__aviso--acao"
+                role="status"
+              >
+                <span>
+                  Nenhum projeto cadastrado. Crie um projeto antes de salvar a
+                  tarefa.{" "}
+                </span>
+                <Link
+                  to="/projetos/novo"
+                  onClick={(evento) => {
+                    if (
+                      !ficha ||
+                      evento.ctrlKey ||
+                      evento.metaKey ||
+                      evento.shiftKey ||
+                      evento.altKey
+                    )
+                      return;
+                    evento.preventDefault();
+                    ficha.navegar("/projetos/novo");
+                  }}
+                >
+                  Criar projeto
+                </Link>
               </p>
             )}
           </div>
@@ -276,9 +400,16 @@ export function FormularioTarefa({
               isRequired
               validationBehavior="aria"
               value={responsavel}
-              onChange={(valor) => { setResponsavel(valor); limparErro("responsavel"); }}
+              onChange={(valor) => {
+                setResponsavel(valor);
+                limparErro("responsavel");
+              }}
               isInvalid={Boolean(erros.responsavel)}
-              hint={erros.responsavel ? <span role="alert">{erros.responsavel}</span> : undefined}
+              hint={
+                erros.responsavel ? (
+                  <span role="alert">{erros.responsavel}</span>
+                ) : undefined
+              }
             />
             <Input
               name="prazo"
@@ -288,9 +419,16 @@ export function FormularioTarefa({
               isRequired
               validationBehavior="aria"
               value={prazo}
-              onChange={(valor) => { setPrazo(valor); limparErro("prazo"); }}
+              onChange={(valor) => {
+                setPrazo(valor);
+                limparErro("prazo");
+              }}
               isInvalid={Boolean(erros.prazo)}
-              hint={erros.prazo ? <span role="alert">{erros.prazo}</span> : undefined}
+              hint={
+                erros.prazo ? (
+                  <span role="alert">{erros.prazo}</span>
+                ) : undefined
+              }
             />
           </div>
 
@@ -367,17 +505,30 @@ export function FormularioTarefa({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          {erroEnvio === "inexistente" ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos." : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo."}
+          {erroEnvio === "inexistente"
+            ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos."
+            : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo."}
         </div>
       )}
 
       <div className="e-form-footer">
         {onCancelar && (
-          <Button type="button" color="tertiary" size="sm" onClick={onCancelar} isDisabled={enviando}>
+          <Button
+            type="button"
+            color="tertiary"
+            size="sm"
+            onClick={onCancelar}
+            isDisabled={enviando}
+          >
             Cancelar
           </Button>
         )}
-        <Button type="submit" color="primary" size="sm" isDisabled={enviando || !podeSalvar}>
+        <Button
+          type="submit"
+          color="primary"
+          size="sm"
+          isDisabled={enviando || !podeSalvar}
+        >
           {enviando ? "Salvando…" : textoSalvar}
         </Button>
       </div>

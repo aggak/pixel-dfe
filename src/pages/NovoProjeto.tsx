@@ -10,7 +10,8 @@ export function NovoProjeto() {
   const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
 
-  // Ao sair da página, o envio pendente é cancelado e a resposta tardia não redireciona.
+  // Ao sair da página, o envio pendente é
+  // cancelado e a resposta tardia não redireciona.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -21,15 +22,19 @@ export function NovoProjeto() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     const criado = await criarProjeto(dados, controller.signal);
-    if (!controller.signal.aborted) navegar("/projetos", true, undefined, [`[data-project-id="${CSS.escape(criado.id)}"] h2 a`, '[data-action="new-project"]']);
+    if (!controller.signal.aborted)
+      navegar("/projetos", true, undefined, [
+        `[data-project-id="${CSS.escape(criado.id)}"] h2 a`,
+        '[data-action="new-project"]',
+      ]);
   }
 
   return (
-      <FormularioProjeto
-        onSalvar={salvar}
-        onCancelar={fechar}
-        onEstadoEnvio={setOcupada}
-        onAlteracao={setAlterada}
-      />
+    <FormularioProjeto
+      onSalvar={salvar}
+      onCancelar={fechar}
+      onEstadoEnvio={setOcupada}
+      onAlteracao={setAlterada}
+    />
   );
 }

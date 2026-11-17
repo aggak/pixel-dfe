@@ -16,40 +16,77 @@ async function executar() {
   const [portaApi, portaWeb] = [await portaLivre(), await portaLivre()];
   const api = `http://127.0.0.1:${portaApi}`;
   const web = `http://127.0.0.1:${portaWeb}`;
-  iniciar("node_modules/vite/bin/vite.js", ["--host", "127.0.0.1", "--port", String(portaWeb), "--strictPort", "--mode", "test"], { ...process.env, VITE_API_URL: api, VITE_API_TEMPO_LIMITE_MS: "1000" });
+  iniciar(
+    "node_modules/vite/bin/vite.js",
+    [
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(portaWeb),
+      "--strictPort",
+      "--mode",
+      "test",
+    ],
+    { ...process.env, VITE_API_URL: api, VITE_API_TEMPO_LIMITE_MS: "1000" },
+  );
   await esperar(web);
 
   browser = await apoio.abrirNavegador();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, colorScheme: "dark" });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "dark",
+  });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
-  const tentar = () => page.getByRole("main").getByRole("button", { name: "Tentar de novo" });
-  const textoConexao = "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
-  const textoServidor = "O servidor encontrou um problema. Tente de novo em instantes.";
+  const tentar = () =>
+    page.getByRole("main").getByRole("button", { name: "Tentar de novo" });
+  const textoConexao =
+    "Não conseguimos falar com o servidor. Verifique sua conexão e tente de novo.";
+  const textoServidor =
+    "O servidor encontrou um problema. Tente de novo em instantes.";
   const textoTempo = "O servidor demorou para responder. Tente de novo.";
 
   await page.goto(`${web}/`);
   await alerta("Não foi possível carregar as tarefas").waitFor();
   assert.equal(await alerta(textoConexao).count(), 1);
   assert.equal(await tentar().count(), 1);
-  iniciar("node_modules/json-server/lib/bin.js", [banco, "--host", "127.0.0.1", "--port", String(portaApi)]);
+  iniciar("node_modules/json-server/lib/bin.js", [
+    banco,
+    "--host",
+    "127.0.0.1",
+    "--port",
+    String(portaApi),
+  ]);
   await esperar(`${api}/tarefas`);
   await tentar().click();
   await page.locator("[data-task-id]").first().waitFor();
-  await page.getByRole("navigation", { name: "Projetos" }).getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
+  await page
+    .getByRole("navigation", { name: "Projetos" })
+    .getByRole("link", { name: "Gerenciador de Tarefas" })
+    .waitFor();
   assert.equal(await alerta("Não foi possível carregar").count(), 0);
   assert.equal(await page.locator(".e-task-project").first().isVisible(), true);
-  console.log("OK: lista com json-server parado avisa e carrega ao tentar de novo");
+  console.log(
+    "OK: lista com json-server parado avisa e carrega ao tentar de novo",
+  );
 
-  for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
+  for (const [caminho, colecao, seletor] of [
+    ["/", "tarefas", "[data-task-id]"],
+    ["/projetos", "projetos", "[data-project-id]"],
+  ]) {
     const semResposta = () => {};
     await page.route(`${api}/${colecao}`, semResposta);
     await page.goto(`${web}${caminho}`);
-    const carregando = page.getByRole("main").getByRole("status").filter({ hasText: `Carregando ${colecao}` });
+    const carregando = page
+      .getByRole("main")
+      .getByRole("status")
+      .filter({ hasText: `Carregando ${colecao}` });
     await carregando.waitFor();
-    await alerta(`Não foi possível carregar ${colecao === "tarefas" ? "as tarefas" : "os projetos"}`).waitFor();
+    await alerta(
+      `Não foi possível carregar ${colecao === "tarefas" ? "as tarefas" : "os projetos"}`,
+    ).waitFor();
     assert.equal(await carregando.count(), 0);
     assert.equal(await alerta(textoTempo).count(), 1);
     assert.equal(await tentar().isEnabled(), true);
@@ -57,38 +94,83 @@ async function executar() {
     await tentar().click();
     await page.locator(seletor).first().waitFor();
     assert.equal(await alerta("Não foi possível carregar").count(), 0);
-    console.log(`OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`);
+    console.log(
+      `OK: ${colecao} sem resposta atinge o limite, avisa e carrega ao tentar de novo`,
+    );
   }
 
-  const respostas = [["erro 500", { status: 500, body: "{}" }], ["404 na coleção", { status: 404, body: "{}" }], ["corpo que não é JSON", { status: 200, contentType: "text/html", body: "<!doctype html>" }], ["objeto no lugar da lista", { status: 200, contentType: "application/json", body: "{}" }]];
-  for (const [caminho, colecao, seletor] of [["/", "tarefas", "[data-task-id]"], ["/quadro", "tarefas", "[data-status-column] [data-task-id]"], ["/projetos", "projetos", "[data-project-id]"]]) {
+  const respostas = [
+    ["erro 500", { status: 500, body: "{}" }],
+    ["404 na coleção", { status: 404, body: "{}" }],
+    [
+      "corpo que não é JSON",
+      { status: 200, contentType: "text/html", body: "<!doctype html>" },
+    ],
+    [
+      "objeto no lugar da lista",
+      { status: 200, contentType: "application/json", body: "{}" },
+    ],
+  ];
+  for (const [caminho, colecao, seletor] of [
+    ["/", "tarefas", "[data-task-id]"],
+    ["/quadro", "tarefas", "[data-status-column] [data-task-id]"],
+    ["/projetos", "projetos", "[data-project-id]"],
+  ]) {
     for (const [nome, resposta] of respostas) {
       const responder = (rota) => rota.fulfill(resposta);
       await page.route(`${api}/${colecao}`, responder);
       await page.goto(`${web}${caminho}`);
       await alerta(textoServidor).waitFor();
-      assert.equal(await alerta(textoConexao).count(), 0, `${caminho} com ${nome}: texto de conexão`);
+      assert.equal(
+        await alerta(textoConexao).count(),
+        0,
+        `${caminho} com ${nome}: texto de conexão`,
+      );
       await page.unroute(`${api}/${colecao}`, responder);
       await tentar().click();
       await page.locator(seletor).first().waitFor();
       assert.equal(await alerta("Não foi possível carregar").count(), 0);
     }
-    console.log(`OK: ${caminho} com erro 500, 404 na coleção, corpo que não é JSON ou objeto no lugar da lista diz que o problema é do servidor`);
+    console.log(
+      `OK: ${caminho} com erro 500, 404 na coleção, corpo que não é JSON ou objeto no lugar da lista diz que o problema é do servidor`,
+    );
   }
 
-  async function conferirRota(nome, caminho, texto, carregado, escopo = () => page.getByRole("main"), comAbas = false) {
+  async function conferirRota(
+    nome,
+    caminho,
+    texto,
+    carregado,
+    escopo = () => page.getByRole("main"),
+    comAbas = false,
+  ) {
     let falhar = true;
     const interceptar = (rota) => (falhar ? rota.abort() : rota.continue());
     await page.route(`${api}/**`, interceptar);
     try {
       await page.goto(`${web}${caminho}`);
       await escopo().getByRole("alert").filter({ hasText: texto }).waitFor();
-      if (comAbas) assert.equal(await abas().getByRole("button").count(), 0, `${nome}: abas repetem o aviso`);
+      if (comAbas)
+        assert.equal(
+          await abas().getByRole("button").count(),
+          0,
+          `${nome}: abas repetem o aviso`,
+        );
       falhar = false;
-      await escopo().getByRole("button", { name: "Tentar de novo" }).first().click();
+      await escopo()
+        .getByRole("button", { name: "Tentar de novo" })
+        .first()
+        .click();
       await carregado().waitFor();
-      if (comAbas) await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
-      assert.equal(await escopo().getByRole("alert").filter({ hasText: texto }).count(), 0, `${nome}: erro continua visível`);
+      if (comAbas)
+        await abas()
+          .getByRole("link", { name: "Gerenciador de Tarefas" })
+          .waitFor();
+      assert.equal(
+        await escopo().getByRole("alert").filter({ hasText: texto }).count(),
+        0,
+        `${nome}: erro continua visível`,
+      );
       console.log(`OK: ${nome}`);
     } finally {
       await page.unroute(`${api}/**`, interceptar);
@@ -97,17 +179,59 @@ async function executar() {
 
   const ficha = () => page.getByRole("dialog");
   const abas = () => page.getByRole("navigation", { name: "Projetos" });
-  await conferirRota("quadro avisa e carrega ao tentar de novo", "/quadro", "Não foi possível carregar as tarefas", () => page.locator("[data-status-column] [data-task-id]").first(), undefined, true);
-  await conferirRota("lista de projetos avisa e carrega ao tentar de novo", "/projetos", "Não foi possível carregar os projetos", () => page.locator("[data-project-id]").first());
-  await conferirRota("página do projeto avisa e carrega ao tentar de novo", "/projetos/1", "Não foi possível carregar o projeto", () => page.locator("[data-task-id]").first(), undefined, true);
-  await conferirRota("detalhes da tarefa avisam e carregam ao tentar de novo", "/tarefas/1", "Não foi possível carregar a tarefa", () => ficha().locator(".e-read-title"), ficha);
-  await conferirRota("edição da tarefa avisa e carrega ao tentar de novo", "/tarefas/1/editar", "Não foi possível carregar a tarefa", () => ficha().locator("form"), ficha);
-  await conferirRota("edição do projeto avisa e carrega ao tentar de novo", "/projetos/1/editar", "Não foi possível carregar o projeto", () => ficha().locator("form"), ficha);
+  await conferirRota(
+    "quadro avisa e carrega ao tentar de novo",
+    "/quadro",
+    "Não foi possível carregar as tarefas",
+    () => page.locator("[data-status-column] [data-task-id]").first(),
+    undefined,
+    true,
+  );
+  await conferirRota(
+    "lista de projetos avisa e carrega ao tentar de novo",
+    "/projetos",
+    "Não foi possível carregar os projetos",
+    () => page.locator("[data-project-id]").first(),
+  );
+  await conferirRota(
+    "página do projeto avisa e carrega ao tentar de novo",
+    "/projetos/1",
+    "Não foi possível carregar o projeto",
+    () => page.locator("[data-task-id]").first(),
+    undefined,
+    true,
+  );
+  await conferirRota(
+    "detalhes da tarefa avisam e carregam ao tentar de novo",
+    "/tarefas/1",
+    "Não foi possível carregar a tarefa",
+    () => ficha().locator(".e-read-title"),
+    ficha,
+  );
+  await conferirRota(
+    "edição da tarefa avisa e carrega ao tentar de novo",
+    "/tarefas/1/editar",
+    "Não foi possível carregar a tarefa",
+    () => ficha().locator("form"),
+    ficha,
+  );
+  await conferirRota(
+    "edição do projeto avisa e carrega ao tentar de novo",
+    "/projetos/1/editar",
+    "Não foi possível carregar o projeto",
+    () => ficha().locator("form"),
+    ficha,
+  );
 
   for (const [caminho, carregado, fundoCarregado, requisicaoFundo] of [
     ["/tarefas/1", ".e-read-title", "[data-task-id]", "/tarefas"],
     ["/tarefas/1/editar", "form", "[data-task-id]", "/tarefas"],
-    ["/projetos/1/editar", "form", "[data-task-id]", "/projetos/1?_embed=tarefas"],
+    [
+      "/projetos/1/editar",
+      "form",
+      "[data-task-id]",
+      "/projetos/1?_embed=tarefas",
+    ],
   ]) {
     for (const fundoFalhou of [true, false]) {
       let falhar = true;
@@ -116,33 +240,65 @@ async function executar() {
         const url = new URL(rota.request().url());
         const ehFundo = url.pathname + url.search === requisicaoFundo;
         if (ehFundo) chamadasFundo.push(url.href);
-        const ehFicha = url.pathname === (caminho.startsWith("/tarefas") ? "/tarefas/1" : "/projetos/1") && !url.search;
-        return falhar && (fundoFalhou || ehFicha) ? rota.abort() : rota.continue();
+        const ehFicha =
+          url.pathname ===
+            (caminho.startsWith("/tarefas") ? "/tarefas/1" : "/projetos/1") &&
+          !url.search;
+        return falhar && (fundoFalhou || ehFicha)
+          ? rota.abort()
+          : rota.continue();
       };
       await page.route(`${api}/**`, interceptar);
       try {
         await page.goto(`${web}${caminho}`);
         await ficha().getByRole("alert").waitFor();
         const fundo = page.locator("main");
-        if (fundoFalhou) await fundo.getByRole("alert").waitFor({ state: "attached" });
-        else await fundo.locator(fundoCarregado).first().waitFor({ state: "attached" });
+        if (fundoFalhou)
+          await fundo.getByRole("alert").waitFor({ state: "attached" });
+        else
+          await fundo
+            .locator(fundoCarregado)
+            .first()
+            .waitFor({ state: "attached" });
         const chamadasIniciais = chamadasFundo.length;
         assert.ok(chamadasIniciais > 0);
         if (fundoFalhou) {
-          const falhaFundo = page.waitForEvent("requestfailed", { predicate: (pedido) => pedido.url().endsWith(requisicaoFundo) });
+          const falhaFundo = page.waitForEvent("requestfailed", {
+            predicate: (pedido) => pedido.url().endsWith(requisicaoFundo),
+          });
           await ficha().getByRole("button", { name: "Tentar de novo" }).focus();
           await page.keyboard.press("Enter");
           await falhaFundo;
-          await page.waitForFunction(() => !document.querySelector('[role="dialog"] [data-pending]') && !document.querySelector('main [data-pending]'));
-          assert.equal(chamadasFundo.length, chamadasIniciais + 1, `${caminho}: uma nova falha não deve iniciar um laço`);
-          assert.equal(await ficha().getByRole("button", { name: "Tentar de novo" }).evaluate((el) => el === document.activeElement), true);
+          await page.waitForFunction(
+            () =>
+              !document.querySelector('[role="dialog"] [data-pending]') &&
+              !document.querySelector("main [data-pending]"),
+          );
+          assert.equal(
+            chamadasFundo.length,
+            chamadasIniciais + 1,
+            `${caminho}: uma nova falha não deve iniciar um laço`,
+          );
+          assert.equal(
+            await ficha()
+              .getByRole("button", { name: "Tentar de novo" })
+              .evaluate((el) => el === document.activeElement),
+            true,
+          );
         }
         falhar = false;
         await ficha().getByRole("button", { name: "Tentar de novo" }).click();
         await ficha().locator(carregado).waitFor();
-        await fundo.locator(fundoCarregado).first().waitFor({ state: "attached" });
+        await fundo
+          .locator(fundoCarregado)
+          .first()
+          .waitFor({ state: "attached" });
         assert.equal(await fundo.getByRole("alert").count(), 0);
-        assert.equal(chamadasFundo.length, chamadasIniciais + (fundoFalhou ? 2 : 0), `${caminho}: só recarregar o fundo em erro`);
+        assert.equal(
+          chamadasFundo.length,
+          chamadasIniciais + (fundoFalhou ? 2 : 0),
+          `${caminho}: só recarregar o fundo em erro`,
+        );
         await ficha().locator(".e-form-header button").click();
         if (caminho === "/tarefas/1/editar") {
           await ficha().locator(".e-read-title").waitFor();
@@ -150,64 +306,109 @@ async function executar() {
         }
         await ficha().waitFor({ state: "detached" });
         await page.getByRole("main").locator(fundoCarregado).first().waitFor();
-        await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
-        assert.equal(await page.getByRole("main").getByRole("alert").count(), 0);
-        assert.equal(chamadasFundo.length, chamadasIniciais + (fundoFalhou ? 2 : 0), `${caminho}: fechar não deve repetir a consulta`);
-        console.log(`OK: ${caminho} tenta de novo com fundo ${fundoFalhou ? "em erro, sem laço e recuperado ao fechar" : "carregado, sem recarregá-lo"}`);
+        await abas()
+          .getByRole("link", { name: "Gerenciador de Tarefas" })
+          .waitFor();
+        assert.equal(
+          await page.getByRole("main").getByRole("alert").count(),
+          0,
+        );
+        assert.equal(
+          chamadasFundo.length,
+          chamadasIniciais + (fundoFalhou ? 2 : 0),
+          `${caminho}: fechar não deve repetir a consulta`,
+        );
+        console.log(
+          `OK: ${caminho} tenta de novo com fundo ${fundoFalhou ? "em erro, sem laço e recuperado ao fechar" : "carregado, sem recarregá-lo"}`,
+        );
       } finally {
         await page.unroute(`${api}/**`, interceptar);
       }
     }
   }
 
-  for (const [caminho, aviso] of [["/tarefas/1", "Nome do projeto indisponível."], ["/tarefas/1/editar", "Não foi possível carregar os projetos."]]) {
+  for (const [caminho, aviso] of [
+    ["/tarefas/1", "Nome do projeto indisponível."],
+    ["/tarefas/1/editar", "Não foi possível carregar os projetos."],
+  ]) {
     let falhar = true;
     let chamadasTarefas = 0;
     const interceptar = (rota) => {
       if (rota.request().url() === `${api}/tarefas`) chamadasTarefas++;
-      return falhar && rota.request().url() === `${api}/projetos` ? rota.abort() : rota.continue();
+      return falhar && rota.request().url() === `${api}/projetos`
+        ? rota.abort()
+        : rota.continue();
     };
     await page.route(`${api}/**`, interceptar);
     try {
       await page.goto(`${web}${caminho}`);
       await ficha().getByText(aviso).waitFor();
-      await page.locator("main [data-task-id]").first().waitFor({ state: "attached" });
+      await page
+        .locator("main [data-task-id]")
+        .first()
+        .waitFor({ state: "attached" });
       const chamadasIniciais = chamadasTarefas;
       falhar = false;
       await ficha().getByRole("button", { name: "Tentar de novo" }).click();
       await ficha().getByText(aviso).waitFor({ state: "detached" });
-      await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor({ state: "attached" });
-      assert.equal(chamadasTarefas, chamadasIniciais, `${caminho}: recuperar projetos não deve recarregar as tarefas do fundo`);
-      console.log(`OK: ${caminho} recupera os projetos da ficha e do fundo sem recarregar tarefas`);
+      await abas()
+        .getByRole("link", { name: "Gerenciador de Tarefas" })
+        .waitFor({ state: "attached" });
+      assert.equal(
+        chamadasTarefas,
+        chamadasIniciais,
+        `${caminho}: recuperar projetos não deve recarregar as tarefas do fundo`,
+      );
+      console.log(
+        `OK: ${caminho} recupera os projetos da ficha e do fundo sem recarregar tarefas`,
+      );
     } finally {
       await page.unroute(`${api}/**`, interceptar);
     }
   }
 
   let falharProjetos = true;
-  const interceptarProjetos = (rota) => (falharProjetos ? rota.abort() : rota.continue());
+  const interceptarProjetos = (rota) =>
+    falharProjetos ? rota.abort() : rota.continue();
   await page.route(`${api}/projetos`, interceptarProjetos);
   await page.goto(`${web}/tarefas/nova`);
   await alerta("Não foi possível carregar os projetos").waitFor();
   falharProjetos = false;
   await ficha().getByRole("button", { name: "Tentar de novo" }).click();
-  await alerta("Não foi possível carregar os projetos").waitFor({ state: "detached" });
+  await alerta("Não foi possível carregar os projetos").waitFor({
+    state: "detached",
+  });
   await alerta("Tentando de novo…").waitFor({ state: "detached" });
-  assert.equal(await ficha().getByRole("button", { name: "Tentar de novo" }).count(), 0);
+  assert.equal(
+    await ficha().getByRole("button", { name: "Tentar de novo" }).count(),
+    0,
+  );
   await page.unroute(`${api}/projetos`, interceptarProjetos);
   console.log("OK: formulário avisa e recarrega os projetos ao tentar de novo");
 
-  const tentarAbas = () => abas().getByRole("button", { name: "Tentar de novo" });
+  const tentarAbas = () =>
+    abas().getByRole("button", { name: "Tentar de novo" });
   let falharAbas = true;
-  const interceptarAbas = (rota) => (falharAbas ? rota.abort() : rota.continue());
+  const interceptarAbas = (rota) =>
+    falharAbas ? rota.abort() : rota.continue();
   await page.route(`${api}/projetos`, interceptarAbas);
   await page.goto(`${web}/`);
   await page.locator("[data-task-id]").first().waitFor();
-  await abas().getByRole("status").filter({ hasText: "Os projetos não carregaram." }).waitFor();
+  await abas()
+    .getByRole("status")
+    .filter({ hasText: "Os projetos não carregaram." })
+    .waitFor();
   await tentarAbas().focus();
   await page.keyboard.press("Enter");
-  await abas().getByRole("status").filter({ hasText: "Os projetos não carregaram." }).waitFor();
-  await page.waitForFunction(() => document.activeElement?.textContent === "Tentar de novo" && !document.activeElement.disabled);
+  await abas()
+    .getByRole("status")
+    .filter({ hasText: "Os projetos não carregaram." })
+    .waitFor();
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.textContent === "Tentar de novo" &&
+      !document.activeElement.disabled,
+  );
   assert.equal(await page.locator(".e-task-project").count(), 0);
   falharAbas = false;
   await tentarAbas().click();
@@ -215,7 +416,9 @@ async function executar() {
   await page.locator(".e-task-project").first().waitFor();
   assert.equal(await tentarAbas().count(), 0);
   await page.unroute(`${api}/projetos`, interceptarAbas);
-  console.log("OK: abas avisam a falha, recarregam projetos e nomes nos cartões mantendo o foco");
+  console.log(
+    "OK: abas avisam a falha, recarregam projetos e nomes nos cartões mantendo o foco",
+  );
 
   await page.route(`${api}/**`, (rota) => rota.abort());
   await page.goto(`${web}/`);
@@ -229,31 +432,53 @@ async function executar() {
   await page.goto(`${web}/tarefas/1`);
   await alerta("Não foi possível carregar a tarefa").waitFor();
   await ficha().getByRole("button", { name: "Tentar de novo" }).focus();
-  const novaFalhaFicha = page.waitForEvent("requestfailed", { predicate: (pedido) => pedido.url() === `${api}/tarefas/1` });
+  const novaFalhaFicha = page.waitForEvent("requestfailed", {
+    predicate: (pedido) => pedido.url() === `${api}/tarefas/1`,
+  });
   await page.keyboard.press("Enter");
   await novaFalhaFicha;
-  await page.waitForFunction(() => !document.querySelector('[role="dialog"] [data-pending]'));
-  assert.equal(await page.evaluate(() => document.activeElement?.textContent), "Tentar de novo");
+  await page.waitForFunction(
+    () => !document.querySelector('[role="dialog"] [data-pending]'),
+  );
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.textContent),
+    "Tentar de novo",
+  );
   assert.equal(await ficha().count(), 1);
   await page.unroute(`${api}/**`, interceptarFichaFoco);
   console.log("OK: na ficha a nova falha mantém o foco em tentar de novo");
 
   let falharNome = true;
-  const interceptarNome = (rota) => (falharNome ? rota.abort() : rota.continue());
+  const interceptarNome = (rota) =>
+    falharNome ? rota.abort() : rota.continue();
   await page.route(`${api}/projetos`, interceptarNome);
   await page.goto(`${web}/tarefas/1`);
   await ficha().locator(".e-read-title").waitFor();
-  await ficha().getByRole("status").filter({ hasText: "Nome do projeto indisponível." }).waitFor();
+  await ficha()
+    .getByRole("status")
+    .filter({ hasText: "Nome do projeto indisponível." })
+    .waitFor();
   falharNome = false;
   await ficha().getByRole("button", { name: "Tentar de novo" }).click();
-  await ficha().locator(".e-read-project").getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
-  assert.equal(await ficha().getByText("Nome do projeto indisponível.").count(), 0);
+  await ficha()
+    .locator(".e-read-project")
+    .getByRole("link", { name: "Gerenciador de Tarefas" })
+    .waitFor();
+  assert.equal(
+    await ficha().getByText("Nome do projeto indisponível.").count(),
+    0,
+  );
   await page.unroute(`${api}/projetos`, interceptarNome);
   console.log("OK: ficha avisa quando só o nome do projeto falha e recarrega");
 
   let falharAndamento = true;
-  const interceptarAndamento = (rota) => (falharAndamento ? rota.abort() : rota.continue());
-  const avisoAndamento = () => page.getByRole("main").getByRole("status").filter({ hasText: "O andamento dos projetos não carregou." });
+  const interceptarAndamento = (rota) =>
+    falharAndamento ? rota.abort() : rota.continue();
+  const avisoAndamento = () =>
+    page
+      .getByRole("main")
+      .getByRole("status")
+      .filter({ hasText: "O andamento dos projetos não carregou." });
   await page.route(`${api}/tarefas`, interceptarAndamento);
   await page.goto(`${web}/projetos`);
   await page.locator("[data-project-id]").first().waitFor();
@@ -263,14 +488,22 @@ async function executar() {
   await tentar().focus();
   await page.keyboard.press("Enter");
   await avisoAndamento().waitFor();
-  await page.waitForFunction(() => document.activeElement?.textContent === "Tentar de novo" && !document.activeElement.disabled);
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.textContent === "Tentar de novo" &&
+      !document.activeElement.disabled,
+  );
   falharAndamento = false;
   await page.keyboard.press("Enter");
   await page.locator(".e-proj-prog").first().waitFor();
   assert.equal(await avisoAndamento().count(), 0);
-  await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+  await page.waitForFunction(
+    () => document.activeElement === document.querySelector("main h1"),
+  );
   await page.unroute(`${api}/tarefas`, interceptarAndamento);
-  console.log("OK: projetos avisam quando só o andamento falha e recarregam ao tentar de novo, com o foco no título");
+  console.log(
+    "OK: projetos avisam quando só o andamento falha e recarregam ao tentar de novo, com o foco no título",
+  );
 
   const interceptarTudo = (rota) => rota.abort();
   await page.route(`${api}/**`, interceptarTudo);
@@ -278,18 +511,24 @@ async function executar() {
   await alerta("Não foi possível carregar os projetos").waitFor();
   await tentar().focus();
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => document.activeElement?.textContent === "Tentar de novo");
+  await page.waitForFunction(
+    () => document.activeElement?.textContent === "Tentar de novo",
+  );
   await page.unroute(`${api}/**`, interceptarTudo);
   console.log("OK: nova falha devolve o foco para tentar de novo");
 
   let falharFicha = true;
-  const interceptarFicha = (rota) => (falharFicha ? rota.abort() : rota.continue());
+  const interceptarFicha = (rota) =>
+    falharFicha ? rota.abort() : rota.continue();
   await page.route(`${api}/**`, interceptarFicha);
   await page.goto(`${web}/tarefas/1`);
   await alerta("Não foi possível carregar a tarefa").waitFor();
   falharFicha = false;
   await ficha().getByRole("button", { name: "Tentar de novo" }).click();
-  await ficha().locator(".e-read-project").getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
+  await ficha()
+    .locator(".e-read-project")
+    .getByRole("link", { name: "Gerenciador de Tarefas" })
+    .waitFor();
   await page.unroute(`${api}/**`, interceptarFicha);
   console.log("OK: ficha recarrega também o nome do projeto");
 
@@ -297,7 +536,9 @@ async function executar() {
   let lenta = false;
   const interceptarLenta = async (rota) => {
     if (!lenta) return rota.abort();
-    await new Promise((resolve) => { liberarLenta = resolve; });
+    await new Promise((resolve) => {
+      liberarLenta = resolve;
+    });
     await rota.continue();
   };
   await page.route(`${api}/projetos`, interceptarLenta);
@@ -306,49 +547,83 @@ async function executar() {
   lenta = true;
   await tentar().click();
   await page.locator("main [data-pending]").waitFor();
-  assert.equal(await alerta("Não foi possível carregar os projetos").count(), 1);
+  assert.equal(
+    await alerta("Não foi possível carregar os projetos").count(),
+    1,
+  );
   await alerta("Tentando de novo…").waitFor();
   assert.equal(await page.getByRole("main").getByRole("status").count(), 0);
   while (!liberarLenta) await new Promise((resolve) => setTimeout(resolve, 20));
   liberarLenta();
   await page.locator("[data-project-id]").first().waitFor();
   await page.unroute(`${api}/projetos`, interceptarLenta);
-  console.log("OK: durante a nova tentativa o aviso fica e o botão indica carregamento");
+  console.log(
+    "OK: durante a nova tentativa o aviso fica e o botão indica carregamento",
+  );
 
   await page.goto(`${web}/projetos/999`);
   await alerta("Projeto não encontrado").waitFor();
   assert.equal(await tentar().count(), 0);
   console.log("OK: projeto inexistente não oferece tentar de novo");
 
-  await page.route("**/src/pages/NovaTarefa.tsx*", (rota) => rota.abort("connectionrefused"));
+  await page.route("**/src/pages/NovaTarefa.tsx*", (rota) =>
+    rota.abort("connectionrefused"),
+  );
   await page.goto(`${web}/`);
   await page.locator("[data-task-id]").first().waitFor();
   await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
   const fichaNova = page.getByRole("dialog", { name: "Nova tarefa" });
-  await fichaNova.getByRole("alert").filter({ hasText: "Não foi possível abrir o formulário" }).waitFor();
-  assert.equal(await fichaNova.getByRole("button", { name: "Tentar de novo" }).count(), 1);
+  await fichaNova
+    .getByRole("alert")
+    .filter({ hasText: "Não foi possível abrir o formulário" })
+    .waitFor();
+  assert.equal(
+    await fichaNova.getByRole("button", { name: "Tentar de novo" }).count(),
+    1,
+  );
   assert.equal(await page.locator("[data-task-id]").first().isVisible(), true);
   await page.unroute("**/src/pages/NovaTarefa.tsx*");
-  console.log("OK: formulário que não baixa mostra aviso na ficha, sem apagar a página");
+  console.log(
+    "OK: formulário que não baixa mostra aviso na ficha, sem apagar a página",
+  );
 
   const totalTarefas = (await (await fetch(`${api}/tarefas`)).json()).length;
   const totalProjetos = (await (await fetch(`${api}/projetos`)).json()).length;
   const alterarResposta = (alterar) => async (rota) => {
     const resposta = await rota.fetch();
-    await rota.fulfill({ response: resposta, json: alterar(await resposta.json()) });
+    await rota.fulfill({
+      response: resposta,
+      json: alterar(await resposta.json()),
+    });
   };
-  const tarefasTortas = alterarResposta((lista) => [lista[0], {}, null, "x", { id: "" }, ...lista.slice(1)]);
+  const tarefasTortas = alterarResposta((lista) => [
+    lista[0],
+    {},
+    null,
+    "x",
+    { id: "" },
+    ...lista.slice(1),
+  ]);
   await page.route(`${api}/tarefas`, tarefasTortas);
   for (const caminho of ["/", "/quadro"]) {
     await page.goto(`${web}${caminho}`);
     await page.locator("[data-task-id]").first().waitFor();
-    assert.equal(await page.locator("[data-task-id]").count(), totalTarefas, `${caminho}: tarefas válidas faltando`);
+    assert.equal(
+      await page.locator("[data-task-id]").count(),
+      totalTarefas,
+      `${caminho}: tarefas válidas faltando`,
+    );
     assert.equal(await page.getByRole("alert").count(), 0);
   }
   await page.unroute(`${api}/tarefas`, tarefasTortas);
-  console.log("OK: itens fora do contrato no meio da lista são descartados e as outras tarefas aparecem");
+  console.log(
+    "OK: itens fora do contrato no meio da lista são descartados e as outras tarefas aparecem",
+  );
 
-  const projetoSemNome = alterarResposta((lista) => [...lista, { id: "sem-nome" }]);
+  const projetoSemNome = alterarResposta((lista) => [
+    ...lista,
+    { id: "sem-nome" },
+  ]);
   await page.route(`${api}/projetos`, projetoSemNome);
   await page.goto(`${web}/`);
   await page.locator("[data-task-id]").first().waitFor();
@@ -356,20 +631,45 @@ async function executar() {
   assert.equal(await abas().locator('a[href="/projetos/sem-nome"]').count(), 1);
   await page.goto(`${web}/projetos`);
   await page.locator("[data-project-id]").first().waitFor();
-  assert.equal(await page.locator("[data-project-id]").count(), totalProjetos + 1);
+  assert.equal(
+    await page.locator("[data-project-id]").count(),
+    totalProjetos + 1,
+  );
   assert.equal(await page.getByRole("alert").count(), 0);
   await page.unroute(`${api}/projetos`, projetoSemNome);
-  console.log("OK: projeto sem nome não derruba as abas nem a lista de projetos");
+  console.log(
+    "OK: projeto sem nome não derruba as abas nem a lista de projetos",
+  );
 
   const barreira = () => alerta("Não foi possível mostrar esta página");
-  const statusQuebrado = alterarResposta((lista) => lista.map((tarefa, indice) => (indice === 0 ? { ...tarefa, status: "__proto__" } : tarefa)));
+  const statusQuebrado = alterarResposta((lista) =>
+    lista.map((tarefa, indice) =>
+      indice === 0 ? { ...tarefa, status: "__proto__" } : tarefa,
+    ),
+  );
   await page.route(`${api}/tarefas`, statusQuebrado);
   await page.goto(`${web}/`);
   await barreira().waitFor();
-  assert.equal(await page.getByRole("navigation", { name: "Navegação principal" }).isVisible(), true);
-  assert.equal(await page.getByRole("contentinfo", { name: "Informações da Pixel" }).isVisible(), true);
-  assert.equal(await page.title(), "Não foi possível mostrar esta página · Pixel");
-  await page.getByRole("navigation", { name: "Navegação principal" }).getByRole("link", { name: "Projetos" }).click();
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .isVisible(),
+    true,
+  );
+  assert.equal(
+    await page
+      .getByRole("contentinfo", { name: "Informações da Pixel" })
+      .isVisible(),
+    true,
+  );
+  assert.equal(
+    await page.title(),
+    "Não foi possível mostrar esta página · Pixel",
+  );
+  await page
+    .getByRole("navigation", { name: "Navegação principal" })
+    .getByRole("link", { name: "Projetos" })
+    .click();
   await page.locator("[data-project-id]").first().waitFor();
   assert.equal(await barreira().count(), 0);
   await page.goBack();
@@ -378,14 +678,22 @@ async function executar() {
   await tentar().click();
   await page.locator("[data-task-id]").first().waitFor();
   assert.equal(await barreira().count(), 0);
-  console.log("OK: erro ao mostrar a página fica na barreira com header e rodapé, some ao navegar e recarrega ao tentar de novo");
+  console.log(
+    "OK: erro ao mostrar a página fica na barreira com header e rodapé, some ao navegar e recarrega ao tentar de novo",
+  );
 
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
-  assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
+  assert.equal(
+    await readFile(join(raiz, "db.seed.json"), "utf8"),
+    seedOriginal,
+  );
   console.log("OK: sem erros JavaScript e bancos locais preservados");
 }
 
 executar()
-  .catch((erro) => { console.error(erro); process.exitCode = 1; })
+  .catch((erro) => {
+    console.error(erro);
+    process.exitCode = 1;
+  })
   .finally(() => apoio.encerrar());

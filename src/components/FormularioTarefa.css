@@ -1,6 +1,7 @@
 /*
- * A aparência da ficha (e-task-form, e-project-form, e-properties, e-form-footer…) vem do CSS global
- * da prévia. Aqui ficam apenas os complementos do markup real do Pixel.
+ * A aparência da ficha (e-task-form, e-project-form,
+ * e-properties, e-form-footer…) vem do CSS global da prévia.
+ * Aqui ficam apenas os complementos do markup real do Pixel.
  */
 .formulario-tarefa {
   text-align: left;
@@ -13,7 +14,6 @@
   gap: 6px;
   min-width: 0;
 }
-
 
 .formulario-tarefa__aviso {
   margin: 0;
@@ -58,13 +58,21 @@
   }
 }
 
-/* Equivale a `.e-description #task-description` (o id aqui é gerado por useId). */
+/* Equivale a `.e-description #task-description`
+   (o id aqui é gerado por useId). */
 .e-description-body {
   padding: 4px 0 6px;
 }
 
 .e-title-field [data-label],
 .e-description-body [data-label] {
-  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

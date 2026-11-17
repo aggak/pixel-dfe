@@ -2,12 +2,22 @@ import type { HTMLAttributes } from "react";
 import { Icon } from "./icon";
 type IconProps = HTMLAttributes<HTMLElement>;
 export const Check = (props: IconProps) => <Icon {...props} name="check" />;
-export const ChevronDown = (props: IconProps) => <Icon {...props} name="angle-down" />;
-export const ChevronRight = (props: IconProps) => <Icon {...props} name="angle-right" />;
-export const DotsVertical = (props: IconProps) => <Icon {...props} name="menu-dots-vertical" />;
+export const ChevronDown = (props: IconProps) => (
+  <Icon {...props} name="angle-down" />
+);
+export const ChevronRight = (props: IconProps) => (
+  <Icon {...props} name="angle-right" />
+);
+export const DotsVertical = (props: IconProps) => (
+  <Icon {...props} name="menu-dots-vertical" />
+);
 export const Eye = (props: IconProps) => <Icon {...props} name="eye" />;
-export const EyeOff = (props: IconProps) => <Icon {...props} name="eye-crossed" />;
-export const HelpCircle = (props: IconProps) => <Icon {...props} name="interrogation" />;
+export const EyeOff = (props: IconProps) => (
+  <Icon {...props} name="eye-crossed" />
+);
+export const HelpCircle = (props: IconProps) => (
+  <Icon {...props} name="interrogation" />
+);
 export const InfoCircle = (props: IconProps) => <Icon {...props} name="info" />;
 export const Plus = (props: IconProps) => <Icon {...props} name="plus" />;
 export const SearchLg = (props: IconProps) => <Icon {...props} name="search" />;

@@ -17,15 +17,23 @@ type CampoObrigatorio = "nome" | "disciplina" | "criadoEm";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
 
 interface FormularioProjetoProps {
-  /** Lido apenas na montagem; use `key` no pai para trocar o projeto editado. */
+  /**
+   * Lido apenas na montagem; use `key` no pai para trocar o projeto editado.
+   */
   valoresIniciais?: Partial<DadosProjeto>;
   onSalvar: (dados: DadosProjeto) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
-  /** Avisa o pai quando um envio começa (`true`) e quando termina ou o formulário é desmontado (`false`). */
+  /**
+   * Avisa o pai quando um envio começa (`true`) e quando
+   * termina ou o formulário é desmontado (`false`).
+   */
   onEstadoEnvio?: (ocupada: boolean) => void;
   onAlteracao?: (alterado: boolean) => void;
-  /** Edição de projeto existente: só então um 404 significa que ele foi excluído. */
+  /**
+   * Edição de projeto existente: só então
+   * um 404 significa que ele foi excluído.
+   */
   edicao?: boolean;
 }
 
@@ -40,14 +48,23 @@ export function FormularioProjeto({
 }: FormularioProjetoProps) {
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
-  const [disciplina, setDisciplina] = useState(valoresIniciais?.disciplina ?? "");
+  const [disciplina, setDisciplina] = useState(
+    valoresIniciais?.disciplina ?? "",
+  );
   const [criadoEm, setCriadoEm] = useState(valoresIniciais?.criadoEm ?? "");
   const [iniciais] = useState(valoresIniciais);
-  const alterado = nome !== (iniciais?.nome ?? "") || descricao !== (iniciais?.descricao ?? "") || disciplina !== (iniciais?.disciplina ?? "") || criadoEm !== (iniciais?.criadoEm ?? "");
+  const alterado =
+    nome !== (iniciais?.nome ?? "") ||
+    descricao !== (iniciais?.descricao ?? "") ||
+    disciplina !== (iniciais?.disciplina ?? "") ||
+    criadoEm !== (iniciais?.criadoEm ?? "");
 
   const [enviando, setEnviando] = useState(false);
-  // "inexistente": o projeto foi excluído enquanto a ficha estava aberta; tentar de novo não adianta.
-  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(false);
+  // "inexistente": o projeto foi excluído enquanto a
+  // ficha estava aberta; tentar de novo não adianta.
+  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
+    false,
+  );
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
 
@@ -63,7 +80,8 @@ export function FormularioProjeto({
     onAlteracaoRef.current?.(true);
     return () => onAlteracaoRef.current?.(false);
   }, [alterado]);
-  // Se o formulário sair da tela durante um envio, o pai não pode ficar preso em "ocupada".
+  // Se o formulário sair da tela durante um envio,
+  // o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {
       if (!notificadoRef.current) return;
@@ -96,18 +114,29 @@ export function FormularioProjeto({
     if (!nome.trim()) novosErros.nome = "Informe o nome do projeto.";
     if (!disciplina.trim()) novosErros.disciplina = "Informe a disciplina.";
     if (!criadoEm) novosErros.criadoEm = "Informe a data de criação.";
-    else if (!dataValida(criadoEm)) novosErros.criadoEm = "Informe uma data válida.";
+    else if (!dataValida(criadoEm))
+      novosErros.criadoEm = "Informe uma data válida.";
     setErros(novosErros);
-    // A ordem de inserção acima é a ordem dos campos na ficha (nome, disciplina, criado em).
-    const primeiroErro = Object.keys(novosErros)[0] as CampoObrigatorio | undefined;
+    // A ordem de inserção acima é a ordem dos campos
+    // na ficha (nome, disciplina, criado em).
+    const primeiroErro = Object.keys(novosErros)[0] as
+      | CampoObrigatorio
+      | undefined;
     if (primeiroErro) {
       const formulario = evento.currentTarget;
-      window.setTimeout(() => formulario.querySelector<HTMLElement>(`[name="${primeiroErro}"]`)?.focus(), 0);
+      window.setTimeout(
+        () =>
+          formulario
+            .querySelector<HTMLElement>(`[name="${primeiroErro}"]`)
+            ?.focus(),
+        0,
+      );
       return;
     }
 
     // Monta o objeto campo a campo para nunca repassar `id` ou extras.
-    // Nome e disciplina são validados sem espaços nas pontas e gravados da mesma forma.
+    // Nome e disciplina são validados sem espaços
+    // nas pontas e gravados da mesma forma.
     const dados: DadosProjeto = {
       nome: nome.trim(),
       descricao,
@@ -122,7 +151,11 @@ export function FormularioProjeto({
     try {
       await onSalvar(dados);
     } catch (erro) {
-      setErroEnvio(edicao && erro instanceof ErroApi && erro.status === 404 ? "inexistente" : "falha");
+      setErroEnvio(
+        edicao && erro instanceof ErroApi && erro.status === 404
+          ? "inexistente"
+          : "falha",
+      );
     } finally {
       enviandoRef.current = false;
       setEnviando(false);
@@ -131,7 +164,12 @@ export function FormularioProjeto({
   }
 
   return (
-    <form className="e-project-form formulario-tarefa" onSubmit={enviar} noValidate aria-busy={enviando}>
+    <form
+      className="e-project-form formulario-tarefa"
+      onSubmit={enviar}
+      noValidate
+      aria-busy={enviando}
+    >
       <div className="e-panel-scroll">
         <div className="e-project-fields">
           <Input
@@ -143,9 +181,14 @@ export function FormularioProjeto({
             validationBehavior="aria"
             size="sm"
             value={nome}
-            onChange={(valor) => { setNome(valor); limparErro("nome"); }}
+            onChange={(valor) => {
+              setNome(valor);
+              limparErro("nome");
+            }}
             isInvalid={Boolean(erros.nome)}
-            hint={erros.nome ? <span role="alert">{erros.nome}</span> : undefined}
+            hint={
+              erros.nome ? <span role="alert">{erros.nome}</span> : undefined
+            }
           />
 
           <div className="e-form-two">
@@ -157,11 +200,19 @@ export function FormularioProjeto({
               validationBehavior="aria"
               size="sm"
               value={disciplina}
-              onChange={(valor) => { setDisciplina(valor); limparErro("disciplina"); }}
+              onChange={(valor) => {
+                setDisciplina(valor);
+                limparErro("disciplina");
+              }}
               isInvalid={Boolean(erros.disciplina)}
-              hint={erros.disciplina ? <span role="alert">{erros.disciplina}</span> : undefined}
+              hint={
+                erros.disciplina ? (
+                  <span role="alert">{erros.disciplina}</span>
+                ) : undefined
+              }
             />
-            {/* Mantido visível, editável e obrigatório: faz parte dos dados do projeto. */}
+            {/* Mantido visível, editável e obrigatório:
+                faz parte dos dados do projeto. */}
             <Input
               name="criadoEm"
               label="Criado em"
@@ -170,18 +221,34 @@ export function FormularioProjeto({
               validationBehavior="aria"
               size="sm"
               value={criadoEm}
-              onChange={(valor) => { setCriadoEm(valor); limparErro("criadoEm"); }}
+              onChange={(valor) => {
+                setCriadoEm(valor);
+                limparErro("criadoEm");
+              }}
               isInvalid={Boolean(erros.criadoEm)}
-              hint={erros.criadoEm ? <span role="alert">{erros.criadoEm}</span> : undefined}
+              hint={
+                erros.criadoEm ? (
+                  <span role="alert">{erros.criadoEm}</span>
+                ) : undefined
+              }
             />
           </div>
 
-          <TextField name="descricao" value={descricao} onChange={setDescricao} className="group flex h-max w-full flex-col items-start justify-start gap-1.5">
+          <TextField
+            name="descricao"
+            value={descricao}
+            onChange={setDescricao}
+            className="group flex h-max w-full flex-col items-start justify-start gap-1.5"
+          >
             <Label>
               Descrição
               <span className="e-opcional">opcional</span>
             </Label>
-            <TextAreaBase placeholder="O que este projeto reúne?" rows={3} size="sm" />
+            <TextAreaBase
+              placeholder="O que este projeto reúne?"
+              rows={3}
+              size="sm"
+            />
           </TextField>
         </div>
       </div>
@@ -189,13 +256,21 @@ export function FormularioProjeto({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          {erroEnvio === "inexistente" ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos." : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo."}
+          {erroEnvio === "inexistente"
+            ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos."
+            : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo."}
         </div>
       )}
 
       <div className="e-form-footer">
         {onCancelar && (
-          <Button type="button" color="tertiary" size="sm" onClick={onCancelar} isDisabled={enviando}>
+          <Button
+            type="button"
+            color="tertiary"
+            size="sm"
+            onClick={onCancelar}
+            isDisabled={enviando}
+          >
             Cancelar
           </Button>
         )}
