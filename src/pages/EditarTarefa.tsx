@@ -13,13 +13,29 @@ import { GatinhoAbanando } from "../components/GatinhoAbanando";
 export function EditarTarefa() {
   const { id = "" } = useParams();
   const { navegar, fechar, setOcupada, setAlterada } = useFicha();
-  const consultar = useCallback((signal: AbortSignal) => buscarTarefa(id, signal), [id]);
-  const { dados: tarefa, erro, carregando, tentando, tentarDeNovo } = useConsulta(consultar);
-  useTituloPagina(erro instanceof ErroApi && erro.status === 404 ? "Tarefa não encontrada" : tarefa ? `Editar: ${tarefa.titulo}` : "Editar tarefa");
+  const consultar = useCallback(
+    (signal: AbortSignal) => buscarTarefa(id, signal),
+    [id],
+  );
+  const {
+    dados: tarefa,
+    erro,
+    carregando,
+    tentando,
+    tentarDeNovo,
+  } = useConsulta(consultar);
+  useTituloPagina(
+    erro instanceof ErroApi && erro.status === 404
+      ? "Tarefa não encontrada"
+      : tarefa
+        ? `Editar: ${tarefa.titulo}`
+        : "Editar tarefa",
+  );
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 
-  // A gravação pertence ao ID atual; uma resposta antiga não pode mudar de tela.
+  // A gravação pertence ao ID atual; uma
+  // resposta antiga não pode mudar de tela.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;
@@ -30,21 +46,44 @@ export function EditarTarefa() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     await atualizarTarefa(id, dados, controller.signal);
-    if (!controller.signal.aborted) navegar(voltarPara, true, undefined, [`[data-task-id="${CSS.escape(id)}"] .e-task-title`]);
+    if (!controller.signal.aborted)
+      navegar(voltarPara, true, undefined, [
+        `[data-task-id="${CSS.escape(id)}"] .e-task-title`,
+      ]);
   }
 
   return (
     <>
-      {carregando && <><div className="e-ficha-gato"><GatinhoAbanando /></div><p className="e-ficha-state e-ficha-loading-tarefa" role="status">Carregando tarefa…</p></>}
-      {erro instanceof ErroApi && erro.status === 404 && (
+      {carregando && (
         <>
-          <div className="e-ficha-gato"><GatinhoCochilando /></div>
-          <p className="e-ficha-state e-form-error" role="alert">Tarefa não encontrada. Ela pode ter sido excluída.</p>
+          <div className="e-ficha-gato">
+            <GatinhoAbanando />
+          </div>
+          <p className="e-ficha-state e-ficha-loading-tarefa" role="status">
+            Carregando tarefa…
+          </p>
         </>
       )}
-      {erro !== undefined && !(erro instanceof ErroApi && erro.status === 404) && (
-        <ErroCarregamento compacto titulo="Não foi possível carregar a tarefa" erro={erro} onTentarDeNovo={tentarDeNovo} tentando={tentando} />
+      {erro instanceof ErroApi && erro.status === 404 && (
+        <>
+          <div className="e-ficha-gato">
+            <GatinhoCochilando />
+          </div>
+          <p className="e-ficha-state e-form-error" role="alert">
+            Tarefa não encontrada. Ela pode ter sido excluída.
+          </p>
+        </>
       )}
+      {erro !== undefined &&
+        !(erro instanceof ErroApi && erro.status === 404) && (
+          <ErroCarregamento
+            compacto
+            titulo="Não foi possível carregar a tarefa"
+            erro={erro}
+            onTentarDeNovo={tentarDeNovo}
+            tentando={tentando}
+          />
+        )}
       {tarefa && (
         <FormularioTarefa
           key={id}

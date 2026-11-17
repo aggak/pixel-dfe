@@ -9,8 +9,20 @@ const apoio = criarApoio();
 const raiz = join(__dirname, "..");
 let browser;
 
-const paginas = ["/", "/quadro", "/projetos", "/projetos/1", "/rota-inexistente"];
-const fichas = ["/tarefas/1", "/tarefas/nova", "/tarefas/1/editar", "/projetos/novo", "/projetos/1/editar"];
+const paginas = [
+  "/",
+  "/quadro",
+  "/projetos",
+  "/projetos/1",
+  "/rota-inexistente",
+];
+const fichas = [
+  "/tarefas/1",
+  "/tarefas/nova",
+  "/tarefas/1/editar",
+  "/projetos/novo",
+  "/projetos/1/editar",
+];
 const larguras = [1280, 850, 800, 650, 375, 320];
 
 async function executar() {
@@ -21,157 +33,367 @@ async function executar() {
 
   browser = await apoio.abrirNavegador();
   const errosPagina = [];
-  // Conteúdo pronto: a consulta principal terminou, nenhum indicador de carregamento segue ativo
-  // e a ficha terminou de abrir (a animação de entrada a escala de 95% para 100%, o que distorce as medidas).
+  // Conteúdo pronto: a consulta principal terminou, nenhum indicador de
+  // carregamento segue ativo e a ficha terminou de abrir (a animação de
+  // entrada a escala de 95% para 100%, o que distorce as medidas).
   async function abrir(page, caminho) {
     await page.goto(`${web}${caminho}`);
-    await page.locator("main h1, .e-form-overlay [role=dialog] h2, .e-form-overlay [role=dialog] form").first().waitFor();
-    await page.waitForFunction(() => !document.querySelector(".e-loading-state, .e-ficha-state[role=status]")
-      && document.getAnimations().every((animacao) => animacao.effect?.getTiming().iterations === Infinity || animacao.playState !== "running"));
+    await page
+      .locator(
+        "main h1, .e-form-overlay [role=dialog] h2, .e-form-overlay [role=dialog] form",
+      )
+      .first()
+      .waitFor();
+    await page.waitForFunction(
+      () =>
+        !document.querySelector(
+          ".e-loading-state, .e-ficha-state[role=status]",
+        ) &&
+        document
+          .getAnimations()
+          .every(
+            (animacao) =>
+              animacao.effect?.getTiming().iterations === Infinity ||
+              animacao.playState !== "running",
+          ),
+    );
   }
 
   for (const tema of ["dark"]) {
-    const page = await browser.newPage({ colorScheme: tema, viewport: { width: 1280, height: 900 } });
+    const page = await browser.newPage({
+      colorScheme: tema,
+      viewport: { width: 1280, height: 900 },
+    });
     page.setDefaultTimeout(10000);
     page.on("pageerror", (erro) => errosPagina.push(erro.message));
 
     const dadosLongos = JSON.parse(seedOriginal);
-    dadosLongos.projetos = [{ ...dadosLongos.projetos[0], nome: "ProjetoSemEspacos".repeat(15), descricao: "DescricaoSemEspacos".repeat(20), disciplina: "DisciplinaSemEspacos".repeat(12) }];
-    dadosLongos.tarefas = [{ ...dadosLongos.tarefas[0], projetoId: dadosLongos.projetos[0].id, titulo: "TituloSemEspacos".repeat(19), responsavel: "ResponsavelSemEspacos".repeat(13) }];
+    dadosLongos.projetos = [
+      {
+        ...dadosLongos.projetos[0],
+        nome: "ProjetoSemEspacos".repeat(15),
+        descricao: "DescricaoSemEspacos".repeat(20),
+        disciplina: "DisciplinaSemEspacos".repeat(12),
+      },
+    ];
+    dadosLongos.tarefas = [
+      {
+        ...dadosLongos.tarefas[0],
+        projetoId: dadosLongos.projetos[0].id,
+        titulo: "TituloSemEspacos".repeat(19),
+        responsavel: "ResponsavelSemEspacos".repeat(13),
+      },
+    ];
     const rotaDadosLongos = `${api}/**`;
     await page.route(rotaDadosLongos, (rota) => {
       const url = new URL(rota.request().url());
       const [colecao, id] = url.pathname.split("/").filter(Boolean);
       const registros = dadosLongos[colecao];
-      let dados = id ? registros?.find((registro) => registro.id === id) : registros;
-      if (dados && url.searchParams.has("_embed")) dados = { ...dados, tarefas: dadosLongos.tarefas.filter((tarefa) => tarefa.projetoId === id) };
+      let dados = id
+        ? registros?.find((registro) => registro.id === id)
+        : registros;
+      if (dados && url.searchParams.has("_embed"))
+        dados = {
+          ...dados,
+          tarefas: dadosLongos.tarefas.filter(
+            (tarefa) => tarefa.projetoId === id,
+          ),
+        };
       return rota.fulfill({ status: dados ? 200 : 404, json: dados ?? {} });
     });
     for (const largura of [320, 375, 768, 1280]) {
       await page.setViewportSize({ width: largura, height: 900 });
-      for (const caminho of ["/", "/quadro", "/projetos", `/projetos/${dadosLongos.projetos[0].id}`, `/tarefas/${dadosLongos.tarefas[0].id}`]) {
+      for (const caminho of [
+        "/",
+        "/quadro",
+        "/projetos",
+        `/projetos/${dadosLongos.projetos[0].id}`,
+        `/tarefas/${dadosLongos.tarefas[0].id}`,
+      ]) {
         await abrir(page, caminho);
-        if (caminho === `/projetos/${dadosLongos.projetos[0].id}`) await page.locator(".e-details-trigger").click();
+        if (caminho === `/projetos/${dadosLongos.projetos[0].id}`)
+          await page.locator(".e-details-trigger").click();
         const conferirTexto = async () => {
           const problemas = await page.evaluate(() => {
             const problemas = [];
-            if (document.documentElement.scrollWidth > document.documentElement.clientWidth) problemas.push("rolagem horizontal na página");
-            const seletores = [".e-task-project", ".e-card-pessoa", ".e-card-prazo", ".e-tools h1:not(.e-task-page-title)", ".e-project-name", ".e-details-content>p", ".e-details-content dd", ".e-read-project>a", ".e-read-meta p", ".e-confirm-dialog>p", ".e-panel-scroll"];
-            for (const seletor of seletores) for (const el of document.querySelectorAll(seletor)) {
-              const caixa = el.getBoundingClientRect();
-              const pai = el.parentElement.getBoundingClientRect();
-              if (el.scrollWidth > el.clientWidth + 1) problemas.push(`${seletor}: conteúdo excede a largura`);
-              if (caixa.right > pai.right + 1 || caixa.left < pai.left - 1 || caixa.right > innerWidth + 1 || caixa.left < -1) problemas.push(`${seletor}: fora do contêiner`);
-              const texto = document.createRange();
-              texto.selectNodeContents(el);
-              if ([...texto.getClientRects()].some((r) => r.right > caixa.right + 1 || r.left < caixa.left - 1)) problemas.push(`${seletor}: texto cortado ou vazando`);
-            }
+            if (
+              document.documentElement.scrollWidth >
+              document.documentElement.clientWidth
+            )
+              problemas.push("rolagem horizontal na página");
+            const seletores = [
+              ".e-task-project",
+              ".e-card-pessoa",
+              ".e-card-prazo",
+              ".e-tools h1:not(.e-task-page-title)",
+              ".e-project-name",
+              ".e-details-content>p",
+              ".e-details-content dd",
+              ".e-read-project>a",
+              ".e-read-meta p",
+              ".e-confirm-dialog>p",
+              ".e-panel-scroll",
+            ];
+            for (const seletor of seletores)
+              for (const el of document.querySelectorAll(seletor)) {
+                const caixa = el.getBoundingClientRect();
+                const pai = el.parentElement.getBoundingClientRect();
+                if (el.scrollWidth > el.clientWidth + 1)
+                  problemas.push(`${seletor}: conteúdo excede a largura`);
+                if (
+                  caixa.right > pai.right + 1 ||
+                  caixa.left < pai.left - 1 ||
+                  caixa.right > innerWidth + 1 ||
+                  caixa.left < -1
+                )
+                  problemas.push(`${seletor}: fora do contêiner`);
+                const texto = document.createRange();
+                texto.selectNodeContents(el);
+                if (
+                  [...texto.getClientRects()].some(
+                    (r) => r.right > caixa.right + 1 || r.left < caixa.left - 1,
+                  )
+                )
+                  problemas.push(`${seletor}: texto cortado ou vazando`);
+              }
             return problemas;
           });
-          assert.deepEqual(problemas, [], `${largura}px ${caminho}: textos sem espaços`);
+          assert.deepEqual(
+            problemas,
+            [],
+            `${largura}px ${caminho}: textos sem espaços`,
+          );
         };
         await conferirTexto();
         if (caminho === "/") {
           await page.locator(".e-task-menu").click();
-          await page.getByRole("menuitem", { name: "Excluir tarefa", exact: true }).click();
+          await page
+            .getByRole("menuitem", { name: "Excluir tarefa", exact: true })
+            .click();
           await page.locator(".e-confirm-dialog").waitFor();
-          await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== "running"));
+          await page.waitForFunction(() =>
+            document
+              .getAnimations()
+              .every(
+                (a) =>
+                  a.effect?.getTiming().iterations === Infinity ||
+                  a.playState !== "running",
+              ),
+          );
           await conferirTexto();
-          assert.equal(await page.locator(".e-confirm-dialog>p").textContent(), `Deseja excluir “${dadosLongos.tarefas[0].titulo}”? Esta ação não pode ser desfeita.`);
-          await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+          assert.equal(
+            await page.locator(".e-confirm-dialog>p").textContent(),
+            `Deseja excluir “${dadosLongos.tarefas[0].titulo}”? Esta ação não pode ser desfeita.`,
+          );
+          await page
+            .getByRole("button", { name: "Cancelar", exact: true })
+            .click();
         }
       }
     }
     await page.unroute(rotaDadosLongos);
-    console.log(`OK: ${tema}: textos sem espaços cabem na lista, quadro, projetos, projeto, ficha e confirmação em 320, 375, 768 e 1280 px; prazos continuam visíveis`);
+    console.log(
+      `OK: ${tema}: textos sem espaços cabem na lista, quadro, projetos, projeto, ficha e confirmação em 320, 375, 768 e 1280 px; prazos continuam visíveis`,
+    );
 
     for (const largura of [1280, 375, 320]) {
       await page.setViewportSize({ width: largura, height: 900 });
       for (const caminho of ["/", "/tarefas/nova"]) {
         await abrir(page, caminho);
         await page.evaluate(() => {
-          const tamanhos = [...document.querySelectorAll("body, body *")].map((el) => [el, parseFloat(getComputedStyle(el).fontSize) / 16]);
-          for (const [el, tamanho] of tamanhos) el.style.setProperty("font-size", `${tamanho}rem`, "important");
-          document.documentElement.style.setProperty("font-size", "32px", "important");
+          const tamanhos = [...document.querySelectorAll("body, body *")].map(
+            (el) => [el, parseFloat(getComputedStyle(el).fontSize) / 16],
+          );
+          for (const [el, tamanho] of tamanhos)
+            el.style.setProperty("font-size", `${tamanho}rem`, "important");
+          document.documentElement.style.setProperty(
+            "font-size",
+            "32px",
+            "important",
+          );
         });
         const problemas = await page.evaluate(() => {
           const problemas = [];
-          const seletores = [".e-top nav a", ".e-form-two [data-label]", ".e-form-footer button"];
-          for (const seletor of seletores) for (const el of document.querySelectorAll(seletor)) {
-            const caixa = el.getBoundingClientRect();
-            const pai = el.parentElement.getBoundingClientRect();
-            const texto = document.createRange();
-            texto.selectNodeContents(el);
-            const retangulos = [...texto.getClientRects()].filter((r) => r.width && r.height);
-            if (caixa.left < 0 || caixa.right > innerWidth + 1 || caixa.left < pai.left - 1 || caixa.right > pai.right + 1) problemas.push(`${seletor}: fora do contêiner`);
-            if (retangulos.some((r) => r.left < caixa.left - 1 || r.right > caixa.right + 1 || r.top < caixa.top - 1 || r.bottom > caixa.bottom + 1)) problemas.push(`${seletor}: texto cortado`);
-          }
-          const sobrepoe = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
-          for (const seletor of [".e-top nav a", ".e-top > *", ".e-form-two", ".e-form-footer"]) {
-            const grupos = seletor === ".e-form-two" || seletor === ".e-form-footer" ? [...document.querySelectorAll(seletor)].map((el) => [...el.children]) : [[...document.querySelectorAll(seletor)]];
-            for (const grupo of grupos) for (let i = 0; i < grupo.length; i++) for (let j = i + 1; j < grupo.length; j++) {
-              if (sobrepoe(grupo[i].getBoundingClientRect(), grupo[j].getBoundingClientRect())) problemas.push(`${seletor}: sobreposição`);
+          const seletores = [
+            ".e-top nav a",
+            ".e-form-two [data-label]",
+            ".e-form-footer button",
+          ];
+          for (const seletor of seletores)
+            for (const el of document.querySelectorAll(seletor)) {
+              const caixa = el.getBoundingClientRect();
+              const pai = el.parentElement.getBoundingClientRect();
+              const texto = document.createRange();
+              texto.selectNodeContents(el);
+              const retangulos = [...texto.getClientRects()].filter(
+                (r) => r.width && r.height,
+              );
+              if (
+                caixa.left < 0 ||
+                caixa.right > innerWidth + 1 ||
+                caixa.left < pai.left - 1 ||
+                caixa.right > pai.right + 1
+              )
+                problemas.push(`${seletor}: fora do contêiner`);
+              if (
+                retangulos.some(
+                  (r) =>
+                    r.left < caixa.left - 1 ||
+                    r.right > caixa.right + 1 ||
+                    r.top < caixa.top - 1 ||
+                    r.bottom > caixa.bottom + 1,
+                )
+              )
+                problemas.push(`${seletor}: texto cortado`);
             }
+          const sobrepoe = (a, b) =>
+            a.left < b.right - 1 &&
+            a.right > b.left + 1 &&
+            a.top < b.bottom - 1 &&
+            a.bottom > b.top + 1;
+          for (const seletor of [
+            ".e-top nav a",
+            ".e-top > *",
+            ".e-form-two",
+            ".e-form-footer",
+          ]) {
+            const grupos =
+              seletor === ".e-form-two" || seletor === ".e-form-footer"
+                ? [...document.querySelectorAll(seletor)].map((el) => [
+                    ...el.children,
+                  ])
+                : [[...document.querySelectorAll(seletor)]];
+            for (const grupo of grupos)
+              for (let i = 0; i < grupo.length; i++)
+                for (let j = i + 1; j < grupo.length; j++) {
+                  if (
+                    sobrepoe(
+                      grupo[i].getBoundingClientRect(),
+                      grupo[j].getBoundingClientRect(),
+                    )
+                  )
+                    problemas.push(`${seletor}: sobreposição`);
+                }
           }
           return problemas;
         });
-        assert.deepEqual(problemas, [], `${largura}px ${caminho}: texto ampliado a 200%`);
+        assert.deepEqual(
+          problemas,
+          [],
+          `${largura}px ${caminho}: texto ampliado a 200%`,
+        );
         if (caminho === "/tarefas/nova") {
-          const cancelar = page.getByRole("button", { name: "Cancelar", exact: true });
-          await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).focus();
+          const cancelar = page.getByRole("button", {
+            name: "Cancelar",
+            exact: true,
+          });
+          await page
+            .getByRole("button", { name: "Fechar nova tarefa", exact: true })
+            .focus();
           let alcancou = false;
           for (let i = 0; i < 20; i++) {
             await page.keyboard.press("Tab");
-            if (await cancelar.evaluate((el) => el === document.activeElement)) { alcancou = true; break; }
+            if (
+              await cancelar.evaluate((el) => el === document.activeElement)
+            ) {
+              alcancou = true;
+              break;
+            }
           }
-          assert.equal(alcancou, true, `${largura}px: Cancelar alcançável por Tab com texto 200%`);
-          assert.equal(await focoVisivel(cancelar), true, `${largura}px: Cancelar sem foco visível com texto 200%`);
+          assert.equal(
+            alcancou,
+            true,
+            `${largura}px: Cancelar alcançável por Tab com texto 200%`,
+          );
+          assert.equal(
+            await focoVisivel(cancelar),
+            true,
+            `${largura}px: Cancelar sem foco visível com texto 200%`,
+          );
           await page.getByLabel(/^Responsável/).fill("Ana");
           await cancelar.click();
           await page.waitForURL(`${web}/`);
         }
       }
     }
-    console.log("OK: texto 200% por fontes computadas em rem e raiz 32px; navegação, rótulos e ações sem sobreposição/corte em 1280, 375 e 320 px; Cancelar acessível e funcional");
+    console.log(
+      "OK: texto 200% por fontes computadas em rem e raiz 32px; navegação, rótulos e ações sem sobreposição/corte em 1280, 375 e 320 px; Cancelar acessível e funcional",
+    );
 
-    // Telas pequenas: nada rola na horizontal e nenhum elemento sai da tela, salvo dentro de uma faixa rolável (abas de projetos).
+    // Telas pequenas: nada rola na horizontal e nenhum elemento sai
+    // da tela, salvo dentro de uma faixa rolável (abas de projetos).
     for (const largura of larguras) {
       await page.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
         await abrir(page, caminho);
         const problema = await page.evaluate(() => {
-          if (document.documentElement.scrollWidth > document.documentElement.clientWidth) return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
-          // Só as abas de projetos podem rolar de lado; qualquer outro contêiner rolável (o corpo da ficha tem overflow-y:auto) não pode transbordar.
+          if (
+            document.documentElement.scrollWidth >
+            document.documentElement.clientWidth
+          )
+            return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
+          // Só as abas de projetos podem rolar de lado;
+          // qualquer outro contêiner rolável (o corpo da
+          // ficha tem overflow-y:auto) não pode transbordar.
           const faixa = (el) => Boolean(el.closest(".e-tabs"));
-          const transbordo = [...document.querySelectorAll("body *")].find((el) => !faixa(el) && /(auto|scroll)/.test(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth + 1);
-          if (transbordo) return `${transbordo.tagName}.${transbordo.className} rola na horizontal (${transbordo.scrollWidth} > ${transbordo.clientWidth})`;
-          const rolavel = (el) => { for (let pai = el.parentElement; pai; pai = pai.parentElement) if (/(auto|scroll)/.test(getComputedStyle(pai).overflowX)) return true; return false; };
+          const transbordo = [...document.querySelectorAll("body *")].find(
+            (el) =>
+              !faixa(el) &&
+              /(auto|scroll)/.test(getComputedStyle(el).overflowX) &&
+              el.scrollWidth > el.clientWidth + 1,
+          );
+          if (transbordo)
+            return `${transbordo.tagName}.${transbordo.className} rola na horizontal (${transbordo.scrollWidth} > ${transbordo.clientWidth})`;
+          const rolavel = (el) => {
+            for (let pai = el.parentElement; pai; pai = pai.parentElement)
+              if (/(auto|scroll)/.test(getComputedStyle(pai).overflowX))
+                return true;
+            return false;
+          };
           const fora = [...document.querySelectorAll("body *")].find((el) => {
             const caixa = el.getBoundingClientRect();
-            return caixa.width > 0 && caixa.height > 0 && getComputedStyle(el).visibility !== "hidden" && (caixa.right > innerWidth + 1 || caixa.left < -1) && !rolavel(el);
+            return (
+              caixa.width > 0 &&
+              caixa.height > 0 &&
+              getComputedStyle(el).visibility !== "hidden" &&
+              (caixa.right > innerWidth + 1 || caixa.left < -1) &&
+              !rolavel(el)
+            );
           });
           return fora ? `${fora.tagName}.${fora.className} fora da tela` : null;
         });
         assert.equal(problema, null, `${tema} ${largura}px ${caminho}`);
       }
     }
-    console.log(`OK: ${tema}: ${paginas.length + fichas.length} rotas sem rolagem horizontal em ${larguras.join(", ")} px`);
+    console.log(
+      `OK: ${tema}: ${paginas.length + fichas.length} rotas sem rolagem horizontal em ${larguras.join(", ")} px`,
+    );
 
-    // Teclado: cada parada do Tab tem foco visível e está na tela; nas páginas, o percurso sai do documento (sem armadilha).
+    // Teclado: cada parada do Tab tem foco visível e está na tela;
+    // nas páginas, o percurso sai do documento (sem armadilha).
     for (const largura of [1280, 375]) {
       await page.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
         await abrir(page, caminho);
         const ficha = fichas.includes(caminho);
-        if (!ficha) await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+        if (!ficha)
+          await page.evaluate(
+            () =>
+              document.activeElement instanceof HTMLElement &&
+              document.activeElement.blur(),
+          );
         const paradas = [];
-        // Cada elemento é marcado ao receber foco: voltar a um marcado é ciclo; sair do documento encerra o percurso.
+        // Cada elemento é marcado ao receber foco: voltar a um
+        // marcado é ciclo; sair do documento encerra o percurso.
         let ciclo = false;
         let saiu = false;
         for (let tentativa = 0; tentativa < 120; tentativa++) {
           await page.keyboard.press("Tab");
           const foco = page.locator(":focus");
-          if ((await foco.count()) === 0) { saiu = true; break; }
+          if ((await foco.count()) === 0) {
+            saiu = true;
+            break;
+          }
           const parada = await foco.evaluate((el) => {
             const caixa = el.getBoundingClientRect();
             const repetida = el.hasAttribute("data-parada-tab");
@@ -179,294 +401,718 @@ async function executar() {
             return {
               repetida,
               nome: `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || "").trim().slice(0, 40)}"`,
-              naTela: caixa.width > 0 && caixa.height > 0 && caixa.bottom > 0 && caixa.top < innerHeight && caixa.right > 0 && caixa.left < innerWidth,
+              naTela:
+                caixa.width > 0 &&
+                caixa.height > 0 &&
+                caixa.bottom > 0 &&
+                caixa.top < innerHeight &&
+                caixa.right > 0 &&
+                caixa.left < innerWidth,
               naFicha: Boolean(el.closest(".e-form-overlay")),
             };
           });
-          if (parada.repetida) { ciclo = true; break; }
+          if (parada.repetida) {
+            ciclo = true;
+            break;
+          }
           paradas.push(parada);
-          assert.equal(await focoVisivel(foco), true, `${tema} ${largura}px ${caminho}: sem foco visível em ${parada.nome}`);
-          assert.equal(parada.naTela, true, `${tema} ${largura}px ${caminho}: ${parada.nome} fora da tela`);
-          if (ficha) assert.equal(parada.naFicha, true, `${tema} ${largura}px ${caminho}: o Tab saiu da ficha para ${parada.nome}`);
+          assert.equal(
+            await focoVisivel(foco),
+            true,
+            `${tema} ${largura}px ${caminho}: sem foco visível em ${parada.nome}`,
+          );
+          assert.equal(
+            parada.naTela,
+            true,
+            `${tema} ${largura}px ${caminho}: ${parada.nome} fora da tela`,
+          );
+          if (ficha)
+            assert.equal(
+              parada.naFicha,
+              true,
+              `${tema} ${largura}px ${caminho}: o Tab saiu da ficha para ${parada.nome}`,
+            );
         }
-        assert.ok(paradas.length >= (ficha ? 2 : 4), `${tema} ${largura}px ${caminho}: só ${paradas.length} paradas`);
-        // Sem armadilha: ao fechar o ciclo (ou sair do documento), o Tab passou por todos os elementos tabuláveis
-        // do escopo — a página inteira, ou só a ficha, que é modal e por isso circula dentro de si.
-        assert.ok(ciclo || saiu, `${tema} ${largura}px ${caminho}: o percurso não terminou em ${paradas.length} paradas`);
-        if (ficha) assert.equal(saiu, false, `${tema} ${largura}px ${caminho}: o foco saiu da ficha`);
+        assert.ok(
+          paradas.length >= (ficha ? 2 : 4),
+          `${tema} ${largura}px ${caminho}: só ${paradas.length} paradas`,
+        );
+        // Sem armadilha: ao fechar o ciclo (ou sair do documento), o Tab
+        // passou por todos os elementos tabuláveis do escopo — a página
+        // inteira, ou só a ficha, que é modal e por isso circula dentro de si.
+        assert.ok(
+          ciclo || saiu,
+          `${tema} ${largura}px ${caminho}: o percurso não terminou em ${paradas.length} paradas`,
+        );
+        if (ficha)
+          assert.equal(
+            saiu,
+            false,
+            `${tema} ${largura}px ${caminho}: o foco saiu da ficha`,
+          );
         const esquecidos = await page.evaluate((ficha) => {
-          const escopo = ficha ? document.querySelector(".e-form-overlay [role=dialog]") : document;
-          return [...escopo.querySelectorAll("a[href], button, input, select, textarea, [tabindex]")]
-            .filter((el) => el.tabIndex >= 0 && !el.disabled && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden" && !el.closest("[inert], [aria-hidden=true]"))
+          const escopo = ficha
+            ? document.querySelector(".e-form-overlay [role=dialog]")
+            : document;
+          return [
+            ...escopo.querySelectorAll(
+              "a[href], button, input, select, textarea, [tabindex]",
+            ),
+          ]
+            .filter(
+              (el) =>
+                el.tabIndex >= 0 &&
+                !el.disabled &&
+                el.getClientRects().length > 0 &&
+                getComputedStyle(el).visibility !== "hidden" &&
+                !el.closest("[inert], [aria-hidden=true]"),
+            )
             .filter((el) => !el.hasAttribute("data-parada-tab"))
-            .map((el) => `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}"`);
+            .map(
+              (el) =>
+                `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}"`,
+            );
         }, ficha);
-        assert.deepEqual(esquecidos, [], `${tema} ${largura}px ${caminho}: o Tab não alcança estes elementos`);
+        assert.deepEqual(
+          esquecidos,
+          [],
+          `${tema} ${largura}px ${caminho}: o Tab não alcança estes elementos`,
+        );
       }
     }
-    console.log(`OK: ${tema}: foco visível e na tela em todas as paradas do Tab; a ficha prende o foco`);
+    console.log(
+      `OK: ${tema}: foco visível e na tela em todas as paradas do Tab; a ficha prende o foco`,
+    );
 
-    // Achado do Lighthouse: o "opcional" da descrição ficava abaixo de 4,5:1 por causa da opacidade.
+    // Achado do Lighthouse: o "opcional" da descrição
+    // ficava abaixo de 4,5:1 por causa da opacidade.
     await page.setViewportSize({ width: 1280, height: 900 });
     await abrir(page, "/tarefas/nova");
-    const [cor, fundo] = await page.locator(".e-description-toggle > span").evaluate((el) => {
-      let opacidade = 1;
-      for (let atual = el; atual; atual = atual.parentElement) opacidade *= Number(getComputedStyle(atual).opacity);
-      let fundo = "rgba(0, 0, 0, 0)";
-      for (let atual = el; atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo); atual = atual.parentElement) fundo = getComputedStyle(atual).backgroundColor;
-      const [r, g, b] = getComputedStyle(el).color.match(/[\d.]+/g).map(Number);
-      const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
-      const misturar = (c, f) => Math.round(c * opacidade + f * (1 - opacidade));
-      return [`rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`, fundo];
-    });
-    assert.ok(contraste(cor, fundo) >= 4.5, `${tema}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`);
-    console.log(`OK: ${tema}: "opcional" da descrição com contraste de pelo menos 4,5:1`);
+    const [cor, fundo] = await page
+      .locator(".e-description-toggle > span")
+      .evaluate((el) => {
+        let opacidade = 1;
+        for (let atual = el; atual; atual = atual.parentElement)
+          opacidade *= Number(getComputedStyle(atual).opacity);
+        let fundo = "rgba(0, 0, 0, 0)";
+        for (
+          let atual = el;
+          atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo);
+          atual = atual.parentElement
+        )
+          fundo = getComputedStyle(atual).backgroundColor;
+        const [r, g, b] = getComputedStyle(el)
+          .color.match(/[\d.]+/g)
+          .map(Number);
+        const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
+        const misturar = (c, f) =>
+          Math.round(c * opacidade + f * (1 - opacidade));
+        return [
+          `rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`,
+          fundo,
+        ];
+      });
+    assert.ok(
+      contraste(cor, fundo) >= 4.5,
+      `${tema}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`,
+    );
+    console.log(
+      `OK: ${tema}: "opcional" da descrição com contraste de pelo menos 4,5:1`,
+    );
     await page.close();
   }
 
-  // Alvos de toque no celular: controles fora de texto corrido têm ao menos 44 × 44 px (contando a área ampliada por ::after).
-  // Roda com a fonte da web e com ela bloqueada: sem a Commissioner o texto cai na fonte de reserva e encolhe,
-  // e a área de toque não pode depender disso.
+  // Alvos de toque no celular: controles fora de texto corrido têm
+  // ao menos 44 × 44 px (contando a área ampliada por ::after).
+  // Roda com a fonte da web e com ela bloqueada: sem a Commissioner o texto cai
+  // na fonte de reserva e encolhe, e a área de toque não pode depender disso.
   const abrirCelular = async () => {
-    const aba = await browser.newPage({ viewport: { width: 375, height: 800 }, hasTouch: true, isMobile: true });
+    const aba = await browser.newPage({
+      viewport: { width: 375, height: 800 },
+      hasTouch: true,
+      isMobile: true,
+    });
     aba.setDefaultTimeout(10000);
     aba.on("pageerror", (erro) => errosPagina.push(erro.message));
     return aba;
   };
   const page = await abrirCelular();
   const semFonte = await abrirCelular();
-  await semFonte.route(/fonts\.(googleapis|gstatic)\.com/, (rota) => rota.abort().catch(() => {}));
+  await semFonte.route(/fonts\.(googleapis|gstatic)\.com/, (rota) =>
+    rota.abort().catch(() => {}),
+  );
   const prepararFonte = async (aba, fonte, caminho) => {
     await abrir(aba, caminho);
     const commissioner = await aba.evaluate(async () => {
       await document.fonts.ready;
-      return [...document.fonts].some((face) => face.family.replace(/"/g, "") === "Commissioner" && face.status === "loaded");
+      return [...document.fonts].some(
+        (face) =>
+          face.family.replace(/"/g, "") === "Commissioner" &&
+          face.status === "loaded",
+      );
     });
-    if (fonte === "reserva") assert.equal(commissioner, false, `${caminho}: a Commissioner carregou mesmo bloqueada`);
+    if (fonte === "reserva")
+      assert.equal(
+        commissioner,
+        false,
+        `${caminho}: a Commissioner carregou mesmo bloqueada`,
+      );
   };
-  for (const [fonte, aba] of [["web", page], ["reserva", semFonte]]) {
+  for (const [fonte, aba] of [
+    ["web", page],
+    ["reserva", semFonte],
+  ]) {
     for (const largura of [375, 320]) {
       await aba.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
         await prepararFonte(aba, fonte, caminho);
-        const pequenos = await aba.evaluate(() => [...document.querySelectorAll('a[href], button, input:not([type=hidden]), textarea, [role="button"], [role="link"]')].flatMap((el) => {
-          const caixa = el.getBoundingClientRect();
-          if (!caixa.width || !caixa.height || getComputedStyle(el).visibility === "hidden") return [];
-          // Oculto visualmente (botões de dispensar do React Aria) ou dentro de texto corrido.
-          for (let atual = el; atual && atual !== document.body; atual = atual.parentElement) {
-            const estilo = getComputedStyle(atual);
-            if (estilo.clipPath.startsWith("inset(50%") || (estilo.clip !== "auto" && estilo.position === "absolute")) return [];
-          }
-          if (el.matches("a") && el.closest("p, dd, li:not([role])")) return [];
-          const area = ["::after", "::before"].map((pseudo) => getComputedStyle(el, pseudo)).filter((estilo) => estilo.content !== "none" && estilo.position === "absolute").map((estilo) => [parseFloat(estilo.width) || 0, parseFloat(estilo.height) || 0]);
-          const largura = Math.max(caixa.width, ...area.map(([l]) => l));
-          const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
-          // A mensagem mostra a área efetiva (com o pseudo-elemento), não só a caixa do texto.
-          return largura < 43.5 || altura < 43.5 ? [`${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(largura)}×${Math.round(altura)}`] : [];
-        }));
-        assert.deepEqual(pequenos, [], `fonte ${fonte}, ${largura}px ${caminho}`);
+        const pequenos = await aba.evaluate(() =>
+          [
+            ...document.querySelectorAll(
+              'a[href], button, input:not([type=hidden]), textarea, [role="button"], [role="link"]',
+            ),
+          ].flatMap((el) => {
+            const caixa = el.getBoundingClientRect();
+            if (
+              !caixa.width ||
+              !caixa.height ||
+              getComputedStyle(el).visibility === "hidden"
+            )
+              return [];
+            // Oculto visualmente (botões de dispensar do
+            // React Aria) ou dentro de texto corrido.
+            for (
+              let atual = el;
+              atual && atual !== document.body;
+              atual = atual.parentElement
+            ) {
+              const estilo = getComputedStyle(atual);
+              if (
+                estilo.clipPath.startsWith("inset(50%") ||
+                (estilo.clip !== "auto" && estilo.position === "absolute")
+              )
+                return [];
+            }
+            if (el.matches("a") && el.closest("p, dd, li:not([role])"))
+              return [];
+            const area = ["::after", "::before"]
+              .map((pseudo) => getComputedStyle(el, pseudo))
+              .filter(
+                (estilo) =>
+                  estilo.content !== "none" && estilo.position === "absolute",
+              )
+              .map((estilo) => [
+                parseFloat(estilo.width) || 0,
+                parseFloat(estilo.height) || 0,
+              ]);
+            const largura = Math.max(caixa.width, ...area.map(([l]) => l));
+            const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
+            // A mensagem mostra a área efetiva (com o
+            // pseudo-elemento), não só a caixa do texto.
+            return largura < 43.5 || altura < 43.5
+              ? [
+                  `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(largura)}×${Math.round(altura)}`,
+                ]
+              : [];
+          }),
+        );
+        assert.deepEqual(
+          pequenos,
+          [],
+          `fonte ${fonte}, ${largura}px ${caminho}`,
+        );
       }
     }
   }
-  console.log("OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte da web e com a de reserva");
+  console.log(
+    "OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte da web e com a de reserva",
+  );
 
   for (const largura of [375, 320]) {
     await page.setViewportSize({ width: largura, height: 800 });
     await prepararFonte(page, "web", "/");
     await page.locator(".e-task-menu").first().click();
-    await page.getByRole("menuitem", { name: "Excluir tarefa", exact: true }).click();
+    await page
+      .getByRole("menuitem", { name: "Excluir tarefa", exact: true })
+      .click();
     await page.locator(".e-confirm-dialog").waitFor();
-    await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== "running"));
-    const alturas = await page.locator(".e-confirm-actions button").evaluateAll((botoes) => botoes.map((b) => Math.round(b.getBoundingClientRect().height)));
+    await page.waitForFunction(() =>
+      document
+        .getAnimations()
+        .every(
+          (a) =>
+            a.effect?.getTiming().iterations === Infinity ||
+            a.playState !== "running",
+        ),
+    );
+    const alturas = await page
+      .locator(".e-confirm-actions button")
+      .evaluateAll((botoes) =>
+        botoes.map((b) => Math.round(b.getBoundingClientRect().height)),
+      );
     assert.equal(alturas.length, 2, `${largura}px: botões da confirmação`);
-    assert.ok(alturas.every((altura) => altura >= 44), `${largura}px: botões da confirmação com ${alturas.join(" e ")} px de altura`);
+    assert.ok(
+      alturas.every((altura) => altura >= 44),
+      `${largura}px: botões da confirmação com ${alturas.join(" e ")} px de altura`,
+    );
     await page.getByRole("button", { name: "Cancelar", exact: true }).click();
   }
-  console.log("OK: botões da confirmação de exclusão com pelo menos 44 px de altura em 375 e 320 px");
+  console.log(
+    "OK: botões da confirmação de exclusão com pelo menos 44 px de altura em 375 e 320 px",
+  );
 
-  // A área de toque ampliada não pode levar o anel de foco para cima do texto vizinho.
-  for (const [fonte, aba] of [["web", page], ["reserva", semFonte]]) {
+  // A área de toque ampliada não pode levar o
+  // anel de foco para cima do texto vizinho.
+  for (const [fonte, aba] of [
+    ["web", page],
+    ["reserva", semFonte],
+  ]) {
     await aba.setViewportSize({ width: 375, height: 800 });
-    for (const [caminho, seletor, vizinhos] of [["/projetos", ".e-project-card h2 a", [".e-project-card > p"]], ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]]]) {
+    for (const [caminho, seletor, vizinhos] of [
+      ["/projetos", ".e-project-card h2 a", [".e-project-card > p"]],
+      ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]],
+    ]) {
       await prepararFonte(aba, fonte, caminho);
-      const sobreposto = await aba.evaluate(([seletor, vizinhos]) => {
-        const link = document.querySelector(seletor);
-        link.focus({ focusVisible: true });
-        const estilo = getComputedStyle(link);
-        const margem = parseFloat(estilo.outlineOffset) + parseFloat(estilo.outlineWidth);
-        const caixa = link.getBoundingClientRect();
-        const anel = { top: caixa.top - margem, bottom: caixa.bottom + margem };
-        return vizinhos.map((vizinho) => [vizinho, link.closest("article, section").querySelector(vizinho).getBoundingClientRect()])
-          .filter(([, outro]) => anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5).map(([vizinho]) => vizinho);
-      }, [seletor, vizinhos]);
-      assert.deepEqual(sobreposto, [], `fonte ${fonte}, ${caminho}: o anel de foco de ${seletor} cobre o texto vizinho`);
+      const sobreposto = await aba.evaluate(
+        ([seletor, vizinhos]) => {
+          const link = document.querySelector(seletor);
+          link.focus({ focusVisible: true });
+          const estilo = getComputedStyle(link);
+          const margem =
+            parseFloat(estilo.outlineOffset) + parseFloat(estilo.outlineWidth);
+          const caixa = link.getBoundingClientRect();
+          const anel = {
+            top: caixa.top - margem,
+            bottom: caixa.bottom + margem,
+          };
+          return vizinhos
+            .map((vizinho) => [
+              vizinho,
+              link
+                .closest("article, section")
+                .querySelector(vizinho)
+                .getBoundingClientRect(),
+            ])
+            .filter(
+              ([, outro]) =>
+                anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5,
+            )
+            .map(([vizinho]) => vizinho);
+        },
+        [seletor, vizinhos],
+      );
+      assert.deepEqual(
+        sobreposto,
+        [],
+        `fonte ${fonte}, ${caminho}: o anel de foco de ${seletor} cobre o texto vizinho`,
+      );
     }
   }
   await semFonte.close();
-  console.log("OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte da web e com a de reserva");
+  console.log(
+    "OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte da web e com a de reserva",
+  );
 
-  // Ficha pelo teclado: Enter no título abre os detalhes e Esc fecha, devolvendo o foco ao link de origem.
+  // Ficha pelo teclado: Enter no título abre os detalhes
+  // e Esc fecha, devolvendo o foco ao link de origem.
   await page.setViewportSize({ width: 1280, height: 900 });
   await abrir(page, "/");
-  const link = page.getByRole("link", { name: "Criar o repositório", exact: true });
+  const link = page.getByRole("link", {
+    name: "Criar o repositório",
+    exact: true,
+  });
   await link.focus();
   await page.keyboard.press("Enter");
   await page.waitForURL(`${web}/tarefas/1`);
-  await page.locator(".e-form-overlay").getByRole("heading", { name: "Criar o repositório" }).waitFor();
+  await page
+    .locator(".e-form-overlay")
+    .getByRole("heading", { name: "Criar o repositório" })
+    .waitFor();
   await page.keyboard.press("Escape");
   await page.waitForURL(`${web}/`);
-  await page.waitForFunction(() => document.activeElement?.textContent === "Criar o repositório");
+  await page.waitForFunction(
+    () => document.activeElement?.textContent === "Criar o repositório",
+  );
   console.log("OK: Enter abre a ficha e Esc fecha devolvendo o foco ao link");
 
-  // Atalho "Pular para o conteúdo": primeira parada do Tab, visível só no foco, leva ao título sem mexer na URL.
+  // Atalho "Pular para o conteúdo": primeira parada do Tab,
+  // visível só no foco, leva ao título sem mexer na URL.
   for (const largura of [1280, 375]) {
     await page.setViewportSize({ width: largura, height: 800 });
     for (const caminho of paginas) {
       await abrir(page, caminho);
-      const antes = await page.evaluate(() => ({ href: location.href, entradas: history.length, idx: history.state?.idx ?? null }));
-      await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+      const antes = await page.evaluate(() => ({
+        href: location.href,
+        entradas: history.length,
+        idx: history.state?.idx ?? null,
+      }));
+      await page.evaluate(() => {
+        if (document.activeElement instanceof HTMLElement)
+          document.activeElement.blur();
+      });
       const escondido = await page.locator(".e-pular").evaluate((el) => {
         const estilo = getComputedStyle(el);
         const caixa = el.getBoundingClientRect();
-        return estilo.position === "absolute" && estilo.clip !== "auto" && caixa.width <= 2 && caixa.height <= 2;
+        return (
+          estilo.position === "absolute" &&
+          estilo.clip !== "auto" &&
+          caixa.width <= 2 &&
+          caixa.height <= 2
+        );
       });
-      assert.equal(escondido, true, `${largura}px ${caminho}: o atalho aparece sem foco`);
+      assert.equal(
+        escondido,
+        true,
+        `${largura}px ${caminho}: o atalho aparece sem foco`,
+      );
       await page.keyboard.press("Tab");
       const link = page.locator(".e-pular");
-      assert.equal(await link.evaluate((el) => el === document.activeElement), true, `${largura}px ${caminho}: o atalho não é a primeira parada`);
+      assert.equal(
+        await link.evaluate((el) => el === document.activeElement),
+        true,
+        `${largura}px ${caminho}: o atalho não é a primeira parada`,
+      );
       assert.equal((await link.innerText()).trim(), "Pular para o conteúdo");
-      assert.equal(await focoVisivel(link), true, `${largura}px ${caminho}: atalho sem foco visível`);
+      assert.equal(
+        await focoVisivel(link),
+        true,
+        `${largura}px ${caminho}: atalho sem foco visível`,
+      );
       const sobreOHeader = await link.evaluate((el) => {
         const caixa = el.getBoundingClientRect();
         const header = document.querySelector(".e-top").getBoundingClientRect();
-        return caixa.height >= 44 && caixa.width >= 44 && caixa.top >= 0 && caixa.left >= 0 && caixa.right <= innerWidth && caixa.bottom > header.top && caixa.top < header.bottom;
+        return (
+          caixa.height >= 44 &&
+          caixa.width >= 44 &&
+          caixa.top >= 0 &&
+          caixa.left >= 0 &&
+          caixa.right <= innerWidth &&
+          caixa.bottom > header.top &&
+          caixa.top < header.bottom
+        );
       });
-      assert.equal(sobreOHeader, true, `${largura}px ${caminho}: o atalho focado não fica sobre o header ou tem menos de 44 px`);
+      assert.equal(
+        sobreOHeader,
+        true,
+        `${largura}px ${caminho}: o atalho focado não fica sobre o header ou tem menos de 44 px`,
+      );
       await page.keyboard.press("Enter");
-      await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+      await page.waitForFunction(
+        () => document.activeElement === document.querySelector("main h1"),
+      );
       const destino = await page.evaluate(() => {
         const titulo = document.querySelector("main h1");
         const caixa = titulo.getBoundingClientRect();
         const header = document.querySelector(".e-top").getBoundingClientRect();
         const escondido = titulo.classList.contains("e-task-page-title");
-        return { coberto: !escondido && caixa.top < header.bottom - 1, hash: location.hash };
+        return {
+          coberto: !escondido && caixa.top < header.bottom - 1,
+          hash: location.hash,
+        };
       });
-      assert.equal(destino.coberto, false, `${largura}px ${caminho}: o título ficou sob o header`);
+      assert.equal(
+        destino.coberto,
+        false,
+        `${largura}px ${caminho}: o título ficou sob o header`,
+      );
       assert.equal(destino.hash, "");
-      const depois = await page.evaluate(() => ({ href: location.href, entradas: history.length, idx: history.state?.idx ?? null }));
-      assert.deepEqual(depois, antes, `${largura}px ${caminho}: o atalho alterou a URL ou o histórico`);
+      const depois = await page.evaluate(() => ({
+        href: location.href,
+        entradas: history.length,
+        idx: history.state?.idx ?? null,
+      }));
+      assert.deepEqual(
+        depois,
+        antes,
+        `${largura}px ${caminho}: o atalho alterou a URL ou o histórico`,
+      );
       if (caminho === "/" || caminho === "/quadro") {
         await page.keyboard.press("Tab");
-        assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true, `${largura}px ${caminho}: o Tab seguinte não caiu na busca`);
+        assert.equal(
+          await page.evaluate(
+            () => document.activeElement?.closest(".e-task-search") !== null,
+          ),
+          true,
+          `${largura}px ${caminho}: o Tab seguinte não caiu na busca`,
+        );
         const buscaLivre = await page.evaluate(() => {
-          const busca = document.querySelector(".e-task-search").getBoundingClientRect();
-          const header = document.querySelector(".e-top").getBoundingClientRect();
+          const busca = document
+            .querySelector(".e-task-search")
+            .getBoundingClientRect();
+          const header = document
+            .querySelector(".e-top")
+            .getBoundingClientRect();
           return busca.top >= header.bottom - 1 && busca.bottom > busca.top;
         });
-        assert.equal(buscaLivre, true, `${largura}px ${caminho}: a busca ficou sob o header`);
+        assert.equal(
+          buscaLivre,
+          true,
+          `${largura}px ${caminho}: a busca ficou sob o header`,
+        );
       }
     }
     await abrir(page, "/");
-    await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement)
+        document.activeElement.blur();
+    });
     await page.keyboard.press("Tab");
     await page.locator(".e-pular").click();
-    await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
-    assert.equal(new URL(page.url()).hash, "", `${largura}px: o clique pôs um hash na URL`);
+    await page.waitForFunction(
+      () => document.activeElement === document.querySelector("main h1"),
+    );
+    assert.equal(
+      new URL(page.url()).hash,
+      "",
+      `${largura}px: o clique pôs um hash na URL`,
+    );
     await page.keyboard.press("Tab");
-    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-task-search") !== null), true, `${largura}px: depois do clique, o Tab não caiu na busca`);
+    assert.equal(
+      await page.evaluate(
+        () => document.activeElement?.closest(".e-task-search") !== null,
+      ),
+      true,
+      `${largura}px: depois do clique, o Tab não caiu na busca`,
+    );
     await abrir(page, "/tarefas/1");
     const interferiu = await page.evaluate(() => {
       const link = document.querySelector(".e-pular");
       const caixa = link.getBoundingClientRect();
-      return link.closest("[inert]") === null || caixa.height > 2 || document.activeElement === link;
+      return (
+        link.closest("[inert]") === null ||
+        caixa.height > 2 ||
+        document.activeElement === link
+      );
     });
-    assert.equal(interferiu, false, `${largura}px: o atalho interfere na ficha`);
+    assert.equal(
+      interferiu,
+      false,
+      `${largura}px: o atalho interfere na ficha`,
+    );
     await page.keyboard.press("Tab");
-    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains("e-pular") ?? false), false, `${largura}px: o Tab na ficha caiu no atalho`);
-    assert.equal(await page.evaluate(() => document.activeElement?.closest(".e-form-overlay") !== null), true, `${largura}px: o Tab saiu da ficha`);
+    assert.equal(
+      await page.evaluate(
+        () => document.activeElement?.classList.contains("e-pular") ?? false,
+      ),
+      false,
+      `${largura}px: o Tab na ficha caiu no atalho`,
+    );
+    assert.equal(
+      await page.evaluate(
+        () => document.activeElement?.closest(".e-form-overlay") !== null,
+      ),
+      true,
+      `${largura}px: o Tab saiu da ficha`,
+    );
   }
   await abrir(page, "/projetos");
   await abrir(page, "/");
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.evaluate(() => { if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); });
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement)
+      document.activeElement.blur();
+  });
   await page.keyboard.press("Tab");
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => document.activeElement === document.querySelector("main h1"));
+  await page.waitForFunction(
+    () => document.activeElement === document.querySelector("main h1"),
+  );
   const aposRolagem = await page.evaluate(() => {
-    const busca = document.querySelector(".e-task-search").getBoundingClientRect();
+    const busca = document
+      .querySelector(".e-task-search")
+      .getBoundingClientRect();
     const header = document.querySelector(".e-top").getBoundingClientRect();
-    return busca.top >= header.bottom - 1 && busca.bottom <= innerHeight && location.pathname === "/";
+    return (
+      busca.top >= header.bottom - 1 &&
+      busca.bottom <= innerHeight &&
+      location.pathname === "/"
+    );
   });
-  assert.equal(aposRolagem, true, "depois de rolar a lista, o atalho não trouxe a busca para baixo do header");
+  assert.equal(
+    aposRolagem,
+    true,
+    "depois de rolar a lista, o atalho não trouxe a busca para baixo do header",
+  );
   await page.goBack();
   await page.waitForURL(/\/projetos$/);
   assert.equal(new URL(page.url()).hash, "");
-  console.log("OK: Pular para o conteúdo é a primeira parada, leva o foco ao título sem mexer na URL e o Tab seguinte cai na busca");
+  console.log(
+    "OK: Pular para o conteúdo é a primeira parada, leva o foco ao título sem mexer na URL e o Tab seguinte cai na busca",
+  );
 
-  const animacoesRodando = (aba) => aba.evaluate(() => document.getAnimations().filter((a) => a.playState === "running").length);
-  const posicoesLogo = (aba) => aba.evaluate(() => [...document.querySelectorAll(".e-top-gato, .e-top-palavra")].map((el) => getComputedStyle(el).backgroundPositionX));
-  const contexto = await browser.newContext({ colorScheme: "dark", viewport: { width: 1280, height: 900 } });
+  const animacoesRodando = (aba) =>
+    aba.evaluate(
+      () =>
+        document.getAnimations().filter((a) => a.playState === "running")
+          .length,
+    );
+  const posicoesLogo = (aba) =>
+    aba.evaluate(() =>
+      [...document.querySelectorAll(".e-top-gato, .e-top-palavra")].map(
+        (el) => getComputedStyle(el).backgroundPositionX,
+      ),
+    );
+  const contexto = await browser.newContext({
+    colorScheme: "dark",
+    viewport: { width: 1280, height: 900 },
+  });
   const movimento = await contexto.newPage();
   movimento.setDefaultTimeout(10000);
   movimento.on("pageerror", (erro) => errosPagina.push(erro.message));
   await abrir(movimento, "/rota-inexistente");
-  const pausar = movimento.locator(".e-footer-links").getByRole("button", { name: "Pausar animações", exact: true });
+  const pausar = movimento
+    .locator(".e-footer-links")
+    .getByRole("button", { name: "Pausar animações", exact: true });
   assert.equal(await pausar.getAttribute("aria-pressed"), "false");
-  await movimento.waitForFunction(() => document.getAnimations().some((a) => a.playState === "running" && a.effect?.target?.matches?.(".e-gato-costas")));
+  await movimento.waitForFunction(() =>
+    document
+      .getAnimations()
+      .some(
+        (a) =>
+          a.playState === "running" &&
+          a.effect?.target?.matches?.(".e-gato-costas"),
+      ),
+  );
   await pausar.focus();
-  assert.equal(await focoVisivel(pausar), true, "pausar animações sem foco visível");
+  assert.equal(
+    await focoVisivel(pausar),
+    true,
+    "pausar animações sem foco visível",
+  );
   await movimento.keyboard.press("Enter");
-  const retomar = movimento.locator(".e-footer-links").getByRole("button", { name: "Retomar animações", exact: true });
+  const retomar = movimento
+    .locator(".e-footer-links")
+    .getByRole("button", { name: "Retomar animações", exact: true });
   assert.equal(await retomar.getAttribute("aria-pressed"), "true");
-  assert.equal(await retomar.evaluate((el) => el === document.activeElement), true, "o foco saiu do botão ao pausar");
-  assert.equal(await movimento.evaluate(() => document.documentElement.dataset.movimento), "reduzido");
-  assert.equal(await animacoesRodando(movimento), 0, "animações rodando com o app pausado");
+  assert.equal(
+    await retomar.evaluate((el) => el === document.activeElement),
+    true,
+    "o foco saiu do botão ao pausar",
+  );
+  assert.equal(
+    await movimento.evaluate(() => document.documentElement.dataset.movimento),
+    "reduzido",
+  );
+  assert.equal(
+    await animacoesRodando(movimento),
+    0,
+    "animações rodando com o app pausado",
+  );
   assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
   await movimento.reload();
   await movimento.locator(".e-not-found").waitFor();
-  assert.equal(await retomar.getAttribute("aria-pressed"), "true", "a pausa não persistiu ao recarregar");
-  await movimento.getByRole("link", { name: "Projetos", exact: true }).first().click();
+  assert.equal(
+    await retomar.getAttribute("aria-pressed"),
+    "true",
+    "a pausa não persistiu ao recarregar",
+  );
+  await movimento
+    .getByRole("link", { name: "Projetos", exact: true })
+    .first()
+    .click();
   await movimento.waitForURL(`${web}/projetos`);
-  assert.equal(await animacoesRodando(movimento), 0, "a troca de página animou com o app pausado");
+  assert.equal(
+    await animacoesRodando(movimento),
+    0,
+    "a troca de página animou com o app pausado",
+  );
   assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
   await movimento.goBack();
   await movimento.locator(".e-not-found").waitFor();
   await retomar.click();
   assert.equal(await pausar.getAttribute("aria-pressed"), "false");
-  assert.equal(await movimento.evaluate(() => document.documentElement.hasAttribute("data-movimento")), false);
-  await movimento.waitForFunction(() => document.getAnimations().some((a) => a.playState === "running" && a.effect?.target?.matches?.(".e-gato-costas")));
+  assert.equal(
+    await movimento.evaluate(() =>
+      document.documentElement.hasAttribute("data-movimento"),
+    ),
+    false,
+  );
+  await movimento.waitForFunction(() =>
+    document
+      .getAnimations()
+      .some(
+        (a) =>
+          a.playState === "running" &&
+          a.effect?.target?.matches?.(".e-gato-costas"),
+      ),
+  );
   await movimento.reload();
   await movimento.locator(".e-not-found").waitFor();
-  assert.equal(await pausar.getAttribute("aria-pressed"), "false", "retomar não persistiu ao recarregar");
-  await movimento.evaluate(() => localStorage.setItem("pixel-animacoes", "pausadas"));
+  assert.equal(
+    await pausar.getAttribute("aria-pressed"),
+    "false",
+    "retomar não persistiu ao recarregar",
+  );
+  await movimento.evaluate(() =>
+    localStorage.setItem("pixel-animacoes", "pausadas"),
+  );
   await movimento.emulateMedia({ reducedMotion: "reduce" });
   await movimento.reload();
   await movimento.locator(".e-not-found").waitFor();
-  assert.equal(await movimento.locator(".e-footer-links button").count(), 0, "com reduce do sistema, a ação não deve aparecer");
-  assert.equal(await animacoesRodando(movimento), 0, "com reduce do sistema, algo animou");
+  assert.equal(
+    await movimento.locator(".e-footer-links button").count(),
+    0,
+    "com reduce do sistema, a ação não deve aparecer",
+  );
+  assert.equal(
+    await animacoesRodando(movimento),
+    0,
+    "com reduce do sistema, algo animou",
+  );
   await movimento.evaluate(() => localStorage.removeItem("pixel-animacoes"));
   await movimento.reload();
   await movimento.locator(".e-not-found").waitFor();
-  assert.equal(await animacoesRodando(movimento), 0, "com reduce do sistema e sem pausa no app, algo animou");
+  assert.equal(
+    await animacoesRodando(movimento),
+    0,
+    "com reduce do sistema e sem pausa no app, algo animou",
+  );
   assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
   await contexto.close();
-  const semArmazenamento = await browser.newContext({ colorScheme: "dark", viewport: { width: 1280, height: 900 } });
-  await semArmazenamento.addInitScript(() => { for (const metodo of ["getItem", "setItem", "removeItem"]) Storage.prototype[metodo] = () => { throw new DOMException("bloqueado", "SecurityError"); }; });
+  const semArmazenamento = await browser.newContext({
+    colorScheme: "dark",
+    viewport: { width: 1280, height: 900 },
+  });
+  await semArmazenamento.addInitScript(() => {
+    for (const metodo of ["getItem", "setItem", "removeItem"])
+      Storage.prototype[metodo] = () => {
+        throw new DOMException("bloqueado", "SecurityError");
+      };
+  });
   const bloqueada = await semArmazenamento.newPage();
   bloqueada.on("pageerror", (erro) => errosPagina.push(erro.message));
   await abrir(bloqueada, "/rota-inexistente");
-  await bloqueada.getByRole("button", { name: "Pausar animações", exact: true }).click();
-  assert.equal(await bloqueada.getByRole("button", { name: "Retomar animações", exact: true }).getAttribute("aria-pressed"), "true");
-  assert.equal(await animacoesRodando(bloqueada), 0, "sem armazenamento, a pausa não parou as animações");
+  await bloqueada
+    .getByRole("button", { name: "Pausar animações", exact: true })
+    .click();
+  assert.equal(
+    await bloqueada
+      .getByRole("button", { name: "Retomar animações", exact: true })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  assert.equal(
+    await animacoesRodando(bloqueada),
+    0,
+    "sem armazenamento, a pausa não parou as animações",
+  );
   await semArmazenamento.close();
-  console.log("OK: Pausar animações no rodapé com nome e aria-pressed; pausa tudo, retoma, persiste ao recarregar, funciona sem armazenamento e some com reduce do sistema, que segue parado");
+  console.log(
+    "OK: Pausar animações no rodapé com nome e aria-pressed; pausa tudo, retoma, persiste ao recarregar, funciona sem armazenamento e some com reduce do sistema, que segue parado",
+  );
 
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
-  assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
+  assert.equal(
+    await readFile(join(raiz, "db.seed.json"), "utf8"),
+    seedOriginal,
+  );
   console.log("OK: sem erros JavaScript e bancos locais preservados");
 }
 
 executar()
-  .catch((erro) => { console.error(erro); process.exitCode = 1; })
+  .catch((erro) => {
+    console.error(erro);
+    process.exitCode = 1;
+  })
   .finally(() => apoio.encerrar());

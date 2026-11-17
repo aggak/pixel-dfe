@@ -16,18 +16,37 @@ async function executar() {
   const { api, web } = await apoio.subirAmbiente({ banco });
 
   browser = await apoio.abrirNavegador();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 900 },
+  });
   page.setDefaultTimeout(10000);
   const errosPagina = [];
   page.on("pageerror", (erro) => errosPagina.push(erro.message));
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
   const ficha = () => page.locator(".e-form-overlay").getByRole("dialog");
   const { segurar } = criarEsperas(page);
-  // Outro usuário (ou outra aba) remove o registro direto na API enquanto a tela está aberta.
-  const removerNaApi = async (colecao, id) => assert.equal((await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok, true);
-  const criarNaApi = async (colecao, dados) => (await fetch(`${api}/${colecao}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(dados) })).json();
+  // Outro usuário (ou outra aba) remove o registro
+  // direto na API enquanto a tela está aberta.
+  const removerNaApi = async (colecao, id) =>
+    assert.equal(
+      (await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok,
+      true,
+    );
+  const criarNaApi = async (colecao, dados) =>
+    (
+      await fetch(`${api}/${colecao}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados),
+      })
+    ).json();
 
-  for (const caminho of ["/tarefas", "/tarefas/", "/TAREFAS?origem=atalho&busca=a%20b#lista", "/TaReFaS/?origem=atalho&busca=a%20b#lista"]) {
+  for (const caminho of [
+    "/tarefas",
+    "/tarefas/",
+    "/TAREFAS?origem=atalho&busca=a%20b#lista",
+    "/TaReFaS/?origem=atalho&busca=a%20b#lista",
+  ]) {
     const { search, hash } = new URL(caminho, web);
     const destino = `${web}/${search}${hash}`;
     await page.goto(`${web}/projetos`);
@@ -36,61 +55,124 @@ async function executar() {
     const resposta = await page.goto(`${web}${caminho}`);
     assert.equal(resposta.status(), 200);
     await page.waitForURL(destino, { timeout: 10000 });
-    await page.getByRole("region", { name: "Lista de tarefas" }).locator("[data-task-id]").first().waitFor();
+    await page
+      .getByRole("region", { name: "Lista de tarefas" })
+      .locator("[data-task-id]")
+      .first()
+      .waitFor();
     assert.equal(await ficha().count(), 0);
-    assert.equal(await page.evaluate(() => history.length), historico + 1, `${caminho}: redirecionamento empilhou histórico`);
+    assert.equal(
+      await page.evaluate(() => history.length),
+      historico + 1,
+      `${caminho}: redirecionamento empilhou histórico`,
+    );
     await page.goBack();
     await page.waitForURL(`${web}/projetos`, { timeout: 10000 });
     await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
     await page.goForward();
     await page.waitForURL(destino, { timeout: 10000 });
-    await page.getByRole("region", { name: "Lista de tarefas" }).locator("[data-task-id]").first().waitFor();
-    console.log(`OK: ${caminho} leva à lista, preserva query/hash e substitui a entrada no histórico`);
+    await page
+      .getByRole("region", { name: "Lista de tarefas" })
+      .locator("[data-task-id]")
+      .first()
+      .waitFor();
+    console.log(
+      `OK: ${caminho} leva à lista, preserva query/hash e substitui a entrada no histórico`,
+    );
   }
 
   const listaRedirecionada = page.url();
-  await page.getByRole("region", { name: "Lista de tarefas" }).getByRole("link", { name: "Criar o repositório", exact: true }).click();
-  await ficha().getByRole("heading", { name: "Criar o repositório", exact: true }).waitFor();
+  await page
+    .getByRole("region", { name: "Lista de tarefas" })
+    .getByRole("link", { name: "Criar o repositório", exact: true })
+    .click();
+  await ficha()
+    .getByRole("heading", { name: "Criar o repositório", exact: true })
+    .waitFor();
   const fundo = await page.evaluate(() => history.state.usr.fundo);
-  assert.equal(fundo.pathname + fundo.search + fundo.hash, new URL(listaRedirecionada).pathname + new URL(listaRedirecionada).search + new URL(listaRedirecionada).hash);
+  assert.equal(
+    fundo.pathname + fundo.search + fundo.hash,
+    new URL(listaRedirecionada).pathname +
+      new URL(listaRedirecionada).search +
+      new URL(listaRedirecionada).hash,
+  );
   await page.keyboard.press("Escape");
   await ficha().waitFor({ state: "detached" });
   await page.waitForURL(listaRedirecionada, { timeout: 10000 });
   await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
-  console.log("OK: a ficha aberta após o redirecionamento mantém o fundo e retorna à lista com query/hash");
+  console.log(
+    "OK: a ficha aberta após o redirecionamento mantém o fundo e retorna à lista com query/hash",
+  );
 
   for (const caminho of ["/tarefas-extra", "/tarefas/999/extra"]) {
     await page.goto(`${web}${caminho}`);
-    await page.getByRole("heading", { name: "Página não encontrada", exact: true }).waitFor();
+    await page
+      .getByRole("heading", { name: "Página não encontrada", exact: true })
+      .waitFor();
     assert.equal(new URL(page.url()).pathname, caminho);
   }
-  console.log("OK: endereços fora das rotas continuam na página não encontrada");
+  console.log(
+    "OK: endereços fora das rotas continuam na página não encontrada",
+  );
 
   for (const caminho of ["/tarefas/999", "/tarefas/999/editar"]) {
     await page.goto(`${web}${caminho}`);
-    await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+    await ficha()
+      .getByRole("alert")
+      .filter({ hasText: "Tarefa não encontrada." })
+      .waitFor();
     assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
-    assert.equal(await ficha().getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
-    console.log(`OK: ${caminho} encerra o carregamento com "Tarefa não encontrada."`);
+    assert.equal(
+      await ficha().getByRole("status").count(),
+      0,
+      `${caminho}: carregamento ativo`,
+    );
+    console.log(
+      `OK: ${caminho} encerra o carregamento com "Tarefa não encontrada."`,
+    );
   }
   for (const caminho of ["/projetos/999", "/projetos/999/editar"]) {
     await page.goto(`${web}${caminho}`);
     // A edição abre sobre a página do projeto: os dois avisos precisam chegar.
-    await page.getByRole("main").getByRole("alert").filter({ hasText: "Este projeto não existe ou foi removido." }).waitFor();
-    if (caminho.endsWith("/editar")) await ficha().getByRole("alert").filter({ hasText: "Este projeto não existe ou foi removido." }).waitFor();
+    await page
+      .getByRole("main")
+      .getByRole("alert")
+      .filter({ hasText: "Este projeto não existe ou foi removido." })
+      .waitFor();
+    if (caminho.endsWith("/editar"))
+      await ficha()
+        .getByRole("alert")
+        .filter({ hasText: "Este projeto não existe ou foi removido." })
+        .waitFor();
     assert.equal(await page.title(), "Projeto não encontrado · Pixel");
-    assert.equal(await page.getByRole("status").count(), 0, `${caminho}: carregamento ativo`);
-    assert.equal(await page.getByRole("button", { name: "Tentar de novo" }).count(), 0, `${caminho}: oferece tentar de novo`);
-    console.log(`OK: ${caminho} encerra o carregamento com "Este projeto não existe ou foi removido."`);
+    assert.equal(
+      await page.getByRole("status").count(),
+      0,
+      `${caminho}: carregamento ativo`,
+    );
+    assert.equal(
+      await page.getByRole("button", { name: "Tentar de novo" }).count(),
+      0,
+      `${caminho}: oferece tentar de novo`,
+    );
+    console.log(
+      `OK: ${caminho} encerra o carregamento com "Este projeto não existe ou foi removido."`,
+    );
   }
 
   // Resposta lenta: a indicação aparece e some quando o 404 chega.
   const lenta = await segurar(`${api}/tarefas/998`);
   await page.goto(`${web}/tarefas/998`);
-  await ficha().getByRole("status").filter({ hasText: "Carregando tarefa" }).waitFor();
+  await ficha()
+    .getByRole("status")
+    .filter({ hasText: "Carregando tarefa" })
+    .waitFor();
   assert.equal(await page.title(), "Tarefa · Pixel");
   await lenta.liberar();
-  await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
+  await ficha()
+    .getByRole("alert")
+    .filter({ hasText: "Tarefa não encontrada." })
+    .waitFor();
   assert.equal(await page.title(), "Tarefa não encontrada · Pixel");
   assert.equal(await ficha().getByRole("status").count(), 0);
   await page.unroute(`${api}/tarefas/998`);
@@ -101,62 +183,110 @@ async function executar() {
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
     return page.getByRole("dialog", { name: `Excluir ${titulo}` });
   }
-  for (const [caminho, id, titulo] of [["/", "2", "Subir o json-server"], ["/projetos/1", "3", "Montar o quadro no GitHub Projects"]]) {
+  for (const [caminho, id, titulo] of [
+    ["/", "2", "Subir o json-server"],
+    ["/projetos/1", "3", "Montar o quadro no GitHub Projects"],
+  ]) {
     await page.goto(`${web}${caminho}`);
     await page.locator(`[data-task-id="${id}"]`).waitFor();
     await removerNaApi("tarefas", id);
     const dialogo = await abrirExclusao(titulo);
-    await dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }).click();
+    await dialogo
+      .getByRole("button", { name: "Excluir tarefa", exact: true })
+      .click();
     await dialogo.waitFor({ state: "detached" });
     await page.locator(`[data-task-id="${id}"]`).waitFor({ state: "detached" });
     assert.equal(await alerta("Não foi possível excluir").count(), 0);
-    console.log(`OK: ${caminho} excluir tarefa já excluída fecha o diálogo e remove o cartão`);
+    console.log(
+      `OK: ${caminho} excluir tarefa já excluída fecha o diálogo e remove o cartão`,
+    );
   }
 
   await page.goto(`${web}/`);
   await page.locator('[data-task-id="4"]').waitFor();
   await removerNaApi("tarefas", "4");
-  await page.getByRole("button", { name: /^Mudar status de Listar as tarefas na tela/ }).click();
+  await page
+    .getByRole("button", { name: /^Mudar status de Listar as tarefas na tela/ })
+    .click();
   await page.getByRole("menuitemradio", { name: "Concluída" }).click();
-  await alerta("“Listar as tarefas na tela” não existe mais. Ela pode ter sido excluída.").waitFor();
+  await alerta(
+    "“Listar as tarefas na tela” não existe mais. Ela pode ter sido excluída.",
+  ).waitFor();
   assert.equal(await alerta("Tente de novo").count(), 0);
-  console.log("OK: mudar status de tarefa excluída avisa que ela não existe mais");
+  console.log(
+    "OK: mudar status de tarefa excluída avisa que ela não existe mais",
+  );
 
-  const extra = await criarNaApi("tarefas", { projetoId: "1", titulo: "Revisar entrega", descricao: "", status: "a-fazer", prioridade: "media", responsavel: "Ana", prazo: "2026-12-01" });
+  const extra = await criarNaApi("tarefas", {
+    projetoId: "1",
+    titulo: "Revisar entrega",
+    descricao: "",
+    status: "a-fazer",
+    prioridade: "media",
+    responsavel: "Ana",
+    prazo: "2026-12-01",
+  });
   await page.goto(`${web}/tarefas/${extra.id}/editar`);
   const titulo = ficha().getByLabel(/^Título/);
   await titulo.waitFor();
   await removerNaApi("tarefas", extra.id);
   await titulo.fill("Título digitado depois da exclusão");
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
-  await alerta("Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos.").waitFor();
+  await alerta(
+    "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos.",
+  ).waitFor();
   assert.equal(await alerta("tente de novo").count(), 0);
   assert.equal(await titulo.inputValue(), "Título digitado depois da exclusão");
-  console.log("OK: salvar tarefa excluída avisa que ela não existe mais e mantém o texto");
+  console.log(
+    "OK: salvar tarefa excluída avisa que ela não existe mais e mantém o texto",
+  );
 
-  const projeto = await criarNaApi("projetos", { nome: "Projeto efêmero", descricao: "", disciplina: "DFE", criadoEm: "2026-10-01" });
+  const projeto = await criarNaApi("projetos", {
+    nome: "Projeto efêmero",
+    descricao: "",
+    disciplina: "DFE",
+    criadoEm: "2026-10-01",
+  });
   await page.goto(`${web}/projetos/${projeto.id}/editar`);
   const nome = ficha().getByLabel(/^Nome/);
   await nome.waitFor();
   await removerNaApi("projetos", projeto.id);
   await nome.fill("Nome digitado depois da exclusão");
   await ficha().getByRole("button", { name: "Salvar alterações" }).click();
-  await alerta("Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos.").waitFor();
+  await alerta(
+    "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos.",
+  ).waitFor();
   assert.equal(await nome.inputValue(), "Nome digitado depois da exclusão");
-  console.log("OK: salvar projeto excluído avisa que ele não existe mais e mantém o texto");
+  console.log(
+    "OK: salvar projeto excluído avisa que ele não existe mais e mantém o texto",
+  );
 
-  // 404 ao criar (POST) não fala de registro excluído: nada existia antes, então vale o aviso padrão de falha.
-  const recusarCriacao = (rota) => (rota.request().method() === "POST" ? rota.fulfill({ status: 404, body: "{}" }) : rota.continue()).catch(() => {});
+  // 404 ao criar (POST) não fala de registro excluído: nada
+  // existia antes, então vale o aviso padrão de falha.
+  const recusarCriacao = (rota) =>
+    (rota.request().method() === "POST"
+      ? rota.fulfill({ status: 404, body: "{}" })
+      : rota.continue()
+    ).catch(() => {});
   await page.route(`${api}/tarefas`, recusarCriacao);
-  // Com ?projetoId a ficha recebe valores iniciais, mas continua sendo um cadastro.
+  // Com ?projetoId a ficha recebe valores
+  // iniciais, mas continua sendo um cadastro.
   await page.goto(`${web}/tarefas/nova?projetoId=1`);
   const tituloNovo = ficha().getByLabel(/^Título/);
   await tituloNovo.waitFor();
   await tituloNovo.fill("Tarefa recusada pela API");
-  await ficha().getByLabel(/^Responsável/).fill("Ana");
-  await ficha().getByLabel(/^Prazo/).fill("2026-12-01");
-  await ficha().getByRole("button", { name: /^Salvar/ }).click();
-  await alerta("Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.").waitFor();
+  await ficha()
+    .getByLabel(/^Responsável/)
+    .fill("Ana");
+  await ficha()
+    .getByLabel(/^Prazo/)
+    .fill("2026-12-01");
+  await ficha()
+    .getByRole("button", { name: /^Salvar/ })
+    .click();
+  await alerta(
+    "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.",
+  ).waitFor();
   assert.equal(await alerta("não existe mais").count(), 0);
   assert.equal(await tituloNovo.inputValue(), "Tarefa recusada pela API");
   await page.unroute(`${api}/tarefas`, recusarCriacao);
@@ -167,26 +297,66 @@ async function executar() {
   const nomeNovo = ficha().getByLabel(/^Nome/);
   await nomeNovo.waitFor();
   await nomeNovo.fill("Projeto recusado pela API");
-  await ficha().getByLabel(/^Disciplina/).fill("DFE");
-  await ficha().getByLabel(/^Criado em/).fill("2026-10-01");
-  await ficha().getByRole("button", { name: /^Salvar/ }).click();
-  await alerta("Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo.").waitFor();
+  await ficha()
+    .getByLabel(/^Disciplina/)
+    .fill("DFE");
+  await ficha()
+    .getByLabel(/^Criado em/)
+    .fill("2026-10-01");
+  await ficha()
+    .getByRole("button", { name: /^Salvar/ })
+    .click();
+  await alerta(
+    "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo.",
+  ).waitFor();
   assert.equal(await alerta("não existe mais").count(), 0);
   assert.equal(await nomeNovo.inputValue(), "Projeto recusado pela API");
   await page.unroute(`${api}/projetos`, recusarCriacao);
-  console.log("OK: 404 ao criar projeto mostra a falha padrão e mantém o texto");
+  console.log(
+    "OK: 404 ao criar projeto mostra a falha padrão e mantém o texto",
+  );
 
-  const orfa = await criarNaApi("tarefas", { projetoId: "999", titulo: "Tarefa sem projeto", descricao: "", status: "a-fazer", prioridade: "baixa", responsavel: "Bia", prazo: "2026-12-01" });
+  const orfa = await criarNaApi("tarefas", {
+    projetoId: "999",
+    titulo: "Tarefa sem projeto",
+    descricao: "",
+    status: "a-fazer",
+    prioridade: "baixa",
+    responsavel: "Bia",
+    prazo: "2026-12-01",
+  });
   await page.goto(`${web}/tarefas/${orfa.id}`);
   await ficha().getByRole("heading", { name: "Tarefa sem projeto" }).waitFor();
-  await ficha().locator(".e-read-project").getByText("Projeto não encontrado").waitFor();
-  assert.equal(await ficha().locator(".e-read-project").getByRole("link").count(), 0);
+  await ficha()
+    .locator(".e-read-project")
+    .getByText("Projeto não encontrado")
+    .waitFor();
+  assert.equal(
+    await ficha().locator(".e-read-project").getByRole("link").count(),
+    0,
+  );
   console.log("OK: tarefa com projeto inexistente não oferece link quebrado");
 
-  // A caixa da rota não muda o id: o json-server gera id aleatório, então estes dois são gravados no arquivo.
+  // A caixa da rota não muda o id: o json-server gera id
+  // aleatório, então estes dois são gravados no arquivo.
   const dadosCaixa = JSON.parse(await readFile(banco, "utf8"));
-  dadosCaixa.tarefas.push({ id: "AbC", projetoId: "1", titulo: "Tarefa com id misto", descricao: "Caixa do id", status: "a-fazer", prioridade: "media", responsavel: "Ana", prazo: "2026-12-01" });
-  dadosCaixa.projetos.push({ id: "XyZ", nome: "Projeto com id misto", descricao: "Caixa", disciplina: "DFE", criadoEm: "2026-10-01" });
+  dadosCaixa.tarefas.push({
+    id: "AbC",
+    projetoId: "1",
+    titulo: "Tarefa com id misto",
+    descricao: "Caixa do id",
+    status: "a-fazer",
+    prioridade: "media",
+    responsavel: "Ana",
+    prazo: "2026-12-01",
+  });
+  dadosCaixa.projetos.push({
+    id: "XyZ",
+    nome: "Projeto com id misto",
+    descricao: "Caixa",
+    disciplina: "DFE",
+    criadoEm: "2026-10-01",
+  });
   await writeFile(banco, JSON.stringify(dadosCaixa, null, 2));
   for (const endereco of [`${api}/tarefas/AbC`, `${api}/projetos/XyZ`]) {
     let visivel = false;
@@ -197,76 +367,157 @@ async function executar() {
     assert.equal(visivel, true, endereco);
   }
   const pedidosCaixa = [];
-  const ouvirCaixa = (req) => { const url = new URL(req.url()); if (url.origin === api) pedidosCaixa.push(`${req.method()} ${decodeURIComponent(url.pathname)}`); };
+  const ouvirCaixa = (req) => {
+    const url = new URL(req.url());
+    if (url.origin === api)
+      pedidosCaixa.push(`${req.method()} ${decodeURIComponent(url.pathname)}`);
+  };
   page.on("request", ouvirCaixa);
 
   await page.goto(`${web}/Tarefas/AbC`);
-  await ficha().getByRole("heading", { name: "Tarefa com id misto", exact: true }).waitFor();
+  await ficha()
+    .getByRole("heading", { name: "Tarefa com id misto", exact: true })
+    .waitFor();
   assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC");
-  await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Fechar detalhes da tarefa");
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.getAttribute("aria-label") ===
+      "Fechar detalhes da tarefa",
+  );
   assert.ok(pedidosCaixa.includes("GET /tarefas/AbC"), pedidosCaixa.join(", "));
   assert.equal(pedidosCaixa.includes("GET /tarefas/abc"), false);
-  await page.getByRole("button", { name: "Fechar detalhes da tarefa", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Fechar detalhes da tarefa", exact: true })
+    .click();
   await ficha().waitFor({ state: "detached" });
   await page.waitForURL(`${web}/`);
   await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
-  console.log("OK: /Tarefas/AbC abre a ficha com o id original, foca o fechar e volta à lista");
+  console.log(
+    "OK: /Tarefas/AbC abre a ficha com o id original, foca o fechar e volta à lista",
+  );
 
   pedidosCaixa.length = 0;
   await page.goto(`${web}/Tarefas/AbC/Editar`);
-  await ficha().getByLabel(/^Título/).waitFor();
-  assert.equal(await ficha().getByLabel(/^Título/).inputValue(), "Tarefa com id misto");
+  await ficha()
+    .getByLabel(/^Título/)
+    .waitFor();
+  assert.equal(
+    await ficha()
+      .getByLabel(/^Título/)
+      .inputValue(),
+    "Tarefa com id misto",
+  );
   assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC/Editar");
   assert.ok(pedidosCaixa.includes("GET /tarefas/AbC"), pedidosCaixa.join(", "));
-  await page.getByRole("button", { name: "Fechar editar tarefa", exact: true }).click();
-  await ficha().getByRole("heading", { name: "Tarefa com id misto", exact: true }).waitFor();
+  await page
+    .getByRole("button", { name: "Fechar editar tarefa", exact: true })
+    .click();
+  await ficha()
+    .getByRole("heading", { name: "Tarefa com id misto", exact: true })
+    .waitFor();
   assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC");
-  console.log("OK: /Tarefas/AbC/Editar preserva o id e fechar volta ao detalhe");
+  console.log(
+    "OK: /Tarefas/AbC/Editar preserva o id e fechar volta ao detalhe",
+  );
 
   await page.goto(`${web}/Tarefas/6`);
-  await ficha().getByRole("alert").filter({ hasText: "Tarefa não encontrada." }).waitFor();
-  assert.equal(await page.getByRole("heading", { name: "Página não encontrada", exact: true }).count(), 0);
-  console.log('OK: /Tarefas/6 abre a ficha e não a página "Página não encontrada"');
+  await ficha()
+    .getByRole("alert")
+    .filter({ hasText: "Tarefa não encontrada." })
+    .waitFor();
+  assert.equal(
+    await page
+      .getByRole("heading", { name: "Página não encontrada", exact: true })
+      .count(),
+    0,
+  );
+  console.log(
+    'OK: /Tarefas/6 abre a ficha e não a página "Página não encontrada"',
+  );
 
   await page.goto(`${web}/Tarefas/nova`);
-  await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Nova tarefa", exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Fechar nova tarefa", exact: true })
+    .click();
   await page.waitForURL(`${web}/`);
   await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
   console.log("OK: /Tarefas/nova abre o formulário e fechar volta à lista");
 
   await page.goto(`${web}/TAREFAS/NOVA?projetoId=XyZ`);
   await ficha().locator('select[name="projetoId"]').waitFor();
-  assert.equal(await ficha().locator('select[name="projetoId"]').inputValue(), "XyZ");
+  assert.equal(
+    await ficha().locator('select[name="projetoId"]').inputValue(),
+    "XyZ",
+  );
   await page.getByRole("button", { name: "Cancelar", exact: true }).click();
   await page.waitForURL(`${web}/projetos/XyZ`);
-  await page.getByRole("heading", { level: 1, name: "Projeto com id misto", exact: true }).waitFor();
-  console.log("OK: /TAREFAS/NOVA?projetoId=XyZ cancela no projeto sem mudar a caixa do id");
+  await page
+    .getByRole("heading", {
+      level: 1,
+      name: "Projeto com id misto",
+      exact: true,
+    })
+    .waitFor();
+  console.log(
+    "OK: /TAREFAS/NOVA?projetoId=XyZ cancela no projeto sem mudar a caixa do id",
+  );
 
   pedidosCaixa.length = 0;
   await page.goto(`${web}/Projetos/Novo`);
-  await page.getByRole("dialog", { name: "Novo projeto", exact: true }).waitFor();
-  assert.equal(pedidosCaixa.some((pedido) => /\/projetos\/novo$/i.test(pedido)), false, pedidosCaixa.join(", "));
-  await page.getByRole("button", { name: "Fechar novo projeto", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Novo projeto", exact: true })
+    .waitFor();
+  assert.equal(
+    pedidosCaixa.some((pedido) => /\/projetos\/novo$/i.test(pedido)),
+    false,
+    pedidosCaixa.join(", "),
+  );
+  await page
+    .getByRole("button", { name: "Fechar novo projeto", exact: true })
+    .click();
   await page.waitForURL(`${web}/projetos`);
   await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
   console.log("OK: /Projetos/Novo abre o cadastro e não trata Novo como id");
 
   await page.goto(`${web}/Projetos/1/EDITAR`);
   await ficha().getByLabel(/^Nome/).waitFor();
-  assert.equal(await ficha().getByLabel(/^Nome/).inputValue(), "Gerenciador de Tarefas");
-  await page.getByRole("button", { name: "Fechar editar projeto", exact: true }).click();
+  assert.equal(
+    await ficha().getByLabel(/^Nome/).inputValue(),
+    "Gerenciador de Tarefas",
+  );
+  await page
+    .getByRole("button", { name: "Fechar editar projeto", exact: true })
+    .click();
   await page.waitForURL(`${web}/Projetos/1`);
-  await page.getByRole("heading", { level: 1, name: "Gerenciador de Tarefas", exact: true }).waitFor();
-  console.log("OK: /Projetos/1/EDITAR preserva o caminho e fechar volta ao projeto");
+  await page
+    .getByRole("heading", {
+      level: 1,
+      name: "Gerenciador de Tarefas",
+      exact: true,
+    })
+    .waitFor();
+  console.log(
+    "OK: /Projetos/1/EDITAR preserva o caminho e fechar volta ao projeto",
+  );
 
   await page.goto(`${web}/Quadro`);
-  await page.getByRole("region", { name: "Quadro de tarefas por status" }).waitFor();
+  await page
+    .getByRole("region", { name: "Quadro de tarefas por status" })
+    .waitFor();
   await page.getByRole("button", { name: "Nova tarefa", exact: true }).click();
-  await page.getByRole("dialog", { name: "Nova tarefa", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Fechar nova tarefa", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Nova tarefa", exact: true })
+    .waitFor();
+  await page
+    .getByRole("button", { name: "Fechar nova tarefa", exact: true })
+    .click();
   await page.waitForURL(`${web}/Quadro`);
-  await page.getByRole("region", { name: "Quadro de tarefas por status" }).waitFor();
+  await page
+    .getByRole("region", { name: "Quadro de tarefas por status" })
+    .waitFor();
   console.log("OK: nova tarefa aberta em /Quadro fecha de volta no quadro");
 
   await page.goto(`${web}/projetos`);
@@ -276,22 +527,34 @@ async function executar() {
   await page.waitForURL(`${web}/?origem=atalho#lista`);
   await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
   assert.equal(await ficha().count(), 0);
-  assert.equal(await page.evaluate(() => history.length), historicoIndex + 1, "/index.html empilhou histórico");
+  assert.equal(
+    await page.evaluate(() => history.length),
+    historicoIndex + 1,
+    "/index.html empilhou histórico",
+  );
   await page.goBack();
   await page.waitForURL(`${web}/projetos`);
   await page.getByRole("region", { name: "Lista de projetos" }).waitFor();
   await page.goto(`${web}/INDEX.HTML`);
   await page.waitForURL(`${web}/`);
   await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
-  console.log("OK: /index.html e /INDEX.HTML redirecionam para / com replace e preservam query/hash");
+  console.log(
+    "OK: /index.html e /INDEX.HTML redirecionam para / com replace e preservam query/hash",
+  );
 
   page.off("request", ouvirCaixa);
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);
-  assert.equal(await readFile(join(raiz, "db.seed.json"), "utf8"), seedOriginal);
+  assert.equal(
+    await readFile(join(raiz, "db.seed.json"), "utf8"),
+    seedOriginal,
+  );
   console.log("OK: sem erros JavaScript e bancos locais preservados");
 }
 
 executar()
-  .catch((erro) => { console.error(erro); process.exitCode = 1; })
+  .catch((erro) => {
+    console.error(erro);
+    process.exitCode = 1;
+  })
   .finally(() => apoio.encerrar());

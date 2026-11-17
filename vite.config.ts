@@ -1,14 +1,19 @@
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vite'
-import { fileURLToPath, URL } from 'node:url'
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: { alias: {
-    '@untitledui/icons': fileURLToPath(new URL('./src/design/uicons.tsx', import.meta.url)),
-    '@': fileURLToPath(new URL('./src/design/vendor', import.meta.url)),
-  } },
-  // O json-server grava no db.json a cada salvamento; sem isso o Vite recarrega a página inteira.
-  server: { watch: { ignored: ['**/db.json'] } },
-})
+  resolve: {
+    alias: {
+      "@untitledui/icons": fileURLToPath(
+        new URL("./src/design/uicons.tsx", import.meta.url),
+      ),
+      "@": fileURLToPath(new URL("./src/design/vendor", import.meta.url)),
+    },
+  },
+  // O json-server grava no db.json a cada salvamento;
+  // sem isso o Vite recarrega a página inteira.
+  server: { watch: { ignored: ["**/db.json"] } },
+});

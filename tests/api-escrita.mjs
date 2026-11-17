@@ -36,7 +36,9 @@ async function esperarGravacao(caminhoDb, condicao) {
 async function executar() {
   const bancoRealAntes = await readFile(join(raiz, "db.json"), "utf8");
   const seedAntes = await readFile(join(raiz, "db.seed.json"), "utf8");
-  const { temporario, banco: caminhoDb } = await apoio.criarBanco({ prefixo: "pixel-api-escrita-" });
+  const { temporario, banco: caminhoDb } = await apoio.criarBanco({
+    prefixo: "pixel-api-escrita-",
+  });
   const porta = await apoio.portaLivre();
   const apiUrl = `http://127.0.0.1:${porta}`;
   const processoApi = apoio.iniciarApi(caminhoDb, porta);
@@ -44,10 +46,25 @@ async function executar() {
   await apoio.esperar(`${apiUrl}/tarefas`);
   process.env.VITE_API_URL = apiUrl;
   process.env.VITE_API_TEMPO_LIMITE_MS = "500";
-  vite = apoio.registrar(await createServer({ root: raiz, mode: "test", cacheDir: join(temporario, ".vite"), logLevel: "silent", server: { middlewareMode: true, hmr: false } }));
+  vite = apoio.registrar(
+    await createServer({
+      root: raiz,
+      mode: "test",
+      cacheDir: join(temporario, ".vite"),
+      logLevel: "silent",
+      server: { middlewareMode: true, hmr: false },
+    }),
+  );
   const api = await vite.ssrLoadModule("/src/api.ts");
-  for (const nome of ["criarTarefa", "atualizarTarefa", "excluirTarefa", "criarProjeto", "atualizarProjeto"]) {
-    if (typeof api[nome] !== "function") throw new Error(`Função ausente em src/api.ts: ${nome}`);
+  for (const nome of [
+    "criarTarefa",
+    "atualizarTarefa",
+    "excluirTarefa",
+    "criarProjeto",
+    "atualizarProjeto",
+  ]) {
+    if (typeof api[nome] !== "function")
+      throw new Error(`Função ausente em src/api.ts: ${nome}`);
   }
 
   const dadosProjeto = {
@@ -60,112 +77,205 @@ async function executar() {
   let tarefaCriada;
   let dadosTarefa;
 
-  await conferir("criarProjeto cria sem ID e devolve projeto completo", async () => {
-    assert.ok(!("id" in dadosProjeto));
-    projetoCriado = await api.criarProjeto(dadosProjeto);
-    assert.equal(typeof projetoCriado.id, "string");
-    assert.ok(projetoCriado.id.length > 0);
-    assert.deepEqual(projetoCriado, { ...dadosProjeto, id: projetoCriado.id });
-  });
+  await conferir(
+    "criarProjeto cria sem ID e devolve projeto completo",
+    async () => {
+      assert.ok(!("id" in dadosProjeto));
+      projetoCriado = await api.criarProjeto(dadosProjeto);
+      assert.equal(typeof projetoCriado.id, "string");
+      assert.ok(projetoCriado.id.length > 0);
+      assert.deepEqual(projetoCriado, {
+        ...dadosProjeto,
+        id: projetoCriado.id,
+      });
+    },
+  );
 
-  await conferir("criarTarefa cria sem ID e devolve tarefa completa", async () => {
-    dadosTarefa = {
-      projetoId: projetoCriado.id,
-      titulo: "Testar escrita da API",
-      descricao: "POST e PATCH via módulo real",
-      status: "a-fazer",
-      prioridade: "media",
-      responsavel: "Ana",
-      prazo: "2026-11-05",
-    };
-    assert.ok(!("id" in dadosTarefa));
-    tarefaCriada = await api.criarTarefa(dadosTarefa);
-    assert.equal(typeof tarefaCriada.id, "string");
-    assert.ok(tarefaCriada.id.length > 0);
-    assert.deepEqual(tarefaCriada, { ...dadosTarefa, id: tarefaCriada.id });
-  });
+  await conferir(
+    "criarTarefa cria sem ID e devolve tarefa completa",
+    async () => {
+      dadosTarefa = {
+        projetoId: projetoCriado.id,
+        titulo: "Testar escrita da API",
+        descricao: "POST e PATCH via módulo real",
+        status: "a-fazer",
+        prioridade: "media",
+        responsavel: "Ana",
+        prazo: "2026-11-05",
+      };
+      assert.ok(!("id" in dadosTarefa));
+      tarefaCriada = await api.criarTarefa(dadosTarefa);
+      assert.equal(typeof tarefaCriada.id, "string");
+      assert.ok(tarefaCriada.id.length > 0);
+      assert.deepEqual(tarefaCriada, { ...dadosTarefa, id: tarefaCriada.id });
+    },
+  );
 
   await conferir("leitura após escrita confirma tarefa e projeto", async () => {
     assert.deepEqual(await api.buscarTarefa(tarefaCriada.id), tarefaCriada);
     assert.deepEqual(await api.buscarProjeto(projetoCriado.id), projetoCriado);
   });
 
-  await conferir("atualizarTarefa parcial mantém campos, ID e vínculo", async () => {
-    const atualizada = await api.atualizarTarefa(tarefaCriada.id, { status: "em-andamento", prioridade: "alta" });
-    assert.deepEqual(atualizada, { ...tarefaCriada, status: "em-andamento", prioridade: "alta" });
-    assert.deepEqual(await api.buscarTarefa(tarefaCriada.id), atualizada);
-    tarefaCriada = atualizada;
-  });
+  await conferir(
+    "atualizarTarefa parcial mantém campos, ID e vínculo",
+    async () => {
+      const atualizada = await api.atualizarTarefa(tarefaCriada.id, {
+        status: "em-andamento",
+        prioridade: "alta",
+      });
+      assert.deepEqual(atualizada, {
+        ...tarefaCriada,
+        status: "em-andamento",
+        prioridade: "alta",
+      });
+      assert.deepEqual(await api.buscarTarefa(tarefaCriada.id), atualizada);
+      tarefaCriada = atualizada;
+    },
+  );
 
   await conferir("atualizarProjeto parcial mantém campos e ID", async () => {
-    const atualizado = await api.atualizarProjeto(projetoCriado.id, { disciplina: "Desenvolvimento Frontend II" });
-    assert.deepEqual(atualizado, { ...projetoCriado, disciplina: "Desenvolvimento Frontend II" });
+    const atualizado = await api.atualizarProjeto(projetoCriado.id, {
+      disciplina: "Desenvolvimento Frontend II",
+    });
+    assert.deepEqual(atualizado, {
+      ...projetoCriado,
+      disciplina: "Desenvolvimento Frontend II",
+    });
     assert.deepEqual(await api.buscarProjeto(projetoCriado.id), atualizado);
     projetoCriado = atualizado;
   });
 
-  await conferir("persistência grava criações e atualizações no arquivo temporário", async () => {
-    const gravou = (atual) => atual.tarefas.some((t) => t.id === tarefaCriada.id && t.status === "em-andamento") && atual.projetos.some((p) => p.id === projetoCriado.id && p.disciplina === "Desenvolvimento Frontend II");
-    const db = await esperarGravacao(caminhoDb, gravou);
-    assert.deepEqual(db.tarefas.find((t) => t.id === tarefaCriada.id), tarefaCriada);
-    assert.deepEqual(db.projetos.find((p) => p.id === projetoCriado.id), projetoCriado);
-  });
+  await conferir(
+    "persistência grava criações e atualizações no arquivo temporário",
+    async () => {
+      const gravou = (atual) =>
+        atual.tarefas.some(
+          (t) => t.id === tarefaCriada.id && t.status === "em-andamento",
+        ) &&
+        atual.projetos.some(
+          (p) =>
+            p.id === projetoCriado.id &&
+            p.disciplina === "Desenvolvimento Frontend II",
+        );
+      const db = await esperarGravacao(caminhoDb, gravou);
+      assert.deepEqual(
+        db.tarefas.find((t) => t.id === tarefaCriada.id),
+        tarefaCriada,
+      );
+      assert.deepEqual(
+        db.projetos.find((p) => p.id === projetoCriado.id),
+        projetoCriado,
+      );
+    },
+  );
 
-  await conferir("listarTarefasDoProjeto retorna só tarefas do projeto via _embed", async () => {
-    const outra = await api.criarTarefa({ ...dadosTarefa, titulo: "Segunda tarefa do projeto" });
-    const lista = await api.listarTarefasDoProjeto(projetoCriado.id);
-    assert.deepEqual(lista.map((t) => t.id).sort(), [tarefaCriada.id, outra.id].sort());
-    assert.ok(lista.every((t) => t.projetoId === projetoCriado.id));
-    const doSeed = await api.listarTarefasDoProjeto("1");
-    assert.ok(doSeed.length > 0 && doSeed.every((t) => t.projetoId === "1"));
-    assert.ok(!doSeed.some((t) => t.id === tarefaCriada.id || t.id === outra.id));
-  });
+  await conferir(
+    "listarTarefasDoProjeto retorna só tarefas do projeto via _embed",
+    async () => {
+      const outra = await api.criarTarefa({
+        ...dadosTarefa,
+        titulo: "Segunda tarefa do projeto",
+      });
+      const lista = await api.listarTarefasDoProjeto(projetoCriado.id);
+      assert.deepEqual(
+        lista.map((t) => t.id).sort(),
+        [tarefaCriada.id, outra.id].sort(),
+      );
+      assert.ok(lista.every((t) => t.projetoId === projetoCriado.id));
+      const doSeed = await api.listarTarefasDoProjeto("1");
+      assert.ok(doSeed.length > 0 && doSeed.every((t) => t.projetoId === "1"));
+      assert.ok(
+        !doSeed.some((t) => t.id === tarefaCriada.id || t.id === outra.id),
+      );
+    },
+  );
 
-  await conferir("atualizações de IDs inexistentes rejeitam com ErroApi 404", async () => {
-    const eh404 = (erro) => erro instanceof api.ErroApi && erro.status === 404;
-    await assert.rejects(api.atualizarTarefa("inexistente-404", { titulo: "Sem destino" }), eh404);
-    await assert.rejects(api.atualizarProjeto("inexistente-404", { nome: "Sem destino" }), eh404);
-    await assert.rejects(api.excluirTarefa("inexistente-404"), eh404);
-  });
+  await conferir(
+    "atualizações de IDs inexistentes rejeitam com ErroApi 404",
+    async () => {
+      const eh404 = (erro) =>
+        erro instanceof api.ErroApi && erro.status === 404;
+      await assert.rejects(
+        api.atualizarTarefa("inexistente-404", { titulo: "Sem destino" }),
+        eh404,
+      );
+      await assert.rejects(
+        api.atualizarProjeto("inexistente-404", { nome: "Sem destino" }),
+        eh404,
+      );
+      await assert.rejects(api.excluirTarefa("inexistente-404"), eh404);
+    },
+  );
 
-  await conferir("métodos e ID especial são codificados na URL (fetch controlado)", async () => {
-    const fetchOriginal = globalThis.fetch;
-    const chamadas = [];
-    globalThis.fetch = async (url, init) => {
-      chamadas.push({ url: String(url), metodo: init?.method });
-      return new Response(JSON.stringify({ id: "controlado" }), { status: 200, headers: { "Content-Type": "application/json" } });
-    };
-    try {
-      await api.criarTarefa(dadosTarefa);
-      await api.atualizarProjeto("a/b c?d#e", { nome: "Controlado" });
-      await api.excluirTarefa("a/b c?d#e");
-    } finally {
-      globalThis.fetch = fetchOriginal;
-    }
-    assert.equal(globalThis.fetch, fetchOriginal);
-    assert.deepEqual(chamadas, [
-      { url: `${apiUrl}/tarefas`, metodo: "POST" },
-      { url: `${apiUrl}/projetos/a%2Fb%20c%3Fd%23e`, metodo: "PATCH" },
-      { url: `${apiUrl}/tarefas/a%2Fb%20c%3Fd%23e`, metodo: "DELETE" },
-    ]);
-  });
+  await conferir(
+    "métodos e ID especial são codificados na URL (fetch controlado)",
+    async () => {
+      const fetchOriginal = globalThis.fetch;
+      const chamadas = [];
+      globalThis.fetch = async (url, init) => {
+        chamadas.push({ url: String(url), metodo: init?.method });
+        return new Response(JSON.stringify({ id: "controlado" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      };
+      try {
+        await api.criarTarefa(dadosTarefa);
+        await api.atualizarProjeto("a/b c?d#e", { nome: "Controlado" });
+        await api.excluirTarefa("a/b c?d#e");
+      } finally {
+        globalThis.fetch = fetchOriginal;
+      }
+      assert.equal(globalThis.fetch, fetchOriginal);
+      assert.deepEqual(chamadas, [
+        { url: `${apiUrl}/tarefas`, metodo: "POST" },
+        { url: `${apiUrl}/projetos/a%2Fb%20c%3Fd%23e`, metodo: "PATCH" },
+        { url: `${apiUrl}/tarefas/a%2Fb%20c%3Fd%23e`, metodo: "DELETE" },
+      ]);
+    },
+  );
 
-  await conferir("sinal já abortado cancela criação e atualização", async () => {
-    const controle = new AbortController();
-    controle.abort();
-    const ehAbort = (erro) => erro?.name === "AbortError";
-    await assert.rejects(api.listarTarefas(controle.signal), ehAbort);
-    await assert.rejects(api.criarTarefa(dadosTarefa, controle.signal), ehAbort);
-    await assert.rejects(api.atualizarProjeto(projetoCriado.id, { nome: "Cancelado" }, controle.signal), ehAbort);
-    await assert.rejects(api.excluirTarefa(tarefaCriada.id, controle.signal), ehAbort);
-  });
+  await conferir(
+    "sinal já abortado cancela criação e atualização",
+    async () => {
+      const controle = new AbortController();
+      controle.abort();
+      const ehAbort = (erro) => erro?.name === "AbortError";
+      await assert.rejects(api.listarTarefas(controle.signal), ehAbort);
+      await assert.rejects(
+        api.criarTarefa(dadosTarefa, controle.signal),
+        ehAbort,
+      );
+      await assert.rejects(
+        api.atualizarProjeto(
+          projetoCriado.id,
+          { nome: "Cancelado" },
+          controle.signal,
+        ),
+        ehAbort,
+      );
+      await assert.rejects(
+        api.excluirTarefa(tarefaCriada.id, controle.signal),
+        ehAbort,
+      );
+    },
+  );
 
-  await conferir("excluirTarefa remove a tarefa do banco temporário", async () => {
-    await api.excluirTarefa(tarefaCriada.id);
-    await assert.rejects(api.buscarTarefa(tarefaCriada.id), (erro) => erro instanceof api.ErroApi && erro.status === 404);
-    const db = await esperarGravacao(caminhoDb, (atual) => !atual.tarefas.some((t) => t.id === tarefaCriada.id));
-    assert.ok(!db.tarefas.some((t) => t.id === tarefaCriada.id));
-  });
+  await conferir(
+    "excluirTarefa remove a tarefa do banco temporário",
+    async () => {
+      await api.excluirTarefa(tarefaCriada.id);
+      await assert.rejects(
+        api.buscarTarefa(tarefaCriada.id),
+        (erro) => erro instanceof api.ErroApi && erro.status === 404,
+      );
+      const db = await esperarGravacao(
+        caminhoDb,
+        (atual) => !atual.tarefas.some((t) => t.id === tarefaCriada.id),
+      );
+      assert.ok(!db.tarefas.some((t) => t.id === tarefaCriada.id));
+    },
+  );
 
   await conferir("servidor parado rejeita escrita e leitura", async () => {
     await encerrarApi();
@@ -180,53 +290,102 @@ async function executar() {
       resposta.write("{");
     }
   });
-  await new Promise((resolve) => servidorTravado.listen(porta, "127.0.0.1", resolve));
+  await new Promise((resolve) =>
+    servidorTravado.listen(porta, "127.0.0.1", resolve),
+  );
   try {
     const chamadas = [
       ["listarTarefas", (signal) => api.listarTarefas(signal)],
       ["listarProjetos", (signal) => api.listarProjetos(signal)],
       ["buscarTarefa", (signal) => api.buscarTarefa("1", signal)],
       ["buscarProjeto", (signal) => api.buscarProjeto("1", signal)],
-      ["listarTarefasDoProjeto", (signal) => api.listarTarefasDoProjeto("1", signal)],
+      [
+        "listarTarefasDoProjeto",
+        (signal) => api.listarTarefasDoProjeto("1", signal),
+      ],
       ["criarTarefa", (signal) => api.criarTarefa(dadosTarefa, signal)],
-      ["atualizarTarefa", (signal) => api.atualizarTarefa("1", { titulo: "Sem resposta" }, signal)],
+      [
+        "atualizarTarefa",
+        (signal) =>
+          api.atualizarTarefa("1", { titulo: "Sem resposta" }, signal),
+      ],
       ["excluirTarefa", (signal) => api.excluirTarefa("1", signal)],
-      ["excluirTarefaSeExistir", (signal) => api.excluirTarefaSeExistir("1", signal)],
+      [
+        "excluirTarefaSeExistir",
+        (signal) => api.excluirTarefaSeExistir("1", signal),
+      ],
       ["criarProjeto", (signal) => api.criarProjeto(dadosProjeto, signal)],
-      ["atualizarProjeto", (signal) => api.atualizarProjeto("1", { nome: "Sem resposta" }, signal)],
+      [
+        "atualizarProjeto",
+        (signal) => api.atualizarProjeto("1", { nome: "Sem resposta" }, signal),
+      ],
     ];
     for (const [indice, [nome, chamar]] of chamadas.entries()) {
-      await conferir(`${nome} sem resposta rejeita por tempo limite`, async () => {
-        const controle = new AbortController();
-        const guarda = setTimeout(() => servidorTravado.closeAllConnections(), 3000);
-        try {
-          await assert.rejects(chamar(indice % 2 ? undefined : controle.signal), (erro) => erro.name === "Error" && erro.message === "O servidor demorou para responder. Tente de novo." && erro.cause?.name === "TimeoutError");
-          assert.equal(controle.signal.aborted, false);
-        } finally {
-          clearTimeout(guarda);
-        }
-      });
+      await conferir(
+        `${nome} sem resposta rejeita por tempo limite`,
+        async () => {
+          const controle = new AbortController();
+          const guarda = setTimeout(
+            () => servidorTravado.closeAllConnections(),
+            3000,
+          );
+          try {
+            await assert.rejects(
+              chamar(indice % 2 ? undefined : controle.signal),
+              (erro) =>
+                erro.name === "Error" &&
+                erro.message ===
+                  "O servidor demorou para responder. Tente de novo." &&
+                erro.cause?.name === "TimeoutError",
+            );
+            assert.equal(controle.signal.aborted, false);
+          } finally {
+            clearTimeout(guarda);
+          }
+        },
+      );
     }
 
-    await conferir("cancelar leitura em andamento preserva AbortError", async () => {
-      const controle = new AbortController();
-      const recebida = once(servidorTravado, "request");
-      const rejeitada = assert.rejects(api.listarTarefas(controle.signal), (erro) => erro.name === "AbortError");
-      await recebida;
-      controle.abort();
-      await rejeitada;
-    });
+    await conferir(
+      "cancelar leitura em andamento preserva AbortError",
+      async () => {
+        const controle = new AbortController();
+        const recebida = once(servidorTravado, "request");
+        const rejeitada = assert.rejects(
+          api.listarTarefas(controle.signal),
+          (erro) => erro.name === "AbortError",
+        );
+        await recebida;
+        controle.abort();
+        await rejeitada;
+      },
+    );
 
     corpoParcial = true;
-    for (const [nome, chamar] of chamadas.filter(([nome]) => ["listarTarefas", "criarTarefa", "atualizarProjeto"].includes(nome))) {
-      await conferir(`${nome} com JSON incompleto também atinge o limite`, async () => {
-        const guarda = setTimeout(() => servidorTravado.closeAllConnections(), 3000);
-        try {
-          await assert.rejects(chamar(), (erro) => erro.name === "Error" && erro.message === "O servidor demorou para responder. Tente de novo." && erro.cause !== undefined);
-        } finally {
-          clearTimeout(guarda);
-        }
-      });
+    for (const [nome, chamar] of chamadas.filter(([nome]) =>
+      ["listarTarefas", "criarTarefa", "atualizarProjeto"].includes(nome),
+    )) {
+      await conferir(
+        `${nome} com JSON incompleto também atinge o limite`,
+        async () => {
+          const guarda = setTimeout(
+            () => servidorTravado.closeAllConnections(),
+            3000,
+          );
+          try {
+            await assert.rejects(
+              chamar(),
+              (erro) =>
+                erro.name === "Error" &&
+                erro.message ===
+                  "O servidor demorou para responder. Tente de novo." &&
+                erro.cause !== undefined,
+            );
+          } finally {
+            clearTimeout(guarda);
+          }
+        },
+      );
     }
   } finally {
     servidorTravado.closeAllConnections();
@@ -250,6 +409,7 @@ executar()
     await apoio.encerrar();
     if (urlAnterior === undefined) delete process.env.VITE_API_URL;
     else process.env.VITE_API_URL = urlAnterior;
-    if (limiteAnterior === undefined) delete process.env.VITE_API_TEMPO_LIMITE_MS;
+    if (limiteAnterior === undefined)
+      delete process.env.VITE_API_TEMPO_LIMITE_MS;
     else process.env.VITE_API_TEMPO_LIMITE_MS = limiteAnterior;
   });

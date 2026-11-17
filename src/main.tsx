@@ -9,11 +9,11 @@ import { FiltrosProvider } from "./components/FiltrosProvider";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <I18nProvider locale="pt-BR">
-    <BrowserRouter>
-      <FiltrosProvider>
-        <App />
-      </FiltrosProvider>
-    </BrowserRouter>
+      <BrowserRouter>
+        <FiltrosProvider>
+          <App />
+        </FiltrosProvider>
+      </BrowserRouter>
     </I18nProvider>
   </StrictMode>,
 );

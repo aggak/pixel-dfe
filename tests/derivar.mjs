@@ -10,8 +10,23 @@ const titulos = [
   "Testar  a\tAPI   do monitoramento",
   "RELATORIO FINAL",
 ];
-const tarefas = titulos.map((titulo, indice) => ({ id: String(indice + 1), projetoId: "1", titulo, descricao: "", status: indice % 2 ? "concluida" : "a-fazer", prioridade: "media", responsavel: "", prazo: "" }));
-const achados = (busca, filtros = {}) => filtrarTarefas(tarefas, { busca, status: "todos", prioridade: "todas", ...filtros }).map((tarefa) => tarefa.titulo);
+const tarefas = titulos.map((titulo, indice) => ({
+  id: String(indice + 1),
+  projetoId: "1",
+  titulo,
+  descricao: "",
+  status: indice % 2 ? "concluida" : "a-fazer",
+  prioridade: "media",
+  responsavel: "",
+  prazo: "",
+}));
+const achados = (busca, filtros = {}) =>
+  filtrarTarefas(tarefas, {
+    busca,
+    status: "todos",
+    prioridade: "todas",
+    ...filtros,
+  }).map((tarefa) => tarefa.titulo);
 
 const casos = [
   ["relatório", [titulos[0], titulos[6]]],
@@ -37,10 +52,22 @@ const casos = [
   ["   ", titulos],
 ];
 
-for (const [busca, esperado] of casos) assert.deepEqual(achados(busca), esperado, JSON.stringify(busca));
-assert.deepEqual(achados("relatorio", { status: "a-fazer" }), [titulos[0], titulos[6]]);
+for (const [busca, esperado] of casos)
+  assert.deepEqual(achados(busca), esperado, JSON.stringify(busca));
+assert.deepEqual(achados("relatorio", { status: "a-fazer" }), [
+  titulos[0],
+  titulos[6],
+]);
 assert.deepEqual(achados("relatorio", { status: "concluida" }), []);
-assert.deepEqual(achados("prototipo", { status: "concluida", prioridade: "media" }), [titulos[1]]);
+assert.deepEqual(
+  achados("prototipo", { status: "concluida", prioridade: "media" }),
+  [titulos[1]],
+);
 assert.deepEqual(achados("prototipo", { prioridade: "alta" }), []);
-assert.deepEqual(tarefas.map((tarefa) => tarefa.titulo), titulos);
-console.log("OK: a busca ignora acentos, maiúsculas e espaços repetidos nos dois lados e continua combinando com os filtros");
+assert.deepEqual(
+  tarefas.map((tarefa) => tarefa.titulo),
+  titulos,
+);
+console.log(
+  "OK: a busca ignora acentos, maiúsculas e espaços repetidos nos dois lados e continua combinando com os filtros",
+);

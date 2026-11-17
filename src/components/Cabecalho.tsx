@@ -1,4 +1,11 @@
-import { useContext, useEffect, useRef, type CSSProperties, type ReactNode, type Ref } from "react";
+import {
+  useContext,
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
@@ -9,14 +16,60 @@ import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
 type Passo = [quadro: number, ms: number];
 const LARGURA_LOGO = 84;
 const LARGURA_GATO = 72;
-const entrada: Passo[] = [[1, 150], [2, 67], [3, 67], [4, 67], [5, 67], [6, 67], [7, 67], [8, 100], [0, 200]];
-const troca: Passo[] = [[10, 50], [1, 67], [11, 67], [12, 67], [13, 67], [14, 67], [15, 67], [16, 83], [0, 100]];
-const tecla: Passo[] = [[9, 50], [10, 117], [9, 50], [17, 67], [0, 83]];
-const onda: Passo[] = [4200, 6900, 5300].flatMap((pausa): Passo[] => [[0, pausa], ...[133, 100, 83, 83, 83, 83, 83, 100, 150].map((ms, i): Passo => [18 + i, ms])]);
+const entrada: Passo[] = [
+  [1, 150],
+  [2, 67],
+  [3, 67],
+  [4, 67],
+  [5, 67],
+  [6, 67],
+  [7, 67],
+  [8, 100],
+  [0, 200],
+];
+const troca: Passo[] = [
+  [10, 50],
+  [1, 67],
+  [11, 67],
+  [12, 67],
+  [13, 67],
+  [14, 67],
+  [15, 67],
+  [16, 83],
+  [0, 100],
+];
+const tecla: Passo[] = [
+  [9, 50],
+  [10, 117],
+  [9, 50],
+  [17, 67],
+  [0, 83],
+];
+const onda: Passo[] = [4200, 6900, 5300].flatMap((pausa): Passo[] => [
+  [0, pausa],
+  ...[133, 100, 83, 83, 83, 83, 83, 100, 150].map(
+    (ms, i): Passo => [18 + i, ms],
+  ),
+]);
 const sequencias = { entrada, troca, tecla, onda };
-const gatoEntrada: Passo[] = [[0, 617], [1, 50], [2, 100], [1, 67]];
-const gatoTroca: Passo[] = [[3, 50], [4, 333], [5, 50], [6, 100], [1, 67]];
-const piscada: Passo[] = [[1, 50], [2, 100], [1, 67]];
+const gatoEntrada: Passo[] = [
+  [0, 617],
+  [1, 50],
+  [2, 100],
+  [1, 67],
+];
+const gatoTroca: Passo[] = [
+  [3, 50],
+  [4, 333],
+  [5, 50],
+  [6, 100],
+  [1, 67],
+];
+const piscada: Passo[] = [
+  [1, 50],
+  [2, 100],
+  [1, 67],
+];
 const pausasPiscada = [5300, 11200, 183, 7100, 14900];
 
 function useLogoAnimado() {
@@ -27,17 +80,25 @@ function useLogoAnimado() {
   const palavra = useRef<HTMLSpanElement>(null);
   const gato = useRef<HTMLSpanElement>(null);
   useEffect(() => {
-    const elLogo = logo.current, elPalavra = palavra.current, elGato = gato.current;
+    const elLogo = logo.current,
+      elPalavra = palavra.current,
+      elGato = gato.current;
     if (!elLogo || !elPalavra || !elGato) return;
     const parado = () => movimentoReduzido() || document.hidden;
-    const mostrarPalavra = (quadro: number) => { elPalavra.style.backgroundPositionX = `${-quadro * LARGURA_LOGO}px`; };
-    const mostrarGato = (quadro: number) => { elGato.style.backgroundPositionX = `${-quadro * LARGURA_GATO}px`; };
+    const mostrarPalavra = (quadro: number) => {
+      elPalavra.style.backgroundPositionX = `${-quadro * LARGURA_LOGO}px`;
+    };
+    const mostrarGato = (quadro: number) => {
+      elGato.style.backgroundPositionX = `${-quadro * LARGURA_GATO}px`;
+    };
     let fase: keyof typeof sequencias = "entrada";
     let decorrido = 0;
     let ancora: number | null = null;
     let relogioPalavra: number | undefined;
     let relogioGato: number | undefined;
-    let ponteiro = false, foco = false, piscadas = 0;
+    let ponteiro = false,
+      foco = false,
+      piscadas = 0;
     const segurando = () => ponteiro || foco;
     function pausar() {
       clearTimeout(relogioPalavra);
@@ -56,23 +117,39 @@ function useLogoAnimado() {
         fase = "onda";
         sequencia = onda;
       }
-      if (segurando() && fase === "onda") { mostrarPalavra(0); decorrido = 0; ancora = null; return; }
+      if (segurando() && fase === "onda") {
+        mostrarPalavra(0);
+        decorrido = 0;
+        ancora = null;
+        return;
+      }
       let fim = 0;
       for (const [quadro, ms] of sequencia) {
         fim += ms;
-        if (decorrido < fim) { mostrarPalavra(quadro); relogioPalavra = window.setTimeout(avancar, fim - decorrido); break; }
+        if (decorrido < fim) {
+          mostrarPalavra(quadro);
+          relogioPalavra = window.setTimeout(avancar, fim - decorrido);
+          break;
+        }
       }
     }
     function pressionar(origem: "ponteiro" | "foco") {
       const jaSegurava = segurando();
-      if (origem === "ponteiro") ponteiro = true; else foco = true;
+      if (origem === "ponteiro") ponteiro = true;
+      else foco = true;
       if (jaSegurava || parado()) return;
-      pausar(); fase = "tecla"; decorrido = 0; avancar();
+      pausar();
+      fase = "tecla";
+      decorrido = 0;
+      avancar();
     }
     function soltar(origem: "ponteiro" | "foco") {
-      if (origem === "ponteiro") ponteiro = false; else foco = false;
+      if (origem === "ponteiro") ponteiro = false;
+      else foco = false;
       if (segurando() || parado()) return;
-      pausar(); if (fase === "onda") decorrido = 0; avancar();
+      pausar();
+      if (fase === "onda") decorrido = 0;
+      avancar();
     }
     function animarGato(passos: Passo[]) {
       clearTimeout(relogioGato);
@@ -83,23 +160,50 @@ function useLogoAnimado() {
         let fim = 0;
         for (const [quadro, ms] of passos) {
           fim += ms;
-          if (tempo < fim) { mostrarGato(quadro); relogioGato = window.setTimeout(seguir, fim - tempo); return; }
+          if (tempo < fim) {
+            mostrarGato(quadro);
+            relogioGato = window.setTimeout(seguir, fim - tempo);
+            return;
+          }
         }
-        animarGato([[0, pausasPiscada[piscadas++ % pausasPiscada.length]], ...piscada]);
+        animarGato([
+          [0, pausasPiscada[piscadas++ % pausasPiscada.length]],
+          ...piscada,
+        ]);
       };
       seguir();
     }
     function reiniciar(doRepouso: boolean) {
-      pausar(); clearTimeout(relogioGato); mostrarGato(0);
-      if (doRepouso) { fase = "onda"; decorrido = 0; mostrarPalavra(0); }
-      if (!parado()) { avancar(); animarGato([[0, 5300], ...piscada]); }
+      pausar();
+      clearTimeout(relogioGato);
+      mostrarGato(0);
+      if (doRepouso) {
+        fase = "onda";
+        decorrido = 0;
+        mostrarPalavra(0);
+      }
+      if (!parado()) {
+        avancar();
+        animarGato([[0, 5300], ...piscada]);
+      }
     }
     trocar.current = () => {
-      pausar(); fase = "troca"; decorrido = 0;
-      if (parado()) mostrarPalavra(0); else { avancar(); piscadas = 0; animarGato(gatoTroca); }
+      pausar();
+      fase = "troca";
+      decorrido = 0;
+      if (parado()) mostrarPalavra(0);
+      else {
+        avancar();
+        piscadas = 0;
+        animarGato(gatoTroca);
+      }
     };
-    const aoEntrar = (e: PointerEvent) => { if (e.pointerType !== "touch") pressionar("ponteiro"); };
-    const aoSair = (e: PointerEvent) => { if (e.pointerType !== "touch") soltar("ponteiro"); };
+    const aoEntrar = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") pressionar("ponteiro");
+    };
+    const aoSair = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") soltar("ponteiro");
+    };
     const aoFocar = () => pressionar("foco");
     const aoDesfocar = () => soltar("foco");
     const aoOcultar = () => reiniciar(false);
@@ -110,17 +214,22 @@ function useLogoAnimado() {
     elLogo.addEventListener("blur", aoDesfocar);
     document.addEventListener("visibilitychange", aoOcultar);
     const pararDeObservar = observarMovimento(aoMudarMovimento);
-    if (!parado()) { avancar(); animarGato(gatoEntrada); }
+    if (!parado()) {
+      avancar();
+      animarGato(gatoEntrada);
+    }
     return () => {
       trocar.current = null;
-      clearTimeout(relogioPalavra); clearTimeout(relogioGato);
+      clearTimeout(relogioPalavra);
+      clearTimeout(relogioGato);
       elLogo.removeEventListener("pointerenter", aoEntrar);
       elLogo.removeEventListener("pointerleave", aoSair);
       elLogo.removeEventListener("focus", aoFocar);
       elLogo.removeEventListener("blur", aoDesfocar);
       document.removeEventListener("visibilitychange", aoOcultar);
       pararDeObservar();
-      mostrarPalavra(0); mostrarGato(0);
+      mostrarPalavra(0);
+      mostrarGato(0);
     };
   }, []);
   useEffect(() => {
@@ -136,19 +245,42 @@ export function AcaoCabecalho({ children }: { children: ReactNode }) {
   return area ? createPortal(children, area) : null;
 }
 
-export function Cabecalho({ emTarefas, areaAcaoRef }: { emTarefas: boolean; areaAcaoRef: Ref<HTMLDivElement> }) {
+export function Cabecalho({
+  emTarefas,
+  areaAcaoRef,
+}: {
+  emTarefas: boolean;
+  areaAcaoRef: Ref<HTMLDivElement>;
+}) {
   const { logo, palavra, gato } = useLogoAnimado();
   const cabecalho = useRef<HTMLElement>(null);
   useEffect(() => {
-    const atualizar = () => cabecalho.current?.toggleAttribute("data-rolada", window.scrollY > 0);
+    const atualizar = () =>
+      cabecalho.current?.toggleAttribute("data-rolada", window.scrollY > 0);
     atualizar();
     window.addEventListener("scroll", atualizar, { passive: true });
     return () => window.removeEventListener("scroll", atualizar);
   }, []);
-  const imagens = { "--e-top-gato": `url("${gatoEscuro}")`, "--e-top-logo": `url("${logoEscuro}")` } as CSSProperties;
-  return <header ref={cabecalho} className="e-top">
-    <Link ref={logo} className="e-logo" to="/" style={imagens}><span ref={gato} className="e-top-gato" aria-hidden="true" /><span ref={palavra} className="e-top-palavra" aria-hidden="true" /><span className="e-top-nome">Pixel</span></Link>
-    <nav aria-label="Navegação principal"><Link to="/" aria-current={emTarefas ? "page" : undefined}><span>Tarefas</span></Link><NavLink to="/projetos"><span>Projetos</span></NavLink></nav>
-    <div ref={areaAcaoRef} className="e-top-acao" />
-  </header>;
+  const imagens = {
+    "--e-top-gato": `url("${gatoEscuro}")`,
+    "--e-top-logo": `url("${logoEscuro}")`,
+  } as CSSProperties;
+  return (
+    <header ref={cabecalho} className="e-top">
+      <Link ref={logo} className="e-logo" to="/" style={imagens}>
+        <span ref={gato} className="e-top-gato" aria-hidden="true" />
+        <span ref={palavra} className="e-top-palavra" aria-hidden="true" />
+        <span className="e-top-nome">Pixel</span>
+      </Link>
+      <nav aria-label="Navegação principal">
+        <Link to="/" aria-current={emTarefas ? "page" : undefined}>
+          <span>Tarefas</span>
+        </Link>
+        <NavLink to="/projetos">
+          <span>Projetos</span>
+        </NavLink>
+      </nav>
+      <div ref={areaAcaoRef} className="e-top-acao" />
+    </header>
+  );
 }
