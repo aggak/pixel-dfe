@@ -27,17 +27,11 @@ import { RadioButtonBase } from "../radio-buttons/radio-buttons";
 import { ToggleBase } from "../toggle/toggle";
 
 interface DropdownItemProps extends AriaMenuItemProps {
-  /** The label of the item to be displayed. */
   label?: string;
-  /** An addon to be displayed on the right side of the item. */
   addon?: string;
-  /** If true, the item will not have any styles. */
   unstyled?: boolean;
-  /** An icon to be displayed on the left side of the item. */
   icon?: FC<{ className?: string }>;
-  /** Avatar URL to be displayed on the left side of the item. */
   avatarUrl?: string;
-  /** The selection indicator to be displayed on the item. */
   selectionIndicator?: "checkmark" | "checkbox" | "radio" | "toggle" | "none";
 }
 

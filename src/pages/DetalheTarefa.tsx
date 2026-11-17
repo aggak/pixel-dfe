@@ -128,8 +128,6 @@ export function DetalheTarefa() {
     tarefa && projetos?.find((item) => item.id === tarefa.projetoId);
   const vencido =
     tarefa && tarefa.status !== "concluida" && prazoVencido(tarefa.prazo);
-  // Com a lista carregada e sem o projeto, o
-  // link levaria a uma página de não encontrado.
   const projetoInexistente =
     tarefa !== undefined && projetos !== undefined && !projeto;
   return (

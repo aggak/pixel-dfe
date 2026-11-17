@@ -33,9 +33,6 @@ async function executar() {
 
   browser = await apoio.abrirNavegador();
   const errosPagina = [];
-  // Conteúdo pronto: a consulta principal terminou, nenhum indicador de
-  // carregamento segue ativo e a ficha terminou de abrir (a animação de
-  // entrada a escala de 95% para 100%, o que distorce as medidas).
   async function abrir(page, caminho) {
     await page.goto(`${web}${caminho}`);
     await page
@@ -320,8 +317,6 @@ async function executar() {
       "OK: texto 200% por fontes computadas em rem e raiz 32px; navegação, rótulos e ações sem sobreposição/corte em 1280, 375 e 320 px; Cancelar acessível e funcional",
     );
 
-    // Telas pequenas: nada rola na horizontal e nenhum elemento sai
-    // da tela, salvo dentro de uma faixa rolável (abas de projetos).
     for (const largura of larguras) {
       await page.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
@@ -332,9 +327,6 @@ async function executar() {
             document.documentElement.clientWidth
           )
             return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
-          // Só as abas de projetos podem rolar de lado;
-          // qualquer outro contêiner rolável (o corpo da
-          // ficha tem overflow-y:auto) não pode transbordar.
           const faixa = (el) => Boolean(el.closest(".e-tabs"));
           const transbordo = [...document.querySelectorAll("body *")].find(
             (el) =>
@@ -369,8 +361,6 @@ async function executar() {
       `OK: ${tema}: ${paginas.length + fichas.length} rotas sem rolagem horizontal em ${larguras.join(", ")} px`,
     );
 
-    // Teclado: cada parada do Tab tem foco visível e está na tela;
-    // nas páginas, o percurso sai do documento (sem armadilha).
     for (const largura of [1280, 375]) {
       await page.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
@@ -383,8 +373,6 @@ async function executar() {
               document.activeElement.blur(),
           );
         const paradas = [];
-        // Cada elemento é marcado ao receber foco: voltar a um
-        // marcado é ciclo; sair do documento encerra o percurso.
         let ciclo = false;
         let saiu = false;
         for (let tentativa = 0; tentativa < 120; tentativa++) {
@@ -437,9 +425,6 @@ async function executar() {
           paradas.length >= (ficha ? 2 : 4),
           `${tema} ${largura}px ${caminho}: só ${paradas.length} paradas`,
         );
-        // Sem armadilha: ao fechar o ciclo (ou sair do documento), o Tab
-        // passou por todos os elementos tabuláveis do escopo — a página
-        // inteira, ou só a ficha, que é modal e por isso circula dentro de si.
         assert.ok(
           ciclo || saiu,
           `${tema} ${largura}px ${caminho}: o percurso não terminou em ${paradas.length} paradas`,
@@ -484,8 +469,6 @@ async function executar() {
       `OK: ${tema}: foco visível e na tela em todas as paradas do Tab; a ficha prende o foco`,
     );
 
-    // Achado do Lighthouse: o "opcional" da descrição
-    // ficava abaixo de 4,5:1 por causa da opacidade.
     await page.setViewportSize({ width: 1280, height: 900 });
     await abrir(page, "/tarefas/nova");
     const [cor, fundo] = await page
@@ -522,10 +505,6 @@ async function executar() {
     await page.close();
   }
 
-  // Alvos de toque no celular: controles fora de texto corrido têm
-  // ao menos 44 × 44 px (contando a área ampliada por ::after).
-  // Roda com a fonte da web e com ela bloqueada: sem a Commissioner o texto cai
-  // na fonte de reserva e encolhe, e a área de toque não pode depender disso.
   const abrirCelular = async () => {
     const aba = await browser.newPage({
       viewport: { width: 375, height: 800 },
@@ -579,8 +558,6 @@ async function executar() {
               getComputedStyle(el).visibility === "hidden"
             )
               return [];
-            // Oculto visualmente (botões de dispensar do
-            // React Aria) ou dentro de texto corrido.
             for (
               let atual = el;
               atual && atual !== document.body;
@@ -607,8 +584,6 @@ async function executar() {
               ]);
             const largura = Math.max(caixa.width, ...area.map(([l]) => l));
             const altura = Math.max(caixa.height, ...area.map(([, a]) => a));
-            // A mensagem mostra a área efetiva (com o
-            // pseudo-elemento), não só a caixa do texto.
             return largura < 43.5 || altura < 43.5
               ? [
                   `${el.tagName} "${(el.getAttribute("aria-label") || el.textContent || el.getAttribute("placeholder") || "").trim().slice(0, 30)}" ${Math.round(largura)}×${Math.round(altura)}`,
@@ -661,8 +636,6 @@ async function executar() {
     "OK: botões da confirmação de exclusão com pelo menos 44 px de altura em 375 e 320 px",
   );
 
-  // A área de toque ampliada não pode levar o
-  // anel de foco para cima do texto vizinho.
   for (const [fonte, aba] of [
     ["web", page],
     ["reserva", semFonte],
@@ -713,8 +686,6 @@ async function executar() {
     "OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte da web e com a de reserva",
   );
 
-  // Ficha pelo teclado: Enter no título abre os detalhes
-  // e Esc fecha, devolvendo o foco ao link de origem.
   await page.setViewportSize({ width: 1280, height: 900 });
   await abrir(page, "/");
   const link = page.getByRole("link", {
@@ -735,8 +706,6 @@ async function executar() {
   );
   console.log("OK: Enter abre a ficha e Esc fecha devolvendo o foco ao link");
 
-  // Atalho "Pular para o conteúdo": primeira parada do Tab,
-  // visível só no foco, leva ao título sem mexer na URL.
   for (const largura of [1280, 375]) {
     await page.setViewportSize({ width: largura, height: 800 });
     for (const caminho of paginas) {

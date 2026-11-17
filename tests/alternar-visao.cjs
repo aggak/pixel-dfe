@@ -134,9 +134,6 @@ async function executar() {
     'OK: a lista mostra o controle com "Lista" marcada e "Tarefas" ativo no menu',
   );
 
-  // Os três critérios juntos: busca, status e
-  // prioridade fora do padrão numa mesma troca.
-  // Marca no window: se a troca recarregasse o documento, a marca sumiria.
   await page.evaluate(() => {
     window.semRecarga = true;
     for (const seletor of [".e-top", ".e-tabs", ".e-footer"])
@@ -191,7 +188,6 @@ async function executar() {
   assert.deepEqual(await ids(lista), altas);
   console.log("OK: quadro → lista preserva os filtros alterados no quadro");
 
-  // Voltar e avançar do navegador também trocam de visão sem perder o estado.
   await page.goBack();
   await quadro.locator("[data-task-id]").first().waitFor();
   assert.equal(await page.title(), "Quadro · Pixel");
@@ -203,8 +199,6 @@ async function executar() {
   assert.equal(await page.evaluate(() => window.semRecarga), true);
   console.log("OK: voltar e avançar do navegador mantêm busca e filtros");
 
-  // Teclado: Tab a partir da busca chega à visão;
-  // depois do Enter o foco continua no controle.
   await busca.focus();
   for (let passo = 0; passo < 6 && (await focado()) !== "Quadro"; passo++)
     await page.keyboard.press("Tab");
@@ -233,8 +227,6 @@ async function executar() {
     "OK: Tab alcança o controle, Enter troca de visão e o foco não volta ao início da página",
   );
 
-  // Com a ficha aberta, o fundo segue marcado:
-  // Lista sob a lista, Quadro sob o quadro.
   const alvo = seed.tarefas.find((t) => t.prioridade === "alta");
   const detalhe = page.getByRole("dialog", {
     name: "Detalhes da tarefa",
@@ -266,8 +258,6 @@ async function executar() {
     "OK: a ficha sobre a lista e sobre o quadro mantém a visão marcada e os filtros",
   );
 
-  // O roteador aceita barra final e maiúsculas;
-  // os dois marcadores precisam concordar.
   for (const [rota, esperado] of [
     ["/quadro/", [null, "page", "page"]],
     ["/QUADRO", [null, "page", "page"]],

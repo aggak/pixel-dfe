@@ -34,8 +34,6 @@ export function EditarTarefa() {
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/tarefas/${encodeURIComponent(id)}`;
 
-  // A gravação pertence ao ID atual; uma
-  // resposta antiga não pode mudar de tela.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;

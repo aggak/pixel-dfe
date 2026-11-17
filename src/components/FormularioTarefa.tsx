@@ -36,8 +36,6 @@ const opcoesPrioridade: { valor: Prioridade; texto: string }[] = [
 type CampoObrigatorio = "projetoId" | "titulo" | "responsavel" | "prazo";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
 
-// Ordem em que os campos aparecem na ficha: o foco
-// de erro vai para o primeiro inválido nesta ordem.
 const ordemCampos: CampoObrigatorio[] = [
   "titulo",
   "projetoId",
@@ -46,21 +44,12 @@ const ordemCampos: CampoObrigatorio[] = [
 ];
 
 interface FormularioTarefaProps {
-  /** Lido apenas na montagem; use `key` no pai para trocar a tarefa editada. */
   valoresIniciais?: Partial<NovaTarefa>;
   onSalvar: (dados: NovaTarefa) => void | Promise<void>;
   onCancelar?: () => void;
   textoSalvar?: string;
-  /**
-   * Avisa o pai quando um envio começa (`true`) e quando
-   * termina ou o formulário é desmontado (`false`).
-   */
   onEstadoEnvio?: (ocupada: boolean) => void;
   onAlteracao?: (alterado: boolean) => void;
-  /**
-   * Edição de tarefa existente: só então um 404 significa que ela
-   * foi excluída. O cadastro também recebe `valoresIniciais`.
-   */
   edicao?: boolean;
 }
 
@@ -99,15 +88,11 @@ export function FormularioTarefa({
     prioridade !== (iniciais?.prioridade ?? "media") ||
     responsavel !== (iniciais?.responsavel ?? "") ||
     prazo !== (iniciais?.prazo ?? "");
-  // A descrição já preenchida começa visível; recolher
-  // apenas esconde o campo, o valor fica no estado.
   const [descricaoAberta, setDescricaoAberta] = useState(
     Boolean(valoresIniciais?.descricao),
   );
 
   const [enviando, setEnviando] = useState(false);
-  // "inexistente": a tarefa foi excluída enquanto a
-  // ficha estava aberta; tentar de novo não adianta.
   const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
     false,
   );
@@ -127,8 +112,6 @@ export function FormularioTarefa({
     onAlteracaoRef.current?.(true);
     return () => onAlteracaoRef.current?.(false);
   }, [alterado]);
-  // Se o formulário sair da tela durante um envio,
-  // o pai não pode ficar preso em "ocupada".
   useEffect(
     () => () => {
       if (!notificadoRef.current) return;
@@ -205,8 +188,6 @@ export function FormularioTarefa({
     if (primeiroErro) {
       const formulario = evento.currentTarget;
       window.setTimeout(() => {
-        // O `name` do Select real fica no <select>
-        // oculto; o foco vai para o botão do combobox.
         const alvo =
           primeiroErro === "projetoId"
             ? seletorProjetoRef.current?.querySelector<HTMLElement>("button")
@@ -216,7 +197,6 @@ export function FormularioTarefa({
       return;
     }
 
-    // Monta o objeto campo a campo para nunca repassar `id` ou extras.
     const dados: NovaTarefa = {
       projetoId,
       titulo: titulo.trim(),

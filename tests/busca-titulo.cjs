@@ -173,8 +173,6 @@ async function executar() {
       "OK: busca sem acentos e com espaços repetidos, filtros combinados, limpeza e abas de projeto",
     );
 
-    // A contagem anunciada acompanha a exclusão quando a busca está ativa,
-    // sem anúncio no carregamento e sem inventar o aviso de exclusão do menu.
     const excluirPeloMenu = async (titulo) => {
       await lista.getByRole("button", { name: `Ações de ${titulo}` }).click();
       await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();

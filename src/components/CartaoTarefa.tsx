@@ -14,8 +14,6 @@ import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { useSeletorStatus } from "../hooks/useSeletorStatus";
 
-// "lista" mostra a tarefa como linha; "quadro"
-// como cartão empilhado na coluna do status.
 export function CartaoTarefa({
   tarefa,
   nomeProjeto,

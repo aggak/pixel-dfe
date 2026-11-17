@@ -1,10 +1,3 @@
-// Issue #52: gera o build de produção (tsc -b + vite build) em pastas
-// temporárias e confere, pelo vite preview, que o bundle compilado
-// usa a URL de .env.production e que navegação, fichas React.lazy e
-// todas as gravações funcionam sobre os arquivos estáticos.
-// A API pública nunca é tocada: o build padrão é servido com a Railway
-// interceptada no navegador, e o fluxo de escrita roda num segundo build
-// apontado para um json-server sobre cópia temporária do db.seed.json.
 const assert = require("node:assert/strict");
 const { readFile, readdir, stat } = require("node:fs/promises");
 const { join, relative, sep } = require("node:path");
@@ -25,9 +18,6 @@ const FICHAS_LAZY = [
 ];
 let browser;
 
-// Ambiente sem VITE_API_URL herdada do shell: variáveis do processo
-// têm prioridade sobre os arquivos .env, então
-// só assim o Vite lê .env.production sozinho.
 function ambienteLimpo(extra = {}) {
   const env = { ...process.env, ...extra };
   if (!("VITE_API_URL" in extra)) delete env.VITE_API_URL;
@@ -48,8 +38,6 @@ async function arquivos(pasta) {
   return lista.sort();
 }
 
-// Retrato do dist/ da raiz (nomes, tamanhos e
-// datas) para provar que o teste não o toca.
 async function retratoDist() {
   const pasta = join(raiz, "dist");
   try {
@@ -105,9 +93,6 @@ async function subirPreview(saida) {
   return web;
 }
 
-// Fontes e ícones de CDN são abortados: o teste não depende da rede externa.
-// Os pedidos à API de produção são respondidos
-// pelo `responderProducao`, quando houver.
 async function isolarRede(contexto, externos, responderProducao) {
   await contexto.route("**/*", (rota) => {
     const url = rota.request().url();
@@ -147,7 +132,6 @@ async function executar() {
     prefixo: "pixel-build-producao-",
   });
 
-  // 1. Compilação real com .env.production, fora do dist/ da raiz.
   await rodar(
     "tsc -b",
     "node_modules/typescript/bin/tsc",
@@ -283,8 +267,6 @@ async function executar() {
   browser = await apoio.abrirNavegador();
   const errosPagina = [];
 
-  // 2. O build padrão servido pelo vite preview
-  // chama a API de produção (interceptada).
   const webProducao = await subirPreview(saidaProducao);
   const pedidosProducao = [];
   const externosProducao = [];
@@ -348,8 +330,6 @@ async function executar() {
     `OK: o build padrão no vite preview pede GET ${API_PRODUCAO}/tarefas e /projetos (interceptados) e renderiza os ${seed.tarefas.length} cartões`,
   );
 
-  // 3. Segundo build apontado para um json-server
-  // isolado, servido pelo vite preview.
   const portaApi = await portaLivre();
   const api = `http://127.0.0.1:${portaApi}`;
   iniciar("node_modules/json-server/lib/bin.js", [
@@ -472,7 +452,6 @@ async function executar() {
     "OK: o preview serve /favicon.svg, /robots.txt, /og-image.png e o link Créditos e licenças (THIRD_PARTY_NOTICES.txt, com RUNTIME_LICENSES.txt ao lado) com HTTP 200 e o conteúdo de public/",
   );
 
-  // Navegação SPA: cliques trocam de tela sem novo documento.
   await page.evaluate(() => {
     window.semRecarga = true;
   });
@@ -502,7 +481,6 @@ async function executar() {
     "OK: / → /quadro → /projetos → /projetos/1 → / pelo menu, sem recarregar o documento",
   );
 
-  // Acesso direto e recarga em cada rota, inclusive a inexistente.
   for (const [rota, conferir] of Object.entries(telas)) {
     const resposta = await page.goto(`${web}${rota}`);
     assert.equal(resposta.status(), 200, rota);
@@ -515,7 +493,6 @@ async function executar() {
     `OK: acesso direto e recarga funcionam no preview em ${Object.keys(telas).join(", ")}`,
   );
 
-  // Busca + status + prioridade combinados, preservados entre Lista e Quadro.
   const busca = page.getByRole("searchbox", { name: "Buscar por título" });
   const filtro = (nome) =>
     page
@@ -579,8 +556,6 @@ async function executar() {
     "OK: busca + status + prioridade filtram a lista e se mantêm ao ir para o quadro e voltar",
   );
 
-  // Até aqui nenhuma ficha de formulário foi aberta:
-  // os chunks React.lazy não podem ter sido baixados.
   assert.deepEqual(fichasCarregadas(), []);
   const ui = criarUi(page);
   const fichaAberta = (titulo) =>
@@ -595,7 +570,6 @@ async function executar() {
     );
   };
 
-  // Criar projeto (chunk NovoProjeto).
   const novoProjeto = {
     nome: "Projeto do build de produção",
     descricao: "Criado pela suíte da issue #52",
@@ -635,7 +609,6 @@ async function executar() {
     "OK: o chunk NovoProjeto carrega sob demanda e o POST /projetos grava o projeto novo",
   );
 
-  // Editar projeto (chunk EditarProjeto).
   const edicaoProjeto = {
     nome: "Gerenciador de Tarefas (build)",
     descricao: projeto1.descricao,
@@ -669,7 +642,6 @@ async function executar() {
     "OK: o chunk EditarProjeto carrega sob demanda e o PATCH /projetos/1 grava a edição",
   );
 
-  // Criar tarefa (chunk NovaTarefa).
   const projetos = (await lerBanco()).projetos;
   const novaTarefa = {
     projetoId: "2",
@@ -718,7 +690,6 @@ async function executar() {
     "OK: o chunk NovaTarefa carrega sob demanda e o POST /tarefas grava a tarefa nova",
   );
 
-  // Detalhe e edição de tarefa (chunk EditarTarefa).
   const tarefa1 = seed.tarefas[0];
   await lista.getByRole("link", { name: tarefa1.titulo, exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/tarefas/1");
@@ -764,7 +735,6 @@ async function executar() {
     "OK: o detalhe abre, o chunk EditarTarefa carrega sob demanda e o PATCH /tarefas/1 grava a edição",
   );
 
-  // Mudar status pelo selo do cartão no quadro.
   const coluna = (status) => quadro.locator(`[data-status-column="${status}"]`);
   await page.goto(`${web}/quadro`);
   await telas["/quadro"]();
@@ -804,7 +774,6 @@ async function executar() {
     "OK: o selo do cartão no quadro grava só o status e move o cartão para a coluna nova",
   );
 
-  // Excluir tarefa com confirmação.
   const cartao = page.locator(`[data-task-id="${tarefaCriada.id}"]`);
   const dialogoExcluir = page.getByRole("dialog", {
     name: `Excluir ${novaTarefa.titulo}`,

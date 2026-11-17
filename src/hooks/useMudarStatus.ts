@@ -29,8 +29,6 @@ export function avisoStatus(titulo: string, status: Status) {
   return `Status de ${titulo} alterado para ${statusTexto[status]}.`;
 }
 
-// Grava o status na API e só então troca a tarefa no estado
-// da página: o cartão muda de coluna com o valor confirmado.
 export function useMudarStatus(
   tarefas: Tarefa[],
   setTarefas: Dispatch<SetStateAction<Tarefa[]>>,
@@ -44,8 +42,6 @@ export function useMudarStatus(
   const carimbar = useRef<string | null>(null);
   const ativa = useContext(ContextoPaginaAtiva);
   const avisoPendente = useRef("");
-  // Toda página montada aplica a tarefa gravada, inclusive
-  // a visão aberta enquanto a resposta ainda vinha.
   useEffect(() => {
     const aplicar = (evento: Event) => {
       const gravada = (evento as CustomEvent<Tarefa>).detail;
@@ -81,9 +77,6 @@ export function useMudarStatus(
     setAviso(avisoPendente.current);
     avisoPendente.current = "";
   }, [ativa]);
-  // No quadro o cartão remonta em outra coluna e o foco do botão se perde.
-  // O foco volta ao seletor do cartão (ou ao título da página, se o filtro
-  // o tirou da tela), mas só se ninguém o levou para outro lugar.
   useEffect(() => {
     const idCarimbo = carimbar.current;
     carimbar.current = null;

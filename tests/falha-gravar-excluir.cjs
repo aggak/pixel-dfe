@@ -19,8 +19,6 @@ async function executar() {
   const api = `http://127.0.0.1:${portaApi}`;
   const web = `http://127.0.0.1:${portaWeb}`;
 
-  // A API fica indisponível de verdade: o processo do
-  // json-server é encerrado e depois reiniciado na mesma porta.
   let servidorApi;
   const ligarApi = async () => {
     servidorApi = iniciar("node_modules/json-server/lib/bin.js", [
@@ -90,8 +88,6 @@ async function executar() {
     }
   }
 
-  // Cadastro de tarefa: todos os sete campos sobrevivem
-  // à falha e o mesmo envio grava quando a API volta.
   const novaTarefa = comTextos(
     {
       projetoId: "2",
@@ -165,7 +161,6 @@ async function executar() {
     "OK: cadastrar tarefa com a API parada avisa, mantém os sete campos e grava ao tentar de novo",
   );
 
-  // Edição de tarefa.
   await page.goto(`${web}/tarefas/1/editar`);
   await ui.campo("Título").waitFor();
   await ui.campo("Título").fill("Criar o repositório no GitHub");
@@ -196,7 +191,6 @@ async function executar() {
     "OK: editar tarefa com a API parada avisa, mantém o texto e grava ao tentar de novo",
   );
 
-  // Cadastro e edição de projeto.
   const ficharProjeto = criarUi(page, () => ficha().locator("form"));
   await page.goto(`${web}/projetos/novo`);
   await ficharProjeto.campo("Nome").waitFor();
@@ -282,8 +276,6 @@ async function executar() {
     "OK: editar projeto com a API parada avisa, mantém o texto e grava ao tentar de novo",
   );
 
-  // Exclusão: o diálogo continua aberto com o aviso e o
-  // foco, e a mesma confirmação funciona quando a API volta.
   for (const [caminho, id, titulo] of [
     ["/", "2", "Subir o json-server"],
     ["/quadro", "3", "Montar o quadro no GitHub Projects"],
@@ -339,8 +331,6 @@ async function executar() {
     );
   }
 
-  // Mudança de status também grava: com a API
-  // parada, avisa e o foco volta ao seletor.
   await page.goto(`${web}/`);
   const seletor = page.getByRole("button", {
     name: /^Mudar status de Desenhar o diagrama ER/,
@@ -354,8 +344,6 @@ async function executar() {
     .getByRole("alert")
     .filter({ hasText: "Não foi possível mudar o status. Tente de novo." })
     .waitFor();
-  // O menu termina de fechar depois que o aviso
-  // aparece; o foco chega ao seletor logo em seguida.
   await page.waitForFunction(() =>
     document.activeElement?.matches('[data-task-id="5"] [data-status-trigger]'),
   );

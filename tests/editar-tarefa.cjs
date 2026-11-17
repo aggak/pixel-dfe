@@ -1,4 +1,3 @@
-// Integração da issue #30 com aplicação real e banco temporário.
 const assert = require("node:assert/strict");
 const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -107,8 +106,6 @@ async function executar() {
         Responsável: "responsavel",
         Prazo: "prazo",
       };
-      // A descrição já preenchida começa aberta;
-      // fechar e reabrir mantém o texto.
       assert.equal(
         await ui.alternarDescricao().getAttribute("aria-expanded"),
         "true",
@@ -121,7 +118,6 @@ async function executar() {
       await page.reload();
       await esperarFormulario("1");
       assert.equal(await campo("Prazo").inputValue(), tarefa.prazo);
-      // O menu de ações do cartão na lista leva ao mesmo formulário.
       await page.goto(`${origem}/`);
       await page
         .getByRole("link", { name: tarefa.titulo, exact: true })
@@ -224,7 +220,6 @@ async function executar() {
           `detalhe após ${acao}`,
           async () => caminho() === "/tarefas/1",
         );
-        // Cancelar volta à leitura; só um segundo Escape fecha a ficha.
         await page
           .getByRole("dialog", { name: "Detalhes da tarefa", exact: true })
           .waitFor();
@@ -430,8 +425,6 @@ async function executar() {
       await ate("envio em curso", () =>
         page.locator('form button[type="submit"]').isDisabled(),
       );
-      // A ficha bloqueia o fundo (inert): a saída
-      // durante o envio é feita pelo histórico real.
       await trocarRota("/projetos");
       await page
         .getByRole("heading", { name: "Projetos", exact: true })
@@ -482,8 +475,6 @@ async function executar() {
         ),
         true,
       );
-      // Na ficha a ordem é Título, Projeto (select real),
-      // Responsável, Prazo, Status, Prioridade e Descrição.
       await campo("Título").focus();
       assert.equal(await focoVisivel(campo("Título")), true);
       await page.keyboard.press("Tab");

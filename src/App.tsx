@@ -127,7 +127,6 @@ function App() {
       : projeto
         ? "Projeto"
         : "Tarefa";
-  // Nova tarefa aberta no quadro volta para ele ao fechar.
   const destinoFechar = editando
     ? caminho.replace(/\/editar$/i, "")
     : tarefaNova

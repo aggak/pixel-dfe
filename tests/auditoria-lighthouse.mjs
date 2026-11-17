@@ -1,8 +1,3 @@
-// Auditoria de acessibilidade do Lighthouse
-// sobre o build de produção (issue #48).
-// Uso: node tests/auditoria-lighthouse.mjs [pasta-dos-relatórios]
-// O Lighthouse não é dependência do projeto: roda por
-// `npx lighthouse@13.6.0` (baixado no cache do npx na primeira vez).
 import { execFile, spawn } from "node:child_process";
 import {
   copyFile,
@@ -31,7 +26,6 @@ const paginas = [
   ["nova-tarefa", "/tarefas/nova"],
   ["editar-projeto", "/projetos/1/editar"],
 ];
-// Blink: preferredColorScheme 0 = escuro. A Pixel só tem o tema escuro.
 const temas = [["escuro", "0"]];
 const dispositivos = [
   ["mobile", []],
@@ -76,8 +70,6 @@ async function auditar() {
     const api = `http://127.0.0.1:${portaApi}`;
     const web = `http://127.0.0.1:${portaWeb}`;
     const build = join(temporario, "dist");
-    // Build de produção próprio, com a API temporária
-    // embutida, sem tocar no dist/ do projeto.
     await executarArquivo(
       process.execPath,
       [

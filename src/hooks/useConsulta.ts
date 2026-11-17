@@ -50,7 +50,6 @@ export function useConsulta<T>(
     aoTentarDeNovo?.();
   }, [aoTentarDeNovo]);
 
-  // Uma nova consulta não deve exibir os dados da URL anterior.
   const mesmaConsulta = resultado?.consulta === consultar;
   const atual =
     mesmaConsulta &&

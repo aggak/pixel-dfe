@@ -1,6 +1,3 @@
-// Suíte da página Nova tarefa em navegador real.
-// Sobe a aplicação real (Vite) e o json-server com cópia
-// temporária de db.seed.json; os bancos reais nunca são alterados.
 const assert = require("node:assert/strict");
 const { mkdir, readFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -130,8 +127,6 @@ async function executar() {
           .count(),
         1,
       );
-      // A descrição é opcional e começa
-      // recolhida; abrir revela o campo rotulado.
       assert.equal(await campo("Descrição").count(), 0);
       assert.equal(
         await ui.alternarDescricao().getAttribute("aria-expanded"),
@@ -239,7 +234,6 @@ async function executar() {
         "contexto trocado para o projeto 2",
         async () => (await ui.valor("Projeto")) === "2",
       );
-      // O destino de retorno acompanha o projeto de origem atual.
       await page.getByRole("button", { name: "Cancelar", exact: true }).click();
       await ate(
         "retorno ao projeto 2",
@@ -379,8 +373,6 @@ async function executar() {
         await preencher({ ...base, titulo: "Tarefa abandonada no menu" });
         await botaoSalvar().click();
         await ate("envio em curso", () => botaoEnvio().isDisabled());
-        // A ficha bloqueia o fundo (inert): a saída
-        // durante o envio é feita pelo histórico real.
         await page.evaluate(() => {
           history.pushState({}, "", "/projetos");
           dispatchEvent(new PopStateEvent("popstate"));
@@ -706,8 +698,6 @@ async function executar() {
       const antes = await lerDb();
       posts.length = 0;
       const dados = { ...base, titulo: "Tarefa com falha e foco recuperado" };
-      // O POST nunca chega ao banco: a resposta 500 é
-      // simulada depois que o envio em curso foi visto.
       const envio = await segurar(`${apiUrl}/tarefas`, {
         metodo: "POST",
         responder: (route) => route.fulfill({ status: 500, json: {} }),
@@ -748,8 +738,6 @@ async function executar() {
         await ate("botão reabilitado após a falha", () =>
           botaoEnvio().isEnabled(),
         );
-        // Sem foco manual: a própria ficha
-        // devolve o foco a um controle interno.
         await ate("foco recuperado dentro da ficha", () =>
           page.evaluate(() => {
             const ativo = document.activeElement;

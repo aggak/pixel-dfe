@@ -46,36 +46,22 @@ interface ComboBoxProps
     Omit<AriaComboBoxProps<SelectItemType>, "children" | "items">,
     RefAttributes<HTMLDivElement>,
     CommonProps {
-  /** Whether to pin a ⌘K key hint to the right edge of the input. It is hidden below the medium breakpoint. */
   shortcut?: boolean;
-  /** The options to render in the dropdown. When `children` is a function it is called once per item to render it. */
   items?: SelectItemType[];
-  /** Additional classes merged onto the dropdown popover, which is sized to match the input. */
   popoverClassName?: string;
-  /** Additional classes merged onto the ⌘K hint container, useful for adjusting its fade and spacing. */
   shortcutClassName?: string;
-  /** Leading icon component displayed before the input. */
   icon?: FC | ReactNode;
-  /** The dropdown contents: either `Select.Item` elements, or a render function called with each entry of `items`. */
   children: AriaListBoxProps<SelectItemType>["children"];
 }
 
 interface ComboBoxValueProps extends AriaGroupProps {
-  /** Controls the field's padding, text size, and icon size. */
   size: "sm" | "md" | "lg";
-  /** Whether to pin the ⌘K key hint to the right edge of the field. */
   shortcut: boolean;
-  /** Text shown in the input while it is empty. */
   placeholder?: string;
-  /** Additional classes merged onto the ⌘K hint container. */
   shortcutClassName?: string;
-  /** Leading icon rendered before the input. Falls back to a search icon when omitted. */
   icon?: FC | ReactNode;
-  /** Fires when focus moves into the field. Used to re-measure the field so the popover matches its width. */
   onFocus?: FocusEventHandler;
-  /** Fires when the pointer enters the field. Used to re-measure the field so the popover matches its width. */
   onPointerEnter?: PointerEventHandler;
-  /** Ref to the field wrapper. It anchors the popover and provides the width it is sized to. */
   ref?: Ref<HTMLDivElement>;
 }
 
@@ -106,7 +92,6 @@ const ComboBoxValue = ({
           isDisabled && "cursor-not-allowed opacity-50",
           isFocusWithin && "ring-2 ring-brand",
 
-          // Icon styles
           "*:data-icon:shrink-0 *:data-icon:text-fg-quaternary",
 
           sizes[size].root,
@@ -192,7 +177,6 @@ export const ComboBox = ({
   const placeholderRef = useRef<HTMLDivElement>(null);
   const [popoverWidth, setPopoverWidth] = useState("");
 
-  // Resize observer for popover width
   const onResize = useCallback(() => {
     if (!placeholderRef.current) return;
 
@@ -228,8 +212,6 @@ export const ComboBox = ({
               shortcutClassName={shortcutClassName}
               icon={icon}
               size={size}
-              // This is a workaround to correctly calculating the trigger width
-              // while using ResizeObserver wasn't 100% reliable.
               onFocus={onResize}
               onPointerEnter={onResize}
             />

@@ -36,8 +36,6 @@ export function EditarProjeto() {
   const controllerRef = useRef<AbortController | null>(null);
   const voltarPara = `/projetos/${encodeURIComponent(id)}`;
 
-  // A gravação pertence ao ID atual; uma
-  // resposta antiga não pode mudar de tela.
   useEffect(() => {
     const controller = new AbortController();
     controllerRef.current = controller;

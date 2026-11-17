@@ -16,25 +16,9 @@ import { cx } from "@/utils/cx";
 
 export interface TooltipProps
   extends AriaTooltipTriggerComponentProps, Omit<AriaTooltipProps, "children"> {
-  /**
-   * The title of the tooltip.
-   */
   title: ReactNode;
-  /**
-   * The description of the tooltip.
-   */
   description?: ReactNode;
-  /**
-   * Whether to show the arrow on the tooltip.
-   *
-   * @default false
-   */
   arrow?: boolean;
-  /**
-   * Delay in milliseconds before the tooltip is shown.
-   *
-   * @default 300
-   */
   delay?: number;
 }
 
@@ -67,7 +51,6 @@ export const Tooltip = ({
     "bottom right",
     "bottom start",
   ].includes(placement);
-  // Set negative cross offset for left and right placement to visually balance the tooltip.
   const calculatedCrossOffset = isTopOrBottomLeft
     ? -12
     : isTopOrBottomRight

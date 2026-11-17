@@ -99,8 +99,6 @@ export function VisaoTarefas({
     consultaTarefas.tentarDeNovo();
     if (consultaProjetos.erro !== undefined) consultaProjetos.tentarDeNovo();
   };
-  // Derivado durante a renderização: a lista
-  // filtrada nunca é guardada como estado.
   const tarefasExibidas = useMemo(
     () => filtrarTarefas(tarefas, filtros),
     [tarefas, filtros],

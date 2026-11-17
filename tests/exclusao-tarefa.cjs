@@ -1,4 +1,3 @@
-// Fluxo da issue #42 com API real e banco temporário.
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
@@ -135,8 +134,6 @@ async function executar() {
     "OK: excluir o único resultado da busca leva o foco à busca, visível",
   );
 
-  // Ficha de detalhes: a mesma confirmação, pela ficha
-  // aberta sobre a lista, o quadro e a página do projeto.
   const criar = async (titulo) =>
     (
       await fetch(`${api}/tarefas`, {

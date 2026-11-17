@@ -74,8 +74,6 @@ export function ConfirmarExclusao({
             >
               Cancelar
             </Button>
-            {/* Pendente, e não desabilitado: o botão segura o foco
-                durante o envio e, se falhar, Enter tenta de novo. */}
             <Button
               color="primary-destructive"
               size="sm"

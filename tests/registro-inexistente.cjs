@@ -25,8 +25,6 @@ async function executar() {
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
   const ficha = () => page.locator(".e-form-overlay").getByRole("dialog");
   const { segurar } = criarEsperas(page);
-  // Outro usuário (ou outra aba) remove o registro
-  // direto na API enquanto a tela está aberta.
   const removerNaApi = async (colecao, id) =>
     assert.equal(
       (await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok,
@@ -133,7 +131,6 @@ async function executar() {
   }
   for (const caminho of ["/projetos/999", "/projetos/999/editar"]) {
     await page.goto(`${web}${caminho}`);
-    // A edição abre sobre a página do projeto: os dois avisos precisam chegar.
     await page
       .getByRole("main")
       .getByRole("alert")
@@ -160,7 +157,6 @@ async function executar() {
     );
   }
 
-  // Resposta lenta: a indicação aparece e some quando o 404 chega.
   const lenta = await segurar(`${api}/tarefas/998`);
   await page.goto(`${web}/tarefas/998`);
   await ficha()
@@ -261,16 +257,12 @@ async function executar() {
     "OK: salvar projeto excluído avisa que ele não existe mais e mantém o texto",
   );
 
-  // 404 ao criar (POST) não fala de registro excluído: nada
-  // existia antes, então vale o aviso padrão de falha.
   const recusarCriacao = (rota) =>
     (rota.request().method() === "POST"
       ? rota.fulfill({ status: 404, body: "{}" })
       : rota.continue()
     ).catch(() => {});
   await page.route(`${api}/tarefas`, recusarCriacao);
-  // Com ?projetoId a ficha recebe valores
-  // iniciais, mas continua sendo um cadastro.
   await page.goto(`${web}/tarefas/nova?projetoId=1`);
   const tituloNovo = ficha().getByLabel(/^Título/);
   await tituloNovo.waitFor();
@@ -337,8 +329,6 @@ async function executar() {
   );
   console.log("OK: tarefa com projeto inexistente não oferece link quebrado");
 
-  // A caixa da rota não muda o id: o json-server gera id
-  // aleatório, então estes dois são gravados no arquivo.
   const dadosCaixa = JSON.parse(await readFile(banco, "utf8"));
   dadosCaixa.tarefas.push({
     id: "AbC",

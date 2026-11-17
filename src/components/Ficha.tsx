@@ -96,8 +96,6 @@ export function Ficha({
     const voltou = eraOcupada.current && !ocupada;
     eraOcupada.current = ocupada;
     if (!voltou || !aberta) return;
-    // Controle desabilitado durante o envio faz o foco
-    // cair no body; recupera sem roubar foco válido.
     const recuperar = () => {
       const raiz = casca.current;
       const ativo = document.activeElement;
@@ -142,7 +140,6 @@ export function Ficha({
     }
     if (pendente.current) return;
     pendente.current = () => {
-      // Só percorre o histórico quando a própria aplicação registrou a origem.
       const indice = window.history.state?.idx;
       const estadoDestino = atualizar
         ? (estado ?? null)
