@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router";
 import "./index.css";
 import App from "./App.tsx";
 import { FiltrosProvider } from "./components/FiltrosProvider";
+import { Splash } from "./components/Splash";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -12,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <FiltrosProvider>
           <App />
+          <Splash />
         </FiltrosProvider>
       </BrowserRouter>
     </I18nProvider>
