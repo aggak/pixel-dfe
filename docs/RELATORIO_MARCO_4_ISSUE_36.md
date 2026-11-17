@@ -10,7 +10,7 @@ Implementei a [issue #36 — Implementar os filtros por status e prioridade](htt
 
 - `src/pages/ListaTarefas.tsx`: adicionei os seletores **Status** e **Prioridade** usando o componente `Select` já presente no projeto. As opções vêm dos textos de `src/design/formatos.ts` e dos tipos de `src/tipos.ts`, com **Todos os status** e **Todas as prioridades** como valores iniciais. Guardei as seleções na página e calculei `tarefasExibidas` com três condições em conjunto: trecho do título, status e prioridade. Reorganizei o cabeçalho para deixar a busca à esquerda; o título da página continua disponível para acessibilidade.
 - `src/App.css`: ajustei a faixa de controles no painel e a distribuição em telas menores. Em 375 px, a busca, os dois seletores e o botão ocupam linhas adequadas sem transbordamento horizontal.
-- `tests/busca-titulo.cjs`: ampliei o teste criado na #35. Ele seleciona **A fazer** e **Média**, confere a tarefa restante, combina esses filtros com `LISTAR` e `json`, limpa a busca mantendo os filtros e depois volta às opções gerais. Também verifica a posição relativa da busca e da ação em desktop e a disposição dos controles em 375 px.
+- `tests/busca-titulo.cts`: ampliei o teste criado na #35. Ele seleciona **A fazer** e **Média**, confere a tarefa restante, combina esses filtros com `LISTAR` e `json`, limpa a busca mantendo os filtros e depois volta às opções gerais. Também verifica a posição relativa da busca e da ação em desktop e a disposição dos controles em 375 px.
 
 Reutilizei `src/design/formatos.ts`, `src/tipos.ts` e a consulta `listarTarefas` sem modificá-los. Não criei a visão de quadro nem alterei o contrato ou os dados.
 
@@ -22,9 +22,9 @@ A posição da busca da #35 não correspondia à referência visual recebida: el
 
 ## Validação e resultados
 
-**Registrado na descrição do PR #73:** constam `npm run build`, `npm run lint`, `node tests/busca-titulo.cjs` e `node tests/marco-2.cjs`. Na entrega original, o teste de navegador confirmou dois cartões em **A fazer**, um ao combinar com **Média**, nenhum para `json` com esses filtros e novamente um ao limpar a busca. A suíte existente de listagem aprovou 12 cenários. Esses são registros da implementação, não novas execuções deste relatório.
+**Registrado na descrição do PR #73:** constam `npm run build`, `npm run lint`, `node tests/busca-titulo.cts` e `node tests/marco-2.cts`. Na entrega original, o teste de navegador confirmou dois cartões em **A fazer**, um ao combinar com **Média**, nenhum para `json` com esses filtros e novamente um ao limpar a busca. A suíte existente de listagem aprovou 12 cenários. Esses são registros da implementação, não novas execuções deste relatório.
 
-**Executado agora na `main` integrada, commit `13e9b55`:** o build e o lint passaram. Executei `tests/busca-titulo.cjs` com sucesso e `tests/marco-2.cjs` com 12 cenários aprovados, sem erro JavaScript não tratado. Os testes de navegador subiram uma API com cópia temporária de `db.seed.json`; o `db.json` local não foi usado para gravação.
+**Executado agora na `main` integrada, commit `13e9b55`:** o build e o lint passaram. Executei `tests/busca-titulo.cts` com sucesso e `tests/marco-2.cts` com 12 cenários aprovados, sem erro JavaScript não tratado. Os testes de navegador subiram uma API com cópia temporária de `db.seed.json`; o `db.json` local não foi usado para gravação.
 
 Separei o trabalho nos commits `a618096` (filtros e testes de combinação) e `19dfd84` (posição responsiva e verificação de layout), ambos com minha autoria. O PR #73 foi integrado à `main` pelo merge `13e9b55`, e a issue #36 está fechada.
 

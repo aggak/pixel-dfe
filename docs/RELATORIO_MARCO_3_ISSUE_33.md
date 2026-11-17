@@ -15,7 +15,7 @@ Consultei o contrato de dados, o enunciado dos marcos e a estrutura consolidada 
 3. Implementei `src/pages/NovoProjeto.tsx` para a rota `/projetos/novo`, gravando o novo registro via `criarProjeto` (`POST /projetos`) sem enviar `id` e redirecionando para `/projetos` após o sucesso, com cancelamento por `AbortController` caso o usuário saia da tela durante o envio.
 4. Implementei `src/pages/EditarProjeto.tsx` para a rota `/projetos/:id/editar`, consultando o projeto atual com `useConsulta` e `buscarProjeto`, preenchendo o `FormularioProjeto` com os dados carregados e gravando as alterações via `atualizarProjeto` (`PATCH /projetos/:id`), retornando ao detalhe `/projetos/:id` após salvar.
 5. Registrei `/projetos/novo` e `/projetos/:id/editar` antes de `/projetos/:id` em `src/App.tsx` (evitando que `novo` seja interpretado como um ID) e adicionei os links de acesso em `src/pages/ListaProjetos.tsx` (**Novo projeto**) e `src/pages/DetalheProjeto.tsx` (**Editar projeto**).
-6. Criei a suíte `tests/projetos-cadastro-edicao.cjs` com reserva não repetida de portas, verificação de identidade dos servidores com nova tentativa automática em caso de colisão e 15 cenários cobrindo criação, edição, higienização de espaços, falhas de envio no `POST` e no `PATCH` e isolamento entre abas.
+6. Criei a suíte `tests/projetos-cadastro-edicao.cts` com reserva não repetida de portas, verificação de identidade dos servidores com nova tentativa automática em caso de colisão e 15 cenários cobrindo criação, edição, higienização de espaços, falhas de envio no `POST` e no `PATCH` e isolamento entre abas.
 
 ## Pontos revisados e ajustes aplicados
 
@@ -23,7 +23,7 @@ Consultei o contrato de dados, o enunciado dos marcos e a estrutura consolidada 
 | --- | --- | --- |
 | Falhas de envio no `POST /projetos` e risco de sobrescrita por semelhança (`[P1]`) | Como o contrato de `Projeto` e o `json-server` geram `id` no servidor sem chave única de idempotência na requisição, uma busca por semelhança de campos pode atingir um projeto criado em outra aba e sobrescrevê-lo indevidamente com `PATCH`. Mantive em `src/pages/NovoProjeto.tsx` o mesmo fluxo direto de `NovaTarefa.tsx` (bloqueio de envios concorrentes durante a requisição e preservação dos campos em caso de erro, sem disparar `PATCH` em registros encontrados por semelhança) e adicionei cenários específicos de falha e concorrência entre abas na suíte. | Validado por três cenários de `POST` na suíte: falha HTTP 500 e de conexão com preservação e nova tentativa, não sobrescrita de projeto homônimo criado em outra aba e bloqueio de duplicidade com cancelamento ao sair da tela. |
 | Espaços nas extremidades de `nome` e `disciplina` | Em `src/components/FormularioProjeto.tsx`, apliquei `nome.trim()` e `disciplina.trim()` na montagem de `dados: DadosProjeto` antes de chamar `onSalvar`. | Tanto o `POST` quanto o `PATCH` persistem `nome` e `disciplina` sem espaços iniciais ou finais no banco. |
-| Reserva e possível colisão de portas na suíte de integração | Em `tests/projetos-cadastro-edicao.cjs`, adicionei controle `portasUsadas` para nunca repetir portas na mesma execução, função `subir` com até 3 tentativas caso a porta seja ocupada no intervalo entre `close()` e o `listen()` do processo filho, e validação da resposta inicial de cada servidor (`/projetos` com IDs do seed e HTML com `/src/main.tsx`). | Inicialização determinística dos servidores temporários da API e do Vite. |
+| Reserva e possível colisão de portas na suíte de integração | Em `tests/projetos-cadastro-edicao.cts`, adicionei controle `portasUsadas` para nunca repetir portas na mesma execução, função `subir` com até 3 tentativas caso a porta seja ocupada no intervalo entre `close()` e o `listen()` do processo filho, e validação da resposta inicial de cada servidor (`/projetos` com IDs do seed e HTML com `/src/main.tsx`). | Inicialização determinística dos servidores temporários da API e do Vite. |
 
 ## Estrutura utilizada
 
@@ -35,7 +35,7 @@ Consultei o contrato de dados, o enunciado dos marcos e a estrutura consolidada 
 | `src/App.tsx` | Registro das rotas `/projetos/novo` e `/projetos/:id/editar` dentro do `Layout` compartilhado. |
 | `src/pages/ListaProjetos.tsx` | Inclusão do link **Novo projeto** no cabeçalho da listagem. |
 | `src/pages/DetalheProjeto.tsx` | Inclusão do link **Editar projeto** no cabeçalho quando os dados do projeto estão carregados. |
-| `tests/projetos-cadastro-edicao.cjs` | Suíte de integração de cadastro e edição de projetos com servidores próprios, verificação de porta/identidade e banco temporário. |
+| `tests/projetos-cadastro-edicao.cts` | Suíte de integração de cadastro e edição de projetos com servidores próprios, verificação de porta/identidade e banco temporário. |
 | `docs/RELATORIO_MARCO_3_ISSUE_33.md` | Registro do processo, revisões, decisões e resultados da issue #33. |
 
 Mantive React, TypeScript, React Router e json-server, sem acrescentar dependências ao projeto e sem modificar `src/tipos.ts`, `src/api.ts`, `db.json` ou `db.seed.json`.
@@ -54,17 +54,17 @@ Mantive React, TypeScript, React Router e json-server, sem acrescentar dependên
 | --- | --- |
 | `npm run build` | Aprovado. Verificação TypeScript por `tsc -b` e geração do pacote de produção. |
 | `npm run lint` | Aprovado, sem avisos ou erros em 24 arquivos. |
-| `node tests/projetos-cadastro-edicao.cjs` | 15 cenários aprovados no Microsoft Edge. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados no Microsoft Edge. |
-| `node tests/nova-tarefa.cjs` | 14 cenários aprovados no Google Chrome. |
-| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados no Google Chrome. |
-| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/projetos-cadastro-edicao.cts` | 15 cenários aprovados no Microsoft Edge. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados no Microsoft Edge. |
+| `node tests/nova-tarefa.cts` | 14 cenários aprovados no Google Chrome. |
+| `node tests/formulario-tarefa.cts` | 17 cenários aprovados no Google Chrome. |
+| `node tests/api-escrita.mts` | 12 cenários aprovados. |
+| `node tests/marco-2.cts` | 12 cenários aprovados no Microsoft Edge. |
 | `git diff --check` | Aprovado, sem problemas de formatação ou espaços no diff. |
 
 **Resultado final: 82 cenários de integração aprovados.** As suítes não registraram erros JavaScript não tratados, e `db.json` e `db.seed.json` permaneceram idênticos ao estado original.
 
-Na suíte `tests/projetos-cadastro-edicao.cjs`, verifiquei:
+Na suíte `tests/projetos-cadastro-edicao.cts`, verifiquei:
 
 1. Acesso a `/projetos/novo` pela lista, abertura direta e recarga sem requisitar `GET /projetos/novo` na API, preservando `/projetos/1` como detalhe.
 2. Validação de campos obrigatórios (`Nome`, `Disciplina` e `Criado em`), recusa de valores preenchidos apenas com espaços, atributos `aria-invalid` e `aria-describedby` e foco automático no primeiro campo com erro.

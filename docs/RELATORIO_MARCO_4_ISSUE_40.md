@@ -22,7 +22,7 @@ A issue pede um seletor ou botão no cartão para mudar o status, a gravação n
    - área de toque de 44 px no mobile por um pseudo-elemento, sem esticar o botão nem o anel de foco;
    - opções do menu com 44 px no mobile;
    - contraste do ponto do selo "Concluída" (2,08:1 → 5,68:1).
-9. Criei `tests/status-cartao.cjs`.
+9. Criei `tests/status-cartao.cts`.
 
 ## Estrutura utilizada
 
@@ -33,7 +33,7 @@ A issue pede um seletor ou botão no cartão para mudar o status, a gravação n
 | `src/pages/ListaTarefas.tsx` | Usa o hook e passa `onMudarStatus` aos cartões. |
 | `src/pages/QuadroTarefas.tsx` | Usa o hook e passa `onMudarStatus` aos cartões. |
 | `src/App.css` | Estilo do seletor, toque no mobile e contraste do selo. |
-| `tests/status-cartao.cjs` | Suíte de navegador com API real e banco temporário. |
+| `tests/status-cartao.cts` | Suíte de navegador com API real e banco temporário. |
 
 Não adicionei dependências. `atualizarTarefa` já existia em `src/api.ts`, e o menu é o `Dropdown` do design. Não alterei `src/tipos.ts`, `db.json` nem `db.seed.json`.
 
@@ -96,14 +96,14 @@ Os quatro pediram mudanças, e apliquei todas.
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado; `oxlint --deny-warnings` sem avisos. |
-| `node tests/status-cartao.cjs` | 10 cenários aprovados; 8 de 8 execuções. |
-| `node tests/alternar-visao.cjs` | 9 cenários aprovados; 3 de 3 execuções. |
-| `node tests/quadro-filtros.cjs` | 8 cenários aprovados; 3 de 3 execuções. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados; 3 de 3 execuções. |
-| `node tests/estado-filtros.cjs` | 6 cenários aprovados. |
-| `node tests/busca-titulo.cjs` | Aprovado. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados. |
-| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
-| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados. |
-| `node tests/nova-tarefa.cjs` | 15 cenários aprovados. |
-| `node tests/projetos-cadastro-edicao.cjs` | 15 cenários aprovados. |
+| `node tests/status-cartao.cts` | 10 cenários aprovados; 8 de 8 execuções. |
+| `node tests/alternar-visao.cts` | 9 cenários aprovados; 3 de 3 execuções. |
+| `node tests/quadro-filtros.cts` | 8 cenários aprovados; 3 de 3 execuções. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados; 3 de 3 execuções. |
+| `node tests/estado-filtros.cts` | 6 cenários aprovados. |
+| `node tests/busca-titulo.cts` | Aprovado. |
+| `node tests/marco-2.cts` | 12 cenários aprovados. |
+| `node tests/api-escrita.mts` | 12 cenários aprovados. |
+| `node tests/formulario-tarefa.cts` | 17 cenários aprovados. |
+| `node tests/nova-tarefa.cts` | 15 cenários aprovados. |
+| `node tests/projetos-cadastro-edicao.cts` | 15 cenários aprovados. |

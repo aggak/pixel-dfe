@@ -1,9 +1,9 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { contraste, focoVisivel, TEXTO_STATUS } = require("./ui.cjs");
+const { contraste, focoVisivel, TEXTO_STATUS } = require("./ui.cts");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 let browser;
@@ -70,8 +70,8 @@ async function executar() {
     page.waitForFunction(
       (alvo) =>
         document.activeElement?.hasAttribute("data-status-trigger") &&
-        document.activeElement.closest("[data-task-id]")?.dataset.taskId ===
-          alvo,
+        document.activeElement.closest<HTMLElement>("[data-task-id]")?.dataset
+          .taskId === alvo,
       id,
     );
   const escolher = async (tarefa, status) => {

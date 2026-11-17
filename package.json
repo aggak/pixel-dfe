@@ -8,7 +8,7 @@
     "api": "json-server db.json",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node tests/rodar.mjs",
+    "test": "node tests/rodar.mts",
     "preview": "vite preview"
   },
   "dependencies": {

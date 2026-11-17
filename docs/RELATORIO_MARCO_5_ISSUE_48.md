@@ -10,10 +10,10 @@ Fiz a auditoria do Lighthouse sobre o build de produção antes e depois das cor
 
 ## Registro de execução
 
-1. Criei `tests/auditoria-lighthouse.mjs`. O script gera um build de produção numa pasta temporária, com a API temporária embutida e sem tocar no `dist/` do projeto. Em seguida, sobe o json-server com uma cópia de `db.seed.json`, serve o build com `vite preview` e roda o Lighthouse 13.6.0 (só a categoria de acessibilidade) por `npx`. Ele audita 7 telas (lista, quadro, projetos, projeto, detalhe da tarefa, nova tarefa e edição de projeto) nos perfis mobile e desktop e nos temas claro e escuro: 28 relatórios. A Pixel segue `prefers-color-scheme`. Forcei o tema escuro com `--blink-settings=preferredColorScheme=0` e confirmei a flag no Chrome headless antes de usá-la.
+1. Criei `tests/auditoria-lighthouse.mts`. O script gera um build de produção numa pasta temporária, com a API temporária embutida e sem tocar no `dist/` do projeto. Em seguida, sobe o json-server com uma cópia de `db.seed.json`, serve o build com `vite preview` e roda o Lighthouse 13.6.0 (só a categoria de acessibilidade) por `npx`. Ele audita 7 telas (lista, quadro, projetos, projeto, detalhe da tarefa, nova tarefa e edição de projeto) nos perfis mobile e desktop e nos temas claro e escuro: 28 relatórios. A Pixel segue `prefers-color-scheme`. Forcei o tema escuro com `--blink-settings=preferredColorScheme=0` e confirmei a flag no Chrome headless antes de usá-la.
 2. Rodei uma sondagem com Playwright em 8 rotas, 6 larguras e 2 temas. Ela mediu a rolagem horizontal, os elementos fora da tela e os alvos de toque, e percorreu cada tela com Tab conferindo o foco visível.
 3. Registrei os achados e o escopo em `.agent/handoff/issue-atual.md`.
-4. Escrevi `tests/acessibilidade-responsividade.cjs`. Os cenários de rolagem horizontal e de teclado passaram logo na primeira execução, porque o comportamento já era correto e a suíte o protege daqui em diante. Os cenários de contraste e de alvos de toque falharam. O contraste medido pelo teste foi 3,68:1, o mesmo valor do Lighthouse.
+4. Escrevi `tests/acessibilidade-responsividade.cts`. Os cenários de rolagem horizontal e de teclado passaram logo na primeira execução, porque o comportamento já era correto e a suíte o protege daqui em diante. Os cenários de contraste e de alvos de toque falharam. O contraste medido pelo teste foi 3,68:1, o mesmo valor do Lighthouse.
 5. Corrigi o contraste e os alvos de toque em `src/App.css`, um cenário de cada vez. Comparei capturas de tela a 375 px antes e depois: o desenho se manteve, mas os controles do topo da lista ficaram mais altos. A busca e a troca Lista/Quadro passaram a 44 px, e a primeira tarefa desceu cerca de 19 px. Isso é consequência pretendida da regra de 44 px.
 6. Rodei a suíte nova três vezes, as suítes da #46 e da #47, a validação completa e a auditoria do Lighthouse de novo.
 7. A revisão final do branch apontou três fragilidades, que corrigi e registrei em "Falhas encontradas e correções".
@@ -24,8 +24,8 @@ Fiz a auditoria do Lighthouse sobre o build de produção antes e depois das cor
 | Arquivo | Alteração |
 | --- | --- |
 | `src/App.css` | "opcional" sem `opacity:.8`; até 650 px, alvos de toque com pelo menos 44 px (logo, busca, filtros, Lista/Quadro, título do cartão de projeto, link do projeto no detalhe, "Voltar para tarefas"). Nos dois links em linha, a área de toque é um `::after` invisível de pelo menos 44 × 44 px, centrado no link. |
-| `tests/acessibilidade-responsividade.cjs` | Nova suíte: transbordo (página e contêineres roláveis), teclado e foco (com cobertura de todos os elementos tabuláveis), contraste do achado, alvos de toque e anel de foco dos links ampliados (com a fonte da web e com ela bloqueada) e Enter/Esc na ficha. |
-| `tests/auditoria-lighthouse.mjs` | Auditoria reproduzível do Lighthouse sobre o build de produção. |
+| `tests/acessibilidade-responsividade.cts` | Nova suíte: transbordo (página e contêineres roláveis), teclado e foco (com cobertura de todos os elementos tabuláveis), contraste do achado, alvos de toque e anel de foco dos links ampliados (com a fonte da web e com ela bloqueada) e Enter/Esc na ficha. |
+| `tests/auditoria-lighthouse.mts` | Auditoria reproduzível do Lighthouse sobre o build de produção. |
 
 ### Dependências externas
 
@@ -48,7 +48,7 @@ Fiz a auditoria do Lighthouse sobre o build de produção antes e depois das cor
 | Edição de projeto | 100 / 100 | 100 / 100 | 100 |
 
 - **`color-contrast` (corrigido):** na ficha "Nova tarefa", tema claro, o "opcional" do botão "Adicionar descrição" tinha contraste de 3,68:1 (`#858389` sobre `#fdfdfd`, 10 px). A causa era `opacity:.8` aplicada sobre `--e-muted`. Sem a opacidade, o texto usa `--e-muted` puro, a mesma cor dos demais textos secundários, e passa de 4,5:1.
-- **`label-content-name-mismatch` (analisado, mantido):** auditoria de peso 0, apontada nos 5 seletores de status da lista e do quadro, antes e depois. O nome acessível é "Mudar status de <título> (atual: <status>)", e o axe 4.14 descarta o trecho entre parênteses antes de procurar o texto visível. O nome contém o texto visível, o que atende ao WCAG 2.5.3. O formato também é exigido pelas suítes (`tests/status-cartao.cjs`) e pela regra do projeto que evita colisão com os filtros chamados "Status". Por isso não o alterei.
+- **`label-content-name-mismatch` (analisado, mantido):** auditoria de peso 0, apontada nos 5 seletores de status da lista e do quadro, antes e depois. O nome acessível é "Mudar status de <título> (atual: <status>)", e o axe 4.14 descarta o trecho entre parênteses antes de procurar o texto visível. O nome contém o texto visível, o que atende ao WCAG 2.5.3. O formato também é exigido pelas suítes (`tests/status-cartao.cts`) e pela regra do projeto que evita colisão com os filtros chamados "Status". Por isso não o alterei.
 
 ## Teclado, foco visível e telas pequenas
 
@@ -67,9 +67,9 @@ No título do cartão de projeto e no link do projeto no detalhe, a área de toq
 
 | Critério | Resultado | Evidência |
 | --- | --- | --- |
-| Executar a auditoria do Lighthouse. | 28 relatórios antes e 28 depois, sobre o build de produção. | `tests/auditoria-lighthouse.mjs` |
-| Conferir navegação por teclado e foco visível. | Foco visível em todas as paradas, ficha com o foco preso, Enter/Esc. | `tests/acessibilidade-responsividade.cjs` |
-| Conferir o uso da aplicação em tela pequena. | Sem rolagem horizontal até 320 px e com alvos de 44 px. | `tests/acessibilidade-responsividade.cjs` |
+| Executar a auditoria do Lighthouse. | 28 relatórios antes e 28 depois, sobre o build de produção. | `tests/auditoria-lighthouse.mts` |
+| Conferir navegação por teclado e foco visível. | Foco visível em todas as paradas, ficha com o foco preso, Enter/Esc. | `tests/acessibilidade-responsividade.cts` |
+| Conferir o uso da aplicação em tela pequena. | Sem rolagem horizontal até 320 px e com alvos de 44 px. | `tests/acessibilidade-responsividade.cts` |
 | Aplicar e verificar as correções identificadas na auditoria. | Contraste e alvos de toque corrigidos; Lighthouse 100 em todas as combinações. | Commits `8046e68`, `92c515a` e `a31a9cb`; auditoria repetida sobre `a31a9cb` |
 
 ## Falhas encontradas e correções
@@ -96,10 +96,10 @@ No título do cartão de projeto e no link do projeto no detalhe, a área de toq
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado, sem erros e sem avisos. |
-| `node tests/acessibilidade-responsividade.cjs` | 9 cenários e a checagem dos bancos aprovados, com os alvos de toque e o anel de foco conferidos com a fonte da web e com a de reserva; 3 de 3 execuções depois da correção da fonte. |
-| `node tests/registro-inexistente.cjs`, `node tests/falha-gravar-excluir.cjs` | Aprovados (regressões da #46 e da #47). |
+| `node tests/acessibilidade-responsividade.cts` | 9 cenários e a checagem dos bancos aprovados, com os alvos de toque e o anel de foco conferidos com a fonte da web e com a de reserva; 3 de 3 execuções depois da correção da fonte. |
+| `node tests/registro-inexistente.cts`, `node tests/falha-gravar-excluir.cts` | Aprovados (regressões da #46 e da #47). |
 | `node .claude/skills/testing-pixel-dfe/scripts/validate-delivery.mjs` | Aprovado: arquivos protegidos intactos, build, lint, `git diff --check` e as 15 suítes existentes. |
-| `node tests/auditoria-lighthouse.mjs` | 28 de 28 combinações com nota 100, em `8046e68` e `92c515a` (rodadas antes do rebase da pilha, com o mesmo código) e de novo em `a31a9cb`. |
+| `node tests/auditoria-lighthouse.mts` | 28 de 28 combinações com nota 100, em `8046e68` e `92c515a` (rodadas antes do rebase da pilha, com o mesmo código) e de novo em `a31a9cb`. |
 
 ## Como repetir as verificações
 
@@ -107,8 +107,8 @@ No título do cartão de projeto e no link do projeto no detalhe, a área de toq
 npm ci
 npm run build
 npm run lint
-node tests/acessibilidade-responsividade.cjs
-node tests/auditoria-lighthouse.mjs $env:TEMP\pixel-lighthouse
+node tests/acessibilidade-responsividade.cts
+node tests/auditoria-lighthouse.mts $env:TEMP\pixel-lighthouse
 ```
 
 ## Commits e limites

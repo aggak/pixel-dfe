@@ -24,7 +24,7 @@ Mantive a proteção existente contra projeto removido da lista, falha ou ausên
 
 ## Validação e resultados
 
-Na `main` após a integração, `npm run build`, `npm run lint` e `git diff --check` terminaram sem erro. Executei as suítes existentes em navegador e com banco temporário: `tests/formulario-tarefa.cjs` (17 cenários), `tests/nova-tarefa.cjs` (14), `tests/editar-tarefa.cjs` (12) e `tests/api-escrita.mjs` (12). Foram **55 cenários aprovados**; os testes informaram que os bancos originais permaneceram intactos.
+Na `main` após a integração, `npm run build`, `npm run lint` e `git diff --check` terminaram sem erro. Executei as suítes existentes em navegador e com banco temporário: `tests/formulario-tarefa.cts` (17 cenários), `tests/nova-tarefa.cts` (14), `tests/editar-tarefa.cts` (12) e `tests/api-escrita.mts` (12). Foram **55 cenários aprovados**; os testes informaram que os bancos originais permaneceram intactos.
 
 Além dessas suítes, conferi em um cenário temporário o envio vazio e os valores compostos por espaços no cadastro, sem persistir dados inválidos. Esse cenário não foi acrescentado ao repositório.
 

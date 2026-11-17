@@ -11,7 +11,7 @@ Nessa base, os formulários de tarefa e de projeto já mostravam um aviso e pres
 ## Registro de execução
 
 1. Rodei uma sondagem com o json-server encerrado. Gravar com a API parada mostrava o aviso e mantinha os dados. Já a falha de exclusão tirava o foco do diálogo de confirmação, que caía no `body`.
-2. Escrevi `tests/falha-gravar-excluir.cjs`. Cada cenário desliga o json-server, tenta a operação, confere o aviso, o foco e os dados preservados, religa o servidor e confirma que a mesma ação grava. Os quatro fluxos de gravação passaram logo na primeira execução, porque descrevem um comportamento que já existia. A exclusão falhou porque o foco não estava no botão de confirmar.
+2. Escrevi `tests/falha-gravar-excluir.cts`. Cada cenário desliga o json-server, tenta a operação, confere o aviso, o foco e os dados preservados, religa o servidor e confirma que a mesma ação grava. Os quatro fluxos de gravação passaram logo na primeira execução, porque descrevem um comportamento que já existia. A exclusão falhou porque o foco não estava no botão de confirmar.
 3. Diagnóstico: durante o envio, o botão "Excluir tarefa" recebia `isDisabled`, e o React Aria tira o foco de um botão desabilitado. Troquei por `isLoading` com `showTextWhileLoading`. O componente `Button` do vendor repassa esse estado como `isPending`, que bloqueia novos cliques sem perder o foco. Depois da falha, Enter tenta a exclusão de novo.
 4. O cenário de status falhou em seguida porque o teste conferia o foco no mesmo instante em que o aviso aparecia. O menu ainda estava fechando, e o foco chegava ao seletor cerca de 100 ms depois. Substituí a checagem instantânea por uma espera. Não houve mudança na aplicação.
 5. Ao rodar a suíte três vezes, a primeira execução terminou os cenários e travou na limpeza. Um processo encerrado por `kill()` fica com `exitCode` nulo e só `signalCode` preenchido, então o `finally` esperava um `exit` que já tinha acontecido. Passei a considerar `signalCode`.
@@ -22,7 +22,7 @@ Nessa base, os formulários de tarefa e de projeto já mostravam um aviso e pres
 | Arquivo | Alteração |
 | --- | --- |
 | `src/components/CartaoTarefa.tsx` | O botão de confirmar da exclusão fica pendente, e não desabilitado, durante o envio. |
-| `tests/falha-gravar-excluir.cjs` | Nova suíte com o json-server encerrado e reiniciado: 8 cenários e a checagem final dos bancos. |
+| `tests/falha-gravar-excluir.cts` | Nova suíte com o json-server encerrado e reiniciado: 8 cenários e a checagem final dos bancos. |
 
 ### Dependências externas
 
@@ -34,7 +34,7 @@ Nessa base, os formulários de tarefa e de projeto já mostravam um aviso e pres
 
 | Critério | Resultado | Evidência |
 | --- | --- | --- |
-| Mostrar uma mensagem quando salvar ou excluir falhar. | Aviso com `role="alert"` no cadastro e na edição de tarefa e de projeto, na exclusão (lista, quadro e projeto) e na mudança de status. | `tests/falha-gravar-excluir.cjs` |
+| Mostrar uma mensagem quando salvar ou excluir falhar. | Aviso com `role="alert"` no cadastro e na edição de tarefa e de projeto, na exclusão (lista, quadro e projeto) e na mudança de status. | `tests/falha-gravar-excluir.cts` |
 | Preservar os dados digitados após uma falha de gravação. | Os sete campos da tarefa e os quatro do projeto continuam preenchidos; com a API de volta, o mesmo envio grava uma única vez. | Cenários de cadastro e edição |
 | Conferir os dois fluxos com a API indisponível. | Conferidos com o processo do json-server encerrado, sem interceptar rotas. | `desligarApi()` na suíte |
 
@@ -50,8 +50,8 @@ Nessa base, os formulários de tarefa e de projeto já mostravam um aviso e pres
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado, sem erros e sem avisos. |
-| `node tests/falha-gravar-excluir.cjs` | 8 cenários e a checagem dos bancos aprovados; 3 de 3 execuções. |
-| `node tests/registro-inexistente.cjs` | Aprovado (regressão da #46). |
+| `node tests/falha-gravar-excluir.cts` | 8 cenários e a checagem dos bancos aprovados; 3 de 3 execuções. |
+| `node tests/registro-inexistente.cts` | Aprovado (regressão da #46). |
 | `node .claude/skills/testing-pixel-dfe/scripts/validate-delivery.mjs` | Aprovado: arquivos protegidos intactos, build, lint, `git diff --check` e as 15 suítes existentes. |
 
 ## Como repetir as verificações
@@ -60,8 +60,8 @@ Nessa base, os formulários de tarefa e de projeto já mostravam um aviso e pres
 npm ci
 npm run build
 npm run lint
-node tests/falha-gravar-excluir.cjs
-node tests/registro-inexistente.cjs
+node tests/falha-gravar-excluir.cts
+node tests/registro-inexistente.cts
 ```
 
 ## Commits e limites

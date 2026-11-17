@@ -12,10 +12,10 @@ O objetivo foi conferir a aplicação publicada em `https://pixel-dfe-project.up
 
 | Arquivo | Alteração |
 | --- | --- |
-| `tests/rotas-publicadas.mjs` | Teste sob demanda e somente de leitura: consulta a tarefa 2 e os projetos na API hospedada; abre cada rota diretamente no Chrome; recarrega; confere HTTP 200, HTML, endereço mantido e conteúdo esperado da tela. |
+| `tests/rotas-publicadas.mts` | Teste sob demanda e somente de leitura: consulta a tarefa 2 e os projetos na API hospedada; abre cada rota diretamente no Chrome; recarrega; confere HTTP 200, HTML, endereço mantido e conteúdo esperado da tela. |
 | `docs/RELATORIO_MARCO_6_ISSUE_54.md` | Este registro dos resultados e limites da verificação. |
 
-O teste usa o apoio de navegador já existente em `tests/ui.cjs`. Ele não faz `POST`, `PATCH` ou `DELETE`, não altera `src/` e não acrescenta dependências ao projeto.
+O teste usa o apoio de navegador já existente em `tests/ui.cts`. Ele não faz `POST`, `PATCH` ou `DELETE`, não altera `src/` e não acrescenta dependências ao projeto.
 
 ## Critérios da issue e resultados
 
@@ -36,16 +36,16 @@ Não encontrei falha no acesso direto ou na recarga. Antes do teste de navegador
 
 | Verificação | Resultado observado |
 | --- | --- |
-| `node tests/rotas-publicadas.mjs` | Aprovado: dez rotas abertas diretamente e recarregadas no Chrome, sem erro JavaScript reportado pelo navegador. |
+| `node tests/rotas-publicadas.mts` | Aprovado: dez rotas abertas diretamente e recarregadas no Chrome, sem erro JavaScript reportado pelo navegador. |
 | `npm run lint` | Aprovado, sem saída de erro. |
-| `node --check tests/rotas-publicadas.mjs` | Aprovado. |
+| `node --check tests/rotas-publicadas.mts` | Aprovado. |
 | `git diff --cached --check` | Aprovado antes do commit do teste. |
 
 Não executei `npm run build` nesta branch: a entrega não modifica os arquivos da aplicação ou a configuração de build. A issue #52 já verificou o build de produção; aqui o alvo foi o site efetivamente publicado.
 
 ## Como repetir
 
-Com as dependências do projeto e o Playwright disponíveis, execute `node tests/rotas-publicadas.mjs`. O teste precisa de Chrome instalado e de acesso aos dois serviços públicos da Railway. Ele só faz consultas de leitura à API.
+Com as dependências do projeto e o Playwright disponíveis, execute `node tests/rotas-publicadas.mts`. O teste precisa de Chrome instalado e de acesso aos dois serviços públicos da Railway. Ele só faz consultas de leitura à API.
 
 ## Commits e limites
 

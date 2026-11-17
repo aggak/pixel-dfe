@@ -16,8 +16,8 @@ A issue pede a navegação entre as duas visões e a preservação do texto de b
 4. A visão ativa é calculada por `caminhoNormalizado`, que remove a barra final e ignora maiúsculas, do mesmo jeito que o roteador casa as rotas. Assim `/quadro/` e `/QUADRO` marcam "Quadro", e o menu e o controle sempre concordam.
 5. A troca de rota remonta a página (a chave do `<Routes>` em `App.tsx` muda a cada navegação), e o foco caía no `body`. Os links passam `state={{ focoVisao: true }}`, e o controle recém-montado devolve o foco ao link da visão ativa. Quem alterna pelo teclado continua no controle.
 6. Escrevi o CSS de `.e-view-switch`. O ativo se distingue por peso e contorno, não só pela cor. O anel de foco fica dentro do link, sem invadir o vizinho. Entre 651 e 940 px, a busca ocupa a primeira linha e filtros, controle e botão dividem a segunda. No mobile, controle e botão têm 44 px de altura e ficam na mesma linha; em 360 px ou menos os ícones do controle somem para caber.
-7. Em `tests/quadro-filtros.cjs`, a troca de rota passou a clicar no controle, em vez de `history.pushState`.
-8. Criei `tests/alternar-visao.cjs`.
+7. Em `tests/quadro-filtros.cts`, a troca de rota passou a clicar no controle, em vez de `history.pushState`.
+8. Criei `tests/alternar-visao.cts`.
 
 ## Estrutura utilizada
 
@@ -27,8 +27,8 @@ A issue pede a navegação entre as duas visões e a preservação do texto de b
 | `src/pages/ListaTarefas.tsx` | Controle na faixa de ações. |
 | `src/pages/QuadroTarefas.tsx` | Controle na faixa de ações. |
 | `src/App.css` | Estilo do controle e ajuste da faixa de ações entre 320 e 940 px. |
-| `tests/alternar-visao.cjs` | Suíte de navegador com API real, banco temporário e build do GitHub Pages. |
-| `tests/quadro-filtros.cjs` | Troca de visão pelo controle e espera da URL depois de fechar a ficha. |
+| `tests/alternar-visao.cts` | Suíte de navegador com API real, banco temporário e build do GitHub Pages. |
+| `tests/quadro-filtros.cts` | Troca de visão pelo controle e espera da URL depois de fechar a ficha. |
 
 Não adicionei dependências. Reaproveitei `ListIcon` e `BoardIcon`, que já existiam em `src/design/icon.tsx` sem uso. Não alterei `src/tipos.ts`, `db.json` nem `db.seed.json`.
 
@@ -58,7 +58,7 @@ Ficaram de fora, por serem anteriores a esta issue:
 
 ## Falhas encontradas e correções
 
-- `tests/quadro-filtros.cjs` falhava de forma intermitente (cerca de 2 em 5), também no `main`, na asserção de `/quadro` depois de fechar a ficha. A causa é do teste: o dialog sai do DOM antes do `history.back()` terminar, e a URL era lida na hora. Troquei as quatro leituras por `page.waitForURL`. Depois disso, 5 de 5 execuções passaram.
+- `tests/quadro-filtros.cts` falhava de forma intermitente (cerca de 2 em 5), também no `main`, na asserção de `/quadro` depois de fechar a ficha. A causa é do teste: o dialog sai do DOM antes do `history.back()` terminar, e a URL era lida na hora. Troquei as quatro leituras por `page.waitForURL`. Depois disso, 5 de 5 execuções passaram.
 - Em 700 px, os filtros de largura fixa empurravam o botão para outra linha mesmo com a busca isolada. Os filtros passaram a encolher até 110 px cada nessa faixa.
 - Para confirmar que o cenário de teclado detecta a perda de foco, desliguei temporariamente a devolução do foco: a suíte falhou no `waitForFunction`. Restaurei o código e ela voltou a passar.
 
@@ -68,13 +68,13 @@ Ficaram de fora, por serem anteriores a esta issue:
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado; `oxlint --deny-warnings` sem avisos. |
-| `node tests/alternar-visao.cjs` | 9 cenários aprovados; 5 de 5 execuções. |
-| `node tests/quadro-filtros.cjs` | 8 cenários aprovados; 5 de 5 execuções. |
-| `node tests/estado-filtros.cjs` | 6 cenários aprovados. |
-| `node tests/busca-titulo.cjs` | Aprovado. |
-| `node tests/marco-2.cjs` | 12 cenários aprovados. |
-| `node tests/api-escrita.mjs` | 12 cenários aprovados. |
-| `node tests/formulario-tarefa.cjs` | 17 cenários aprovados. |
-| `node tests/nova-tarefa.cjs` | 15 cenários aprovados. |
-| `node tests/editar-tarefa.cjs` | 12 cenários aprovados. |
-| `node tests/projetos-cadastro-edicao.cjs` | 15 cenários aprovados. |
+| `node tests/alternar-visao.cts` | 9 cenários aprovados; 5 de 5 execuções. |
+| `node tests/quadro-filtros.cts` | 8 cenários aprovados; 5 de 5 execuções. |
+| `node tests/estado-filtros.cts` | 6 cenários aprovados. |
+| `node tests/busca-titulo.cts` | Aprovado. |
+| `node tests/marco-2.cts` | 12 cenários aprovados. |
+| `node tests/api-escrita.mts` | 12 cenários aprovados. |
+| `node tests/formulario-tarefa.cts` | 17 cenários aprovados. |
+| `node tests/nova-tarefa.cts` | 15 cenários aprovados. |
+| `node tests/editar-tarefa.cts` | 12 cenários aprovados. |
+| `node tests/projetos-cadastro-edicao.cts` | 15 cenários aprovados. |

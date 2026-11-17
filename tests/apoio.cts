@@ -3,7 +3,7 @@ const { copyFile, mkdtemp, rm } = require("node:fs/promises");
 const { createServer } = require("node:net");
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
-const { lancarNavegador } = require("./ui.cjs");
+const { lancarNavegador } = require("./ui.cts");
 
 const raiz = join(__dirname, "..");
 const dormir = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
@@ -62,7 +62,7 @@ function criarApoio() {
     env,
     { exibirErros = false } = {},
   ) {
-    return new Promise((resolver, rejeitar) => {
+    return new Promise<void>((resolver, rejeitar) => {
       const processo = iniciar(arquivo, argumentos, env, {
         exibirErros,
         servidor: false,
@@ -89,7 +89,7 @@ function criarApoio() {
 
   async function esperar(
     url,
-    { tentativas = 100, processo, confirmar = async () => true } = {},
+    { tentativas = 100, processo, confirmar = async () => true }: any = {},
   ) {
     for (let tentativa = 0; tentativa < tentativas; tentativa++) {
       const servidores = processo
@@ -127,7 +127,7 @@ function criarApoio() {
     prefixo = "pixel-testes-",
     pasta,
     semente = "db.seed.json",
-  } = {}) {
+  }: any = {}) {
     const temporario = await criarTemporario(prefixo, pasta);
     const banco = join(temporario, "db.json");
     await copyFile(resolve(raiz, semente), banco);
@@ -190,7 +190,7 @@ function criarApoio() {
 
   function iniciarVite(
     porta,
-    { api, argumentos = [], env = process.env, preview } = {},
+    { api, argumentos = [], env = process.env, preview }: any = {},
   ) {
     return iniciar(
       "node_modules/vite/bin/vite.js",
@@ -212,7 +212,7 @@ function criarApoio() {
     rotaApi = "/tarefas",
     tentativas = 100,
     ...vite
-  } = {}) {
+  }: any = {}) {
     const portaApi = await portaLivre();
     const portaWeb = await portaLivre();
     const api = `http://127.0.0.1:${portaApi}`;
@@ -252,7 +252,8 @@ function criarApoio() {
           ),
         )),
       );
-      for (const [sinal, handler] of sinais) process.off(sinal, handler);
+      for (const [sinal, handler] of sinais as [NodeJS.Signals, () => void][])
+        process.off(sinal, handler);
       const falha = resultados.find(
         (resultado) => resultado.status === "rejected",
       );

@@ -34,8 +34,10 @@ const dispositivos = [
 
 async function portaLivre() {
   const servidor = createServer();
-  await new Promise((resolve) => servidor.listen(0, "127.0.0.1", resolve));
-  const porta = servidor.address().port;
+  await new Promise<void>((resolve) =>
+    servidor.listen(0, "127.0.0.1", resolve),
+  );
+  const porta = (servidor.address() as import("node:net").AddressInfo).port;
   await new Promise((resolve) => servidor.close(resolve));
   return porta;
 }
@@ -101,9 +103,12 @@ async function auditar() {
     await Promise.all([esperar(`${api}/tarefas`), esperar(web)]);
 
     const linhas = [];
-    for (const [pagina, caminho] of paginas) {
-      for (const [dispositivo, extras] of dispositivos) {
-        for (const [tema, esquema] of temas) {
+    for (const [pagina, caminho] of paginas as [string, string][]) {
+      for (const [dispositivo, extras] of dispositivos as [
+        string,
+        string[],
+      ][]) {
+        for (const [tema, esquema] of temas as [string, string][]) {
           const arquivo = join(saida, `${pagina}-${dispositivo}-${tema}.json`);
           await executarArquivo(
             "npx",
@@ -121,7 +126,7 @@ async function auditar() {
             { cwd: raiz, shell: true, maxBuffer: 64 * 1024 * 1024 },
           );
           const relatorio = JSON.parse(await readFile(arquivo, "utf8"));
-          const falhas = Object.values(relatorio.audits)
+          const falhas = Object.values<any>(relatorio.audits)
             .filter(
               (audit) =>
                 audit.score === 0 && audit.scoreDisplayMode === "binary",

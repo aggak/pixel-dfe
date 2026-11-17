@@ -1,9 +1,9 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { focoVisivel, contraste } = require("./ui.cjs");
+const { focoVisivel, contraste } = require("./ui.cts");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 const raiz = join(__dirname, "..");
@@ -199,7 +199,11 @@ async function executar() {
         await abrir(page, caminho);
         await page.evaluate(() => {
           const tamanhos = [...document.querySelectorAll("body, body *")].map(
-            (el) => [el, parseFloat(getComputedStyle(el).fontSize) / 16],
+            (el) =>
+              [el, parseFloat(getComputedStyle(el).fontSize) / 16] as [
+                HTMLElement,
+                number,
+              ],
           );
           for (const [el, tamanho] of tamanhos)
             el.style.setProperty("font-size", `${tamanho}rem`, "important");
@@ -445,7 +449,7 @@ async function executar() {
             ),
           ]
             .filter(
-              (el) =>
+              (el: HTMLButtonElement) =>
                 el.tabIndex >= 0 &&
                 !el.disabled &&
                 el.getClientRects().length > 0 &&
@@ -939,7 +943,7 @@ async function executar() {
       .some(
         (a) =>
           a.playState === "running" &&
-          a.effect?.target?.matches?.(".e-gato-costas"),
+          (a.effect as KeyframeEffect)?.target?.matches?.(".e-gato-costas"),
       ),
   );
   await pausar.focus();
@@ -1002,7 +1006,7 @@ async function executar() {
       .some(
         (a) =>
           a.playState === "running" &&
-          a.effect?.target?.matches?.(".e-gato-costas"),
+          (a.effect as KeyframeEffect)?.target?.matches?.(".e-gato-costas"),
       ),
   );
   await movimento.reload();

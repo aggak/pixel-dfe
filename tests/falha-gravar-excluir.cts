@@ -1,9 +1,9 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { criarUi, comTextos } = require("./ui.cjs");
+const { criarUi, comTextos } = require("./ui.cts");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 const { portaLivre, esperar, iniciar } = apoio;
 

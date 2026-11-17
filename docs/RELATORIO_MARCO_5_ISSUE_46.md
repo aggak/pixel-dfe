@@ -10,8 +10,8 @@ Implementei a [issue #46 — Tratar tarefa ou projeto inexistente](https://githu
 
 1. Antes de alterar o código, rodei uma sondagem com o json-server real e um banco temporário. Ela confirmou o tratamento das quatro rotas e encontrou quatro lacunas: excluir uma tarefa já excluída, mudar o status de uma tarefa excluída, salvar a edição de uma tarefa ou de um projeto excluídos e abrir uma tarefa cujo projeto não existe.
 2. Registrei o escopo, os arquivos autorizados, os textos e os cenários em `.agent/handoff/issue-atual.md`, um arquivo local que não entra no repositório.
-3. Escrevi primeiro `tests/registro-inexistente.cjs`. Os cenários das quatro rotas passaram logo na primeira execução porque descrevem um comportamento que já existia. O primeiro cenário novo falhou porque o diálogo de exclusão continuava aberto.
-4. Criei `excluirTarefaSeExistir` em `src/api.ts`. Para a tela, uma resposta 404 na exclusão quer dizer que a tarefa já não existe, ou seja, o pedido do usuário já foi atendido. `excluirTarefa` continua rejeitando o 404, como exige `tests/api-escrita.mjs`. A lista, o quadro e a página do projeto passaram a usar a nova função.
+3. Escrevi primeiro `tests/registro-inexistente.cts`. Os cenários das quatro rotas passaram logo na primeira execução porque descrevem um comportamento que já existia. O primeiro cenário novo falhou porque o diálogo de exclusão continuava aberto.
+4. Criei `excluirTarefaSeExistir` em `src/api.ts`. Para a tela, uma resposta 404 na exclusão quer dizer que a tarefa já não existe, ou seja, o pedido do usuário já foi atendido. `excluirTarefa` continua rejeitando o 404, como exige `tests/api-escrita.mts`. A lista, o quadro e a página do projeto passaram a usar a nova função.
 5. Em `CartaoTarefa`, uma resposta 404 ao mudar o status agora mostra "Esta tarefa não existe mais. Ela pode ter sido excluída." no lugar de "Tente de novo".
 6. Em `FormularioTarefa` e `FormularioProjeto`, uma resposta 404 ao salvar agora mostra que o registro não existe mais e confirma que os dados digitados foram mantidos. As outras falhas continuam com a mensagem anterior.
 7. Em `DetalheTarefa`, quando a lista de projetos já carregou e o projeto da tarefa não está nela, a ficha mostra "Projeto não encontrado" sem link. Se a lista de projetos falhar, o link com o identificador continua, como antes.
@@ -28,7 +28,7 @@ Implementei a [issue #46 — Tratar tarefa ou projeto inexistente](https://githu
 | `src/components/FormularioTarefa.tsx`, `src/components/FormularioProjeto.tsx` | Aviso próprio para a gravação de um registro inexistente, só na edição (prop `edicao`); os campos são preservados. |
 | `src/pages/EditarTarefa.tsx`, `src/pages/EditarProjeto.tsx` | Passam `edicao` ao formulário. |
 | `src/pages/DetalheTarefa.tsx` | Projeto inexistente aparece sem link quebrado. |
-| `tests/registro-inexistente.cjs` | Nova suíte de navegador com 13 cenários e a checagem final dos bancos. |
+| `tests/registro-inexistente.cts` | Nova suíte de navegador com 13 cenários e a checagem final dos bancos. |
 
 ### Dependências externas
 
@@ -40,8 +40,8 @@ Implementei a [issue #46 — Tratar tarefa ou projeto inexistente](https://githu
 
 | Critério | Resultado | Evidência |
 | --- | --- | --- |
-| Conferir o acesso a `/tarefas/999` e `/projetos/999`. | Conferido também em `/tarefas/999/editar` e `/projetos/999/editar`. | `tests/registro-inexistente.cjs`, quatro primeiros cenários |
-| Mostrar uma mensagem de não encontrado para registros inexistentes. | Mensagens nas rotas e também no status, na gravação e no projeto de uma tarefa órfã. | `tests/registro-inexistente.cjs` |
+| Conferir o acesso a `/tarefas/999` e `/projetos/999`. | Conferido também em `/tarefas/999/editar` e `/projetos/999/editar`. | `tests/registro-inexistente.cts`, quatro primeiros cenários |
+| Mostrar uma mensagem de não encontrado para registros inexistentes. | Mensagens nas rotas e também no status, na gravação e no projeto de uma tarefa órfã. | `tests/registro-inexistente.cts` |
 | Encerrar o carregamento, sem deixar a indicação ativa indefinidamente. | Nenhum `role="status"` fica ativo depois do 404, inclusive com resposta atrasada em 600 ms. | Cenário "resposta lenta com 404" |
 
 ## Falhas encontradas e correções
@@ -57,7 +57,7 @@ Implementei a [issue #46 — Tratar tarefa ou projeto inexistente](https://githu
 | --- | --- |
 | `npm run build` | Aprovado (`tsc -b` e `vite build`). |
 | `npm run lint` | Aprovado, sem erros e sem avisos. |
-| `node tests/registro-inexistente.cjs` | 13 cenários e a checagem dos bancos aprovados; 3 de 3 execuções, também depois da correção da revisão. |
+| `node tests/registro-inexistente.cts` | 13 cenários e a checagem dos bancos aprovados; 3 de 3 execuções, também depois da correção da revisão. |
 | `node .claude/skills/testing-pixel-dfe/scripts/validate-delivery.mjs` | Aprovado: arquivos protegidos intactos, build, lint, `git diff --check` e as 15 suítes existentes (`api-escrita` até `estado-vazio`). |
 
 ## Como repetir as verificações
@@ -66,8 +66,8 @@ Implementei a [issue #46 — Tratar tarefa ou projeto inexistente](https://githu
 npm ci
 npm run build
 npm run lint
-node tests/registro-inexistente.cjs
-node tests/api-escrita.mjs
+node tests/registro-inexistente.cts
+node tests/api-escrita.mts
 ```
 
 ## Commits e limites

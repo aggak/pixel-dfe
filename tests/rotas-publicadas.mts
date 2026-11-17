@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { lancarNavegador } = require("./ui.cjs");
+const { lancarNavegador } = require("./ui.cts");
 
 const APP = "https://pixel-dfe-project.up.railway.app";
 const API = "https://pixel-dfe-production.up.railway.app";
@@ -114,7 +114,10 @@ async function executar() {
     const erros = [];
     page.on("pageerror", (erro) => erros.push(erro.message));
 
-    for (const [caminho, elemento] of rotas) {
+    for (const [caminho, elemento] of rotas as [
+      string,
+      (pagina: unknown) => any,
+    ][]) {
       for (const acao of ["acesso direto", "recarga"]) {
         const resposta =
           acao === "acesso direto"

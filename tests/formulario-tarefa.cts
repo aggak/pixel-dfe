@@ -9,8 +9,8 @@ const {
   criarUi,
   focoVisivel,
   criarEsperas,
-} = require("./ui.cjs");
-const { criarApoio } = require("./apoio.cjs");
+} = require("./ui.cts");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 const repo = join(__dirname, "..");

@@ -2,9 +2,9 @@ const assert = require("node:assert/strict");
 const { readFile, writeFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
-const { criarEsperas } = require("./ui.cjs");
+const { criarEsperas } = require("./ui.cts");
 
 const raiz = join(__dirname, "..");
 let browser;

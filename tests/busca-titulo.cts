@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 
-const { criarApoio } = require("./apoio.cjs");
+const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
 
 async function executar() {

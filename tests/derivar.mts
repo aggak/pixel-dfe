@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { filtrarTarefas } from "../src/derivar.ts";
+import type { Tarefa } from "../src/tipos.ts";
 
 const titulos = [
   "Redigir o relatório de requisitos",
@@ -10,7 +11,7 @@ const titulos = [
   "Testar  a\tAPI   do monitoramento",
   "RELATORIO FINAL",
 ];
-const tarefas = titulos.map((titulo, indice) => ({
+const tarefas: Tarefa[] = titulos.map((titulo, indice) => ({
   id: String(indice + 1),
   projetoId: "1",
   titulo,
