@@ -3085,3 +3085,25 @@ textarea {
     opacity: 0;
   }
 }
+.e-card[draggable="true"] {
+  cursor: grab;
+}
+.e-card.e-card-arrastando {
+  opacity: 0.45;
+}
+.e-column {
+  border-radius: 10px;
+  outline: 1px dashed transparent;
+  outline-offset: 6px;
+}
+.e-column.e-column-alvo {
+  outline-color: color-mix(in srgb, var(--e-action) 60%, transparent);
+  background: color-mix(in srgb, var(--e-action) 6%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(:root:not([data-movimento="reduzido"])) .e-column {
+    transition:
+      outline-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+}

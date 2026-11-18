@@ -82,5 +82,5 @@ export function useSeletorStatus(
         : "Não foi possível mudar o status. Tente de novo."}
     </p>
   );
-  return { seletorStatus, alerta };
+  return { seletorStatus, alerta, mudar };
 }
