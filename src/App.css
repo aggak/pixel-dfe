@@ -459,6 +459,49 @@ textarea {
 .e-form-dialog {
   overflow: visible !important;
 }
+@keyframes ficha-fundo-entrada {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ficha-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ficha-conteudo-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.e-form-overlay[data-entering] {
+  animation: ficha-fundo-entrada 220ms ease-out both;
+}
+.e-form-overlay[data-exiting] {
+  animation: ficha-fundo-entrada 160ms ease-in reverse both;
+}
+.e-form-modal[data-entering] {
+  animation: ficha-entrada 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.e-form-modal[data-exiting] {
+  animation: ficha-entrada 160ms ease-in reverse both;
+}
+.e-ficha-content {
+  animation: ficha-conteudo-entrada 160ms ease-out;
+}
 .e-task-form {
   color: var(--e-ink);
 }
@@ -472,10 +515,20 @@ textarea {
   padding-right: 36px !important;
 }
 .e-form-header {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   display: flex;
   align-items: center;
   gap: 9px;
   padding: 15px 18px 5px;
+}
+.e-form-header[data-arrastando] {
+  cursor: grabbing;
+}
+.e-form-header:focus-visible {
+  outline: 2px solid var(--e-action);
+  outline-offset: -4px;
 }
 .e-form-symbol {
   width: 26px;
@@ -2975,6 +3028,62 @@ textarea {
 :root[data-movimento="reduzido"] .e-tabs a::before {
   animation: none !important;
   transition: none !important;
+}
+.e-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--e-back);
+  cursor: default;
+  user-select: none;
+}
+.e-splash-gato {
+  display: block;
+  width: 144px;
+  height: 144px;
+  background: var(--e-gato) 0 0/2592px 100% no-repeat;
+  image-rendering: pixelated;
+}
+.e-splash-palavra {
+  display: block;
+  width: 126px;
+  height: 48px;
+  background: var(--e-splash-palavra) 0 0/126px 48px no-repeat;
+  image-rendering: pixelated;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-gato {
+    animation:
+      e-splash-entrada 0.4s ease-out both,
+      e-splash-abanando 1.5s steps(18) infinite;
+  }
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-palavra {
+    animation: e-splash-entrada 0.4s 0.15s ease-out both;
+  }
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-saindo {
+    animation: e-splash-saida 0.3s ease-in forwards;
+  }
+}
+@keyframes e-splash-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes e-splash-abanando {
+  to {
+    background-position-x: -2592px;
+  }
+}
+@keyframes e-splash-saida {
+  to {
+    opacity: 0;
+  }
 }
 .e-card[draggable="true"] {
   cursor: grab;
