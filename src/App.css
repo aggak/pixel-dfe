@@ -2976,3 +2976,59 @@ textarea {
   animation: none !important;
   transition: none !important;
 }
+.e-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--e-back);
+  cursor: default;
+  user-select: none;
+}
+.e-splash-gato {
+  display: block;
+  width: 144px;
+  height: 144px;
+  background: var(--e-gato) 0 0/2592px 100% no-repeat;
+  image-rendering: pixelated;
+}
+.e-splash-palavra {
+  display: block;
+  width: 126px;
+  height: 48px;
+  background: var(--e-splash-palavra) 0 0/126px 48px no-repeat;
+  image-rendering: pixelated;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-gato {
+    animation:
+      e-splash-entrada 0.4s ease-out both,
+      e-splash-abanando 1.5s steps(18) infinite;
+  }
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-palavra {
+    animation: e-splash-entrada 0.4s 0.15s ease-out both;
+  }
+  :where(:root:not([data-movimento="reduzido"])) .e-splash-saindo {
+    animation: e-splash-saida 0.3s ease-in forwards;
+  }
+}
+@keyframes e-splash-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes e-splash-abanando {
+  to {
+    background-position-x: -2592px;
+  }
+}
+@keyframes e-splash-saida {
+  to {
+    opacity: 0;
+  }
+}

@@ -6,6 +6,7 @@ const { join, resolve } = require("node:path");
 const { lancarNavegador } = require("./ui.cts");
 
 const raiz = join(__dirname, "..");
+process.env.VITE_SPLASH ??= "desligado";
 const dormir = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
 const ativo = (processo) =>
   processo.pid && processo.exitCode === null && processo.signalCode === null;
