@@ -15,6 +15,7 @@ import {
   Dialog,
 } from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
+import { useArrastarFicha } from "../hooks/useArrastarFicha";
 import { ContextoFicha, ehRotaFicha, type EstadoFicha } from "./ficha-contexto";
 import {
   descartarRetorno,
@@ -50,6 +51,7 @@ export function Ficha({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const arraste = useArrastarFicha();
   const [aberta, setAberta] = useState(true);
   const [ocupada, setOcupada] = useState(false);
   const [alterada, setAlterada] = useState(false);
@@ -210,7 +212,13 @@ export function Ficha({
                 }}
                 aria-busy={ocupada}
               >
-                <header className="e-form-header">
+                <header
+                  {...arraste}
+                  className="e-form-header"
+                  tabIndex={0}
+                  aria-label="Mover ficha"
+                  title="Arraste para mover ou use as setas do teclado"
+                >
                   <div className="e-form-symbol">
                     <Icon name={icone} />
                   </div>
