@@ -78,6 +78,30 @@ async function executar() {
   const salvarEdicao = () =>
     page.getByRole("button", { name: "Salvar alterações", exact: true });
   const caminho = () => new URL(page.url()).pathname;
+  const atalhoCriado = () => ui.atalhoData("Criado em");
+  const avisoErroData = () =>
+    page.locator(
+      ".e-tarefa-avisos p.formulario-tarefa__aviso--erro[role=alert]",
+    );
+  const idsDescricaoData = async () =>
+    ((await atalhoCriado().getAttribute("aria-describedby")) ?? "")
+      .split(/\s+/)
+      .filter(Boolean);
+  const hojeNaPagina = () =>
+    page.evaluate(() => {
+      const agora = new Date();
+      const iso = [
+        agora.getFullYear(),
+        String(agora.getMonth() + 1).padStart(2, "0"),
+        String(agora.getDate()).padStart(2, "0"),
+      ].join("-");
+      const extensa = new Intl.DateTimeFormat("pt-BR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(`${iso}T12:00:00`));
+      return { iso, extensa };
+    });
   const lerBanco = async () => JSON.parse(await readFile(banco, "utf8"));
   async function esperarEdicao(id) {
     const dados = (await lerBanco()).projetos.find((p) => p.id === id);
@@ -125,20 +149,57 @@ async function executar() {
           .count(),
         1,
       );
-      for (const rotulo of ["Nome", "Descrição", "Disciplina", "Criado em"]) {
-        assert.equal(await campo(rotulo).count(), 1, rotulo);
-        assert.equal(await campo(rotulo).inputValue(), "", rotulo);
-      }
       assert.equal(
-        await page
-          .getByRole("textbox", { name: "Descrição opcional", exact: true })
-          .count(),
+        await page.locator(".e-form-modal.e-ficha-compacta").count(),
         1,
       );
       assert.equal(
-        await campo("Disciplina").getAttribute("placeholder"),
-        "Ex.: Banco de Dados",
+        await page
+          .locator(".e-title-field")
+          .getByLabel(/^Nome\s*\*?$/)
+          .count(),
+        1,
       );
+      for (const rotulo of ["Nome", "Disciplina"]) {
+        assert.equal(await campo(rotulo).count(), 1, rotulo);
+        assert.equal(await campo(rotulo).inputValue(), "", rotulo);
+      }
+      assert.equal(await campo("Descrição").count(), 0);
+      assert.equal(
+        await ui.alternarDescricao().getAttribute("aria-expanded"),
+        "false",
+      );
+      assert.equal(
+        await ui.alternarDescricao().getAttribute("aria-label"),
+        "Adicionar descrição",
+      );
+      await ui.abrirDescricao();
+      assert.equal(
+        await ui.alternarDescricao().getAttribute("aria-label"),
+        "Ocultar descrição",
+      );
+      const descricao = page.getByRole("textbox", {
+        name: "Descrição",
+        exact: true,
+      });
+      assert.equal(await descricao.count(), 1);
+      assert.equal(await descricao.inputValue(), "");
+      assert.equal(
+        await descricao.getAttribute("placeholder"),
+        "Descrição (opcional)",
+      );
+      assert.equal(
+        await campo("Disciplina").getAttribute("placeholder"),
+        "Disciplina",
+      );
+      const hoje = await hojeNaPagina();
+      assert.equal(await campo("Criado em").count(), 0);
+      assert.equal(await atalhoCriado().count(), 1);
+      assert.equal(
+        await atalhoCriado().getAttribute("aria-label"),
+        `Criado em: ${hoje.extensa}`,
+      );
+      assert.equal(await ui.valor("Criado em"), hoje.iso);
       assert.equal(await salvarNovo().count(), 1);
       await page.reload();
       await page.locator("form").waitFor();
@@ -162,9 +223,14 @@ async function executar() {
       gravacoes.length = 0;
       await campo("Nome").fill("   ");
       await campo("Disciplina").fill("   ");
+      await ui.preencherData("Criado em", "");
+      assert.equal(
+        await atalhoCriado().getAttribute("aria-label"),
+        "Criado em",
+      );
       await salvarNovo().click();
       assert.equal(gravacoes.length, 0);
-      for (const rotulo of ["Nome", "Disciplina", "Criado em"]) {
+      for (const rotulo of ["Nome", "Disciplina"]) {
         assert.equal(
           await campo(rotulo).getAttribute("aria-required"),
           "true",
@@ -174,7 +240,6 @@ async function executar() {
       for (const [rotulo, msg] of [
         ["Nome", "Informe o nome do projeto."],
         ["Disciplina", "Informe a disciplina."],
-        ["Criado em", "Informe a data de criação."],
       ]) {
         assert.equal(
           await campo(rotulo).getAttribute("aria-invalid"),
@@ -185,17 +250,33 @@ async function executar() {
         assert.ok(descId, rotulo);
         assert.equal(await page.locator(`[id="${descId}"]`).innerText(), msg);
       }
+      assert.equal(await atalhoCriado().getAttribute("data-invalido"), "");
+      const idAvisoData = await avisoErroData().getAttribute("id");
+      assert.ok(idAvisoData);
+      assert.ok((await idsDescricaoData()).includes(idAvisoData));
+      assert.equal(
+        await avisoErroData().innerText(),
+        "Informe a data de criação.",
+      );
       await ate("foco no primeiro campo inválido", async () =>
         campo("Nome").evaluate((el) => el === document.activeElement),
       );
+      assert.equal(await ui.obrigatorio("Criado em"), true);
+      const entradaData = await ui.abrirData("Criado em");
+      assert.equal(await entradaData.getAttribute("aria-invalid"), "true");
+      const idFormulario = await page.locator("form").getAttribute("id");
+      assert.ok(idFormulario);
+      assert.equal(await entradaData.getAttribute("form"), idFormulario);
+      await ui.fecharData("Criado em");
     },
   );
 
   async function preencherProjeto(dados) {
     await campo("Nome").fill(dados.nome);
+    await ui.abrirDescricao();
     await campo("Descrição").fill(dados.descricao);
     await campo("Disciplina").fill(dados.disciplina);
-    await campo("Criado em").fill(dados.criadoEm);
+    await ui.preencherData("Criado em", dados.criadoEm);
   }
   const focoNaTela = () =>
     page.evaluate(() => {
@@ -217,21 +298,15 @@ async function executar() {
       const anoLongo = "20265-12-20";
       const invalida = "Informe uma data válida.";
       async function conferirRecusa() {
-        await page.getByText(invalida, { exact: true }).waitFor();
+        await avisoErroData().getByText(invalida, { exact: true }).waitFor();
         assert.equal(gravacoes.length, 0);
-        assert.equal(
-          await campo("Criado em").getAttribute("aria-invalid"),
-          "true",
-        );
-        const descId =
-          await campo("Criado em").getAttribute("aria-describedby");
-        assert.ok(descId);
-        assert.equal(
-          await page.locator(`[id="${descId}"]`).innerText(),
-          invalida,
-        );
-        await ate("foco na data inválida", async () =>
-          campo("Criado em").evaluate((el) => el === document.activeElement),
+        assert.equal(await atalhoCriado().getAttribute("data-invalido"), "");
+        const idAviso = await avisoErroData().getAttribute("id");
+        assert.ok(idAviso);
+        assert.ok((await idsDescricaoData()).includes(idAviso));
+        assert.equal(await avisoErroData().innerText(), invalida);
+        await ate("foco no atalho da data inválida", async () =>
+          atalhoCriado().evaluate((el) => el === document.activeElement),
         );
       }
       await page.goto(`${origem}/projetos/novo`);
@@ -246,9 +321,12 @@ async function executar() {
       await salvarNovo().click();
       await conferirRecusa();
       assert.equal(caminho(), "/projetos/novo");
-      await campo("Criado em").fill("2026-12-20");
+      const idAvisoAnterior = await avisoErroData().getAttribute("id");
+      await ui.preencherData("Criado em", "2026-12-20");
       assert.equal(await page.getByText(invalida, { exact: true }).count(), 0);
-      assert.equal(await campo("Criado em").getAttribute("aria-invalid"), null);
+      assert.equal(await avisoErroData().count(), 0);
+      assert.equal(await atalhoCriado().getAttribute("data-invalido"), null);
+      assert.ok(!(await idsDescricaoData()).includes(idAvisoAnterior));
 
       await page.route(`${api}/projetos/1`, (route) =>
         route.request().method() === "GET"
@@ -256,7 +334,7 @@ async function executar() {
           : route.continue(),
       );
       await abrirEdicao("1");
-      assert.equal(await campo("Criado em").inputValue(), anoLongo);
+      assert.equal(await ui.valor("Criado em"), anoLongo);
       gravacoes.length = 0;
       await salvarEdicao().click();
       await conferirRecusa();
@@ -517,6 +595,38 @@ async function executar() {
   );
 
   await conferir(
+    "data de hoje no cadastro não conta como alteração: clique fora fecha; com alteração, mantém a ficha",
+    async () => {
+      const fora = async () => {
+        await ate(
+          "ficha posicionada",
+          async () =>
+            (await page.locator(".e-form-modal").boundingBox())?.x > 200,
+        );
+        await page.mouse.click(100, 450);
+      };
+      gravacoes.length = 0;
+      await page.goto(`${origem}/projetos/novo`);
+      await page.locator("form").waitFor();
+      assert.equal(await ui.valor("Criado em"), (await hojeNaPagina()).iso);
+      await fora();
+      await ate(
+        "lista após clique fora sem alteração",
+        async () => caminho() === "/projetos",
+      );
+      await page.locator("form").waitFor({ state: "detached" });
+      await page.goto(`${origem}/projetos/novo`);
+      await page.locator("form").waitFor();
+      await campo("Nome").fill("Projeto em rascunho");
+      await fora();
+      await assentar();
+      assert.equal(caminho(), "/projetos/novo");
+      assert.equal(await campo("Nome").inputValue(), "Projeto em rascunho");
+      assert.equal(gravacoes.length, 0);
+    },
+  );
+
+  await conferir(
     "botão de edição, acesso direto e recarga em /projetos/:id/editar com dados atuais",
     async () => {
       await page.goto(`${origem}/projetos/1`);
@@ -535,6 +645,12 @@ async function executar() {
       assert.equal(caminho(), "/projetos/1/editar");
       const projeto = await esperarEdicao("1");
       assert.equal(await page.title(), `Editar: ${projeto.nome} · Pixel`);
+      assert.ok(projeto.descricao);
+      assert.equal(
+        await ui.alternarDescricao().getAttribute("aria-expanded"),
+        "true",
+      );
+      assert.equal(await campo("Descrição").count(), 1);
       const campos = {
         Nome: "nome",
         Descrição: "descricao",
@@ -542,15 +658,11 @@ async function executar() {
         "Criado em": "criadoEm",
       };
       for (const [rotulo, atributo] of Object.entries(campos)) {
-        assert.equal(
-          await campo(rotulo).inputValue(),
-          projeto[atributo],
-          rotulo,
-        );
+        assert.equal(await ui.valor(rotulo), projeto[atributo], rotulo);
       }
       await page.reload();
       await esperarEdicao("1");
-      assert.equal(await campo("Criado em").inputValue(), projeto.criadoEm);
+      assert.equal(await ui.valor("Criado em"), projeto.criadoEm);
     },
   );
 
@@ -567,7 +679,7 @@ async function executar() {
       await campo("Nome").fill(`   ${dados.nome} `);
       await campo("Descrição").fill(dados.descricao);
       await campo("Disciplina").fill(`  ${dados.disciplina}  `);
-      await campo("Criado em").fill(dados.criadoEm);
+      await ui.preencherData("Criado em", dados.criadoEm);
       gravacoes.length = 0;
       await salvarEdicao().click();
       await ate(

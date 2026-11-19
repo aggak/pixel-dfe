@@ -475,42 +475,47 @@ async function executar() {
     );
 
     await page.setViewportSize({ width: 1280, height: 900 });
-    await abrir(page, "/tarefas/nova");
-    await page
-      .getByRole("button", { name: "Adicionar descrição", exact: true })
-      .click();
-    const descricao = page.getByRole("textbox", { name: "Descrição", exact: true });
-    assert.equal(
-      await descricao.getAttribute("placeholder"),
-      "Descrição (opcional)",
-    );
-    const [cor, fundo] = await descricao.evaluate((el) => {
-      const estiloPlaceholder = getComputedStyle(el, "::placeholder");
-      let opacidade = Number(estiloPlaceholder.opacity);
-      for (let atual = el; atual; atual = atual.parentElement)
-        opacidade *= Number(getComputedStyle(atual).opacity);
-      let fundo = "rgba(0, 0, 0, 0)";
-      for (
-        let atual = el;
-        atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo);
-        atual = atual.parentElement
-      )
-        fundo = getComputedStyle(atual).backgroundColor;
-      const [r, g, b] = estiloPlaceholder.color.match(/[\d.]+/g).map(Number);
-      const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
-      const misturar = (c, f) =>
-        Math.round(c * opacidade + f * (1 - opacidade));
-      return [
-        `rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`,
-        fundo,
-      ];
-    });
-    assert.ok(
-      contraste(cor, fundo) >= 4.5,
-      `${tema}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`,
-    );
+    for (const caminho of ["/tarefas/nova", "/projetos/novo"]) {
+      await abrir(page, caminho);
+      await page
+        .getByRole("button", { name: "Adicionar descrição", exact: true })
+        .click();
+      const descricao = page.getByRole("textbox", {
+        name: "Descrição",
+        exact: true,
+      });
+      assert.equal(
+        await descricao.getAttribute("placeholder"),
+        "Descrição (opcional)",
+      );
+      const [cor, fundo] = await descricao.evaluate((el) => {
+        const estiloPlaceholder = getComputedStyle(el, "::placeholder");
+        let opacidade = Number(estiloPlaceholder.opacity);
+        for (let atual = el; atual; atual = atual.parentElement)
+          opacidade *= Number(getComputedStyle(atual).opacity);
+        let fundo = "rgba(0, 0, 0, 0)";
+        for (
+          let atual = el;
+          atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo);
+          atual = atual.parentElement
+        )
+          fundo = getComputedStyle(atual).backgroundColor;
+        const [r, g, b] = estiloPlaceholder.color.match(/[\d.]+/g).map(Number);
+        const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
+        const misturar = (c, f) =>
+          Math.round(c * opacidade + f * (1 - opacidade));
+        return [
+          `rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`,
+          fundo,
+        ];
+      });
+      assert.ok(
+        contraste(cor, fundo) >= 4.5,
+        `${tema} ${caminho}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`,
+      );
+    }
     console.log(
-      `OK: ${tema}: "opcional" da descrição com contraste de pelo menos 4,5:1`,
+      `OK: ${tema}: "opcional" da descrição com contraste de pelo menos 4,5:1 na Nova tarefa e no Novo projeto`,
     );
     await page.close();
   }

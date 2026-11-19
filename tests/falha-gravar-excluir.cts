@@ -193,9 +193,10 @@ async function executar() {
   await page.goto(`${web}/projetos/novo`);
   await ficharProjeto.campo("Nome").waitFor();
   await ficharProjeto.campo("Nome").fill("Portfólio da turma");
+  await ficharProjeto.abrirDescricao();
   await ficharProjeto.campo("Descrição").fill("Página com os trabalhos");
   await ficharProjeto.campo("Disciplina").fill("DFE");
-  await ficharProjeto.campo("Criado em").fill("2026-10-20");
+  await ficharProjeto.preencherData("Criado em", "2026-10-20");
   await desligarApi();
   await ficha().getByRole("button", { name: "Salvar projeto" }).click();
   await ficha()
@@ -211,11 +212,7 @@ async function executar() {
     ["Disciplina", "DFE"],
     ["Criado em", "2026-10-20"],
   ]) {
-    assert.equal(
-      await ficharProjeto.campo(rotulo).inputValue(),
-      esperado,
-      rotulo,
-    );
+    assert.equal(await ficharProjeto.valor(rotulo), esperado, rotulo);
   }
   assert.equal(
     await focoDentro(ficha()),

@@ -1,20 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import { Button as BotaoAria } from "react-aria-components";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
-import { Label } from "@/components/base/input/label";
-import { TextAreaBase } from "@/components/base/textarea/textarea";
-import { TextField } from "react-aria-components";
+import { TextArea } from "@/components/base/textarea/textarea";
+import { Tooltip } from "@/components/base/tooltip/tooltip";
 import { ErroApi } from "../api";
 import { dataValida } from "../design/formatos";
 import { Icon } from "../design/icon";
 import type { Projeto } from "../tipos";
+import { PrazoNovaTarefa } from "./PrazoNovaTarefa";
 import "./FormularioTarefa.css";
 
 export type DadosProjeto = Omit<Projeto, "id">;
 
 type CampoObrigatorio = "nome" | "disciplina" | "criadoEm";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
+
+const IconeDisciplina = (props: Omit<Parameters<typeof Icon>[0], "name">) => (
+  <Icon {...props} name="book" />
+);
 
 interface FormularioProjetoProps {
   valoresIniciais?: Partial<DadosProjeto>;
@@ -35,6 +40,7 @@ export function FormularioProjeto({
   onAlteracao,
   edicao = false,
 }: FormularioProjetoProps) {
+  const id = useId();
   const [nome, setNome] = useState(valoresIniciais?.nome ?? "");
   const [descricao, setDescricao] = useState(valoresIniciais?.descricao ?? "");
   const [disciplina, setDisciplina] = useState(
@@ -47,6 +53,10 @@ export function FormularioProjeto({
     descricao !== (iniciais?.descricao ?? "") ||
     disciplina !== (iniciais?.disciplina ?? "") ||
     criadoEm !== (iniciais?.criadoEm ?? "");
+  const [descricaoAberta, setDescricaoAberta] = useState(
+    Boolean(valoresIniciais?.descricao),
+  );
+  const [focarDescricao, setFocarDescricao] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
@@ -103,14 +113,17 @@ export function FormularioProjeto({
       novosErros.criadoEm = "Informe uma data válida.";
     setErros(novosErros);
     const primeiroErro = Object.keys(novosErros)[0] as
-      | CampoObrigatorio
-      | undefined;
+      CampoObrigatorio | undefined;
     if (primeiroErro) {
       const formulario = evento.currentTarget;
       window.setTimeout(
         () =>
           formulario
-            .querySelector<HTMLElement>(`[name="${primeiroErro}"]`)
+            .querySelector<HTMLElement>(
+              primeiroErro === "criadoEm"
+                ? "[data-prazo-atalho]"
+                : `[name="${primeiroErro}"]`,
+            )
             ?.focus(),
         0,
       );
@@ -143,15 +156,22 @@ export function FormularioProjeto({
     }
   }
 
+  const rotuloDescricao = descricaoAberta
+    ? "Ocultar descrição"
+    : descricao.trim()
+      ? "Mostrar descrição"
+      : "Adicionar descrição";
+
   return (
     <form
+      id={id}
       className="e-project-form formulario-tarefa"
       onSubmit={enviar}
       noValidate
       aria-busy={enviando}
     >
       <div className="e-panel-scroll">
-        <div className="e-project-fields">
+        <div className="e-title-field">
           <Input
             name="nome"
             label="Nome"
@@ -159,7 +179,7 @@ export function FormularioProjeto({
             autoFocus
             isRequired
             validationBehavior="aria"
-            size="sm"
+            size="md"
             value={nome}
             onChange={(valor) => {
               setNome(valor);
@@ -170,15 +190,18 @@ export function FormularioProjeto({
               erros.nome ? <span role="alert">{erros.nome}</span> : undefined
             }
           />
+        </div>
 
-          <div className="e-form-two">
+        <div className="e-tarefa-compacta">
+          <div className="e-tarefa-responsavel">
             <Input
               name="disciplina"
               label="Disciplina"
-              placeholder="Ex.: Banco de Dados"
+              placeholder="Disciplina"
+              size="sm"
+              icon={IconeDisciplina}
               isRequired
               validationBehavior="aria"
-              size="sm"
               value={disciplina}
               onChange={(valor) => {
                 setDisciplina(valor);
@@ -191,43 +214,32 @@ export function FormularioProjeto({
                 ) : undefined
               }
             />
-            <Input
-              name="criadoEm"
-              label="Criado em"
-              type="date"
-              isRequired
-              validationBehavior="aria"
-              size="sm"
-              value={criadoEm}
-              onChange={(valor) => {
-                setCriadoEm(valor);
-                limparErro("criadoEm");
-              }}
-              isInvalid={Boolean(erros.criadoEm)}
-              hint={
-                erros.criadoEm ? (
-                  <span role="alert">{erros.criadoEm}</span>
-                ) : undefined
-              }
-            />
           </div>
-
-          <TextField
-            name="descricao"
-            value={descricao}
-            onChange={setDescricao}
-            className="group flex h-max w-full flex-col items-start justify-start gap-1.5"
-          >
-            <Label>
-              Descrição
-              <span className="e-opcional">opcional</span>
-            </Label>
-            <TextAreaBase
-              placeholder="O que este projeto reúne?"
-              rows={3}
-              size="sm"
-            />
-          </TextField>
+          <div className="e-tarefa-avisos">
+            {erros.criadoEm && (
+              <p
+                id={`${id}-criado-erro`}
+                className="formulario-tarefa__aviso formulario-tarefa__aviso--erro"
+                role="alert"
+              >
+                {erros.criadoEm}
+              </p>
+            )}
+          </div>
+          {descricaoAberta && (
+            <div id={`${id}-descricao`} className="e-description-body">
+              <TextArea
+                name="descricao"
+                label="Descrição"
+                placeholder="Descrição (opcional)"
+                rows={3}
+                size="sm"
+                autoFocus={focarDescricao}
+                value={descricao}
+                onChange={setDescricao}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,21 +252,59 @@ export function FormularioProjeto({
         </div>
       )}
 
-      <div className="e-form-footer">
-        {onCancelar && (
-          <Button
-            type="button"
-            color="tertiary"
-            size="sm"
-            onClick={onCancelar}
-            isDisabled={enviando}
-          >
-            Cancelar
+      <div className="e-form-footer e-tarefa-rodape">
+        <div
+          className="e-tarefa-atalhos"
+          role="group"
+          aria-label="Detalhes do projeto"
+        >
+          <PrazoNovaTarefa
+            valor={criadoEm}
+            erro={erros.criadoEm}
+            onChange={(valor) => {
+              setCriadoEm(valor);
+              limparErro("criadoEm");
+            }}
+            formulario={id}
+            idErro={`${id}-criado-erro`}
+            nome="criadoEm"
+            rotulo="Criado em"
+            alvo="data de criação"
+            doAlvo="da data de criação"
+          />
+          <Tooltip title={rotuloDescricao}>
+            <BotaoAria
+              type="button"
+              className="e-description-toggle e-tarefa-atalho"
+              data-preenchido={descricao.trim() ? "" : undefined}
+              aria-label={rotuloDescricao}
+              aria-expanded={descricaoAberta}
+              aria-controls={descricaoAberta ? `${id}-descricao` : undefined}
+              onPress={() => {
+                setDescricaoAberta(!descricaoAberta);
+                setFocarDescricao(!descricaoAberta);
+              }}
+            >
+              <Icon name="document" />
+            </BotaoAria>
+          </Tooltip>
+        </div>
+        <div className="e-tarefa-envio">
+          {onCancelar && (
+            <Button
+              type="button"
+              color="tertiary"
+              size="sm"
+              onClick={onCancelar}
+              isDisabled={enviando}
+            >
+              Cancelar
+            </Button>
+          )}
+          <Button type="submit" color="primary" size="sm" isDisabled={enviando}>
+            {enviando ? "Salvando…" : textoSalvar}
           </Button>
-        )}
-        <Button type="submit" color="primary" size="sm" isDisabled={enviando}>
-          {enviando ? "Salvando…" : textoSalvar}
-        </Button>
+        </div>
       </div>
     </form>
   );

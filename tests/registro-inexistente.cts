@@ -291,9 +291,7 @@ async function executar() {
   await ficha()
     .getByLabel(/^Disciplina/)
     .fill("DFE");
-  await ficha()
-    .getByLabel(/^Criado em/)
-    .fill("2026-10-01");
+  await ui.preencherData("Criado em", "2026-10-01");
   await ficha()
     .getByRole("button", { name: /^Salvar/ })
     .click();

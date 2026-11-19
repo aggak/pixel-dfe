@@ -1,4 +1,4 @@
-.e-ficha-nova-tarefa .e-prazo-tarefa__entrada {
+.e-ficha-compacta .e-prazo-tarefa__entrada {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -10,29 +10,29 @@
   background: var(--nova-campo);
 }
 
-.e-ficha-nova-tarefa .e-prazo-tarefa__entrada [role="presentation"] {
+.e-ficha-compacta .e-prazo-tarefa__entrada [role="presentation"] {
   min-width: 0;
   padding-inline: 0 !important;
   background: transparent;
   box-shadow: none;
 }
 
-.e-ficha-nova-tarefa .e-prazo-tarefa__entrada input[type="date"] {
+.e-ficha-compacta .e-prazo-tarefa__entrada input[type="date"] {
   padding-inline: 10px 0;
   font-variant-numeric: tabular-nums;
   appearance: none;
 }
 
-.e-ficha-nova-tarefa .e-prazo-tarefa__entrada input::-webkit-calendar-picker-indicator {
+.e-ficha-compacta .e-prazo-tarefa__entrada input::-webkit-calendar-picker-indicator {
   display: none;
 }
 
-.e-ficha-nova-tarefa .e-prazo-tarefa__entrada:focus-within {
+.e-ficha-compacta .e-prazo-tarefa__entrada:focus-within {
   border-bottom-color: var(--nova-foco, var(--e-action));
   box-shadow: inset 0 -1px var(--nova-foco, var(--e-action));
 }
 
-.e-ficha-nova-tarefa .e-prazo-tarefa[data-invalid] .e-prazo-tarefa__entrada {
+.e-ficha-compacta .e-prazo-tarefa[data-invalid] .e-prazo-tarefa__entrada {
   --nova-foco: var(--e-error);
   border-bottom-color: var(--e-error);
 }

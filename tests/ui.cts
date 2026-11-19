@@ -5,6 +5,10 @@ const CONTROLES_SELECT = {
   Status: "status",
   Prioridade: "prioridade",
 };
+const DIALOGOS_DATA = {
+  Prazo: "Selecionar prazo",
+  "Criado em": "Selecionar data de criação",
+};
 const escapar = (texto) => texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function lancarNavegador() {
@@ -27,27 +31,46 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
     escopo().locator(`select[name="${CONTROLES_SELECT[nome]}"]`);
   const alternarDescricao = () =>
     escopo().locator("button.e-description-toggle");
-  const atalhoPrazo = () => escopo().locator("button[data-prazo-atalho]");
-  const painelPrazo = () => page.getByRole("dialog", { name: "Selecionar prazo" });
+  const atalhoData = (rotulo) =>
+    escopo().locator(`button[data-prazo-atalho][aria-label^="${rotulo}"]`);
+  const painelData = (rotulo) =>
+    page.getByRole("dialog", { name: DIALOGOS_DATA[rotulo] });
 
-  async function abrirPrazo() {
-    if (!(await atalhoPrazo().count())) return campo("Prazo");
-    if (!(await painelPrazo().isVisible())) await atalhoPrazo().click();
-    return painelPrazo().getByLabel(/^Prazo\s*\*?$/);
+  async function abrirData(rotulo) {
+    if (!(await atalhoData(rotulo).count())) return campo(rotulo);
+    if (!(await painelData(rotulo).isVisible()))
+      await atalhoData(rotulo).click();
+    return painelData(rotulo).getByLabel(
+      new RegExp(`^${escapar(rotulo)}\\s*\\*?$`),
+    );
   }
 
-  async function fecharPrazo() {
-    if (!(await painelPrazo().isVisible())) return;
+  async function fecharData(rotulo) {
+    if (!(await painelData(rotulo).isVisible())) return;
     await page.keyboard.press("Escape");
-    await painelPrazo().waitFor({ state: "hidden" });
+    await painelData(rotulo).waitFor({ state: "hidden" });
   }
 
-  async function preencherPrazo(valor) {
-    await (await abrirPrazo()).fill(valor);
-    await fecharPrazo();
+  async function preencherData(rotulo, valor) {
+    await (await abrirData(rotulo)).fill(valor);
+    await fecharData(rotulo);
   }
+
+  const atalhoPrazo = () => atalhoData("Prazo");
+  const abrirPrazo = () => abrirData("Prazo");
+  const fecharPrazo = () => fecharData("Prazo");
+  const preencherPrazo = (valor) => preencherData("Prazo", valor);
 
   async function obrigatorio(nome) {
+    if (DIALOGOS_DATA[nome] && (await atalhoData(nome).count())) {
+      const entrada = await abrirData(nome);
+      const rotulo = painelData(nome).locator("label", { hasText: nome });
+      const resultado =
+        (await entrada.getAttribute("aria-required")) === "true" &&
+        /\*/.test(await rotulo.first().innerText());
+      await fecharData(nome);
+      return resultado;
+    }
     if (CONTROLES_SELECT[nome]) {
       const raiz = seletor(nome).locator("xpath=..");
       return (
@@ -82,11 +105,11 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
   async function valor(nome) {
     if (CONTROLES_SELECT[nome]) return oculto(nome).inputValue();
     if (nome === "Descrição") await abrirDescricao();
-    if (nome === "Prazo") {
-      const entrada = await abrirPrazo();
-      const valorPrazo = await entrada.inputValue();
-      await fecharPrazo();
-      return valorPrazo;
+    if (DIALOGOS_DATA[nome]) {
+      const entrada = await abrirData(nome);
+      const valorData = await entrada.inputValue();
+      await fecharData(nome);
+      return valorData;
     }
     return campo(nome).inputValue();
   }
@@ -118,6 +141,11 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
     obrigatorio,
     oculto,
     alternarDescricao,
+    atalhoData,
+    painelData,
+    abrirData,
+    fecharData,
+    preencherData,
     atalhoPrazo,
     abrirPrazo,
     fecharPrazo,

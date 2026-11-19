@@ -582,13 +582,14 @@ async function executar() {
   await fichaAberta("Novo projeto").waitFor();
   await esperarChunk("NovoProjeto");
   assert.deepEqual(fichasCarregadas(), ["NovoProjeto"]);
+  await ui.abrirDescricao();
   for (const [rotulo, chave] of [
     ["Nome", "nome"],
     ["Descrição", "descricao"],
     ["Disciplina", "disciplina"],
-    ["Criado em", "criadoEm"],
   ])
     await ui.campo(rotulo).fill(novoProjeto[chave]);
+  await ui.preencherData("Criado em", novoProjeto.criadoEm);
   gravacoes.length = 0;
   await page
     .getByRole("button", { name: "Salvar projeto", exact: true })
