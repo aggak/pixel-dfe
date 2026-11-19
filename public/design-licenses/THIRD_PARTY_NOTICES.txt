@@ -5,3 +5,8 @@ License: MIT; see UNTITLED_UI_LICENSE.txt.
 Components are vendored unmodified under vendor/. UI composition, pixel icons, and icon adapters are local to Pixel.
 Runtime packages bundled into the built JavaScript and CSS: react, react-dom, scheduler, use-sync-external-store, react-router, react-aria, react-aria-components, react-stately, @internationalized/string, clsx, tailwind-merge, tailwindcss, and tailwindcss-animate.
 Their full license texts are in RUNTIME_LICENSES.txt, next to this file.
+
+pixel-art-atlas-1.4m sprites
+Dataset: https://huggingface.co/datasets/Angais/pixel-art-atlas-1.4m
+Author: Angais. License: CC0 1.0, with the terms listed on the dataset card.
+The caixa-de-papelao project icon in src/design/temas-felinos.ts was redrawn in Pixel's palette from a sprite in this dataset.

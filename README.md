@@ -24,7 +24,7 @@
 - **Tudo à mão:** crie, edite e exclua tarefas; ajuste status, prioridade e responsável.
 - **Sem perder o contexto:** abra detalhes e formulários em fichas sobre a página.
 
-![Navegação por abas com as iniciais do projeto selecionado](docs/images/abas-etiqueta-detalhe.png)
+![Navegação por abas com o projeto selecionado em destaque](docs/images/abas-etiqueta-detalhe.png)
 
 ## Personalidade em cada detalhe
 

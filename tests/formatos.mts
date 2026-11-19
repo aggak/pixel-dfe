@@ -2,56 +2,43 @@ import assert from "node:assert/strict";
 import {
   dataValida,
   formatarPrazoCartao,
-  iniciais,
   prazoVencido,
 } from "../src/design/formatos.ts";
+import { TEMAS, temasDosProjetos } from "../src/design/temas-felinos.ts";
 
-const monogramas = [
-  ["Portal da biblioteca", "PB"],
-  ["  engenharia   de\nsoftware\t", "ES"],
-  ["Árvore e Órbita", "AO"],
-  ["ac\u0327a\u0303o e educac\u0327a\u0303o", "AE"],
-  ["Listas, árvores e grafos", "LA"],
-  ["front-end", "FE"],
-  ["Pixel", "PI"],
-  ["Ágil", "AG"],
-  ["a biblioteca", "BI"],
-  ["X", "X"],
-  ["3", "3"],
-  ["2026", "20"],
-  ["Projeto 2", "P2"],
-  ["", "?"],
-  [" \n\t ", "?"],
-  ["---?! 🐈", "?"],
-  ["de", "DE"],
-  ["A e os", "A"],
-  ["para", "PA"],
-];
-
-for (const [nome, esperado] of monogramas)
-  assert.equal(iniciais(nome), esperado, JSON.stringify(nome));
-for (const conectivo of [
-  "a",
-  "as",
-  "o",
-  "os",
-  "da",
-  "das",
-  "de",
-  "do",
-  "dos",
-  "e",
-  "em",
-  "para",
-]) {
-  assert.equal(
-    iniciais(`${conectivo} Portal ${conectivo} Biblioteca`),
-    "PB",
-    conectivo,
-  );
+const projeto = (id: string, criadoEm = "2026-08-10") => ({
+  id,
+  nome: `Projeto ${id}`,
+  descricao: "",
+  disciplina: "",
+  criadoEm,
+});
+const varios = Array.from({ length: TEMAS.length }, (_, i) =>
+  projeto(String(i + 1)),
+);
+const sorteio = temasDosProjetos(varios);
+assert.equal(
+  new Set(varios.map(({ id }) => sorteio.get(id)?.id)).size,
+  TEMAS.length,
+);
+assert.deepEqual(
+  temasDosProjetos([...varios].reverse()).get("7"),
+  sorteio.get("7"),
+);
+const sozinho = temasDosProjetos([projeto("abc")]).get("abc");
+assert.equal(
+  temasDosProjetos([projeto("abc"), projeto("xyz", "2026-09-01")]).get("abc"),
+  sozinho,
+);
+const excedente = temasDosProjetos([...varios, projeto("extra", "2026-12-01")]);
+assert.ok(excedente.get("extra"));
+for (const tema of TEMAS) {
+  assert.equal(tema.desenho.length, 16, tema.id);
+  for (const linha of tema.desenho)
+    assert.equal([...linha].length, 16, tema.id);
 }
 console.log(
-  "OK: iniciais removem acentos, ignoram conectivos, limitam letras e tratam nomes vazios",
+  "OK: temas felinos são estáveis por projeto e só se repetem quando o catálogo acaba",
 );
 
 for (const iso of ["2026-12-20", "2024-02-29", "0000-02-29", "9999-12-31"])

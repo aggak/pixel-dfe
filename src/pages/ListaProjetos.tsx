@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useLocation, useNavigate, Link } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { listarProjetos, listarTarefas } from "../api";
@@ -10,7 +11,8 @@ import {
   ErroCarregamento,
   EstadoVazio,
 } from "../components/Layout";
-import { AndamentoProjeto, Monograma } from "../components/CartaoProjeto";
+import { AndamentoProjeto, IconeFelino } from "../components/CartaoProjeto";
+import { temasDosProjetos } from "../design/temas-felinos";
 import { EditIcon, PlusIcon } from "../design/icon";
 import { AcaoCabecalho } from "../components/Cabecalho";
 
@@ -32,6 +34,7 @@ export function ListaProjetos() {
     tentando: tentandoTarefas,
     tentarDeNovo: tentarTarefas,
   } = useConsulta(listarTarefas);
+  const temas = useMemo(() => temasDosProjetos(projetos ?? []), [projetos]);
   const location = useLocation();
   const navigate = useNavigate();
   useRetornoFoco(projetos !== undefined && !revalidando && !revalidandoTarefas);
@@ -98,7 +101,7 @@ export function ListaProjetos() {
               data-project-id={projeto.id}
             >
               <div className="e-proj-cab">
-                <Monograma nome={projeto.nome} />
+                <IconeFelino tema={temas.get(projeto.id)} />
                 <div className="e-proj-cab-txt">
                   <span className="e-project-discipline">
                     {projeto.disciplina}
