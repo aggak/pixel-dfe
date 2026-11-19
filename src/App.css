@@ -2116,7 +2116,7 @@ textarea {
   gap: 12px;
   margin-right: -8px;
 }
-.e-proj-mono {
+.e-proj-icone {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2127,7 +2127,7 @@ textarea {
   color: var(--e-action);
   border-radius: 8px;
 }
-.e-proj-mono svg {
+.e-proj-icone svg {
   display: block;
 }
 .e-proj-cab-txt {
@@ -2868,12 +2868,15 @@ textarea {
 }
 .e-tabs a[aria-current] {
   max-width: min(292px, calc(100vw - 96px));
-  padding: 0 16px 0 10px;
+  padding: 0 16px;
   border-color: var(--e-line);
   background: var(--e-sheet);
   color: var(--e-ink);
   font-weight: 500;
   animation: e-aba-sobe 160ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.e-tabs a[aria-current]:has(.e-tabs-icone) {
+  padding-left: 10px;
 }
 .e-tabs a[aria-current]::after {
   content: "";
@@ -2901,10 +2904,10 @@ textarea {
       )
       right bottom / var(--aba-pe) var(--aba-pe) no-repeat;
 }
-.e-tabs-mono {
+.e-tabs-icone {
   display: none;
 }
-.e-tabs a[aria-current] .e-tabs-mono {
+.e-tabs a[aria-current] .e-tabs-icone {
   display: flex;
   flex: none;
   align-items: center;
@@ -2917,7 +2920,7 @@ textarea {
   color: var(--e-action);
   animation: e-aba-pixel 160ms steps(4, end) 40ms backwards;
 }
-.e-tabs-mono svg {
+.e-tabs-icone svg {
   display: block;
 }
 .e-tabs a:first-child {
@@ -3038,9 +3041,12 @@ textarea {
   }
   .e-tabs a[aria-current] {
     max-width: calc(100vw - 150px);
-    padding: 0 13px 0 9px;
+    padding: 0 13px;
   }
-  .e-tabs a[aria-current] .e-tabs-mono {
+  .e-tabs a[aria-current]:has(.e-tabs-icone) {
+    padding-left: 9px;
+  }
+  .e-tabs a[aria-current] .e-tabs-icone {
     margin-right: 8px;
   }
   .e-tabs[data-sobra~="ini"] {
@@ -3075,12 +3081,12 @@ textarea {
   .e-tabs a,
   .e-tabs a::before,
   .e-tabs-seta,
-  .e-tabs-mono {
+  .e-tabs-icone {
     animation: none !important;
     transition: none !important;
   }
 }
-:root[data-movimento="reduzido"] :is(.e-tabs a, .e-tabs-seta, .e-tabs-mono),
+:root[data-movimento="reduzido"] :is(.e-tabs a, .e-tabs-seta, .e-tabs-icone),
 :root[data-movimento="reduzido"] .e-tabs a::before {
   animation: none !important;
   transition: none !important;

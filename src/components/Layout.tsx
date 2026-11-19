@@ -25,7 +25,6 @@ import { GatinhoCarregando } from "./GatinhoCarregando";
 import { Cabecalho } from "./Cabecalho";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { MarcaRodape } from "./MarcaRodape";
-import { Monograma } from "./CartaoProjeto";
 import {
   ALVOS_RESERVA,
   marcarVolta,
@@ -337,7 +336,7 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
         to={naVisao ? caminho : ultimaVisao}
         aria-current={!atual ? "page" : undefined}
       >
-        <span className="e-tabs-mono" aria-hidden="true">
+        <span className="e-tabs-icone" aria-hidden="true">
           <PixelArte largura={8} altura={8} desenho={GRADE_TODAS} />
         </span>
         <span className="e-tabs-nome">Todas</span>
@@ -360,7 +359,6 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
           title={projeto.nome}
           aria-current={atual === projeto.id ? "page" : undefined}
         >
-          <Monograma nome={projeto.nome} className="e-tabs-mono" />
           <span className="e-tabs-nome">{projeto.nome}</span>
         </Link>
       ))}
