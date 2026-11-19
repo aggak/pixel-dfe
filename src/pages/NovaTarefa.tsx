@@ -39,6 +39,8 @@ export function NovaTarefa() {
   return (
     <FormularioTarefa
       key={projetoId}
+      compacto
+      textoSalvar="Salvar"
       valoresIniciais={{ projetoId }}
       onSalvar={salvar}
       onCancelar={fechar}

@@ -1,13 +1,7 @@
 import { Badge } from "@/components/base/badges/badges";
 import { Icon, PawIcon } from "../design/icon";
-import { prioridadeTexto, statusTexto } from "../design/formatos";
+import { iconesPrioridade, prioridadeTexto, statusTexto } from "../design/formatos";
 import type { Prioridade, Status } from "../tipos";
-
-const iconesPrioridade: Record<Prioridade, string> = {
-  alta: "angle-double-small-up",
-  media: "minus-small",
-  baixa: "arrow-small-down",
-};
 
 export function SeloStatus({
   status,

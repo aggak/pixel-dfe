@@ -42,6 +42,11 @@ export const prioridadeTexto: Record<Prioridade, string> = {
   media: "Média",
   alta: "Alta",
 };
+export const iconesPrioridade: Record<Prioridade, string> = {
+  alta: "angle-double-small-up",
+  media: "minus-small",
+  baixa: "arrow-small-down",
+};
 export function formatarData(iso: string, extensa = false) {
   const data = new Date(`${iso}T12:00:00`);
   if (Number.isNaN(data.getTime())) return iso;

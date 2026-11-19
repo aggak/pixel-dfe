@@ -4,7 +4,7 @@ const { join } = require("node:path");
 
 const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
-const { criarEsperas } = require("./ui.cts");
+const { criarEsperas, criarUi } = require("./ui.cts");
 
 const raiz = join(__dirname, "..");
 let browser;
@@ -25,6 +25,7 @@ async function executar() {
   const alerta = (texto) => page.getByRole("alert").filter({ hasText: texto });
   const ficha = () => page.locator(".e-form-overlay").getByRole("dialog");
   const { segurar } = criarEsperas(page);
+  const ui = criarUi(page);
   const removerNaApi = async (colecao, id) =>
     assert.equal(
       (await fetch(`${api}/${colecao}/${id}`, { method: "DELETE" })).ok,
@@ -270,14 +271,12 @@ async function executar() {
   await ficha()
     .getByLabel(/^Responsável/)
     .fill("Ana");
-  await ficha()
-    .getByLabel(/^Prazo/)
-    .fill("2026-12-01");
+  await ui.preencherPrazo("2026-12-01");
   await ficha()
     .getByRole("button", { name: /^Salvar/ })
     .click();
   await alerta(
-    "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.",
+    "Não foi possível salvar. Tente novamente.",
   ).waitFor();
   assert.equal(await alerta("não existe mais").count(), 0);
   assert.equal(await tituloNovo.inputValue(), "Tarefa recusada pela API");

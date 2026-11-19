@@ -194,7 +194,7 @@ async function conferirPublicacao() {
       (r) => r.url() === `${API}/tarefas` && r.request().method() === "POST",
     );
     await page
-      .getByRole("button", { name: "Salvar tarefa", exact: true })
+      .getByRole("button", { name: "Salvar", exact: true })
       .click();
     const post = await respostaPost;
     assert.equal(post.status(), 201);

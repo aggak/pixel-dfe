@@ -671,7 +671,7 @@ async function executar() {
   await ui.preencherTarefa(comTextos(novaTarefa, projetos));
   gravacoes.length = 0;
   await page
-    .getByRole("button", { name: "Salvar tarefa", exact: true })
+    .getByRole("button", { name: "Salvar", exact: true })
     .click();
   await page.waitForURL((url) => url.pathname === "/");
   await lista

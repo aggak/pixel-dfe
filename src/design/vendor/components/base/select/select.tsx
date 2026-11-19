@@ -13,6 +13,7 @@ import {
 import { Avatar } from "@/components/base/avatar/avatar";
 import { HintText } from "@/components/base/input/hint-text";
 import { Label } from "@/components/base/input/label";
+import { Tooltip } from "@/components/base/tooltip/tooltip";
 import { cx } from "@/utils/cx";
 import { isReactComponent } from "@/utils/is-react-component";
 import { Popover } from "./popover";
@@ -38,6 +39,7 @@ export interface SelectProps
     CommonProps {
   items?: SelectItemType[];
   popoverClassName?: string;
+  triggerTooltip?: string;
   icon?: FC | ReactNode;
   children: ReactNode | ((item: SelectItemType) => ReactNode);
 }
@@ -154,6 +156,7 @@ const Select = ({
   hint,
   tooltip,
   hideRequiredIndicator,
+  triggerTooltip,
   className,
   ...rest
 }: SelectProps) => {
@@ -168,35 +171,72 @@ const Select = ({
           )
         }
       >
-        {(state) => (
-          <>
-            {label && (
-              <Label
-                isRequired={hideRequiredIndicator ? false : state.isRequired}
-                tooltip={tooltip}
-              >
-                {label}
-              </Label>
-            )}
-
+        {(state) => {
+          const trigger = (
             <SelectValue {...state} {...{ size, placeholder }} icon={icon} />
+          );
+          return (
+            <>
+              {label && (
+                <Label
+                  isRequired={hideRequiredIndicator ? false : state.isRequired}
+                  tooltip={tooltip}
+                >
+                  {label}
+                </Label>
+              )}
 
-            <Popover size={size} className={rest.popoverClassName}>
-              <AriaListBox items={items} className="size-full outline-hidden">
-                {children}
-              </AriaListBox>
-            </Popover>
+              {triggerTooltip ? (
+                <Tooltip
+                  title={triggerTooltip}
+                  isDisabled={state.isOpen || state.isDisabled}
+                >
+                  {trigger}
+                </Tooltip>
+              ) : (
+                trigger
+              )}
 
-            {hint && (
-              <HintText
-                isInvalid={state.isInvalid}
-                className={cx(size === "sm" && "text-xs")}
+              <Popover
+                size={size}
+                className={rest.popoverClassName}
+                {...(triggerTooltip
+                  ? {
+                      placement: "bottom start",
+                      containerPadding: 10,
+                      offset: 6,
+                      maxHeight: 208,
+                    }
+                  : {})}
               >
-                {hint}
-              </HintText>
-            )}
-          </>
-        )}
+                {triggerTooltip && label && (
+                  <div
+                    aria-hidden="true"
+                    data-select-heading
+                    className="px-2.5 py-1 text-xs text-tertiary"
+                  >
+                    {label}
+                  </div>
+                )}
+                <AriaListBox
+                  items={items}
+                  className={cx(triggerTooltip ? "w-full" : "size-full", "outline-hidden")}
+                >
+                  {children}
+                </AriaListBox>
+              </Popover>
+
+              {hint && (
+                <HintText
+                  isInvalid={state.isInvalid}
+                  className={cx(size === "sm" && "text-xs")}
+                >
+                  {hint}
+                </HintText>
+              )}
+            </>
+          );
+        }}
       </AriaSelect>
     </SelectContext.Provider>
   );

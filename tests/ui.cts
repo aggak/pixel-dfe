@@ -27,6 +27,25 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
     escopo().locator(`select[name="${CONTROLES_SELECT[nome]}"]`);
   const alternarDescricao = () =>
     escopo().locator("button.e-description-toggle");
+  const atalhoPrazo = () => escopo().locator("button[data-prazo-atalho]");
+  const painelPrazo = () => page.getByRole("dialog", { name: "Selecionar prazo" });
+
+  async function abrirPrazo() {
+    if (!(await atalhoPrazo().count())) return campo("Prazo");
+    if (!(await painelPrazo().isVisible())) await atalhoPrazo().click();
+    return painelPrazo().getByLabel(/^Prazo\s*\*?$/);
+  }
+
+  async function fecharPrazo() {
+    if (!(await painelPrazo().isVisible())) return;
+    await page.keyboard.press("Escape");
+    await painelPrazo().waitFor({ state: "hidden" });
+  }
+
+  async function preencherPrazo(valor) {
+    await (await abrirPrazo()).fill(valor);
+    await fecharPrazo();
+  }
 
   async function obrigatorio(nome) {
     if (CONTROLES_SELECT[nome]) {
@@ -63,6 +82,12 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
   async function valor(nome) {
     if (CONTROLES_SELECT[nome]) return oculto(nome).inputValue();
     if (nome === "Descrição") await abrirDescricao();
+    if (nome === "Prazo") {
+      const entrada = await abrirPrazo();
+      const valorPrazo = await entrada.inputValue();
+      await fecharPrazo();
+      return valorPrazo;
+    }
     return campo(nome).inputValue();
   }
   const opcoes = (nome) =>
@@ -85,7 +110,7 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
     await escolher("Status", dados.nomeStatus);
     await escolher("Prioridade", dados.nomePrioridade);
     await campo("Responsável").fill(dados.responsavel);
-    await campo("Prazo").fill(dados.prazo);
+    await preencherPrazo(dados.prazo);
   }
   return {
     campo,
@@ -93,6 +118,10 @@ function criarUi(page, escopo = () => page.locator("form").first()) {
     obrigatorio,
     oculto,
     alternarDescricao,
+    atalhoPrazo,
+    abrirPrazo,
+    fecharPrazo,
+    preencherPrazo,
     escolher,
     abrirDescricao,
     fecharDescricao,
