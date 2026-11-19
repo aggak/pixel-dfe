@@ -36,7 +36,7 @@ export const STATUS: Status[] = [
   "concluida",
 ];
 
-export interface ColunaStatus {
+interface ColunaStatus {
   status: Status;
   tarefas: Tarefa[];
 }

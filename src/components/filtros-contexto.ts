@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import type { Filtros } from "../derivar";
 
-export interface ContextoFiltrosValor {
+interface ContextoFiltrosValor {
   filtros: Filtros;
   alterar: (parcial: Partial<Filtros>) => void;
   limpar: () => void;

@@ -15,7 +15,6 @@ import { HintText } from "@/components/base/input/hint-text";
 import { Label } from "@/components/base/input/label";
 import { cx } from "@/utils/cx";
 import { isReactComponent } from "@/utils/is-react-component";
-import { ComboBox } from "./combobox";
 import { Popover } from "./popover";
 import { SelectItem } from "./select-item";
 import {
@@ -204,10 +203,8 @@ const Select = ({
 };
 
 const _Select = Select as typeof Select & {
-  ComboBox: typeof ComboBox;
   Item: typeof SelectItem;
 };
-_Select.ComboBox = ComboBox;
 _Select.Item = SelectItem;
 
 export { _Select as Select };

@@ -19,8 +19,6 @@ lighthouse/
 .DS_Store
 *.sw?
 
-.claude/
-.codex/
 prototipos/
 .env
 .env.*
