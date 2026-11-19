@@ -456,6 +456,51 @@ textarea {
   box-shadow: 0 14px 48px rgb(10 7 14 / 32%) !important;
   overflow: auto;
 }
+.e-form-overlay:has(> .e-ficha-nova-tarefa) {
+  --nova-altura-visivel: var(--visual-viewport-height, 100dvh);
+  --modal-pt: clamp(16px, calc(var(--nova-altura-visivel) - 380px), 103px);
+  --modal-pb: 16px;
+  padding: var(--modal-pt) 20px var(--modal-pb) !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+}
+.e-form-modal.e-ficha-nova-tarefa {
+  width: var(--nova-largura-ficha, 408px) !important;
+  margin-top: 0;
+  max-height: calc(var(--nova-altura-visivel) - var(--modal-pt) - var(--modal-pb)) !important;
+}
+.e-form-overlay[data-entering]:has(> .e-ficha-nova-tarefa) {
+  animation: e-ficha-nova-fundo-entrar 140ms ease-out both;
+}
+.e-form-modal.e-ficha-nova-tarefa[data-entering] {
+  animation: e-ficha-nova-entrar 160ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+.e-form-overlay[data-exiting]:has(> .e-ficha-nova-tarefa) {
+  animation: e-ficha-nova-fundo-sair 140ms ease-in both;
+}
+.e-form-modal.e-ficha-nova-tarefa[data-exiting] {
+  animation: e-ficha-nova-sair 140ms cubic-bezier(0.75, 0, 0.8, 0.25) both;
+}
+@keyframes e-ficha-nova-fundo-entrar {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes e-ficha-nova-entrar {
+  from {
+    transform: translateY(-5px);
+  }
+}
+@keyframes e-ficha-nova-fundo-sair {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes e-ficha-nova-sair {
+  to {
+    transform: translateY(-5px);
+  }
+}
 .e-form-dialog {
   overflow: visible !important;
 }
@@ -872,6 +917,17 @@ textarea {
     margin-top: 0;
     width: 438px !important;
     max-height: calc(100dvh - 20px) !important;
+  }
+  .e-form-overlay:has(> .e-ficha-nova-tarefa) {
+    --nova-largura-ficha: 438px;
+    --modal-pt: max(
+      env(safe-area-inset-top),
+      clamp(10px, calc((var(--nova-altura-visivel) - 320px) / 5), 96px)
+    );
+    --modal-pb: max(10px, env(safe-area-inset-bottom));
+    padding-inline: max(10px, env(safe-area-inset-left))
+      max(10px, env(safe-area-inset-right)) !important;
+    justify-content: center !important;
   }
   .e-form-modal:has(.e-ficha-loading-tarefa) {
     height: min(537px, calc(100dvh - 20px));

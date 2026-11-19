@@ -107,10 +107,9 @@ async function executar() {
   await conferirLimite(
     "/tarefas",
     "POST",
-    ficha().getByRole("button", { name: "Salvar tarefa" }),
+    ficha().getByRole("button", { name: "Salvar", exact: true }),
     ficha().getByRole("alert").filter({
-      hasText:
-        "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.",
+      hasText: "Não foi possível salvar. Tente novamente.",
     }),
   );
   assert.equal(
@@ -120,12 +119,11 @@ async function executar() {
     false,
   );
   await desligarApi();
-  await ficha().getByRole("button", { name: "Salvar tarefa" }).click();
+  await ficha().getByRole("button", { name: "Salvar", exact: true }).click();
   await ficha()
     .getByRole("alert")
     .filter({
-      hasText:
-        "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.",
+      hasText: "Não foi possível salvar. Tente novamente.",
     })
     .waitFor();
   assert.equal(new URL(page.url()).pathname, "/tarefas/nova");
@@ -146,7 +144,7 @@ async function executar() {
     "foco saiu da ficha após a falha",
   );
   await ligarApi();
-  await ficha().getByRole("button", { name: "Salvar tarefa" }).click();
+  await ficha().getByRole("button", { name: "Salvar", exact: true }).click();
   await page.waitForURL(`${web}/`);
   await page
     .getByRole("link", { name: novaTarefa.titulo, exact: true })

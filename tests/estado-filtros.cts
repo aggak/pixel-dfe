@@ -221,7 +221,7 @@ async function executar() {
         ),
       );
       await page
-        .getByRole("button", { name: "Salvar tarefa", exact: true })
+        .getByRole("button", { name: "Salvar", exact: true })
         .click();
       await page.getByRole("dialog").waitFor({ state: "detached" });
     };

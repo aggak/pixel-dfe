@@ -277,7 +277,7 @@ async function executar() {
       ),
     );
     await nova
-      .getByRole("button", { name: "Salvar tarefa", exact: true })
+      .getByRole("button", { name: "Salvar", exact: true })
       .click();
     await nova.waitFor({ state: "detached" });
     await page.waitForURL((url) => url.pathname === "/quadro");

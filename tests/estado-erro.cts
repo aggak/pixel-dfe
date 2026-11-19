@@ -374,13 +374,13 @@ async function executar() {
   await page.goto(`${web}/tarefas/nova`);
   await alerta("Não foi possível carregar os projetos").waitFor();
   falharProjetos = false;
-  await ficha().getByRole("button", { name: "Tentar de novo" }).click();
+  await ficha().getByRole("button", { name: "Tentar novamente" }).click();
   await alerta("Não foi possível carregar os projetos").waitFor({
     state: "detached",
   });
-  await alerta("Tentando de novo…").waitFor({ state: "detached" });
+  await alerta("Carregando projetos…").waitFor({ state: "detached" });
   assert.equal(
-    await ficha().getByRole("button", { name: "Tentar de novo" }).count(),
+    await ficha().getByRole("button", { name: "Tentar novamente" }).count(),
     0,
   );
   await page.unroute(`${api}/projetos`, interceptarProjetos);

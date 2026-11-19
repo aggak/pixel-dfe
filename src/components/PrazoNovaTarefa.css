@@ -1,0 +1,254 @@
+.e-ficha-nova-tarefa .e-prazo-tarefa__entrada {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding-right: 3px;
+  border-bottom: 1px solid var(--nova-contorno);
+  border-radius: 6px 6px 2px 2px;
+  background: var(--nova-campo);
+}
+
+.e-ficha-nova-tarefa .e-prazo-tarefa__entrada [role="presentation"] {
+  min-width: 0;
+  padding-inline: 0 !important;
+  background: transparent;
+  box-shadow: none;
+}
+
+.e-ficha-nova-tarefa .e-prazo-tarefa__entrada input[type="date"] {
+  padding-inline: 10px 0;
+  font-variant-numeric: tabular-nums;
+  appearance: none;
+}
+
+.e-ficha-nova-tarefa .e-prazo-tarefa__entrada input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.e-ficha-nova-tarefa .e-prazo-tarefa__entrada:focus-within {
+  border-bottom-color: var(--nova-foco, var(--e-action));
+  box-shadow: inset 0 -1px var(--nova-foco, var(--e-action));
+}
+
+.e-ficha-nova-tarefa .e-prazo-tarefa[data-invalid] .e-prazo-tarefa__entrada {
+  --nova-foco: var(--e-error);
+  border-bottom-color: var(--e-error);
+}
+
+.e-prazo-tarefa__botao {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--e-action);
+}
+
+.e-prazo-tarefa__botao:is([data-hovered], [aria-expanded="true"]) {
+  background: var(--nova-realce);
+}
+
+.e-calendario-prazo {
+  width: min(244px, calc(100vw - 20px));
+}
+
+.e-calendario-prazo__dialogo {
+  padding: 7px;
+  outline: none;
+}
+
+.e-calendario-prazo .e-prazo-tarefa {
+  margin-bottom: 4px;
+  padding-inline: 1px;
+}
+
+.e-calendario-prazo .e-prazo-tarefa [data-label] {
+  color: var(--e-muted);
+  font-size: 12px;
+}
+
+.e-calendario-prazo .e-prazo-tarefa__entrada {
+  width: 100%;
+}
+
+.e-calendario-prazo .e-prazo-tarefa__entrada [role="presentation"] {
+  border-bottom: 1px solid var(--e-line);
+  border-radius: 6px 6px 2px 2px;
+  background: color-mix(in srgb, var(--e-back) 24%, var(--nova-menu-superficie));
+  box-shadow: none;
+}
+
+.e-calendario-prazo .e-prazo-tarefa__entrada [role="presentation"]:focus-within {
+  border-bottom-color: var(--e-action);
+}
+
+.e-calendario-prazo .e-prazo-tarefa__entrada input {
+  min-height: 32px;
+  padding-block: 4px;
+  appearance: none;
+  border: 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.e-calendario-prazo .e-prazo-tarefa__entrada input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.e-calendario-prazo__cabecalho {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 2px;
+}
+
+.e-calendario-prazo__cabecalho h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.e-calendario-prazo button {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--e-action);
+}
+
+.e-calendario-prazo__cabecalho button {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+  padding: 0;
+}
+
+.e-calendario-prazo__cabecalho button[slot="previous"] .e-uicon {
+  transform: scaleX(-1);
+}
+
+.e-calendario-prazo button[data-hovered]:not([data-disabled]) {
+  background: var(--nova-realce);
+}
+
+.e-prazo-tarefa__botao[data-focus-visible],
+.e-calendario-prazo :is(button, .e-calendario-prazo__dia)[data-focus-visible] {
+  outline: 2px solid var(--e-action);
+  outline-offset: -2px;
+}
+
+.e-calendario-prazo button[data-disabled] {
+  color: var(--e-muted);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.e-calendario-prazo__grade {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 1px;
+}
+
+.e-calendario-prazo__grade :is(th, td) {
+  padding: 0;
+  text-align: center;
+}
+
+.e-calendario-prazo__grade th {
+  padding-block: 2px;
+  color: var(--e-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.e-calendario-prazo__dia {
+  position: relative;
+  display: grid;
+  min-height: 28px;
+  place-items: center;
+  border-radius: 7px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.e-calendario-prazo__dia[data-outside-month] {
+  visibility: hidden;
+}
+
+.e-calendario-prazo__dia[data-hovered]:not([data-selected]) {
+  background: var(--nova-realce);
+}
+
+.e-calendario-prazo__dia[data-today]::after {
+  position: absolute;
+  bottom: 4px;
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  content: "";
+}
+
+.e-calendario-prazo__dia[data-today] {
+  color: var(--e-action);
+}
+
+.e-calendario-prazo__dia[data-selected] {
+  background: var(--e-action);
+  color: var(--e-back);
+  font-weight: 600;
+}
+
+.e-calendario-prazo__dia[data-selected][data-focus-visible] {
+  outline-color: var(--e-back);
+}
+
+.e-calendario-prazo__rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid var(--e-line);
+}
+
+.e-calendario-prazo__rodape button {
+  min-height: 28px;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+@media (max-width: 650px), (pointer: coarse) {
+  .e-calendario-prazo {
+    width: min(264px, calc(100vw - 20px));
+  }
+
+  .e-calendario-prazo .e-prazo-tarefa__entrada input {
+    min-height: 44px;
+  }
+
+  .e-prazo-tarefa__botao {
+    width: 44px;
+    height: 44px;
+  }
+
+  .e-calendario-prazo__dia {
+    min-height: 34px;
+  }
+
+  .e-calendario-prazo__cabecalho {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+
+  .e-calendario-prazo :is(.e-calendario-prazo__cabecalho, .e-calendario-prazo__rodape) button {
+    min-height: 44px;
+  }
+}

@@ -57,7 +57,10 @@
 }
 
 .e-title-field [data-label],
-.e-description-body [data-label] {
+.e-description-body [data-label],
+.e-tarefa-responsavel [data-label],
+.e-tarefa-seletor [data-label],
+.e-tarefa-seletor button[aria-haspopup="listbox"] :is(section, p) {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -67,4 +70,356 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+:is(.e-form-modal.e-ficha-nova-tarefa, .e-nova-tarefa-popover) {
+  --nova-realce: #443350;
+}
+
+.e-form-modal.e-ficha-nova-tarefa {
+  --e-sheet: #34283e;
+  --nova-campo: #2d2237;
+  --nova-contorno: #8e7997;
+  --nova-recuo: 18px;
+  border-color: var(--e-line);
+  border-radius: 13px !important;
+  box-shadow: 0 6px 20px rgb(12 7 17 / 22%) !important;
+}
+
+.e-ficha-nova-tarefa .e-form-header {
+  padding: 10px var(--nova-recuo) 7px;
+}
+
+.e-ficha-nova-tarefa .e-form-header h2 {
+  font-size: 15px;
+  font-weight: 550;
+}
+
+.e-ficha-nova-tarefa .e-form-symbol {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+}
+
+.e-ficha-nova-tarefa .e-title-field {
+  padding: 1px var(--nova-recuo) 7px;
+}
+
+.e-ficha-nova-tarefa .e-task-form [data-label] {
+  color: var(--e-muted) !important;
+  font-size: 12px !important;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.e-ficha-nova-tarefa .e-task-form [data-label] > span {
+  color: inherit;
+}
+
+.e-ficha-nova-tarefa :is(.e-title-field, .e-tarefa-responsavel) input {
+  min-height: 34px;
+  padding-block: 5px !important;
+  line-height: 1.35 !important;
+}
+
+.e-ficha-nova-tarefa .e-title-field input {
+  font-size: 16px !important;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.e-ficha-nova-tarefa .e-task-form :is(
+  [data-input-wrapper] > [role="presentation"],
+  textarea
+) {
+  background: var(--nova-campo) !important;
+  border-bottom: 1px solid var(--nova-contorno) !important;
+  border-radius: 6px 6px 2px 2px !important;
+  box-shadow: none !important;
+}
+
+.e-ficha-nova-tarefa .e-title-field [data-input-wrapper] > [role="presentation"] {
+  padding-inline: 9px !important;
+}
+
+.e-ficha-nova-tarefa .e-task-form :is(
+  [data-input-wrapper] > [role="presentation"]:focus-within,
+  textarea:focus
+) {
+  border-bottom-color: var(--nova-foco, var(--e-action)) !important;
+  box-shadow: inset 0 -1px var(--nova-foco, var(--e-action)) !important;
+}
+
+.e-ficha-nova-tarefa .e-task-form :is(
+  [data-input-wrapper] > [role="presentation"][data-invalid]
+) {
+  --nova-foco: var(--e-error);
+  border-bottom-color: var(--e-error) !important;
+}
+
+.e-tarefa-compacta {
+  margin-inline: var(--nova-recuo);
+}
+
+.e-tarefa-responsavel input {
+  font-size: 14px;
+}
+
+.e-tarefa-responsavel > [data-input-wrapper] > [role="presentation"] > .e-uicon {
+  color: var(--e-muted);
+}
+
+.e-tarefa-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.e-tarefa-atalhos .e-tarefa-seletor {
+  gap: 0;
+}
+
+.e-tarefa-atalhos :is(.e-tarefa-atalho, .e-tarefa-seletor button[aria-haspopup="listbox"]) {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--e-muted);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.e-tarefa-seletor button[aria-haspopup="listbox"] > span {
+  display: grid;
+  justify-content: center;
+  place-items: center;
+  padding: 0;
+}
+
+.e-tarefa-seletor button[aria-haspopup="listbox"] > span > .e-uicon:last-child {
+  display: none;
+}
+
+.e-tarefa-atalhos button > .e-uicon,
+.e-tarefa-atalhos button > span > .e-uicon {
+  width: 14px;
+  height: 14px;
+}
+
+.e-tarefa-atalhos :is(.e-tarefa-atalho, .e-tarefa-seletor button[aria-haspopup="listbox"]):enabled:is([data-hovered], [aria-expanded="true"]) {
+  background: var(--nova-realce);
+  color: var(--e-ink);
+}
+
+.e-tarefa-atalhos button:focus-visible {
+  outline: 2px solid var(--e-action);
+  outline-offset: -2px;
+}
+
+.e-tarefa-atalhos button:disabled {
+  cursor: default;
+}
+
+.e-tarefa-atalhos :is(button[data-preenchido], [data-preenchido] > button[aria-haspopup="listbox"])::after {
+  position: absolute;
+  inset: auto 7px 7px auto;
+  width: 3px;
+  height: 3px;
+  background: var(--e-action);
+  content: "";
+}
+
+.e-tarefa-atalhos button[aria-invalid="true"] {
+  color: var(--e-error);
+}
+
+.e-tarefa-avisos:not(:empty) {
+  display: grid;
+  gap: 4px;
+  padding-block: 5px 2px;
+}
+
+.e-ficha-nova-tarefa .e-description-body {
+  padding: 6px 0 3px;
+}
+
+.e-ficha-nova-tarefa .e-description-body textarea {
+  display: block;
+  padding: 10px 11px;
+  line-height: 1.55 !important;
+}
+
+.e-form-footer.e-tarefa-rodape {
+  justify-content: space-between;
+  gap: 3px 8px;
+  margin: 8px var(--nova-recuo) 0;
+  padding: 5px 0 10px;
+  border-top: 1px solid var(--e-line);
+}
+
+.e-tarefa-envio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.e-tarefa-envio > button {
+  min-height: 36px;
+  font-size: 13px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.e-tarefa-envio > button[type="button"]:enabled {
+  background: transparent;
+  color: var(--e-muted);
+}
+
+.e-tarefa-envio > button[type="button"]:enabled:is(:hover, [data-pressed]) {
+  background: var(--nova-realce);
+  color: var(--e-ink);
+}
+
+.e-tarefa-envio > button[type="submit"] {
+  padding-inline: 16px;
+  background: var(--e-action);
+  color: var(--e-back);
+}
+
+.e-tarefa-envio > button[type="submit"]:enabled:hover {
+  background: color-mix(in srgb, var(--e-action) 82%, var(--e-ink));
+}
+
+.e-tarefa-envio > button[type="submit"]:enabled[data-pressed] {
+  background: color-mix(in srgb, var(--e-action) 88%, var(--e-back));
+}
+
+.e-tarefa-envio > button[type="submit"]:disabled {
+  background: color-mix(in srgb, var(--e-action) 18%, var(--nova-campo));
+  color: var(--e-muted);
+}
+
+.e-tarefa-envio > button:focus-visible {
+  outline: 2px solid var(--e-action);
+  outline-offset: 2px;
+}
+
+.e-nova-tarefa-popover {
+  --nova-menu-superficie: #2e2337;
+  z-index: 60;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #72577f;
+  border-radius: 11px;
+  background: var(--nova-menu-superficie);
+  box-shadow: 0 10px 30px rgb(12 7 18 / 44%);
+  color: var(--e-ink);
+}
+
+.e-nova-tarefa-opcoes {
+  width: min(var(--nova-opcoes-largura, 112px), calc(100vw - 20px));
+  padding: 4px;
+}
+
+.e-nova-tarefa-opcoes--projeto {
+  --nova-opcoes-largura: 184px;
+}
+
+.e-nova-tarefa-opcoes--status {
+  --nova-opcoes-largura: 136px;
+}
+
+.e-nova-tarefa-opcoes [data-select-heading] {
+  padding: 3px 7px 4px;
+  color: var(--e-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.e-nova-tarefa-opcoes [role="option"] {
+  padding: 0;
+}
+
+.e-nova-tarefa-opcoes [role="option"] > div {
+  width: 100%;
+  min-height: 28px;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.e-nova-tarefa-opcoes [role="option"] > div > svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--e-action);
+}
+
+.e-nova-tarefa-opcoes [role="option"] [slot="label"] {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.e-nova-tarefa-opcoes [role="option"]:not([data-disabled]) [slot="label"] {
+  color: var(--e-ink);
+}
+
+.e-nova-tarefa-opcoes
+  [role="option"]:not([data-disabled], [data-selected]):is([data-hovered], [data-focused])
+  > div {
+  background: var(--nova-realce);
+}
+
+.e-nova-tarefa-opcoes [role="option"][data-selected] > div {
+  background: color-mix(in srgb, var(--e-action) 18%, var(--nova-menu-superficie));
+}
+
+.e-nova-tarefa-opcoes [role="option"][data-selected] [slot="label"] {
+  font-weight: 600;
+}
+
+.e-nova-tarefa-opcoes [role="option"][data-focus-visible] > div {
+  outline: 2px solid var(--e-action);
+  outline-offset: -2px;
+}
+
+@media (max-width: 650px) {
+  .e-form-modal.e-ficha-nova-tarefa {
+    --nova-recuo: 13px;
+  }
+}
+
+@media (max-width: 650px), (pointer: coarse) {
+  .e-ficha-nova-tarefa :is(.e-title-field, .e-tarefa-responsavel) input {
+    min-height: 44px;
+    font-size: 16px !important;
+  }
+
+  .e-tarefa-atalhos :is(.e-tarefa-atalho, .e-tarefa-seletor button[aria-haspopup="listbox"]) {
+    width: 44px;
+    height: 44px;
+  }
+
+  .e-tarefa-envio > button,
+  .e-nova-tarefa-opcoes [role="option"] > div {
+    min-height: 44px;
+  }
 }

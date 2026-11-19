@@ -14,7 +14,6 @@ const ROTULOS = [
   "Status",
   "Prioridade",
   "Responsável",
-  "Prazo",
 ];
 const dormir = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let total = 0;
@@ -89,7 +88,7 @@ async function executar() {
   const aguardarProjetos = (descricao = "projetos carregados no formulário") =>
     ate(descricao, () => ui.projetosCarregados(seed.projetos.length));
   const botaoSalvar = () =>
-    page.getByRole("button", { name: "Salvar tarefa", exact: true });
+    page.getByRole("button", { name: "Salvar", exact: true });
   const botaoEnvio = () => page.locator('form button[type="submit"]');
   const caminho = () => new URL(page.url());
   const lerDb = async () => JSON.parse(await readFile(caminhoDb, "utf8"));
@@ -135,8 +134,12 @@ async function executar() {
       await ui.abrirDescricao();
       for (const rotulo of ROTULOS)
         assert.equal(await controle(rotulo).count(), 1, rotulo);
-      for (const rotulo of ["Projeto", "Título", "Responsável", "Prazo"])
+      for (const rotulo of ["Projeto", "Título", "Responsável"])
         assert.equal(await ui.obrigatorio(rotulo), true, rotulo);
+      assert.equal(await ui.atalhoPrazo().getAttribute("aria-expanded"), "false");
+      const entradaPrazo = await ui.abrirPrazo();
+      assert.equal(await entradaPrazo.getAttribute("aria-required"), "true");
+      await ui.fecharPrazo();
       assert.equal(await ui.valor("Projeto"), "");
       assert.equal(await botaoSalvar().count(), 1);
       await page.reload();
@@ -316,7 +319,7 @@ async function executar() {
       await botaoSalvar().click();
       await page
         .getByRole("alert")
-        .filter({ hasText: "Não foi possível salvar a tarefa" })
+        .filter({ hasText: "Não foi possível salvar. Tente novamente." })
         .waitFor();
       assert.equal(caminho().pathname, "/tarefas/nova");
       assert.equal(await campo("Título").inputValue(), dados.titulo);
@@ -328,7 +331,8 @@ async function executar() {
         ["Prioridade", "prioridade"],
       ])
         assert.equal(await ui.valor(rotulo), dados[atributo], rotulo);
-      assert.equal(await campo("Prazo").inputValue(), dados.prazo);
+      assert.equal(await (await ui.abrirPrazo()).inputValue(), dados.prazo);
+      await ui.fecharPrazo();
       await ate("botão reabilitado após a falha", () =>
         botaoEnvio().isEnabled(),
       );
@@ -627,7 +631,7 @@ async function executar() {
       );
       await page
         .getByText(
-          "O projeto desta tarefa não foi encontrado. Escolha um projeto disponível.",
+          "Projeto não encontrado. Selecione outro.",
           { exact: true },
         )
         .waitFor();
@@ -663,7 +667,7 @@ async function executar() {
         ),
         true,
       );
-      await page.locator("form label", { hasText: "Responsável" }).click();
+      await campo("Responsável").click();
       assert.equal(
         await page.evaluate(
           () => document.activeElement && document.activeElement.id,
@@ -714,7 +718,7 @@ async function executar() {
         await aguardarProjetos();
         await botaoSalvar().click();
         for (const mensagem of [
-          "Informe o título da tarefa.",
+          "Informe o título.",
           "Selecione um projeto.",
           "Informe o responsável.",
           "Informe o prazo.",
@@ -726,14 +730,14 @@ async function executar() {
         await ui.abrirDescricao();
         await campo("Descrição").fill(dados.descricao);
         await campo("Responsável").fill(dados.responsavel);
-        await campo("Prazo").fill(dados.prazo);
+        await ui.preencherPrazo(dados.prazo);
         await ui.escolher("Projeto", seed.projetos[0].nome);
         await botaoSalvar().click();
         await ate("envio em curso", () => botaoEnvio().isDisabled());
         await envio.liberar();
         await page
           .getByRole("alert")
-          .filter({ hasText: "Não foi possível salvar a tarefa" })
+          .filter({ hasText: "Não foi possível salvar. Tente novamente." })
           .waitFor();
         await ate("botão reabilitado após a falha", () =>
           botaoEnvio().isEnabled(),
@@ -801,7 +805,7 @@ async function executar() {
       await page.locator("form").waitFor();
       await aguardarProjetos();
       await preencher(dados);
-      await campo("Prazo").press("Enter");
+      await (await ui.abrirPrazo()).press("Enter");
       await ate(
         "foco no cartão criado",
         async () => (await focoNaTela()).texto === dados.titulo,
@@ -896,7 +900,7 @@ async function executar() {
       assert.equal(
         await page
           .getByText(
-            "Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.",
+            "Nenhum projeto cadastrado.",
           )
           .count(),
         0,
@@ -909,7 +913,7 @@ async function executar() {
         await page.locator("form").waitFor();
         const aviso = page.getByRole("status").filter({
           hasText:
-            "Nenhum projeto cadastrado. Crie um projeto antes de salvar a tarefa.",
+            "Nenhum projeto cadastrado.",
         });
         await aviso.waitFor();
         const link = aviso.getByRole("link", {

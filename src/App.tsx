@@ -218,6 +218,7 @@ function App() {
             destinoFechar={destinoFechar}
             fundo={fundo}
             origemInterna={candidato === fundo}
+            classeModal={tarefaNova ? "e-ficha-nova-tarefa" : undefined}
           >
             <FalhaFormulario key={location.pathname} titulo={tituloInicial}>
               <Suspense
@@ -225,7 +226,7 @@ function App() {
                   <>
                     <TituloPagina titulo={tituloInicial} />
                     <p className="e-ficha-state" role="status">
-                      Carregando formulário…
+                      {tarefaNova ? "Carregando…" : "Carregando formulário…"}
                     </p>
                   </>
                 }

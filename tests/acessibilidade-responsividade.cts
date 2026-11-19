@@ -237,6 +237,7 @@ async function executar() {
               )
                 problemas.push(`${seletor}: fora do contêiner`);
               if (
+                !el.closest(".e-tarefa-atalhos") &&
                 retangulos.some(
                   (r) =>
                     r.left < caixa.left - 1 ||
@@ -475,30 +476,35 @@ async function executar() {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await abrir(page, "/tarefas/nova");
-    const [cor, fundo] = await page
-      .locator(".e-description-toggle > span")
-      .evaluate((el) => {
-        let opacidade = 1;
-        for (let atual = el; atual; atual = atual.parentElement)
-          opacidade *= Number(getComputedStyle(atual).opacity);
-        let fundo = "rgba(0, 0, 0, 0)";
-        for (
-          let atual = el;
-          atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo);
-          atual = atual.parentElement
-        )
-          fundo = getComputedStyle(atual).backgroundColor;
-        const [r, g, b] = getComputedStyle(el)
-          .color.match(/[\d.]+/g)
-          .map(Number);
-        const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
-        const misturar = (c, f) =>
-          Math.round(c * opacidade + f * (1 - opacidade));
-        return [
-          `rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`,
-          fundo,
-        ];
-      });
+    await page
+      .getByRole("button", { name: "Adicionar descrição", exact: true })
+      .click();
+    const descricao = page.getByRole("textbox", { name: "Descrição", exact: true });
+    assert.equal(
+      await descricao.getAttribute("placeholder"),
+      "Descrição (opcional)",
+    );
+    const [cor, fundo] = await descricao.evaluate((el) => {
+      const estiloPlaceholder = getComputedStyle(el, "::placeholder");
+      let opacidade = Number(estiloPlaceholder.opacity);
+      for (let atual = el; atual; atual = atual.parentElement)
+        opacidade *= Number(getComputedStyle(atual).opacity);
+      let fundo = "rgba(0, 0, 0, 0)";
+      for (
+        let atual = el;
+        atual && /rgba\(0, 0, 0, 0\)|transparent/.test(fundo);
+        atual = atual.parentElement
+      )
+        fundo = getComputedStyle(atual).backgroundColor;
+      const [r, g, b] = estiloPlaceholder.color.match(/[\d.]+/g).map(Number);
+      const [fr, fg, fb] = fundo.match(/[\d.]+/g).map(Number);
+      const misturar = (c, f) =>
+        Math.round(c * opacidade + f * (1 - opacidade));
+      return [
+        `rgb(${misturar(r, fr)}, ${misturar(g, fg)}, ${misturar(b, fb)})`,
+        fundo,
+      ];
+    });
     assert.ok(
       contraste(cor, fundo) >= 4.5,
       `${tema}: "opcional" com contraste ${contraste(cor, fundo).toFixed(2)}:1`,

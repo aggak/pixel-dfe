@@ -40,6 +40,7 @@ export function Ficha({
   destinoFechar,
   fundo,
   origemInterna = false,
+  classeModal,
   children,
 }: {
   titulo: string;
@@ -47,6 +48,7 @@ export function Ficha({
   destinoFechar: string;
   fundo: Location;
   origemInterna?: boolean;
+  classeModal?: string;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -201,7 +203,9 @@ export function Ficha({
         isKeyboardDismissDisabled={ocupada}
         className="e-form-overlay"
       >
-        <Modal className="e-form-modal">
+        <Modal
+          className={classeModal ? `e-form-modal ${classeModal}` : "e-form-modal"}
+        >
           <Dialog aria-label={titulo} className="e-form-dialog">
             <Presenca aoSair={concluirSaida}>
               <div
