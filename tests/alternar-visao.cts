@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { focoVisivel } = require("./ui.cts");
+const { criarUi, focoVisivel } = require("./ui.cts");
 
 function gerarBuild(saida, api) {
   return apoio.rodar(
@@ -531,7 +531,10 @@ async function executar() {
     .getByLabel(/^Nome\s*\*?$/)
     .fill("Projeto sem entrada duplicada");
   await fichaProjeto.getByLabel(/^Disciplina\s*\*?$/).fill("Navegação");
-  await fichaProjeto.getByLabel(/^Criado em\s*\*?$/).fill("2026-11-15");
+  await criarUi(page, () => fichaProjeto.locator("form")).preencherData(
+    "Criado em",
+    "2026-11-15",
+  );
   await fichaProjeto
     .getByRole("button", { name: "Salvar projeto", exact: true })
     .click();

@@ -218,7 +218,7 @@ function App() {
             destinoFechar={destinoFechar}
             fundo={fundo}
             origemInterna={candidato === fundo}
-            classeModal={tarefaNova ? "e-ficha-nova-tarefa" : undefined}
+            classeModal={tarefaNova || projeto ? "e-ficha-compacta" : undefined}
           >
             <FalhaFormulario key={location.pathname} titulo={tituloInicial}>
               <Suspense

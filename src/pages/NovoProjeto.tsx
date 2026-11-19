@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getLocalTimeZone, today } from "@internationalized/date";
 import { useFicha } from "../components/ficha-contexto";
 import { criarProjeto } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
@@ -9,6 +10,7 @@ export function NovoProjeto() {
   useTituloPagina("Novo projeto");
   const { navegar, fechar, setOcupada, setAlterada } = useFicha();
   const controllerRef = useRef<AbortController | null>(null);
+  const [hoje] = useState(() => today(getLocalTimeZone()).toString());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -29,6 +31,7 @@ export function NovoProjeto() {
 
   return (
     <FormularioProjeto
+      valoresIniciais={{ criadoEm: hoje }}
       onSalvar={salvar}
       onCancelar={fechar}
       onEstadoEnvio={setOcupada}

@@ -18,6 +18,7 @@ export const PawIcon = (p: SVGProps<SVGSVGElement>) => (
 const desenhos = {
   "arrow-down":
     "M3 1h1v1h-1zM3 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM2 4h1v1h-1zM4 4h1v1h-1zM3 5h1v1h-1z",
+  "book-open": "M0 1h2v1h-2zM5 1h2v1h-2zM0 2h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM6 2h1v1h-1zM0 3h1v1h-1zM3 3h1v1h-1zM6 3h1v1h-1zM0 4h1v1h-1zM3 4h1v1h-1zM6 4h1v1h-1zM0 5h7v1h-7z",
   calendar:
     "M1 0h1v1h-1zM5 0h1v1h-1zM0 1h7v1h-7zM0 2h1v1h-1zM6 2h1v1h-1zM0 3h7v1h-7zM0 4h1v1h-1zM6 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM1 6h5v1h-5z",
   check:
@@ -74,6 +75,7 @@ const nomes: Record<string, keyof typeof desenhos> = {
   "angle-small-down": "chevron-down",
   "angle-small-up": "chevron-up",
   "arrow-small-down": "arrow-down",
+  book: "book-open",
   calendar: "calendar",
   check: "check",
   circle: "circle",

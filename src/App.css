@@ -456,7 +456,7 @@ textarea {
   box-shadow: 0 14px 48px rgb(10 7 14 / 32%) !important;
   overflow: auto;
 }
-.e-form-overlay:has(> .e-ficha-nova-tarefa) {
+.e-form-overlay:has(> .e-ficha-compacta) {
   --nova-altura-visivel: var(--visual-viewport-height, 100dvh);
   --modal-pt: clamp(16px, calc(var(--nova-altura-visivel) - 380px), 103px);
   --modal-pb: 16px;
@@ -464,21 +464,21 @@ textarea {
   align-items: flex-start !important;
   justify-content: flex-end !important;
 }
-.e-form-modal.e-ficha-nova-tarefa {
+.e-form-modal.e-ficha-compacta {
   width: var(--nova-largura-ficha, 408px) !important;
   margin-top: 0;
   max-height: calc(var(--nova-altura-visivel) - var(--modal-pt) - var(--modal-pb)) !important;
 }
-.e-form-overlay[data-entering]:has(> .e-ficha-nova-tarefa) {
+.e-form-overlay[data-entering]:has(> .e-ficha-compacta) {
   animation: e-ficha-nova-fundo-entrar 140ms ease-out both;
 }
-.e-form-modal.e-ficha-nova-tarefa[data-entering] {
+.e-form-modal.e-ficha-compacta[data-entering] {
   animation: e-ficha-nova-entrar 160ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
-.e-form-overlay[data-exiting]:has(> .e-ficha-nova-tarefa) {
+.e-form-overlay[data-exiting]:has(> .e-ficha-compacta) {
   animation: e-ficha-nova-fundo-sair 140ms ease-in both;
 }
-.e-form-modal.e-ficha-nova-tarefa[data-exiting] {
+.e-form-modal.e-ficha-compacta[data-exiting] {
   animation: e-ficha-nova-sair 140ms cubic-bezier(0.75, 0, 0.8, 0.25) both;
 }
 @keyframes e-ficha-nova-fundo-entrar {
@@ -918,7 +918,7 @@ textarea {
     width: 438px !important;
     max-height: calc(100dvh - 20px) !important;
   }
-  .e-form-overlay:has(> .e-ficha-nova-tarefa) {
+  .e-form-overlay:has(> .e-ficha-compacta) {
     --nova-largura-ficha: 438px;
     --modal-pt: max(
       env(safe-area-inset-top),
@@ -1315,20 +1315,6 @@ textarea {
 .e-project-card h2 {
   overflow-wrap: anywhere;
 }
-.e-project-fields {
-  padding: 15px 18px 0;
-  display: grid;
-  gap: 16px;
-}
-.e-project-fields label {
-  font-size: 12px;
-}
-.e-project-fields .e-opcional {
-  font-size: 10px;
-  margin-left: 3px;
-  font-weight: 400;
-  color: var(--e-muted);
-}
 .e-edit-project-details {
   margin-top: 15px;
   font-size: 12px;
@@ -1441,17 +1427,6 @@ textarea {
   .e-projects .e-page-heading p {
     font-size: 12px;
     line-height: 1.5;
-  }
-  .e-project-fields {
-    padding: 12px 13px 0;
-    gap: 14px;
-  }
-  .e-project-fields input,
-  .e-project-fields textarea {
-    font-size: 16px !important;
-  }
-  .e-project-fields input {
-    min-height: 44px;
   }
   .e-edit-project-details {
     min-height: 44px;
@@ -1706,9 +1681,6 @@ textarea {
   }
 }
 
-.e-project-fields > .e-form-two {
-  grid-template-columns: minmax(0, 1fr);
-}
 .e-board-content > .e-board {
   margin-top: 18px;
 }

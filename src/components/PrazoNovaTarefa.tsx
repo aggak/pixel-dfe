@@ -28,12 +28,20 @@ export function PrazoNovaTarefa({
   onChange,
   formulario,
   idErro,
+  nome = "prazo",
+  rotulo = "Prazo",
+  alvo = "prazo",
+  doAlvo = "do prazo",
 }: {
   valor: string;
   erro?: string;
   onChange: (valor: string) => void;
   formulario?: string;
   idErro?: string;
+  nome?: string;
+  rotulo?: string;
+  alvo?: string;
+  doAlvo?: string;
 }) {
   const data = dataValida(valor) ? parseDate(valor) : null;
   const [aberto, setAberto] = useState(false);
@@ -42,7 +50,7 @@ export function PrazoNovaTarefa({
     return (
       <TextField
         className="e-prazo-tarefa"
-        name="prazo"
+        name={nome}
         size="sm"
         type="date"
         isRequired
@@ -51,7 +59,9 @@ export function PrazoNovaTarefa({
         onChange={onChange}
         isInvalid={Boolean(erro)}
       >
-        <Label isRequired isInvalid={Boolean(erro)}>Prazo</Label>
+        <Label isRequired isInvalid={Boolean(erro)}>
+          {rotulo}
+        </Label>
         <div className="e-prazo-tarefa__entrada">
           <InputBase
             type="date"
@@ -80,15 +90,15 @@ export function PrazoNovaTarefa({
     );
   }
 
-  const rotulo = data ? `Prazo: ${formatarData(valor, true)}` : "Prazo";
+  const dica = data ? `${rotulo}: ${formatarData(valor, true)}` : rotulo;
   const botao = (
     <Button
       className={formulario ? "e-tarefa-atalho" : "e-prazo-tarefa__botao"}
       type="button"
       data-prazo-atalho={formulario ? "" : undefined}
       data-preenchido={formulario && data ? "" : undefined}
-      aria-label={formulario ? rotulo : "Abrir calendário do prazo"}
-      aria-invalid={formulario && erro ? true : undefined}
+      aria-label={formulario ? dica : `Abrir calendário ${doAlvo}`}
+      data-invalido={formulario && erro ? "" : undefined}
       aria-describedby={formulario && erro ? idErro : undefined}
     >
       <Icon name="calendar" />
@@ -97,7 +107,7 @@ export function PrazoNovaTarefa({
   const seletor = (
     <DialogTrigger isOpen={aberto} onOpenChange={setAberto}>
       {formulario ? (
-        <Tooltip title={rotulo} isDisabled={aberto}>
+        <Tooltip title={dica} isDisabled={aberto}>
           {botao}
         </Tooltip>
       ) : botao}
@@ -109,7 +119,7 @@ export function PrazoNovaTarefa({
       >
         <Dialog
           className="e-calendario-prazo__dialogo"
-          aria-label="Selecionar prazo"
+          aria-label={`Selecionar ${alvo}`}
         >
           {({ close }) => {
             function selecionar(proximo: string) {
@@ -121,7 +131,7 @@ export function PrazoNovaTarefa({
               <>
                 {formulario && entrada(undefined, close)}
                 <Calendar
-                  aria-label="Calendário do prazo"
+                  aria-label={`Calendário ${doAlvo}`}
                   value={data}
                   onChange={(dia) => selecionar(dia.toString())}
                   autoFocus
