@@ -1,10 +1,31 @@
 <!doctype html>
-<html lang="pt-BR" class="dark dark-mode">
+<html lang="pt-BR" class="dark dark-mode" data-tema="ameixa" data-esquema="escuro">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#120c1b" />
+    <script>
+      try {
+        const tema = localStorage.getItem("pixel-tema");
+        if (tema) {
+          const raiz = document.documentElement;
+          const claro = localStorage.getItem("pixel-esquema") === "claro";
+          raiz.dataset.tema = tema;
+          raiz.dataset.esquema = claro ? "claro" : "escuro";
+          raiz.classList.toggle("dark", !claro);
+          raiz.classList.toggle("dark-mode", !claro);
+          document
+            .querySelector('meta[name="color-scheme"]')
+            .setAttribute("content", claro ? "light" : "dark");
+          const metaFundo = document.querySelector('meta[name="theme-color"]');
+          const [id, fundo] = (localStorage.getItem("pixel-tema-fundo") ?? "").split(":");
+          if (id === tema && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(fundo))
+            metaFundo.setAttribute("content", fundo);
+          else metaFundo.removeAttribute("content");
+        }
+      } catch {}
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tarefas · Pixel</title>
     <meta name="description" content="Gerenciador de tarefas acadêmicas da disciplina Desenvolvimento Frontend, ULBRA. Organize projetos, acompanhe prazos e veja suas entregas avançarem." />

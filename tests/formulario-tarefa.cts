@@ -49,7 +49,7 @@ async function ate(descricao, verificar, tentativas = 150) {
   throw new Error(`Tempo esgotado aguardando: ${descricao}`);
 }
 const FIXTURE_HTML = `<!doctype html>
-<html lang="pt-BR" class="dark dark-mode"><head><meta charset="UTF-8" />
+<html lang="pt-BR" class="dark dark-mode" data-tema="ameixa" data-esquema="escuro"><head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Teste do formulário</title></head>
 <body><div id="root"></div><script type="module" src="/fixture.tsx"></script></body></html>`;
 const FIXTURE_TSX = `import { StrictMode, useState } from "react";
@@ -59,6 +59,7 @@ import { MemoryRouter } from "react-router";
 import { FormularioTarefa } from "../src/components/FormularioTarefa";
 import { atualizarTarefa, criarTarefa } from "../src/api";
 import type { NovaTarefa, Tarefa } from "../src/tipos";
+import "../src/temas/estilos";
 import "../src/index.css";
 import "../src/App.css";
 type Janela = Window & { __payloads?: NovaTarefa[]; __cancelamentos?: number; __liberarEnvio?: () => void };

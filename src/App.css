@@ -1,15 +1,5 @@
 :root {
-  --e-back: #120c1b;
-  --e-sheet: #2e2337;
-  --e-ink: #f4ebf7;
-  --e-muted: #bcaec7;
-  --e-line: #503e5d;
-  --e-control: #9d86ae;
-  --e-action: #d19bef;
-  --e-mark: #473052;
-  --e-error: #fa9b91;
   font-synthesis: none;
-  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
@@ -299,13 +289,13 @@ textarea {
   padding: 3px 0;
 }
 .e-priority-alta {
-  color: #e59ba9 !important;
+  color: var(--e-priority-alta) !important;
 }
 .e-priority-media {
-  color: #d5b683 !important;
+  color: var(--e-priority-media) !important;
 }
 .e-priority-baixa {
-  color: #95c4ca !important;
+  color: var(--e-priority-baixa) !important;
 }
 .e-card-status > .e-paw {
   width: 8px;
@@ -440,7 +430,7 @@ textarea {
   align-items: flex-start !important;
   justify-content: flex-end !important;
   backdrop-filter: none !important;
-  background: rgb(12 7 19 / 26%) !important;
+  background: var(--e-veu) !important;
   --modal-pt: 14px;
   --modal-pb: 14px;
 }
@@ -450,10 +440,10 @@ textarea {
   margin-top: 89px;
   max-height: calc(100dvh - 125px) !important;
   border-radius: 13px !important;
-  border: 1px solid #7c608b;
-  --e-sheet: #3b2d45;
+  border: 1px solid var(--e-ficha-borda);
+  --e-sheet: var(--e-ficha-fundo);
   background: var(--e-sheet) !important;
-  box-shadow: 0 14px 48px rgb(10 7 14 / 32%) !important;
+  box-shadow: var(--e-ficha-sombra) !important;
   overflow: auto;
 }
 .e-form-overlay:has(> .e-ficha-compacta) {
@@ -1074,10 +1064,10 @@ textarea {
   --color-utility-neutral-500: var(--e-muted);
   --color-utility-neutral-700: var(--e-ink);
 }
-.dark-mode .bg-brand-solid {
+:root .bg-brand-solid {
   color: var(--e-back);
 }
-.dark-mode .bg-brand-solid [data-icon] {
+:root .bg-brand-solid [data-icon] {
   color: var(--e-back);
 }
 :root,
@@ -1095,7 +1085,7 @@ textarea {
   --color-border-error_subtle: var(--e-error);
   --color-focus-ring-error: var(--e-error);
 }
-.dark-mode .bg-error-solid {
+:root .bg-error-solid {
   color: var(--e-back);
 }
 @media (max-width: 650px) {
@@ -1662,6 +1652,13 @@ textarea {
 .e-form-overlay input[type="date"]::-webkit-calendar-picker-indicator {
   line-height: 1;
 }
+.e-form-overlay textarea::-webkit-resizer {
+  background:
+    linear-gradient(135deg, transparent 44%, var(--e-control) 45% 55%, transparent 56%)
+      right 4px bottom 4px / 9px 9px no-repeat,
+    linear-gradient(135deg, transparent 43%, var(--e-control) 44% 56%, transparent 57%)
+      right 3px bottom 3px / 4px 4px no-repeat;
+}
 @supports (-webkit-hyphens: none) {
   .e-form-overlay
     input[type="date"][value=""]:not(:focus)::-webkit-datetime-edit {
@@ -1729,7 +1726,7 @@ textarea {
   border-radius: 9px;
   margin-bottom: 12px;
   padding: 12px 14px;
-  box-shadow: 0 2px 2px #49334b08;
+  box-shadow: var(--e-cartao-sombra);
 }
 .e-card .e-task-heading {
   gap: 6px;
@@ -1799,13 +1796,13 @@ textarea {
   color: var(--e-ink);
 }
 .e-card-status-em-andamento {
-  color: #acb9e5;
+  color: var(--e-status-em-andamento);
 }
 .e-card-status-em-revisao {
-  color: #c69bdc;
+  color: var(--e-status-em-revisao);
 }
 .e-card-status-concluida {
-  color: #a6c8b1;
+  color: var(--e-status-concluida);
 }
 .e-card .e-task-meta {
   flex-wrap: nowrap;
@@ -1988,7 +1985,7 @@ textarea {
   font-weight: 600;
   box-shadow:
     inset 0 0 0 1px var(--e-line),
-    0 1px 2px #49334b14;
+    var(--e-aba-sombra);
 }
 .e-view-switch a:focus-visible {
   outline-offset: -2px;
@@ -2283,7 +2280,7 @@ textarea {
   outline-offset: 3px;
 }
 .e-confirm-overlay {
-  background: rgb(12 7 19 / 52%) !important;
+  background: var(--e-veu-forte) !important;
   backdrop-filter: none !important;
 }
 .e-confirm-modal {
@@ -2293,7 +2290,7 @@ textarea {
   background: var(--e-sheet) !important;
   color: var(--e-ink);
   border-radius: 13px !important;
-  box-shadow: 0 14px 48px rgb(24 24 27 / 20%) !important;
+  box-shadow: var(--e-confirmar-sombra) !important;
 }
 .e-confirm-dialog {
   padding: 22px;
@@ -2903,12 +2900,12 @@ textarea {
   --aba-ff: 0px;
   --aba-mascara: linear-gradient(
     to right,
-    #000 calc(var(--aba-todas) + var(--aba-si)),
+    black calc(var(--aba-todas) + var(--aba-si)),
     transparent calc(var(--aba-todas) + var(--aba-si)),
-    #000 calc(var(--aba-todas) + var(--aba-si) + var(--aba-fi)),
-    #000 calc(100% - var(--aba-sf) - var(--aba-ff)),
+    black calc(var(--aba-todas) + var(--aba-si) + var(--aba-fi)),
+    black calc(100% - var(--aba-sf) - var(--aba-ff)),
     transparent calc(100% - var(--aba-sf)),
-    #000 calc(100% - var(--aba-sf))
+    black calc(100% - var(--aba-sf))
   );
   -webkit-mask-image: var(--aba-mascara);
   mask-image: var(--aba-mascara);
