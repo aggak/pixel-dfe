@@ -944,10 +944,11 @@ async function executar() {
   movimento.setDefaultTimeout(10000);
   movimento.on("pageerror", (erro) => errosPagina.push(erro.message));
   await abrir(movimento, "/rota-inexistente");
-  const pausar = movimento
-    .locator(".e-footer-links")
-    .getByRole("button", { name: "Pausar animações", exact: true });
-  assert.equal(await pausar.getAttribute("aria-pressed"), "false");
+  assert.equal(
+    await movimento.locator(".e-footer-links button").count(),
+    0,
+    "o rodapé não deve ter botões",
+  );
   await movimento.waitForFunction(() =>
     document
       .getAnimations()
@@ -957,39 +958,15 @@ async function executar() {
           (a.effect as KeyframeEffect)?.target?.matches?.(".e-gato-costas"),
       ),
   );
-  await pausar.focus();
-  assert.equal(
-    await focoVisivel(pausar),
-    true,
-    "pausar animações sem foco visível",
-  );
-  await movimento.keyboard.press("Enter");
-  const retomar = movimento
-    .locator(".e-footer-links")
-    .getByRole("button", { name: "Retomar animações", exact: true });
-  assert.equal(await retomar.getAttribute("aria-pressed"), "true");
-  assert.equal(
-    await retomar.evaluate((el) => el === document.activeElement),
-    true,
-    "o foco saiu do botão ao pausar",
-  );
-  assert.equal(
-    await movimento.evaluate(() => document.documentElement.dataset.movimento),
-    "reduzido",
-  );
-  assert.equal(
-    await animacoesRodando(movimento),
-    0,
-    "animações rodando com o app pausado",
-  );
-  assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
+  await movimento.emulateMedia({ reducedMotion: "reduce" });
   await movimento.reload();
   await movimento.locator(".e-not-found").waitFor();
   assert.equal(
-    await retomar.getAttribute("aria-pressed"),
-    "true",
-    "a pausa não persistiu ao recarregar",
+    await animacoesRodando(movimento),
+    0,
+    "com reduce do sistema, algo animou",
   );
+  assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
   await movimento
     .getByRole("link", { name: "Projetos", exact: true })
     .first()
@@ -998,91 +975,12 @@ async function executar() {
   assert.equal(
     await animacoesRodando(movimento),
     0,
-    "a troca de página animou com o app pausado",
-  );
-  assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
-  await movimento.goBack();
-  await movimento.locator(".e-not-found").waitFor();
-  await retomar.click();
-  assert.equal(await pausar.getAttribute("aria-pressed"), "false");
-  assert.equal(
-    await movimento.evaluate(() =>
-      document.documentElement.hasAttribute("data-movimento"),
-    ),
-    false,
-  );
-  await movimento.waitForFunction(() =>
-    document
-      .getAnimations()
-      .some(
-        (a) =>
-          a.playState === "running" &&
-          (a.effect as KeyframeEffect)?.target?.matches?.(".e-gato-costas"),
-      ),
-  );
-  await movimento.reload();
-  await movimento.locator(".e-not-found").waitFor();
-  assert.equal(
-    await pausar.getAttribute("aria-pressed"),
-    "false",
-    "retomar não persistiu ao recarregar",
-  );
-  await movimento.evaluate(() =>
-    localStorage.setItem("pixel-animacoes", "pausadas"),
-  );
-  await movimento.emulateMedia({ reducedMotion: "reduce" });
-  await movimento.reload();
-  await movimento.locator(".e-not-found").waitFor();
-  assert.equal(
-    await movimento.locator(".e-footer-links button").count(),
-    0,
-    "com reduce do sistema, a ação não deve aparecer",
-  );
-  assert.equal(
-    await animacoesRodando(movimento),
-    0,
-    "com reduce do sistema, algo animou",
-  );
-  await movimento.evaluate(() => localStorage.removeItem("pixel-animacoes"));
-  await movimento.reload();
-  await movimento.locator(".e-not-found").waitFor();
-  assert.equal(
-    await animacoesRodando(movimento),
-    0,
-    "com reduce do sistema e sem pausa no app, algo animou",
+    "com reduce do sistema, a troca de página animou",
   );
   assert.deepEqual(await posicoesLogo(movimento), ["0px", "0px"]);
   await contexto.close();
-  const semArmazenamento = await browser.newContext({
-    colorScheme: "dark",
-    viewport: { width: 1280, height: 900 },
-  });
-  await semArmazenamento.addInitScript(() => {
-    for (const metodo of ["getItem", "setItem", "removeItem"])
-      Storage.prototype[metodo] = () => {
-        throw new DOMException("bloqueado", "SecurityError");
-      };
-  });
-  const bloqueada = await semArmazenamento.newPage();
-  bloqueada.on("pageerror", (erro) => errosPagina.push(erro.message));
-  await abrir(bloqueada, "/rota-inexistente");
-  await bloqueada
-    .getByRole("button", { name: "Pausar animações", exact: true })
-    .click();
-  assert.equal(
-    await bloqueada
-      .getByRole("button", { name: "Retomar animações", exact: true })
-      .getAttribute("aria-pressed"),
-    "true",
-  );
-  assert.equal(
-    await animacoesRodando(bloqueada),
-    0,
-    "sem armazenamento, a pausa não parou as animações",
-  );
-  await semArmazenamento.close();
   console.log(
-    "OK: Pausar animações no rodapé com nome e aria-pressed; pausa tudo, retoma, persiste ao recarregar, funciona sem armazenamento e some com reduce do sistema, que segue parado",
+    "OK: rodapé sem botão de animações; o gato anima por padrão e tudo fica parado com reduce do sistema, inclusive na troca de página",
   );
 
   assert.deepEqual(errosPagina, []);

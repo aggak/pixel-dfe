@@ -1012,14 +1012,6 @@ textarea {
     transition-duration: 0s !important;
   }
 }
-:root[data-movimento="reduzido"],
-:root[data-movimento="reduzido"] *,
-:root[data-movimento="reduzido"] ::before,
-:root[data-movimento="reduzido"] ::after {
-  scroll-behavior: auto !important;
-  animation-duration: 0s !important;
-  transition-duration: 0s !important;
-}
 :root,
 :root.dark-mode {
   --font-body: Commissioner, Arial, sans-serif;
@@ -1535,7 +1527,7 @@ textarea {
   margin-left: auto;
   min-width: 0;
 }
-.e-footer-links :is(a, button) {
+.e-footer-links a {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -1545,7 +1537,7 @@ textarea {
   text-underline-offset: 3px;
   white-space: nowrap;
 }
-.e-footer-links :is(a, button):hover {
+.e-footer-links a:hover {
   color: var(--e-ink);
   text-decoration-color: var(--e-control);
 }
@@ -1582,12 +1574,9 @@ textarea {
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.e-footer-links :is(a, button):focus-visible {
+.e-footer-links a:focus-visible {
   outline-offset: 3px;
   border-radius: 2px;
-}
-.e-footer-links button {
-  padding: 0;
 }
 @media (max-width: 650px) {
   .e-footer {
@@ -1604,7 +1593,7 @@ textarea {
     margin-left: 0;
     column-gap: 14px;
   }
-  .e-footer-links :is(a, button) {
+  .e-footer-links a {
     min-width: 44px;
     min-height: 44px;
   }
@@ -1913,13 +1902,13 @@ textarea {
   }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) :is(.e-card, .e-project-card) {
+  :is(.e-card, .e-project-card) {
     transition:
       border-color 0.18s ease,
       box-shadow 0.18s ease,
       transform 0.18s ease;
   }
-  :where(:root:not([data-movimento="reduzido"])) .e-card:hover {
+  .e-card:hover {
     transform: translateY(-2px);
   }
 }
@@ -2254,9 +2243,6 @@ textarea {
     transition: none;
   }
 }
-:root[data-movimento="reduzido"] .e-project-card {
-  transition: none;
-}
 @media (max-width: 360px) {
   .e-view-switch .e-uicon {
     display: none;
@@ -2359,7 +2345,7 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-dormindo {
+  .e-gato-dormindo {
     animation: e-gato-quadros 4s steps(48) infinite;
   }
 }
@@ -2378,7 +2364,7 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-olhando {
+  .e-gato-olhando {
     animation: e-gato-olhando-quadros 8s steps(96) infinite;
   }
 }
@@ -2428,7 +2414,7 @@ textarea {
   color: var(--e-action);
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-costas {
+  .e-gato-costas {
     animation: e-gato-costas-quadros 7s steps(84) infinite;
   }
 }
@@ -2446,7 +2432,7 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-carregando {
+  .e-gato-carregando {
     animation: e-gato-carregando-quadros calc(14s / 12) steps(14) infinite;
   }
 }
@@ -2464,7 +2450,7 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-lavando {
+  .e-gato-lavando {
     animation: e-gato-lavando-quadros 8s steps(96) infinite;
   }
 }
@@ -2495,7 +2481,7 @@ textarea {
   --e-gato-escala: 2;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-cochilando {
+  .e-gato-cochilando {
     animation: e-gato-cochilando-quadros 8s steps(96) infinite;
   }
 }
@@ -2513,7 +2499,7 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-gato-abanando {
+  .e-gato-abanando {
     animation: e-gato-abanando-quadros 1.5s steps(18) infinite;
   }
 }
@@ -2746,9 +2732,6 @@ textarea {
   .e-top-palavra {
     background-position-x: 0 !important;
   }
-}
-:root[data-movimento="reduzido"] :is(.e-top-gato, .e-top-palavra) {
-  background-position-x: 0 !important;
 }
 .e-tabs {
   --aba-pe: 8px;
@@ -3058,11 +3041,6 @@ textarea {
     transition: none !important;
   }
 }
-:root[data-movimento="reduzido"] :is(.e-tabs a, .e-tabs-seta, .e-tabs-icone),
-:root[data-movimento="reduzido"] .e-tabs a::before {
-  animation: none !important;
-  transition: none !important;
-}
 .e-splash {
   position: fixed;
   inset: 0;
@@ -3091,15 +3069,15 @@ textarea {
   image-rendering: pixelated;
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-splash-gato {
+  .e-splash-gato {
     animation:
       e-splash-entrada 0.4s ease-out both,
       e-splash-abanando 1.5s steps(18) infinite;
   }
-  :where(:root:not([data-movimento="reduzido"])) .e-splash-palavra {
+  .e-splash-palavra {
     animation: e-splash-entrada 0.4s 0.15s ease-out both;
   }
-  :where(:root:not([data-movimento="reduzido"])) .e-splash-saindo {
+  .e-splash-saindo {
     animation: e-splash-saida 0.3s ease-in forwards;
   }
 }
@@ -3135,7 +3113,7 @@ textarea {
   background: color-mix(in srgb, var(--e-action) 6%, transparent);
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(:root:not([data-movimento="reduzido"])) .e-column {
+  .e-column {
     transition:
       outline-color 0.15s ease,
       background-color 0.15s ease;
