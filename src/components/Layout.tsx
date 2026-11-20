@@ -31,11 +31,7 @@ import {
   primeiroVisivel,
 } from "../hooks/useRetornoFoco";
 import { FILTROS_INICIAIS, type Filtros } from "../derivar";
-import {
-  movimentoReduzido,
-  pausarAnimacoes,
-  useMovimento,
-} from "../hooks/useMovimento";
+import { movimentoReduzido } from "../hooks/useMovimento";
 
 function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
@@ -156,25 +152,10 @@ export function Layout() {
             >
               Créditos e licenças
             </a>
-            <PausarAnimacoes />
           </nav>
         </div>
       </footer>
     </div>
-  );
-}
-function PausarAnimacoes() {
-  const movimento = useMovimento();
-  if (movimento === "sistema") return null;
-  const pausadas = movimento === "pausadas";
-  return (
-    <button
-      type="button"
-      aria-pressed={pausadas}
-      onClick={() => pausarAnimacoes(!pausadas)}
-    >
-      {pausadas ? "Retomar animações" : "Pausar animações"}
-    </button>
   );
 }
 function PixelArte({
