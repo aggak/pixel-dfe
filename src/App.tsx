@@ -1,4 +1,11 @@
-import { Component, lazy, Suspense, useState, type ReactNode } from "react";
+import {
+  Component,
+  lazy,
+  Suspense,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Link,
   Navigate,
@@ -16,6 +23,7 @@ import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
+import { useUrlDoSprite } from "./temas/sprites";
 import { ContextoPaginaAtiva, TituloPagina } from "./hooks/useTituloPagina";
 import {
   ContextoAtualizacao,
@@ -72,6 +80,11 @@ class FalhaFormulario extends Component<
 function App() {
   const location = useLocation();
   const [tentativaFundo, setTentativaFundo] = useState(0);
+  const favicon = useUrlDoSprite("rodape-rosto");
+  useEffect(() => {
+    if (favicon)
+      document.querySelector('link[rel="icon"]')?.setAttribute("href", favicon);
+  }, [favicon]);
   const caminho = location.pathname.replace(/\/+$/, "") || "/";
   const rota = caminho.toLowerCase();
   const ficha = ehRotaFicha(caminho);

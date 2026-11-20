@@ -10,8 +10,7 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { movimentoReduzido, observarMovimento } from "../hooks/useMovimento";
-import gatoEscuro from "../assets/gatinho/cabecalho-gato-escuro.svg";
-import logoEscuro from "../assets/gatinho/cabecalho-logo-escuro.svg";
+import { useSprite } from "../temas/sprites";
 
 type Passo = [quadro: number, ms: number];
 const LARGURA_LOGO = 84;
@@ -253,6 +252,8 @@ export function Cabecalho({
   areaAcaoRef: Ref<HTMLDivElement>;
 }) {
   const { logo, palavra, gato } = useLogoAnimado();
+  const spriteGato = useSprite("cabecalho-gato");
+  const spriteLogo = useSprite("cabecalho-logo");
   const cabecalho = useRef<HTMLElement>(null);
   useEffect(() => {
     const atualizar = () =>
@@ -262,8 +263,8 @@ export function Cabecalho({
     return () => window.removeEventListener("scroll", atualizar);
   }, []);
   const imagens = {
-    "--e-top-gato": `url("${gatoEscuro}")`,
-    "--e-top-logo": `url("${logoEscuro}")`,
+    "--e-top-gato": spriteGato,
+    "--e-top-logo": spriteLogo,
   } as CSSProperties;
   return (
     <header ref={cabecalho} className="e-top">

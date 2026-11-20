@@ -5,8 +5,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import gato from "../assets/gatinho/abanando-escuro.svg";
-import palavra from "../assets/gatinho/rodape-palavra-escuro.svg";
+import { useSprite } from "../temas/sprites";
 import { movimentoReduzido } from "../hooks/useMovimento";
 
 const CHAVE = "pixel-splash";
@@ -27,6 +26,8 @@ export function Splash() {
     deveMostrar() ? "visivel" : "fim",
   );
   const ativo = fase !== "fim";
+  const gato = useSprite("abanando");
+  const palavra = useSprite("rodape-palavra");
   useLayoutEffect(() => {
     const raiz = document.getElementById("root");
     if (!raiz || !ativo) return;
@@ -55,8 +56,8 @@ export function Splash() {
   }, [ativo]);
   if (!ativo) return null;
   const imagens = {
-    "--e-gato": `url("${gato}")`,
-    "--e-splash-palavra": `url("${palavra}")`,
+    "--e-gato": gato,
+    "--e-splash-palavra": palavra,
   } as CSSProperties;
   return createPortal(
     <div

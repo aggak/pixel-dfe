@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
-import sprite from "../assets/gatinho/olhando-escuro.svg";
+import { useSprite } from "../temas/sprites";
 
 export function GatinhoOlhando() {
+  const sprite = useSprite("olhando");
   return (
     <span
       className="e-gato-olhando"
-      style={{ "--e-gato": `url("${sprite}")` } as CSSProperties}
+      style={{ "--e-gato": sprite } as CSSProperties}
       aria-hidden="true"
     />
   );
