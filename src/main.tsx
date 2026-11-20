@@ -1,3 +1,4 @@
+import "./temas/estilos";
 import { I18nProvider } from "react-aria-components";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

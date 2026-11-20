@@ -1,0 +1,54 @@
+@layer temas-esquema {
+  [data-esquema="claro"] {
+    color-scheme: light;
+    --e-back: #f1f2f3;
+    --e-sheet: #ffffff;
+    --e-ink: #28282c;
+    --e-muted: #595d64;
+    --e-line: #d6d8dc;
+    --e-control: #83858c;
+    --e-action: #643895;
+    --e-mark: #eee7f6;
+    --e-error: #b02140;
+    --e-priority-alta: #98421a;
+    --e-priority-media: #79600e;
+    --e-priority-baixa: #246b77;
+    --e-status-em-andamento: #315f9e;
+    --e-status-em-revisao: #864580;
+    --e-status-concluida: #326c4f;
+
+    --e-gato-tinta: #291c34;
+    --e-gato-contorno: #492d57;
+    --e-gato-pelo-1: #714985;
+    --e-gato-pelo-2: #8b5d9e;
+    --e-gato-pelo-3: #b78bc9;
+    --e-gato-pelo-4: #d1abdf;
+    --e-gato-pelo-5: #e3c9ed;
+    --e-gato-branco: #f7eef9;
+    --e-gato-rosa-escuro: #bf6785;
+    --e-gato-rosa: #efa0b7;
+    --e-gato-sono: #776e80;
+
+    --e-pixel-amarelo: #e3b554;
+    --e-pixel-amarelo-escuro: #a57427;
+    --e-pixel-azul: #82afdb;
+    --e-pixel-azul-escuro: #4c719d;
+    --e-pixel-verde: #81bf9a;
+    --e-pixel-verde-escuro: #4d876b;
+    --e-pixel-vermelho: #d0646d;
+
+    --e-logo-1: #cbb3e3;
+    --e-logo-2: #b99ad8;
+    --e-logo-3: #a682cc;
+    --e-logo-4: #6b2fa0;
+    --e-logo-5: #7d3fb2;
+    --e-logo-6: #8a4fbf;
+    --e-logo-7: #a26ed2;
+    --e-logo-8: #9a62cc;
+    --e-logo-9: #9a62cc;
+    --e-logo-10: #b282dc;
+    --e-logo-11: #c49ae4;
+    --e-logo-12: #b98ae0;
+    --e-logo-13: #d6b6ec;
+  }
+}

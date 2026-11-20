@@ -254,6 +254,24 @@ async function executar() {
     .filter(([, texto]) => texto.includes("localhost:3000"))
     .map(([arquivo]) => arquivo);
   assert.deepEqual(comLocalhost, []);
+  const cssDosTemas = conteudos.find(
+    ([arquivo, texto]) =>
+      arquivo.endsWith(".css") && texto.includes("temas-esquema"),
+  );
+  assert.ok(cssDosTemas, "CSS dos temas ausente do build");
+  const camadas = ["temas-reservas", "temas-esquema", "temas-tema"].map(
+    (camada) =>
+      cssDosTemas[1].search(new RegExp(`@layer[^{;]*\\b${camada}\\b`)),
+  );
+  assert.ok(
+    camadas.every(
+      (posicao, i) => posicao >= 0 && (i === 0 || posicao > camadas[i - 1]),
+    ),
+    `camadas dos temas fora de ordem no build (reservas, esquema, tema): ${camadas.join(", ")}`,
+  );
+  console.log(
+    "OK: no CSS do build, as camadas dos temas aparecem na ordem reservas, esquema, tema",
+  );
   console.log(
     `OK: tsc -b e vite build geram index.html, favicon.svg, robots.txt, og-image.png, licenças, ${js.length} JS e ${css.length} CSS, com os 4 chunks React.lazy fora do index.html`,
   );

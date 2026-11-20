@@ -73,17 +73,17 @@
 }
 
 :is(.e-form-modal.e-ficha-compacta, .e-nova-tarefa-popover) {
-  --nova-realce: #443350;
+  --nova-realce: var(--e-campo-realce);
 }
 
 .e-form-modal.e-ficha-compacta {
-  --e-sheet: #34283e;
-  --nova-campo: #2d2237;
-  --nova-contorno: #8e7997;
+  --e-sheet: var(--e-ficha-compacta-fundo);
+  --nova-campo: var(--e-campo-fundo);
+  --nova-contorno: var(--e-campo-borda);
   --nova-recuo: 18px;
   border-color: var(--e-line);
   border-radius: 13px !important;
-  box-shadow: 0 6px 20px rgb(12 7 17 / 22%) !important;
+  box-shadow: var(--e-ficha-compacta-sombra) !important;
 }
 
 .e-ficha-compacta .e-form-header {
@@ -316,14 +316,14 @@
 }
 
 .e-nova-tarefa-popover {
-  --nova-menu-superficie: #2e2337;
+  --nova-menu-superficie: var(--e-menu-fundo);
   z-index: 60;
   overflow: auto;
   overscroll-behavior: contain;
-  border: 1px solid #72577f;
+  border: 1px solid var(--e-menu-borda);
   border-radius: 11px;
   background: var(--nova-menu-superficie);
-  box-shadow: 0 10px 30px rgb(12 7 18 / 44%);
+  box-shadow: var(--e-menu-sombra);
   color: var(--e-ink);
 }
 

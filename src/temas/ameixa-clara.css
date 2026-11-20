@@ -1,0 +1,15 @@
+@layer temas-tema {
+  [data-tema="ameixa-clara"] {
+    --e-ficha-fundo: #ffffff;
+    --e-ficha-borda: #c0c1c7;
+    --e-ficha-sombra: 0 10px 32px rgb(32 33 39 / 14%), 0 2px 5px rgb(32 33 39 / 6%);
+    --e-ficha-compacta-fundo: #f6f7f8;
+    --e-ficha-compacta-sombra: 0 6px 20px rgb(32 33 39 / 12%);
+    --e-menu-sombra: 0 6px 20px rgb(32 33 39 / 14%);
+    --e-cartao-sombra: 0 1px 2px rgb(32 33 39 / 5%);
+    --e-aba-sombra: 0 1px 2px rgb(10 7 14 / 8%);
+    --e-confirmar-sombra: 0 14px 48px rgb(10 7 14 / 20%);
+    --e-veu: rgb(34 35 40 / 27%);
+    --e-veu-forte: rgb(34 35 40 / 44%);
+  }
+}

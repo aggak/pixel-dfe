@@ -1,0 +1,31 @@
+@layer temas-tema {
+  [data-tema="floresta"] {
+    --e-back: #101e16;
+    --e-sheet: #21362a;
+    --e-ink: #eaf5ef;
+    --e-muted: #b4cfc0;
+    --e-line: #396049;
+    --e-control: #82b597;
+    --e-action: #a1e8be;
+    --e-mark: #355f46;
+    --e-gato-contorno: #395e48;
+    --e-gato-pelo-1: #608e73;
+    --e-gato-pelo-2: #75a88a;
+    --e-gato-pelo-3: #94c7a9;
+    --e-gato-pelo-4: #b0d9c1;
+    --e-gato-pelo-5: #d1ebdc;
+    --e-logo-1: #376149;
+    --e-logo-2: #568b6c;
+    --e-logo-3: #7db193;
+    --e-logo-4: #8ec5a5;
+    --e-logo-5: #a7dabc;
+    --e-logo-6: #b4d9c3;
+    --e-logo-7: #c6e6d3;
+    --e-logo-8: #caead7;
+    --e-logo-9: #d5f1e1;
+    --e-logo-10: #dcf1e5;
+    --e-logo-11: #e4f5eb;
+    --e-logo-12: #eefbf3;
+    --e-logo-13: #f3fdf7;
+  }
+}

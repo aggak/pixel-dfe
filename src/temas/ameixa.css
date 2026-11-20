@@ -1,0 +1,20 @@
+@layer temas-tema {
+  [data-tema="ameixa"] {
+    --e-ficha-fundo: #3b2d45;
+    --e-ficha-borda: #7c608b;
+    --e-ficha-sombra: 0 14px 48px rgb(10 7 14 / 32%);
+    --e-ficha-compacta-fundo: #34283e;
+    --e-ficha-compacta-sombra: 0 6px 20px rgb(12 7 17 / 22%);
+    --e-campo-fundo: #2d2237;
+    --e-campo-borda: #8e7997;
+    --e-campo-realce: #443350;
+    --e-menu-fundo: #2e2337;
+    --e-menu-borda: #72577f;
+    --e-menu-sombra: 0 10px 30px rgb(12 7 18 / 44%);
+    --e-cartao-sombra: 0 2px 2px #49334b08;
+    --e-aba-sombra: 0 1px 2px #49334b14;
+    --e-confirmar-sombra: 0 14px 48px rgb(24 24 27 / 20%);
+    --e-veu: rgb(12 7 19 / 26%);
+    --e-veu-forte: rgb(12 7 19 / 52%);
+  }
+}

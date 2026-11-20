@@ -1,0 +1,24 @@
+@layer temas-reservas {
+  :where(:root, [data-tema], [data-esquema]) {
+    --e-ficha-fundo: color-mix(in srgb, var(--e-sheet) 90%, var(--e-ink));
+    --e-ficha-borda: color-mix(in srgb, var(--e-control) 75%, var(--e-sheet));
+    --e-ficha-sombra: 0 14px 48px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 32%);
+    --e-ficha-compacta-fundo: color-mix(
+      in srgb,
+      var(--e-sheet) 95%,
+      var(--e-ink)
+    );
+    --e-ficha-compacta-sombra: 0 6px 20px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 22%);
+    --e-campo-fundo: var(--e-sheet);
+    --e-campo-borda: var(--e-control);
+    --e-campo-realce: var(--e-mark);
+    --e-menu-fundo: var(--e-sheet);
+    --e-menu-borda: color-mix(in srgb, var(--e-control) 70%, var(--e-sheet));
+    --e-menu-sombra: 0 10px 30px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 44%);
+    --e-cartao-sombra: 0 2px 2px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 3%);
+    --e-aba-sombra: 0 1px 2px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 8%);
+    --e-confirmar-sombra: 0 14px 48px rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 20%);
+    --e-veu: rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 26%);
+    --e-veu-forte: rgb(from light-dark(var(--e-ink), var(--e-back)) r g b / 52%);
+  }
+}
