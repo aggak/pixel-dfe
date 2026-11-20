@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
-import rostoEscuro from "../assets/gatinho/rodape-rosto-escuro.svg";
-import palavraEscuro from "../assets/gatinho/rodape-palavra-escuro.svg";
+import { useSprite } from "../temas/sprites";
 
 export function MarcaRodape() {
+  const rosto = useSprite("rodape-rosto");
+  const palavra = useSprite("rodape-palavra");
   const imagens = {
-    "--e-rodape-rosto": `url("${rostoEscuro}")`,
-    "--e-rodape-palavra": `url("${palavraEscuro}")`,
+    "--e-rodape-rosto": rosto,
+    "--e-rodape-palavra": palavra,
   } as CSSProperties;
   return (
     <strong className="e-footer-marca" style={imagens}>

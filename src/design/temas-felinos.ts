@@ -1,4 +1,5 @@
 import type { Projeto } from "../tipos";
+import { corPixel } from "../temas/catalogo.ts";
 
 export interface TemaFelino {
   id: string;
@@ -45,27 +46,27 @@ export function camadasDoTema(tema: TemaFelino) {
       caminhos.set(cor, (caminhos.get(cor) ?? "") + d);
     }
   });
-  return [...caminhos].map(([cor, d]) => ({ cor: PALETA[cor], d }));
+  return [...caminhos].map(([cor, d]) => ({ cor: corPixel(PALETA[cor]), d }));
 }
 
 const PALETA: Record<string, string> = {
-  k: "#2a1c33",
-  o: "#4e3760",
-  d: "#7d5e90",
-  m: "#9a72ab",
-  l: "#bb91ca",
-  p: "#cfaedb",
-  h: "#e4d0ec",
-  w: "#f3eaf5",
-  r: "#c97c98",
-  s: "#f2a7bf",
-  y: "#f1d38a",
-  Y: "#c4954f",
-  b: "#8fb4e3",
-  B: "#5a78b0",
-  g: "#9fd3b1",
-  G: "#5f9c7f",
-  v: "#e7756f",
+  k: "--e-gato-tinta",
+  o: "--e-gato-contorno",
+  d: "--e-gato-pelo-1",
+  m: "--e-gato-pelo-2",
+  l: "--e-gato-pelo-3",
+  p: "--e-gato-pelo-4",
+  h: "--e-gato-pelo-5",
+  w: "--e-gato-branco",
+  r: "--e-gato-rosa-escuro",
+  s: "--e-gato-rosa",
+  y: "--e-pixel-amarelo",
+  Y: "--e-pixel-amarelo-escuro",
+  b: "--e-pixel-azul",
+  B: "--e-pixel-azul-escuro",
+  g: "--e-pixel-verde",
+  G: "--e-pixel-verde-escuro",
+  v: "--e-pixel-vermelho",
 };
 
 export const TEMAS: TemaFelino[] = [

@@ -23,7 +23,7 @@ export function IconeFelino({
         focusable="false"
       >
         {camadasDoTema(tema).map(({ cor, d }) => (
-          <path key={cor} fill={cor} d={d} />
+          <path key={cor} style={{ fill: cor }} d={d} />
         ))}
       </svg>
     </span>
