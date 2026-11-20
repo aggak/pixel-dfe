@@ -2561,6 +2561,59 @@ textarea {
 .e-top[data-rolada] {
   box-shadow: inset 0 -1px var(--e-line);
 }
+.e-top-fim {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.e-top-fim > .e-top-acao {
+  margin-left: 0;
+}
+
+.e-top-fim > .e-top-acao:empty {
+  display: none;
+}
+
+.e-top-configuracoes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--e-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.e-top-configuracoes:is([data-hovered], [aria-expanded="true"]) {
+  background: var(--e-mark);
+  color: var(--e-ink);
+}
+
+.e-top-configuracoes .e-uicon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 800px) {
+  .e-top-configuracoes {
+    width: 44px;
+    padding: 0;
+  }
+
+  .e-top-configuracoes > span {
+    display: none;
+  }
+}
+
 .e-top-acao {
   display: flex;
   align-items: center;
@@ -2654,6 +2707,9 @@ textarea {
     gap: 6px;
     align-items: center;
   }
+  .e-top-fim {
+    gap: 2px;
+  }
   .e-top .e-logo {
     height: 58px;
   }
@@ -2665,14 +2721,14 @@ textarea {
   }
   .e-top nav {
     height: 58px;
-    gap: 14px;
+    gap: 8px;
   }
   .e-top nav a {
     width: 56px;
     min-height: 46px;
   }
   .e-top nav a:last-child {
-    width: 64px;
+    width: 62px;
   }
   .e-top-acao-botao {
     width: 44px;
@@ -2706,22 +2762,37 @@ textarea {
     justify-content: center;
   }
 }
-@media (max-width: 360px) {
-  .e-top {
-    padding-right: min(var(--e-page-gutter), calc(100vw - 312px));
-  }
+@media (width < 406px) {
   .e-top .e-logo {
     flex-basis: 112px;
     width: 112px;
   }
-  .e-top-gato {
+  .e-top-gato,
+  .e-top-palavra {
     transform: scale(0.75);
     transform-origin: left center;
   }
   .e-top-palavra {
     left: 48px;
-    transform: scale(0.75);
-    transform-origin: left center;
+  }
+}
+@media (width < 360px) {
+  .e-top .e-logo {
+    flex-basis: 92px;
+    width: 92px;
+  }
+  .e-top-gato,
+  .e-top-palavra {
+    transform: scale(0.625);
+  }
+  .e-top-palavra {
+    left: 39px;
+  }
+  .e-top nav a {
+    width: 46px;
+  }
+  .e-top nav a:last-child {
+    width: 52px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

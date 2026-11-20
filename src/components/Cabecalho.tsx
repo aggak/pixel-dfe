@@ -11,6 +11,7 @@ import { Link, NavLink, useLocation } from "react-router";
 import { ContextoAcaoCabecalho } from "./acao-cabecalho-contexto";
 import { movimentoReduzido, observarMovimento } from "../hooks/useMovimento";
 import { useSprite } from "../temas/sprites";
+import { MenuAparencia } from "./MenuAparencia";
 
 type Passo = [quadro: number, ms: number];
 const LARGURA_LOGO = 84;
@@ -281,7 +282,10 @@ export function Cabecalho({
           <span>Projetos</span>
         </NavLink>
       </nav>
-      <div ref={areaAcaoRef} className="e-top-acao" />
+      <div className="e-top-fim">
+        <div ref={areaAcaoRef} className="e-top-acao" />
+        <MenuAparencia />
+      </div>
     </header>
   );
 }

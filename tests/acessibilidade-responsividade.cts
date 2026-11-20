@@ -326,6 +326,26 @@ async function executar() {
       await page.setViewportSize({ width: largura, height: 800 });
       for (const caminho of [...paginas, ...fichas]) {
         await abrir(page, caminho);
+        if (largura === 320 && caminho === "/") {
+          const topo = page.locator(".e-top");
+          assert(
+            await topo.locator(".e-top-palavra").isVisible(),
+            "marca Pixel visível em 320 px",
+          );
+          const partes = await topo
+            .locator(":scope > *")
+            .evaluateAll((elementos) =>
+              elementos.map((el) => {
+                const { top, bottom } = el.getBoundingClientRect();
+                return { top, bottom };
+              }),
+            );
+          const meio = (partes[0].top + partes[0].bottom) / 2;
+          assert(
+            partes.every(({ top, bottom }) => top <= meio && bottom > meio),
+            "marca, navegação e ações ficam na mesma linha em 320 px",
+          );
+        }
         const problema = await page.evaluate(() => {
           if (
             document.documentElement.scrollWidth >
@@ -982,6 +1002,63 @@ async function executar() {
   console.log(
     "OK: rodapé sem botão de animações; o gato anima por padrão e tudo fica parado com reduce do sistema, inclusive na troca de página",
   );
+
+  for (const largura of [1280, 320]) {
+    const celular = largura === 320;
+    const seletor = await browser.newPage({
+      viewport: { width: largura, height: 800 },
+      reducedMotion: "reduce",
+      hasTouch: celular,
+    });
+    await abrir(seletor, "/");
+    const configuracoes = seletor.getByRole("button", { name: "Configurações" });
+    const aparencia = seletor.getByRole("dialog", { name: "Aparência" });
+    const html = seletor.locator("html");
+    const temaInicial = await html.getAttribute("data-tema");
+    const abrirAparencia = async () => {
+      if (celular) await configuracoes.tap();
+      else await configuracoes.press("Enter");
+      await aparencia.waitFor();
+    };
+
+    await abrirAparencia();
+    assert.equal(await aparencia.getByRole("radio").count(), 3);
+    assert.equal(await aparencia.locator(".e-tema-indicio").count(), 3);
+    const fechar = aparencia.getByRole("button", { name: "Fechar" });
+    if (celular) await fechar.tap();
+    else await fechar.click();
+    await aparencia.waitFor({ state: "hidden" });
+    assert.equal(await html.getAttribute("data-tema"), temaInicial);
+    assert.equal(seletor.url(), `${web}/`);
+
+    await abrirAparencia();
+    await seletor.keyboard.press("Escape");
+    await aparencia.waitFor({ state: "hidden" });
+    await seletor.waitForFunction(() =>
+      document.activeElement?.matches('.e-top-configuracoes[aria-expanded="false"]'),
+    );
+
+    await abrirAparencia();
+    if (celular) await seletor.touchscreen.tap(4, 120);
+    else await seletor.mouse.click(4, 120);
+    await aparencia.waitFor({ state: "hidden" });
+    assert.equal(await html.getAttribute("data-tema"), temaInicial);
+
+    await abrirAparencia();
+    const ameixaClara = aparencia.getByText("Ameixa clara", { exact: true });
+    if (celular) await ameixaClara.tap();
+    else await ameixaClara.click();
+    await aparencia.waitFor({ state: "hidden" });
+    assert.equal(await html.getAttribute("data-tema"), "ameixa-clara");
+    assert.equal(seletor.url(), `${web}/`);
+
+    await seletor.getByRole("link", { name: "Projetos", exact: true }).click();
+    await seletor.waitForURL(`${web}/projetos`);
+    await seletor.reload();
+    await seletor.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
+    assert.equal(await html.getAttribute("data-tema"), "ameixa-clara");
+    await seletor.close();
+  }
 
   assert.deepEqual(errosPagina, []);
   assert.equal(await readFile(join(raiz, "db.json"), "utf8"), bancoOriginal);

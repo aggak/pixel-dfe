@@ -189,6 +189,10 @@ function App() {
                 />
                 <Route path="/quadro" element={<QuadroTarefas />} />
                 <Route path="/projetos" element={<ListaProjetos />} />
+                <Route
+                  path="/configuracoes"
+                  element={<Navigate to="/" replace />}
+                />
                 <Route path="/projetos/:id" element={<DetalheProjeto />} />
                 <Route
                   path="*"
