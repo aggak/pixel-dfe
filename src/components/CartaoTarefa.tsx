@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import type { Status, Tarefa } from "../tipos";
-import { Icon, EditIcon, TrashIcon } from "../design/icon";
+import { Icon, EditIcon, FolderIcon, TrashIcon } from "../design/icon";
 import { formatarData, formatarPrazoCartao } from "../design/formatos";
 import { SeloPrioridade } from "./Selos";
 import { ConfirmarExclusao } from "./ConfirmarExclusao";
@@ -163,10 +163,27 @@ export function CartaoTarefa({
         <>
           <div className="e-task-main">
             {cabecalho}
-            {nomeProjeto && (
-              <span className="e-task-project">{nomeProjeto}</span>
-            )}
-            <div className="e-task-meta">{pessoaPrazo}</div>
+            <div className="e-task-meta e-read-meta">
+              {nomeProjeto && (
+                <p>
+                  <FolderIcon />
+                  <span className="e-task-project">{nomeProjeto}</span>
+                </p>
+              )}
+              <p>
+                <Icon name="user" />
+                <span>{tarefa.responsavel}</span>
+              </p>
+              <p>
+                <Icon name="calendar" />
+                <time
+                  dateTime={tarefa.prazo}
+                  title={`Prazo: ${formatarData(tarefa.prazo, true)}`}
+                >
+                  {formatarPrazoCartao(tarefa.prazo)}
+                </time>
+              </p>
+            </div>
             {alerta}
           </div>
           <div className="e-task-tags">
