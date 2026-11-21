@@ -3233,3 +3233,13 @@ textarea {
 .e-row .e-read-meta i {
   font-size: 13px;
 }
+.e-card.e-card-soltar-antes {
+  box-shadow:
+    0 -8px 0 -6px var(--e-action),
+    var(--e-cartao-sombra);
+}
+.e-card.e-card-soltar-depois {
+  box-shadow:
+    0 8px 0 -6px var(--e-action),
+    var(--e-cartao-sombra);
+}

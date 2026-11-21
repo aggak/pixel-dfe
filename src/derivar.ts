@@ -48,6 +48,14 @@ export function agruparPorStatus(tarefas: Tarefa[]): ColunaStatus[] {
   }));
 }
 
+export function ordenarPorOrdem(tarefas: Tarefa[]): Tarefa[] {
+  return [...tarefas].sort(
+    (a, b) =>
+      (a.ordem ?? Number.MAX_SAFE_INTEGER) -
+      (b.ordem ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
 const PESO_PRIORIDADE: Record<Prioridade, number> = {
   alta: 0,
   media: 1,

@@ -118,6 +118,7 @@ function normalizarTarefa(tarefa: Registro): Tarefa {
     prioridade: tarefa.prioridade as Tarefa["prioridade"],
     responsavel: texto(tarefa.responsavel),
     prazo: texto(tarefa.prazo),
+    ...(typeof tarefa.ordem === "number" ? { ordem: tarefa.ordem } : {}),
   };
 }
 

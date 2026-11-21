@@ -18,6 +18,7 @@ export interface Tarefa {
   prioridade: Prioridade;
   responsavel: string;
   prazo: string;
+  ordem?: number;
 }
 
 export type NovaTarefa = Omit<Tarefa, "id">;

@@ -1,12 +1,13 @@
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { isTextDropItem, useDrop } from "react-aria-components";
 import { Badge } from "@/components/base/badges/badges";
 import { GatinhoLavando } from "../components/GatinhoLavando";
 import { VisaoTarefas } from "../components/VisaoTarefas";
-import { agruparPorStatus } from "../derivar";
+import { agruparPorStatus, ordenarPorOrdem } from "../derivar";
 import { statusTexto } from "../design/formatos";
 import { Icon } from "../design/icon";
 import { soltarTarefa, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
+import { atualizarTarefa } from "../api";
 import type { Status, Tarefa } from "../tipos";
 import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
 
@@ -17,19 +18,67 @@ const iconesStatus: Record<Status, string> = {
   concluida: "check",
 };
 
-function Coluna({ status, children }: { status: Status; children: ReactNode }) {
+type Ancora = { antes?: string; depois?: string };
+
+function ancoraNoPonto(coluna: HTMLElement, y: number): Ancora {
+  const topo = coluna.getBoundingClientRect().top + y;
+  const cartoes = [
+    ...coluna.querySelectorAll<HTMLElement>("[data-task-id]"),
+  ].filter((cartao) => !cartao.classList.contains("e-card-arrastando"));
+  const antes = cartoes.find((cartao) => {
+    const caixa = cartao.getBoundingClientRect();
+    return topo < caixa.top + caixa.height / 2;
+  });
+  if (antes) return { antes: antes.dataset.taskId };
+  return { depois: cartoes.at(-1)?.dataset.taskId };
+}
+
+function Coluna({
+  status,
+  onSoltar,
+  children,
+}: {
+  status: Status;
+  onSoltar: (id: string, status: Status, ancora: Ancora) => void;
+  children: ReactNode;
+}) {
   const ref = useRef<HTMLElement>(null);
+  const [alvo, setAlvo] = useState<Ancora>();
   const { dropProps, isDropTarget } = useDrop({
     ref,
     getDropOperation: (tipos) => (tipos.has(TIPO_TAREFA) ? "move" : "cancel"),
-    onDrop: async ({ items }) => {
+    onDropMove: ({ y }) => {
+      if (!ref.current) return;
+      const ancora = ancoraNoPonto(ref.current, y);
+      setAlvo((atual) =>
+        atual?.antes === ancora.antes && atual?.depois === ancora.depois
+          ? atual
+          : ancora,
+      );
+    },
+    onDropExit: () => setAlvo(undefined),
+    onDrop: async ({ items, y }) => {
+      setAlvo(undefined);
       const item = items.find(
         (atual) => isTextDropItem(atual) && atual.types.has(TIPO_TAREFA),
       );
-      if (item && isTextDropItem(item))
-        soltarTarefa(await item.getText(TIPO_TAREFA), status);
+      if (!item || !isTextDropItem(item) || !ref.current) return;
+      const id = await item.getText(TIPO_TAREFA);
+      onSoltar(id, status, ancoraNoPonto(ref.current, y));
+      soltarTarefa(id, status);
     },
   });
+  useEffect(() => {
+    const coluna = ref.current;
+    if (!coluna || !isDropTarget || !alvo) return;
+    const id = alvo.antes ?? alvo.depois;
+    const cartao = id
+      ? coluna.querySelector<HTMLElement>(`[data-task-id="${CSS.escape(id)}"]`)
+      : null;
+    const classe = alvo.antes ? "e-card-soltar-antes" : "e-card-soltar-depois";
+    cartao?.classList.add(classe);
+    return () => cartao?.classList.remove(classe);
+  }, [alvo, isDropTarget]);
   return (
     <section
       {...dropProps}
@@ -52,16 +101,47 @@ function Quadro({
   cartao: (tarefa: Tarefa, variante?: "lista" | "quadro") => ReactNode;
   todasTarefas: Tarefa[];
 }) {
+  const [ordemLocal, setOrdemLocal] = useState<Record<string, number>>({});
+  const aplicar = (lista: Tarefa[]) =>
+    lista.map((tarefa) =>
+      tarefa.id in ordemLocal
+        ? { ...tarefa, ordem: ordemLocal[tarefa.id] }
+        : tarefa,
+    );
+  const todas = aplicar(todasTarefas);
   const { recortar } = useConcluidasRecolhidas(todasTarefas);
+  const soltar = (id: string, status: Status, ancora: Ancora) => {
+    const ids = ordenarPorOrdem(
+      todas.filter((tarefa) => tarefa.status === status && tarefa.id !== id),
+    ).map((tarefa) => tarefa.id);
+    const ancorada = ancora.antes ?? ancora.depois;
+    const posicao = ancorada ? ids.indexOf(ancorada) : -1;
+    ids.splice(
+      posicao < 0 ? ids.length : ancora.antes ? posicao : posicao + 1,
+      0,
+      id,
+    );
+    const anteriores = new Map(
+      todas.map((tarefa) => [tarefa.id, tarefa.ordem]),
+    );
+    const mudadas = ids.flatMap((tid, ordem) =>
+      anteriores.get(tid) === ordem ? [] : [[tid, ordem] as const],
+    );
+    if (mudadas.length === 0) return;
+    setOrdemLocal((atual) => ({ ...atual, ...Object.fromEntries(mudadas) }));
+    void Promise.allSettled(
+      mudadas.map(([tid, ordem]) => atualizarTarefa(tid, { ordem })),
+    );
+  };
   return (
     <section className="e-board" aria-label="Quadro de tarefas por status">
-      {agruparPorStatus(tarefas).map((coluna) => {
+      {agruparPorStatus(ordenarPorOrdem(aplicar(tarefas))).map((coluna) => {
         const { visiveis, botao } =
           coluna.status === "concluida"
             ? recortar(coluna.tarefas)
             : { visiveis: coluna.tarefas, botao: null };
         return (
-          <Coluna key={coluna.status} status={coluna.status}>
+          <Coluna key={coluna.status} status={coluna.status} onSoltar={soltar}>
             <h2>
               <span className="e-column-name">
                 <Icon name={iconesStatus[coluna.status]} />
