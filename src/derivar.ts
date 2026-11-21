@@ -47,3 +47,19 @@ export function agruparPorStatus(tarefas: Tarefa[]): ColunaStatus[] {
     tarefas: tarefas.filter((t) => t.status === status),
   }));
 }
+
+const PESO_PRIORIDADE: Record<Prioridade, number> = {
+  alta: 0,
+  media: 1,
+  baixa: 2,
+};
+
+export function ordenarTarefas(tarefas: Tarefa[]): Tarefa[] {
+  return [...tarefas].sort(
+    (a, b) =>
+      STATUS.indexOf(a.status) - STATUS.indexOf(b.status) ||
+      PESO_PRIORIDADE[a.prioridade] - PESO_PRIORIDADE[b.prioridade] ||
+      a.prazo.localeCompare(b.prazo) ||
+      a.titulo.localeCompare(b.titulo, "pt-BR"),
+  );
+}

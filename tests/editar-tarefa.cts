@@ -515,8 +515,12 @@ async function executar() {
     async () => {
       await page.setViewportSize({ width: 1280, height: 360 });
       await page.goto(`${origem}/`);
-      const cartao = page.locator('[data-task-id="5"]');
-      await cartao.waitFor();
+      await page.locator("[data-task-id]").first().waitFor();
+      const id = await page
+        .locator(".e-list > [data-task-id]")
+        .last()
+        .getAttribute("data-task-id");
+      const cartao = page.locator(`[data-task-id="${id}"]`);
       await page.evaluate(() =>
         scrollTo(0, document.documentElement.scrollHeight),
       );
@@ -524,7 +528,7 @@ async function executar() {
       assert.ok(rolagem > 0, "a lista precisa estar rolada");
       await cartao.locator(".e-task-menu").click();
       await page.getByRole("menuitem", { name: "Editar tarefa" }).click();
-      const dados = await esperarFormulario("5");
+      const dados = await esperarFormulario(id);
       await campo("Responsável").fill(`${dados.responsavel} editado`);
       await salvar().click();
       await page
@@ -533,10 +537,11 @@ async function executar() {
       await page.keyboard.press("Escape");
       await ate("foco no título do cartão editado", () =>
         page.evaluate(
-          () =>
+          (alvo) =>
             document.activeElement?.matches(
-              '[data-task-id="5"] .e-task-title',
+              `[data-task-id="${alvo}"] .e-task-title`,
             ) ?? false,
+          id,
         ),
       );
       const estado = await page.evaluate(() => {
