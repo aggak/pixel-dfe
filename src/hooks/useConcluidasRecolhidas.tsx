@@ -45,6 +45,11 @@ export function useConcluidasRecolhidas(todasTarefas: Tarefa[]) {
       const ra = recentes.indexOf(a.id);
       const rb = recentes.indexOf(b.id);
       if (ra !== rb) return ra < 0 ? 1 : rb < 0 ? -1 : ra - rb;
+      if (a.ordem !== undefined || b.ordem !== undefined)
+        return (
+          (a.ordem ?? Number.MAX_SAFE_INTEGER) -
+          (b.ordem ?? Number.MAX_SAFE_INTEGER)
+        );
       return b.prazo.localeCompare(a.prazo);
     });
     return {

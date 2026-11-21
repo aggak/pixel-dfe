@@ -60,12 +60,12 @@ async function executar() {
   const antes = patches.length;
   await cartao(outra.id).dragTo(coluna("a-fazer"), PEGAR);
   await page.waitForTimeout(300);
-  assert.equal(patches.length, antes);
+  assert.ok(patches.slice(antes).every((patch) => !("status" in patch.corpo)));
   assert.equal(
     await coluna("a-fazer").locator(`[data-task-id="${outra.id}"]`).count(),
     1,
   );
-  console.log("OK: soltar na mesma coluna não grava nada");
+  console.log("OK: soltar na mesma coluna não muda o status");
 
   await page.route(`${api}/tarefas/${outra.id}`, (rota) =>
     rota.request().method() === "PATCH"
