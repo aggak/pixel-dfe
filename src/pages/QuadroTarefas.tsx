@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { isTextDropItem, useDrop } from "react-aria-components";
 import { Badge } from "@/components/base/badges/badges";
+import { AnimarPosicoes } from "../components/AnimarPosicoes";
+import { useFiltros } from "../components/filtros-contexto";
 import { GatinhoLavando } from "../components/GatinhoLavando";
 import { VisaoTarefas } from "../components/VisaoTarefas";
 import { agruparPorStatus, ordenarPorOrdem } from "../derivar";
@@ -102,6 +104,7 @@ function Quadro({
   todasTarefas: Tarefa[];
 }) {
   const [ordemLocal, setOrdemLocal] = useState<Record<string, number>>({});
+  const { filtros } = useFiltros();
   const aplicar = (lista: Tarefa[]) =>
     lista.map((tarefa) =>
       tarefa.id in ordemLocal
@@ -109,7 +112,7 @@ function Quadro({
         : tarefa,
     );
   const todas = aplicar(todasTarefas);
-  const { recortar } = useConcluidasRecolhidas(todasTarefas);
+  const { recortar, abertas } = useConcluidasRecolhidas(todasTarefas);
   const soltar = (id: string, status: Status, ancora: Ancora) => {
     const ids = ordenarPorOrdem(
       todas.filter((tarefa) => tarefa.status === status && tarefa.id !== id),
@@ -134,7 +137,15 @@ function Quadro({
     );
   };
   return (
-    <section className="e-board" aria-label="Quadro de tarefas por status">
+    <AnimarPosicoes
+      classe="e-board"
+      rotulo="Quadro de tarefas por status"
+      seletor=":scope > .e-column > .e-card[data-task-id]"
+      tarefas={todas}
+      filtros={filtros}
+      concluidasAbertas={abertas}
+      considerarOrdem
+    >
       {agruparPorStatus(ordenarPorOrdem(aplicar(tarefas))).map((coluna) => {
         const { visiveis, botao } =
           coluna.status === "concluida"
@@ -164,7 +175,7 @@ function Quadro({
           </Coluna>
         );
       })}
-    </section>
+    </AnimarPosicoes>
   );
 }
 

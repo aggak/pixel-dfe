@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { AnimarPosicoes } from "../components/AnimarPosicoes";
+import { useFiltros } from "../components/filtros-contexto";
 import { VisaoTarefas } from "../components/VisaoTarefas";
 import { ordenarTarefas } from "../derivar";
 import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
@@ -13,19 +15,27 @@ function Lista({
   cartao: (tarefa: Tarefa) => ReactNode;
   todasTarefas: Tarefa[];
 }) {
-  const { recortar } = useConcluidasRecolhidas(todasTarefas);
+  const { filtros } = useFiltros();
+  const { recortar, abertas } = useConcluidasRecolhidas(todasTarefas);
   const ordenadas = ordenarTarefas(tarefas);
   const { visiveis, botao } = recortar(
     ordenadas.filter((tarefa) => tarefa.status === "concluida"),
   );
   return (
-    <section className="e-list" aria-label="Lista de tarefas">
+    <AnimarPosicoes
+      classe="e-list"
+      rotulo="Lista de tarefas"
+      seletor=":scope > .e-row[data-task-id]"
+      tarefas={todasTarefas}
+      filtros={filtros}
+      concluidasAbertas={abertas}
+    >
       {ordenadas
         .filter((tarefa) => tarefa.status !== "concluida")
         .map((tarefa) => cartao(tarefa))}
       {visiveis.map((tarefa) => cartao(tarefa))}
       {botao}
-    </section>
+    </AnimarPosicoes>
   );
 }
 
