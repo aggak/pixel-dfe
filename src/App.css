@@ -2158,15 +2158,13 @@ textarea {
   font-size: 12px;
   line-height: 1.4;
 }
-.e-proj-prog,
-.e-proj-prazo {
+.e-proj-prog {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
 }
-.e-proj-prog b,
-.e-proj-prazo b {
+.e-proj-prog b {
   color: var(--e-ink);
   font-weight: 500;
 }

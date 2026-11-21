@@ -1,6 +1,5 @@
 import type { Tarefa } from "../tipos";
 import { PawIcon } from "../design/icon";
-import { formatarData } from "../design/formatos";
 import { camadasDoTema, type TemaFelino } from "../design/temas-felinos";
 
 export function IconeFelino({
@@ -57,10 +56,6 @@ export function AndamentoProjeto({
   const concluidas = tarefas.filter(
     (tarefa) => tarefa.status === "concluida",
   ).length;
-  const prazo = tarefas
-    .filter((tarefa) => tarefa.status !== "concluida" && tarefa.prazo)
-    .map((tarefa) => tarefa.prazo)
-    .sort()[0];
   const porcento = total ? Math.round((concluidas / total) * 100) : 0;
   return (
     <div className="e-proj-foot">
@@ -76,11 +71,6 @@ export function AndamentoProjeto({
           <span className="e-proj-prog">
             <b>{concluidas}</b> de {total}{" "}
             {concluidas === 1 ? "concluída" : "concluídas"}
-          </span>
-        )}
-        {prazo && (
-          <span className="e-proj-prazo">
-            Próximo prazo <b>{formatarData(prazo)}</b>
           </span>
         )}
       </div>
