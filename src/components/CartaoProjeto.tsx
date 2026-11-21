@@ -1,6 +1,6 @@
 import type { Tarefa } from "../tipos";
 import { PawIcon } from "../design/icon";
-import { formatarData, prazoVencido } from "../design/formatos";
+import { formatarData } from "../design/formatos";
 import { camadasDoTema, type TemaFelino } from "../design/temas-felinos";
 
 export function IconeFelino({
@@ -62,7 +62,6 @@ export function AndamentoProjeto({
     .map((tarefa) => tarefa.prazo)
     .sort()[0];
   const porcento = total ? Math.round((concluidas / total) * 100) : 0;
-  const vencido = prazo ? prazoVencido(prazo) : false;
   return (
     <div className="e-proj-foot">
       <div className="e-proj-foot-txt">
@@ -80,9 +79,8 @@ export function AndamentoProjeto({
           </span>
         )}
         {prazo && (
-          <span className={`e-proj-prazo${vencido ? " e-proj-vencido" : ""}`}>
-            {vencido ? "Prazo vencido" : "Próximo prazo"}{" "}
-            <b>{formatarData(prazo)}</b>
+          <span className="e-proj-prazo">
+            Próximo prazo <b>{formatarData(prazo)}</b>
           </span>
         )}
       </div>

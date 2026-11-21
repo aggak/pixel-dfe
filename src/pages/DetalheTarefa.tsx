@@ -27,7 +27,7 @@ import {
 } from "../components/Layout";
 import { SeloPrioridade } from "../components/Selos";
 import { Icon, FolderIcon, EditIcon, TrashIcon } from "../design/icon";
-import { formatarData, prazoVencido } from "../design/formatos";
+import { formatarData } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
 
 function EtiquetasTarefa({
@@ -126,8 +126,6 @@ export function DetalheTarefa() {
   };
   const projeto =
     tarefa && projetos?.find((item) => item.id === tarefa.projetoId);
-  const vencido =
-    tarefa && tarefa.status !== "concluida" && prazoVencido(tarefa.prazo);
   const projetoInexistente =
     tarefa !== undefined && projetos !== undefined && !projeto;
   return (
@@ -216,11 +214,7 @@ export function DetalheTarefa() {
               </p>
               <p>
                 <Icon name="calendar" />
-                <time
-                  className={vencido ? "e-card-vencido" : undefined}
-                  dateTime={tarefa.prazo}
-                >
-                  {vencido ? "Venceu em " : ""}
+                <time dateTime={tarefa.prazo}>
                   {formatarData(tarefa.prazo, true)}
                 </time>
               </p>

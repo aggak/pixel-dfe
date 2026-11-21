@@ -1823,9 +1823,6 @@ textarea {
 .e-card-separador {
   font-size: 11px;
 }
-.e-card-vencido {
-  color: var(--e-error);
-}
 .e-row .e-task-meta {
   align-items: center;
   gap: 8px;
@@ -2172,10 +2169,6 @@ textarea {
 .e-proj-prazo b {
   color: var(--e-ink);
   font-weight: 500;
-}
-.e-proj-vencido,
-.e-proj-vencido b {
-  color: var(--e-error);
 }
 .e-proj-ok {
   color: var(--e-action);

@@ -91,15 +91,15 @@ async function executar() {
     },
   );
   await conferir(
-    "prazos mostram outro ano no cartão e vencimento na ficha, exceto concluídas",
+    "prazos mostram outro ano no cartão e a data completa na ficha",
     async () => {
       await page.clock.setFixedTime(new Date("2026-11-12T12:00:00"));
       const casos = [
-        ["2020-01-05", "a-fazer", "Venceu 5 jan 2020", true],
-        ["2026-11-11", "em-andamento", "Venceu 11 nov", true],
-        ["2027-01-10", "em-revisao", "10 jan 2027", false],
-        ["2026-11-12", "a-fazer", "12 nov", false],
-        ["2020-01-05", "concluida", "5 jan 2020", false],
+        ["2020-01-05", "a-fazer", "5 jan 2020"],
+        ["2026-11-11", "em-andamento", "11 nov"],
+        ["2027-01-10", "em-revisao", "10 jan 2027"],
+        ["2026-11-12", "a-fazer", "12 nov"],
+        ["2020-01-05", "concluida", "5 jan 2020"],
       ];
       const tarefas = casos.map(([prazo, status], i) => ({
         ...seed.tarefas[0],
@@ -122,12 +122,6 @@ async function executar() {
             const prazo = page.locator(`[data-task-id="${tarefa.id}"] time`);
             assert.equal(await prazo.textContent(), casos[i][2]);
             assert.equal(await prazo.getAttribute("datetime"), tarefa.prazo);
-            assert.equal(
-              await prazo.evaluate((el) =>
-                el.classList.contains("e-card-vencido"),
-              ),
-              casos[i][3],
-            );
           }
           assert.ok(
             await page.locator("[data-task-id]").evaluateAll((cartoes) =>
@@ -152,27 +146,9 @@ async function executar() {
           month: "long",
           year: "numeric",
         }).format(new Date(`${tarefa.prazo}T12:00:00`));
-        assert.equal(
-          await prazo.textContent(),
-          `${casos[i][3] ? "Venceu em " : ""}${extensa}`,
-        );
+        assert.equal(await prazo.textContent(), extensa);
         assert.equal(await prazo.getAttribute("datetime"), tarefa.prazo);
-        assert.equal(
-          await prazo.evaluate((el) => el.classList.contains("e-card-vencido")),
-          casos[i][3],
-        );
-        assert.ok(
-          (await ficha().ariaSnapshot()).includes(
-            `${casos[i][3] ? "Venceu em " : ""}${extensa}`,
-          ),
-        );
-        if (casos[i][3])
-          assert.equal(
-            await prazo.evaluate((el) => getComputedStyle(el).color),
-            await page
-              .locator(`[data-task-id="${tarefa.id}"] time`)
-              .evaluate((el) => getComputedStyle(el).color),
-          );
+        assert.ok((await ficha().ariaSnapshot()).includes(extensa));
       }
       await page.unrouteAll();
       await page.clock.setFixedTime(new Date());
@@ -411,7 +387,7 @@ async function executar() {
       window.prazoEsperado = valor;
     }, iso);
   await conferir(
-    "cartão de projeto avisa quando o menor prazo pendente já venceu",
+    "cartão de projeto mostra o menor prazo pendente mesmo quando já passou",
     async () => {
       const [anteontem, ontem, amanha] = [
         diaRelativo(-2),
@@ -431,15 +407,14 @@ async function executar() {
       await abrir("/projetos");
       await prazoEsperado(ontem);
       const rodape = await rodapeProjeto("1");
-      assert.equal(rodape.texto, `Prazo vencido ${rodape.esperada}`);
+      assert.equal(rodape.texto, `Próximo prazo ${rodape.esperada}`);
       assert.equal(rodape.data, rodape.esperada);
-      assert.equal(rodape.cor, rodape.corErro);
-      assert.equal(rodape.corData, rodape.corErro);
+      assert.notEqual(rodape.cor, rodape.corErro);
+      assert.notEqual(rodape.corData, rodape.corErro);
       assert.equal(
         await page.locator('[data-project-id="2"] .e-proj-prazo').count(),
         0,
       );
-      assert.ok(!(await texto()).includes("Próximo prazo"));
       await page.unrouteAll();
     },
   );
@@ -475,14 +450,7 @@ async function executar() {
         );
         assert.notEqual(rodape.cor, rodape.corErro, `projeto ${id}`);
         assert.notEqual(rodape.corData, rodape.corErro, `projeto ${id}`);
-        assert.equal(
-          await page
-            .locator(`[data-project-id="${id}"] .e-proj-vencido`)
-            .count(),
-          0,
-        );
       }
-      assert.ok(!(await texto()).includes("Prazo vencido"));
       await page.unrouteAll();
     },
   );
