@@ -71,5 +71,5 @@ export function useConcluidasRecolhidas(todasTarefas: Tarefa[]) {
       ),
     };
   };
-  return { recortar };
+  return { recortar, abertas };
 }
