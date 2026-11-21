@@ -403,9 +403,12 @@ async function executar() {
   );
   await animacao.clock.fastForward(900);
   assert.equal(await quadroGato(), "0px");
-  await animacao
-    .locator("[data-task-id] .e-task-title")
+  const primeira = await animacao
+    .locator("[data-task-id]")
     .first()
+    .getAttribute("data-task-id");
+  await animacao
+    .locator(`[data-task-id="${primeira}"] .e-task-title`)
     .dispatchEvent("click");
   await animacao.getByRole("dialog").waitFor();
   await animacao.clock.runFor(100);
@@ -428,7 +431,7 @@ async function executar() {
     .getByRole("button", { name: "Editar tarefa", exact: true })
     .waitFor();
   await animacao
-    .locator('[data-task-id="1"]')
+    .locator(`[data-task-id="${primeira}"]`)
     .getByText("Revalidação confirmada", { exact: true })
     .waitFor();
   assert.equal(await quadroLogo(), "0px");

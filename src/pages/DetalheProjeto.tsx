@@ -7,6 +7,7 @@ import {
   listarProjetos,
   ErroApi,
 } from "../api";
+import { ordenarTarefas } from "../derivar";
 import { CartaoTarefa } from "../components/CartaoTarefa";
 import { AcaoCabecalho } from "../components/Cabecalho";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
@@ -192,7 +193,7 @@ export function DetalheProjeto() {
                 />
               ) : (
                 <div className="e-list">
-                  {tarefas.map((tarefa) => (
+                  {ordenarTarefas(tarefas).map((tarefa) => (
                     <CartaoTarefa
                       key={tarefa.id}
                       tarefa={tarefa}
