@@ -5,11 +5,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, TrashIcon } from "../design/icon";
-import {
-  formatarData,
-  formatarPrazoCartao,
-  prazoVencido,
-} from "../design/formatos";
+import { formatarData, formatarPrazoCartao } from "../design/formatos";
 import { SeloPrioridade } from "./Selos";
 import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
@@ -122,7 +118,6 @@ export function CartaoTarefa({
       </Dropdown.Root>
     </div>
   );
-  const vencido = !concluida && prazoVencido(tarefa.prazo);
   const pessoaPrazo = (
     <>
       <span className="e-card-pessoa">{tarefa.responsavel}</span>
@@ -130,11 +125,10 @@ export function CartaoTarefa({
         ·
       </span>
       <time
-        className={`e-card-prazo${vencido ? " e-card-vencido" : ""}`}
+        className="e-card-prazo"
         dateTime={tarefa.prazo}
         title={`Prazo: ${formatarData(tarefa.prazo, true)}`}
       >
-        {vencido ? "Venceu " : ""}
         {formatarPrazoCartao(tarefa.prazo)}
       </time>
     </>
