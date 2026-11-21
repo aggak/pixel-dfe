@@ -568,7 +568,12 @@ async function executar() {
   for (const caminho of ["/", "/quadro", `/projetos/${alvo.projetoId}`]) {
     await page.goto(`${web}${caminho}`);
     await cartao(alvo.id).waitFor();
-    const antes = await page.locator("[data-task-id]").count();
+    const pendentes = page.locator("[data-task-id]:not(.e-task-done)");
+    const alvoPendente = !(await cartao(alvo.id).getAttribute("class"))
+      ?.split(" ")
+      .includes("e-task-done");
+    const antes = (await pendentes.count()) - (alvoPendente ? 1 : 0);
+    const total = parseInt(await rodape.innerText(), 10);
     const url = `${api}/tarefas/${alvo.id}`;
     await page.route(url, (rota) =>
       rota.request().method() === "PATCH"
@@ -587,8 +592,8 @@ async function executar() {
       await aviso.innerText(),
       `“${alvo.titulo}” não existe mais. Ela pode ter sido excluída.`,
     );
-    assert.equal(await page.locator("[data-task-id]").count(), antes - 1);
-    assert.equal(await rodape.innerText(), textoTotal(antes - 1));
+    assert.equal(await pendentes.count(), antes);
+    assert.equal(await rodape.innerText(), textoTotal(total - 1));
     await page.waitForFunction(() =>
       document.activeElement?.matches("main [role=alert]"),
     );

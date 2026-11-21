@@ -7,7 +7,8 @@ import { agruparPorStatus } from "../derivar";
 import { statusTexto } from "../design/formatos";
 import { Icon } from "../design/icon";
 import { soltarTarefa, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
-import type { Status } from "../tipos";
+import type { Status, Tarefa } from "../tipos";
+import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
 
 const iconesStatus: Record<Status, string> = {
   "a-fazer": "circle",
@@ -42,36 +43,56 @@ function Coluna({ status, children }: { status: Status; children: ReactNode }) {
   );
 }
 
+function Quadro({
+  tarefas,
+  cartao,
+  todasTarefas,
+}: {
+  tarefas: Tarefa[];
+  cartao: (tarefa: Tarefa, variante?: "lista" | "quadro") => ReactNode;
+  todasTarefas: Tarefa[];
+}) {
+  const { recortar } = useConcluidasRecolhidas(todasTarefas);
+  return (
+    <section className="e-board" aria-label="Quadro de tarefas por status">
+      {agruparPorStatus(tarefas).map((coluna) => {
+        const { visiveis, botao } =
+          coluna.status === "concluida"
+            ? recortar(coluna.tarefas)
+            : { visiveis: coluna.tarefas, botao: null };
+        return (
+          <Coluna key={coluna.status} status={coluna.status}>
+            <h2>
+              <span className="e-column-name">
+                <Icon name={iconesStatus[coluna.status]} />
+                <span>{statusTexto[coluna.status]}</span>
+              </span>
+              <Badge type="modern" color="gray" size="sm">
+                {coluna.tarefas.length}
+              </Badge>
+            </h2>
+            {visiveis.map((tarefa) => cartao(tarefa, "quadro"))}
+            {botao}
+            {coluna.tarefas.length === 0 && (
+              <p className="e-column-empty">
+                <GatinhoLavando />
+                {todasTarefas.some((tarefa) => tarefa.status === coluna.status)
+                  ? "Nenhuma tarefa encontrada"
+                  : "Nenhuma tarefa"}
+              </p>
+            )}
+          </Coluna>
+        );
+      })}
+    </section>
+  );
+}
+
 export function QuadroTarefas() {
   return (
     <VisaoTarefas titulo="Quadro" classeConteudo="e-content e-board-content">
       {(tarefas, cartao, todasTarefas) => (
-        <section className="e-board" aria-label="Quadro de tarefas por status">
-          {agruparPorStatus(tarefas).map((coluna) => (
-            <Coluna key={coluna.status} status={coluna.status}>
-              <h2>
-                <span className="e-column-name">
-                  <Icon name={iconesStatus[coluna.status]} />
-                  <span>{statusTexto[coluna.status]}</span>
-                </span>
-                <Badge type="modern" color="gray" size="sm">
-                  {coluna.tarefas.length}
-                </Badge>
-              </h2>
-              {coluna.tarefas.map((tarefa) => cartao(tarefa, "quadro"))}
-              {coluna.tarefas.length === 0 && (
-                <p className="e-column-empty">
-                  <GatinhoLavando />
-                  {todasTarefas.some(
-                    (tarefa) => tarefa.status === coluna.status,
-                  )
-                    ? "Nenhuma tarefa encontrada"
-                    : "Nenhuma tarefa"}
-                </p>
-              )}
-            </Coluna>
-          ))}
-        </section>
+        <Quadro tarefas={tarefas} cartao={cartao} todasTarefas={todasTarefas} />
       )}
     </VisaoTarefas>
   );
