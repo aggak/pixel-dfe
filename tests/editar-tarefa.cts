@@ -234,34 +234,43 @@ async function executar() {
   );
 
   await conferir(
-    "cancelar e fechar retornam ao detalhe sem gravar",
+    "fechar a edição a partir do detalhe volta à tela de origem sem gravar",
     async () => {
       const antes = await lerBanco();
       gravacoes.length = 0;
-      for (const acao of ["Cancelar", "Fechar editar tarefa", "Escape"]) {
-        await abrir();
+      const id = "4";
+      const cartao = page.locator(`[data-task-id="${id}"] .e-task-title`);
+      const detalhe = page.getByRole("dialog", {
+        name: "Detalhes da tarefa",
+        exact: true,
+      });
+      for (const [destino, acao] of [
+        ["/", "Fechar editar tarefa"],
+        ["/quadro", "Escape"],
+        ["/projetos/1", "Cancelar"],
+      ]) {
+        await page.goto(`${origem}${destino}`);
+        await cartao.click();
+        await detalhe.getByRole("button", { name: "Editar tarefa" }).click();
+        await esperarFormulario(id);
         await campo("Título").fill("Alteração cancelada");
         if (acao === "Escape") await page.keyboard.press("Escape");
         else
           await page.getByRole("button", { name: acao, exact: true }).click();
-        await ate(
-          `detalhe após ${acao}`,
-          async () => caminho() === "/tarefas/1",
+        await page.waitForURL((url) => url.pathname === destino);
+        await page.getByRole("dialog").waitFor({ state: "detached" });
+        await cartao.waitFor();
+        await ate(`foco no cartão após ${acao}`, () =>
+          cartao.evaluate((elemento) => elemento === document.activeElement),
         );
-        await page
-          .getByRole("dialog", { name: "Detalhes da tarefa", exact: true })
-          .waitFor();
-        assert.equal(await page.locator("form").count(), 0);
       }
-      await page.keyboard.press("Escape");
-      await ate("lista após segundo Escape", async () => caminho() === "/");
       assert.equal(gravacoes.length, 0);
       assert.deepEqual(await lerBanco(), antes);
     },
   );
 
   await conferir(
-    "clique fora: sem alteração volta ao detalhe; com alteração fica na edição com os valores",
+    "clique fora: sem alteração volta à lista; com alteração fica na edição com os valores",
     async () => {
       const fora = async () => {
         await ate(
@@ -275,12 +284,10 @@ async function executar() {
       await abrir();
       await fora();
       await ate(
-        "detalhe após clique fora sem alteração",
-        async () => caminho() === "/tarefas/1",
+        "lista após clique fora sem alteração",
+        async () => caminho() === "/",
       );
-      await page
-        .getByRole("dialog", { name: "Detalhes da tarefa", exact: true })
-        .waitFor();
+      await page.getByRole("dialog").waitFor({ state: "detached" });
       const dados = await abrir();
       const outroStatus =
         dados.status === "concluida" ? "A fazer" : "Concluída";
@@ -316,8 +323,8 @@ async function executar() {
       assert.equal(await campo("Título").inputValue(), "Rascunho mantido");
       await page.getByRole("button", { name: "Cancelar", exact: true }).click();
       await ate(
-        "Cancelar segue voltando ao detalhe",
-        async () => caminho() === "/tarefas/1",
+        "Cancelar volta à lista",
+        async () => caminho() === "/",
       );
       assert.equal(gravacoes.length, 0);
     },

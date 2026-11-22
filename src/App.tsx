@@ -146,7 +146,7 @@ function App() {
       : projeto
         ? "Projeto"
         : "Tarefa";
-  const destinoFechar = editando
+  const destinoFechar = editando && projeto
     ? caminho.replace(/\/editar$/i, "")
     : tarefaNova
       ? (fundo.pathname.replace(/\/+$/, "") || "/").toLowerCase() === "/quadro"

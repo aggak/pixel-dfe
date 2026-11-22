@@ -399,12 +399,11 @@ async function executar() {
   await page
     .getByRole("button", { name: "Fechar editar tarefa", exact: true })
     .click();
-  await ficha()
-    .getByRole("heading", { name: "Tarefa com id misto", exact: true })
-    .waitFor();
-  assert.equal(new URL(page.url()).pathname, "/Tarefas/AbC");
+  await ficha().waitFor({ state: "detached" });
+  await page.waitForURL(`${web}/`);
+  await page.getByRole("region", { name: "Lista de tarefas" }).waitFor();
   console.log(
-    "OK: /Tarefas/AbC/Editar preserva o id e fechar volta ao detalhe",
+    "OK: /Tarefas/AbC/Editar preserva o id e fechar volta à lista",
   );
 
   await page.goto(`${web}/Tarefas/6`);

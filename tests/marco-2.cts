@@ -401,7 +401,7 @@ async function executar() {
         [
           "/tarefas/1/editar",
           "Editar tarefa",
-          "Criar o repositório",
+          "Tarefas",
           "Editar: Criar o repositório",
         ],
         ["/projetos/novo", "Novo projeto", "Projetos"],
@@ -486,12 +486,11 @@ async function executar() {
         .click();
       await conferirTitulo("Editar: Criar o repositório");
       await page.keyboard.press("Escape");
-      await conferirTitulo("Criar o repositório");
-      await page.waitForFunction(() =>
-        Boolean(document.activeElement?.closest('[role="dialog"]')),
-      );
-      await page.keyboard.press("Escape");
       await ficha().waitFor({ state: "detached" });
+      await conferirTitulo("Gerenciador de Tarefas");
+      await page.goForward();
+      await conferirTitulo("Editar: Criar o repositório");
+      await page.goBack();
       await conferirTitulo("Gerenciador de Tarefas");
     },
   );
