@@ -120,29 +120,38 @@ function Quadro({
         : tarefa,
     );
   const todas = aplicar(todasTarefas);
-  const { recortar, abertas } = useConcluidasRecolhidas(todasTarefas);
+  const { recortar, abertas, posicionadas, definirPosicionadas } =
+    useConcluidasRecolhidas(todasTarefas);
   const soltar = (
     id: string,
     status: Status,
     ancora: Ancora,
     statusSalvo: Promise<boolean>,
   ) => {
-    const ids = ordenarPorOrdem(
-      todas.filter((tarefa) => tarefa.status === status && tarefa.id !== id),
-    ).map((tarefa) => tarefa.id);
+    const coluna = ordenarPorOrdem(
+      todas.filter((tarefa) => tarefa.status === status),
+    );
+    const concluidaAberta = status === "concluida" && abertas;
+    const ordenadas = concluidaAberta ? recortar(coluna).visiveis : coluna;
+    const ids = ordenadas.map((tarefa) => tarefa.id).filter((tid) => tid !== id);
     const ancorada = ancora.antes ?? ancora.depois;
     const posicao = ancorada ? ids.indexOf(ancorada) : -1;
-    ids.splice(
-      posicao < 0 ? ids.length : ancora.antes ? posicao : posicao + 1,
-      0,
-      id,
-    );
+    const indice =
+      posicao < 0 ? ids.length : ancora.antes ? posicao : posicao + 1;
+    ids.splice(indice, 0, id);
     const anteriores = new Map(
       todas.map((tarefa) => [tarefa.id, tarefa.ordem]),
     );
     const mudadas = ids.flatMap((tid, ordem) =>
       anteriores.get(tid) === ordem ? [] : [[tid, ordem] as const],
     );
+    if (concluidaAberta)
+      void statusSalvo.then((salvo) => {
+        if (salvo)
+          definirPosicionadas(
+            ids.filter((tid, i) => i >= indice || posicionadas.includes(tid)),
+          );
+      });
     if (mudadas.length === 0) return;
     const minha = ++rodada.current;
     setFalhaOrdem(false);
@@ -176,6 +185,7 @@ function Quadro({
     minha: number,
   ) => {
     if (rodada.current !== minha) return;
+    definirPosicionadas(posicionadas);
     setOrdemLocal((atual) => {
       const proxima = { ...atual };
       for (const [tid] of mudadas) {

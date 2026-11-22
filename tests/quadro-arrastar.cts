@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 
 const { criarApoio } = require("./apoio.cts");
+const { criarEsperas } = require("./ui.cts");
 const apoio = criarApoio();
 
 async function executar() {
@@ -186,6 +187,83 @@ async function executar() {
   await page.locator(".e-row").first().waitFor();
   assert.equal(await page.locator('.e-row[draggable="true"]').count(), 0);
   console.log("OK: lista não fica arrastável");
+
+  const [a, b, c, d, e] = seed.tarefas.map((t) => t.id);
+  for (const [ordem, id] of [a, b, c, d, e].entries()) {
+    const resposta = await fetch(`${api}/tarefas/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ordem,
+        status: ordem < 3 ? "concluida" : "a-fazer",
+      }),
+    });
+    assert.ok(resposta.ok);
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`${web}/quadro`);
+  await cartao(d).locator("[data-status-trigger]").click();
+  await page
+    .getByRole("menuitemradio", { name: "Concluída", exact: true })
+    .click();
+  await coluna("concluida").locator(`[data-task-id="${d}"]`).waitFor();
+  assert.deepEqual(await idsNaColuna("concluida"), [d, a, b]);
+  const mostrarTodas = page.getByRole("button", {
+    name: /Mostrar todas as concluídas/,
+  });
+  await mostrarTodas.click();
+  assert.deepEqual(await idsNaColuna("concluida"), [d, a, b, c]);
+
+  const esperas = criarEsperas(page);
+  const soltarAntesDeC = (id) =>
+    cartao(id).dragTo(cartao(c), {
+      ...PEGAR,
+      targetPosition: { x: 24, y: 4 },
+    });
+  await page.route(`${api}/tarefas/*`, (rota) =>
+    rota.request().method() === "PATCH"
+      ? rota.fulfill({ status: 500, body: "{}" })
+      : rota.continue(),
+  );
+  await Promise.all([
+    page.waitForResponse(`${api}/tarefas`),
+    soltarAntesDeC(d),
+  ]);
+  await alertaOrdem.waitFor();
+  await esperas.assentar();
+  assert.deepEqual(await idsNaColuna("concluida"), [d, a, b, c]);
+  await page.unroute(`${api}/tarefas/*`);
+
+  const urlAncora = `${api}/tarefas/${c}`;
+  for (const [id, esperada] of [
+    [d, [a, b, d, c]],
+    [e, [a, b, d, e, c]],
+  ]) {
+    const ordemPendente = await esperas.segurar(urlAncora, { metodo: "PATCH" });
+    await Promise.all([
+      page.waitForRequest(urlAncora),
+      page.waitForResponse(
+        (resposta) =>
+          resposta.url() === `${api}/tarefas/${id}` &&
+          resposta.request().method() === "PATCH" &&
+          "ordem" in resposta.request().postDataJSON() &&
+          resposta.ok(),
+      ),
+      soltarAntesDeC(id),
+    ]);
+    await esperas.assentar();
+    assert.deepEqual(await idsNaColuna("concluida"), esperada);
+    await ordemPendente.liberar();
+    await page.unroute(urlAncora);
+    assert.deepEqual(await idsNaColuna("concluida"), esperada);
+    assert.deepEqual(await ordemSalva("concluida"), esperada);
+    await page.reload();
+    await mostrarTodas.click();
+    assert.deepEqual(await idsNaColuna("concluida"), esperada);
+  }
+  console.log(
+    "OK: arrastes dentro e para o meio da Concluída expandida mantêm a posição após recarregar",
+  );
 
   assert.deepEqual(errosJs, []);
   console.log("Cenários de arrastar no quadro aprovados.");
