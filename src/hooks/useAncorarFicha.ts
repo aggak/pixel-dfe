@@ -1,6 +1,6 @@
 import { useLayoutEffect, type RefObject } from "react";
 
-export type LugarFicha = "quadro";
+export type LugarFicha = "quadro" | "lista";
 
 const DESKTOP =
   "(min-width: 1024px) and (min-height: 501px) and (pointer: fine)";
@@ -25,6 +25,104 @@ function soltar(modal: HTMLElement) {
   modal.removeAttribute("data-ancorada-sem-espaco");
   for (const nome of ["--ficha-x", "--ficha-y", "--ficha-topo"])
     modal.style.removeProperty(nome);
+}
+
+function fimDoTexto(linha: HTMLElement) {
+  const trecho = document.createRange();
+  let fim = linha.getBoundingClientRect().left;
+  for (const parte of linha.querySelectorAll(
+    ".e-task-title, .e-task-meta, .e-task-error",
+  )) {
+    trecho.selectNodeContents(parte);
+    fim = Math.max(fim, trecho.getBoundingClientRect().right);
+  }
+  return fim;
+}
+
+function ancorarLista(modal: HTMLElement, seletor: string) {
+  const pagina = document.documentElement;
+  let alvos: (HTMLElement | null)[] = [];
+  const tamanho = new ResizeObserver(medir);
+  tamanho.observe(modal, { box: "border-box" });
+
+  function medir() {
+    const linha = document.querySelector<HTMLElement>(
+      `main .e-list .e-row${seletor}`,
+    );
+    const area =
+      linha?.closest<HTMLElement>(".e-list") ??
+      document.querySelector<HTMLElement>("main .e-list") ??
+      document.querySelector<HTMLElement>("main .e-content");
+    const novos = [area, linha];
+    if (novos.some((alvo, i) => alvo !== alvos[i])) {
+      for (const alvo of alvos) if (alvo) tamanho.unobserve(alvo);
+      for (const alvo of novos)
+        if (alvo) tamanho.observe(alvo, { box: "border-box" });
+      alvos = novos;
+    }
+
+    const largura = modal.offsetWidth;
+    const altura = modal.offsetHeight;
+    const topo = fimDoCabecalho();
+    const teto = topo + VAO;
+    const chao = window.innerHeight - MARGEM;
+    const caixa = area?.getBoundingClientRect();
+    const inicio = Math.max(teto, caixa?.top ?? teto);
+    const fim = Math.min(chao, caixa?.bottom ?? chao);
+
+    let x =
+      ((caixa?.left ?? 0) + (caixa?.right ?? pagina.clientWidth) - largura) / 2;
+    let y =
+      (fim > inicio ? (inicio + fim) / 2 : (teto + chao) / 2) - altura / 2;
+    if (linha) {
+      const corpo = linha.getBoundingClientRect();
+      if (corpo.bottom > topo && corpo.top < window.innerHeight) {
+        const texto = fimDoTexto(linha);
+        const selos =
+          linha.querySelector(".e-task-tags")?.getBoundingClientRect().left ??
+          corpo.right;
+        if (selos - texto >= largura) {
+          x = (texto + selos - largura) / 2;
+          y = (corpo.top + corpo.bottom - altura) / 2;
+        } else {
+          const abaixo = corpo.bottom + VAO;
+          const acima = corpo.top - VAO - altura;
+          y =
+            abaixo + altura - chao <= Math.max(0, teto - acima)
+              ? abaixo
+              : acima;
+        }
+      }
+    }
+
+    escreverPx(modal, "--ficha-x", limitar(x, pagina.clientWidth - largura));
+    escreverPx(modal, "--ficha-y", Math.max(teto, Math.min(y, chao - altura)));
+    escreverPx(modal, "--ficha-topo", topo);
+    if (!modal.hasAttribute("data-ancorada"))
+      modal.setAttribute("data-ancorada", "");
+  }
+
+  const mudancas = new MutationObserver(medir);
+  const raiz = document.getElementById("root");
+  if (raiz)
+    mudancas.observe(raiz, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  window.addEventListener("resize", medir);
+  window.addEventListener("scroll", medir, { passive: true });
+  document.fonts.addEventListener("loadingdone", medir);
+  medir();
+
+  return () => {
+    mudancas.disconnect();
+    tamanho.disconnect();
+    window.removeEventListener("resize", medir);
+    window.removeEventListener("scroll", medir);
+    document.fonts.removeEventListener("loadingdone", medir);
+    soltar(modal);
+  };
 }
 
 function ancorarQuadro(modal: HTMLElement, seletor: string) {
@@ -117,7 +215,10 @@ export function useAncorarFicha(
       delete modal.dataset.lugar;
       if (!desktop.matches) return;
       modal.dataset.lugar = lugar;
-      parar = ancorarQuadro(modal, seletor);
+      parar =
+        lugar === "quadro"
+          ? ancorarQuadro(modal, seletor)
+          : ancorarLista(modal, seletor);
     };
     desktop.addEventListener("change", atualizar);
     atualizar();
