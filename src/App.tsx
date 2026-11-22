@@ -19,7 +19,12 @@ import { QuadroTarefas } from "./pages/QuadroTarefas";
 import { DetalheTarefa } from "./pages/DetalheTarefa";
 import { ErroCarregamento, Layout } from "./components/Layout";
 import { Ficha } from "./components/Ficha";
-import { ehRotaFicha, type EstadoFicha } from "./components/ficha-contexto";
+import {
+  ContextoTarefaAberta,
+  ehRotaFicha,
+  tarefaDaFicha,
+  type EstadoFicha,
+} from "./components/ficha-contexto";
 import { ListaProjetos } from "./pages/ListaProjetos";
 import { DetalheProjeto } from "./pages/DetalheProjeto";
 import { GatinhoCostas } from "./components/GatinhoCostas";
@@ -150,7 +155,7 @@ function App() {
         ? "/projetos"
         : fundo.pathname + fundo.search;
   return (
-    <>
+    <ContextoTarefaAberta.Provider value={tarefaDaFicha(caminho)}>
       <ContextoTentativaFundo.Provider value={tentativaFundo}>
         <ContextoPaginaAtiva.Provider value={!ficha}>
           <ContextoAtualizacao.Provider
@@ -266,7 +271,7 @@ function App() {
           </Ficha>
         </ContextoAoTentarDeNovo.Provider>
       )}
-    </>
+    </ContextoTarefaAberta.Provider>
   );
 }
 export default App;

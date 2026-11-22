@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useDrag } from "react-aria-components";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
@@ -11,6 +11,7 @@ import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { useSeletorStatus } from "../hooks/useSeletorStatus";
 import { ouvirSoltura, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
+import { ContextoTarefaAberta } from "./ficha-contexto";
 
 export function CartaoTarefa({
   tarefa,
@@ -26,6 +27,7 @@ export function CartaoTarefa({
   onExcluir: (tarefa: Tarefa) => Promise<void>;
 }) {
   const [confirmando, setConfirmando] = useState(false);
+  const fichaAberta = useContext(ContextoTarefaAberta) === tarefa.id;
   const location = useLocation();
   const navigate = useNavigate();
   const caminho = `/tarefas/${encodeURIComponent(tarefa.id)}`;
@@ -139,6 +141,7 @@ export function CartaoTarefa({
       ref={raiz}
       className={classe}
       data-task-id={tarefa.id}
+      data-ficha-aberta={fichaAberta || undefined}
     >
       {emQuadro ? (
         <div className="e-task-main">
