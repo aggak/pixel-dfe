@@ -95,11 +95,11 @@ async function executar() {
     async () => {
       await page.clock.setFixedTime(new Date("2026-11-12T12:00:00"));
       const casos = [
-        ["2020-01-05", "a-fazer", "5 jan 2020"],
-        ["2026-11-11", "em-andamento", "11 nov"],
-        ["2027-01-10", "em-revisao", "10 jan 2027"],
-        ["2026-11-12", "a-fazer", "12 nov"],
-        ["2020-01-05", "concluida", "5 jan 2020"],
+        ["2020-01-05", "a-fazer", "5 jan 2020", "Venceu há 2503 dias, num domingo"],
+        ["2026-11-11", "em-andamento", "11 nov", "Venceu ontem, numa quarta-feira"],
+        ["2027-01-10", "em-revisao", "10 jan 2027", "Faltam 59 dias, cai num domingo"],
+        ["2026-11-12", "a-fazer", "12 nov", "Vence hoje, numa quinta-feira"],
+        ["2020-01-05", "concluida", "5 jan 2020", "Prazo num domingo"],
       ];
       const tarefas = casos.map(([prazo, status], i) => ({
         ...seed.tarefas[0],
@@ -138,7 +138,7 @@ async function executar() {
           );
         }
       }
-      for (const tarefa of tarefas) {
+      for (const [i, tarefa] of tarefas.entries()) {
         await abrir(`/tarefas/${tarefa.id}`);
         const prazo = ficha().locator("time");
         const extensa = new Intl.DateTimeFormat("pt-BR", {
@@ -146,7 +146,18 @@ async function executar() {
           month: "long",
           year: "numeric",
         }).format(new Date(`${tarefa.prazo}T12:00:00`));
-        assert.equal(await prazo.textContent(), extensa);
+        const frase = casos[i][3];
+        assert.equal(
+          await prazo.textContent(),
+          tarefa.status === "concluida"
+            ? `${frase}, ${extensa}`
+            : `Prazo: ${extensa}. ${frase}`,
+        );
+        assert.equal(
+          await ficha().getByText(extensa).count(),
+          1,
+          "a data não se repete na ficha",
+        );
         assert.equal(await prazo.getAttribute("datetime"), tarefa.prazo);
         assert.ok((await ficha().ariaSnapshot()).includes(extensa));
       }

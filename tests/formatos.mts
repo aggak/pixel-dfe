@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
-import { dataValida, formatarPrazoCartao } from "../src/design/formatos.ts";
+import {
+  dataValida,
+  diasAtePrazo,
+  formatarPrazoCartao,
+  lerPrazo,
+} from "../src/design/formatos.ts";
 import { TEMAS, temasDosProjetos } from "../src/design/temas-felinos.ts";
 
 const projeto = (id: string, criadoEm = "2026-08-10") => ({
@@ -89,6 +94,42 @@ try {
   }
   console.log(
     "OK: prazo compacto inclui outro ano e usa o ano local na virada",
+  );
+  for (const fuso of ["UTC", "America/Sao_Paulo", "Pacific/Kiritimati"]) {
+    process.env.TZ = fuso;
+    const hoje = new Date(2026, 10, 12, 23, 30);
+    for (const [iso, concluida, dias, estado, frase] of [
+      ["2020-01-05", false, -2503, "atrasada", "Venceu há 2503 dias, num domingo"],
+      ["2026-11-10", false, -2, "atrasada", "Venceu há 2 dias, numa terça-feira"],
+      ["2026-11-11", false, -1, "atrasada", "Venceu ontem, numa quarta-feira"],
+      ["2026-11-12", false, 0, "perto", "Vence hoje, numa quinta-feira"],
+      ["2026-11-13", false, 1, "perto", "Vence amanhã, numa sexta-feira"],
+      ["2026-11-14", false, 2, "perto", "Faltam 2 dias, cai num sábado"],
+      ["2026-11-15", false, 3, "longe", "Faltam 3 dias, cai num domingo"],
+      ["2026-11-11", true, -1, "concluida", "Prazo numa quarta-feira"],
+    ] as const) {
+      assert.equal(diasAtePrazo(iso, hoje), dias, `${fuso}: dias até ${iso}`);
+      const [, mes, dia] = iso.split("-").map(Number);
+      assert.deepEqual(
+        lerPrazo(iso, concluida, hoje),
+        { dia, mes: mes - 1, estado, frase },
+        `${fuso}: prazo ${iso}`,
+      );
+    }
+    // Anos de dois dígitos continuam no próprio século.
+    assert.equal(
+      diasAtePrazo("0099-12-31", hoje),
+      Math.round((Date.parse("0099-12-31") - Date.UTC(2026, 10, 12)) / 864e5),
+    );
+    assert.equal(
+      lerPrazo("0099-12-31", true, hoje)?.frase,
+      "Prazo numa quinta-feira",
+    );
+    assert.equal(diasAtePrazo("2026-02-30", hoje), undefined);
+    assert.equal(lerPrazo("inválido", false, hoje), undefined);
+  }
+  console.log(
+    "OK: a frase do prazo conta dias corridos no dia local e lê o ISO em UTC, inclusive nos anos 0000 a 0099",
   );
 } finally {
   if (fusoOriginal === undefined) delete process.env.TZ;

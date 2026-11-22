@@ -127,6 +127,8 @@ async function executar() {
               ".e-resumo-data",
               ".e-read-project>a",
               ".e-read-meta p",
+              ".fol-prazo",
+              ".fol-quem",
               ".e-confirm-dialog>p",
               ".e-panel-scroll",
             ];
@@ -143,10 +145,18 @@ async function executar() {
                   caixa.left < -1
                 )
                   problemas.push(`${seletor}: fora do contêiner`);
+                // O texto só para leitor de tela (.sr-only) não ocupa lugar.
                 const texto = document.createRange();
-                texto.selectNodeContents(el);
+                const nos = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+                const retangulos = [];
+                while (nos.nextNode()) {
+                  if (nos.currentNode.parentElement.closest(".sr-only"))
+                    continue;
+                  texto.selectNodeContents(nos.currentNode);
+                  retangulos.push(...texto.getClientRects());
+                }
                 if (
-                  [...texto.getClientRects()].some(
+                  retangulos.some(
                     (r) => r.right > caixa.right + 1 || r.left < caixa.left - 1,
                   )
                 )
@@ -687,7 +697,11 @@ async function executar() {
     await aba.setViewportSize({ width: 375, height: 800 });
     for (const [caminho, seletor, vizinhos] of [
       ["/projetos", ".e-project-card h2 a", [".e-project-card > p"]],
-      ["/tarefas/1", ".e-read-project > a", [".e-read-title", ".e-read-tags"]],
+      [
+        "/tarefas/1",
+        ".e-read-project > a",
+        [".fol-prazo", ".e-read-tags", ".fol-quem", ".e-read-description"],
+      ],
     ]) {
       await prepararFonte(aba, fonte, caminho);
       const sobreposto = await aba.evaluate(
@@ -701,6 +715,8 @@ async function executar() {
           const anel = {
             top: caixa.top - margem,
             bottom: caixa.bottom + margem,
+            left: caixa.left - margem,
+            right: caixa.right + margem,
           };
           return vizinhos
             .map((vizinho) => [
@@ -712,7 +728,10 @@ async function executar() {
             ])
             .filter(
               ([, outro]) =>
-                anel.bottom > outro.top + 0.5 && anel.top < outro.bottom - 0.5,
+                anel.bottom > outro.top + 0.5 &&
+                anel.top < outro.bottom - 0.5 &&
+                anel.right > outro.left + 0.5 &&
+                anel.left < outro.right - 0.5,
             )
             .map(([vizinho]) => vizinho);
         },
