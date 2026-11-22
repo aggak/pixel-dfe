@@ -14,6 +14,7 @@ function useConcluidasRecentes(todasTarefas: Tarefa[]) {
     chave,
     total: todasTarefas.length,
     recentes: [] as string[],
+    posicionadas: [] as string[],
   });
   if (registro.chave !== chave) {
     const antes = new Set(registro.chave.split(","));
@@ -26,15 +27,25 @@ function useConcluidasRecentes(todasTarefas: Tarefa[]) {
         ...entraram,
         ...registro.recentes.filter((id) => ids.includes(id)),
       ],
+      posicionadas: registro.posicionadas.filter((id) => ids.includes(id)),
     });
   }
-  return registro.recentes;
+  const definirPosicionadas = (posicionadas: string[]) =>
+    setRegistro((atual) => ({ ...atual, posicionadas }));
+  return {
+    recentes: registro.recentes.filter(
+      (id) => !registro.posicionadas.includes(id),
+    ),
+    posicionadas: registro.posicionadas,
+    definirPosicionadas,
+  };
 }
 
 export function useConcluidasRecolhidas(todasTarefas: Tarefa[]) {
   const { filtros } = useFiltros();
   const [abertas, setAbertas] = useState(false);
-  const recentes = useConcluidasRecentes(todasTarefas);
+  const { recentes, posicionadas, definirPosicionadas } =
+    useConcluidasRecentes(todasTarefas);
   const recortar = (concluidas: Tarefa[]) => {
     if (
       filtros.status === "concluida" ||
@@ -71,5 +82,5 @@ export function useConcluidasRecolhidas(todasTarefas: Tarefa[]) {
       ),
     };
   };
-  return { recortar, abertas };
+  return { recortar, abertas, posicionadas, definirPosicionadas };
 }
