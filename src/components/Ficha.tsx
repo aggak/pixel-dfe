@@ -224,7 +224,8 @@ export function Ficha({
     setAberta(false);
   }
   const fechar = () => {
-    if (!ocupada) navegar(destinoFechar);
+    if (!ocupada && !document.querySelector(".e-splash"))
+      navegar(destinoFechar);
   };
   return (
     <ContextoFicha.Provider
