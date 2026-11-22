@@ -178,10 +178,14 @@ async function executar() {
     .split(", ")
     .sort();
   assert.deepEqual(pacotesNotices, pacotesLicencas);
-  assert.ok(
-    pacotesLicencas.includes("react-router"),
-    "react-router ausente de RUNTIME_LICENSES.txt",
+  const { dependencies } = JSON.parse(
+    await readFile(join(raiz, "package.json"), "utf8"),
   );
+  for (const pacote of Object.keys(dependencies))
+    assert.ok(
+      pacotesLicencas.includes(pacote),
+      `${pacote} ausente de RUNTIME_LICENSES.txt`,
+    );
   assert.match(notices, /RUNTIME_LICENSES\.txt/);
   const js = producao.lista.filter((arquivo) => arquivo.endsWith(".js"));
   const css = producao.lista.filter(
@@ -693,9 +697,7 @@ async function executar() {
     await page.waitForTimeout(100);
   await ui.preencherTarefa(comTextos(novaTarefa, projetos));
   gravacoes.length = 0;
-  await page
-    .getByRole("button", { name: "Salvar", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Salvar", exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/");
   await lista
     .getByRole("link", { name: novaTarefa.titulo, exact: true })
