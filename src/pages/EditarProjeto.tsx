@@ -44,8 +44,12 @@ export function EditarProjeto() {
 
   async function salvar(dados: DadosProjeto) {
     const controller = controllerRef.current;
-    if (!controller || controller.signal.aborted) return;
-    await atualizarProjeto(id, dados, controller.signal);
+    if (!controller || controller.signal.aborted || !projeto) return;
+    const alteracoes: Partial<DadosProjeto> = { ...dados };
+    for (const campo of Object.keys(dados) as (keyof DadosProjeto)[]) {
+      if (dados[campo] === projeto[campo]) delete alteracoes[campo];
+    }
+    await atualizarProjeto(id, alteracoes, controller.signal);
     if (!controller.signal.aborted)
       navegar(
         voltarPara,

@@ -207,6 +207,33 @@ async function executar() {
   );
 
   await conferir(
+    "editar só o título preserva o status gravado após a abertura do formulário",
+    async () => {
+      const tarefa = await abrir("4");
+      const titulo = "Título atualizado";
+      await campo("Título").fill(`  ${titulo}  `);
+      const status = "em-revisao";
+      assert.notEqual(tarefa.status, status);
+      const resposta = await page.request.patch(`${api}/tarefas/4`, {
+        data: { status },
+      });
+      assert.equal(resposta.ok(), true);
+      gravacoes.length = 0;
+      await salvar().click();
+      await page.getByRole("heading", { name: titulo, exact: true }).waitFor();
+      assert.deepEqual(gravacoes, [
+        { metodo: "PATCH", caminho: "/tarefas/4", dados: { titulo } },
+      ]);
+      const db = await lerBanco();
+      assert.deepEqual(db.tarefas.find((t) => t.id === "4"), {
+        ...tarefa,
+        titulo,
+        status,
+      });
+    },
+  );
+
+  await conferir(
     "cancelar e fechar retornam ao detalhe sem gravar",
     async () => {
       const antes = await lerBanco();
@@ -403,6 +430,7 @@ async function executar() {
       await assentar();
       assert.equal(caminho(), "/tarefas/1/editar");
       assert.equal(gravacoes.length, 1);
+      assert.deepEqual(gravacoes[0].dados, {});
       await envio.liberar();
       await ate(
         "detalhe após gravação",

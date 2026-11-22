@@ -713,6 +713,7 @@ async function executar() {
       await esperarEdicao("1");
       const descricao = "Descrição revisada pela página do projeto";
       await campo("Descrição").fill(descricao);
+      gravacoes.length = 0;
       await salvarEdicao().click();
       await ate(
         "retorno ao detalhe do projeto",
@@ -722,6 +723,9 @@ async function executar() {
         .locator("#project-details")
         .getByText(descricao, { exact: true })
         .waitFor();
+      assert.deepEqual(gravacoes, [
+        { metodo: "PATCH", caminho: "/projetos/1", dados: { descricao } },
+      ]);
       await ate("foco em Editar projeto", () =>
         page.evaluate(
           () =>
@@ -732,11 +736,15 @@ async function executar() {
       await page.goto(`${origem}/projetos`);
       await page.locator('[data-project-id="2"] .e-edit-project').click();
       await esperarEdicao("2");
+      gravacoes.length = 0;
       await salvarEdicao().click();
       await ate(
         "retorno ao detalhe do projeto",
         async () => caminho() === "/projetos/2",
       );
+      assert.deepEqual(gravacoes, [
+        { metodo: "PATCH", caminho: "/projetos/2", dados: {} },
+      ]);
       await ate("foco no título visível do projeto", () =>
         page.evaluate(
           () => document.activeElement === document.querySelector("main h1"),
