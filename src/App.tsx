@@ -20,6 +20,7 @@ import { DetalheTarefa } from "./pages/DetalheTarefa";
 import { ErroCarregamento, Layout } from "./components/Layout";
 import { Ficha } from "./components/Ficha";
 import {
+  chaveDoConteudo,
   ContextoTarefaAberta,
   ehRotaFicha,
   tarefaDaFicha,
@@ -158,11 +159,7 @@ function App() {
     <ContextoTarefaAberta.Provider value={tarefaDaFicha(caminho)}>
       <ContextoTentativaFundo.Provider value={tentativaFundo}>
         <ContextoPaginaAtiva.Provider value={!ficha}>
-          <ContextoAtualizacao.Provider
-            value={
-              (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key
-            }
-          >
+          <ContextoAtualizacao.Provider value={chaveDoConteudo(fundo)}>
             <Routes location={fundo}>
               <Route element={<Layout />}>
                 <Route path="/" element={<ListaTarefas />} />
