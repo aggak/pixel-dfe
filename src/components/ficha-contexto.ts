@@ -7,6 +7,20 @@ export function ehRotaFicha(caminho: string) {
     /^\/projetos\/(novo|[^/]+\/editar)\/?$/i.test(caminho)
   );
 }
+export function tarefaDaFicha(caminho: string) {
+  const id = /^\/tarefas\/(?!nova(?:\/|$))([^/]+)(?:\/editar)?\/?$/i.exec(
+    caminho,
+  )?.[1];
+  if (!id) return undefined;
+  try {
+    return decodeURIComponent(id);
+  } catch {
+    return id;
+  }
+}
+export const ContextoTarefaAberta = createContext<string | undefined>(
+  undefined,
+);
 export type EstadoFicha = { fundo?: Location; chaveConteudo?: string };
 type Navegacao = {
   navegar: (

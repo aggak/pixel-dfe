@@ -16,13 +16,20 @@ import {
 } from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
 import { useArrastarFicha } from "../hooks/useArrastarFicha";
-import { ContextoFicha, ehRotaFicha, type EstadoFicha } from "./ficha-contexto";
+import { useAncorarFicha } from "../hooks/useAncorarFicha";
+import {
+  ContextoFicha,
+  ehRotaFicha,
+  tarefaDaFicha,
+  type EstadoFicha,
+} from "./ficha-contexto";
 import {
   descartarRetorno,
   marcarRetorno,
   primeiroVisivel,
   retornoPendente,
 } from "../hooks/useRetornoFoco";
+import "./AncoragemFicha.css";
 
 function Presenca({
   aoSair,
@@ -94,6 +101,12 @@ export function Ficha({
     }
   }, [location.pathname]);
   const casca = useRef<HTMLDivElement>(null);
+  const rotaFundo = fundo.pathname.replace(/\/+$/, "").toLowerCase();
+  useAncorarFicha(
+    casca,
+    tarefaDaFicha(location.pathname),
+    rotaFundo === "/quadro" ? "quadro" : undefined,
+  );
   const ultimoFoco = useRef<HTMLElement | null>(null);
   const eraOcupada = useRef(false);
   useEffect(() => {
@@ -204,7 +217,9 @@ export function Ficha({
         className="e-form-overlay"
       >
         <Modal
-          className={classeModal ? `e-form-modal ${classeModal}` : "e-form-modal"}
+          className={
+            classeModal ? `e-form-modal ${classeModal}` : "e-form-modal"
+          }
         >
           <Dialog aria-label={titulo} className="e-form-dialog">
             <Presenca aoSair={concluirSaida}>

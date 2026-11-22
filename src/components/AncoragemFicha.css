@@ -1,0 +1,25 @@
+@media (min-width: 1024px) and (min-height: 501px) and (pointer: fine) {
+  .e-form-modal[data-lugar]:not(.e-ficha-compacta) {
+    --ficha-descida: clamp(89px, 17dvh, 150px);
+    margin-top: var(--ficha-descida);
+    margin-inline: auto;
+    max-height: calc(100dvh - var(--ficha-descida) - 36px) !important;
+  }
+  .e-form-modal[data-lugar][data-ancorada]:not(.e-ficha-compacta) {
+    position: fixed;
+    left: var(--ficha-x);
+    top: var(--ficha-y);
+    margin: 0;
+    max-height: calc(100dvh - 24px) !important;
+  }
+  .e-form-modal[data-lugar="quadro"][data-ancorada-sem-espaco]:not(
+      .e-ficha-compacta
+    ) {
+    max-height: calc(100dvh - var(--ficha-y) - 12px) !important;
+  }
+  .e-card[data-ficha-aberta] {
+    background-color: var(--e-mark);
+    outline: 2px solid var(--e-action);
+    outline-offset: -2px;
+  }
+}
