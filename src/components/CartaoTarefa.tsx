@@ -52,8 +52,8 @@ export function CartaoTarefa({
   const raiz = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!emQuadro) return;
-    return ouvirSoltura(({ id, status }) => {
-      if (id === tarefa.id) void mudar(status);
+    return ouvirSoltura(({ id, status, responder }) => {
+      if (id === tarefa.id) responder(mudar(status));
     });
   });
   const focarVizinho = () => {

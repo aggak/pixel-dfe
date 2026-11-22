@@ -17,18 +17,21 @@ export function useSeletorStatus(
   const enviando = useRef(false);
   const gatilho = useRef<HTMLButtonElement>(null);
   const mudar = async (status: Status) => {
-    if (status === tarefa.status || enviando.current) return;
+    if (status === tarefa.status) return true;
+    if (enviando.current) return false;
     enviando.current = true;
     setSalvando(true);
     setFalhou(false);
     try {
       await onMudarStatus(tarefa, status);
+      return true;
     } catch (erro) {
       setFalhou(
         erro instanceof ErroApi && erro.status === 404
           ? "inexistente"
           : "falha",
       );
+      return false;
     } finally {
       enviando.current = false;
       setSalvando(false);
