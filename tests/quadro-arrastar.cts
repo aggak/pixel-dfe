@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 
 const { criarApoio } = require("./apoio.cts");
+const { criarEsperas } = require("./ui.cts");
 const apoio = criarApoio();
 
 async function executar() {
@@ -13,6 +14,7 @@ async function executar() {
     viewport: { width: 1280, height: 900 },
   });
   const errosJs = [];
+  const { assentar, segurar } = criarEsperas(page);
   page.on("pageerror", (erro) => errosJs.push(erro));
   page.setDefaultTimeout(10000);
   const patches = [];
@@ -171,16 +173,42 @@ async function executar() {
   const salvaAntesDeSair = await ordemSalva("em-revisao");
   await page.locator('a[href="/projetos"]').first().click();
   await page.waitForURL("**/projetos");
-  await page.route(`${api}/tarefas*`, async (rota) => {
-    if (rota.request().method() === "GET")
-      await new Promise((pronto) => setTimeout(pronto, 1500));
-    await rota.continue();
-  });
+  const leitura = await segurar(`${api}/tarefas*`, { metodo: "GET" });
   await page.goBack();
   await coluna("em-revisao").locator("[data-task-id]").first().waitFor();
   assert.deepEqual(await idsNaColuna("em-revisao"), salvaAntesDeSair);
+  await leitura.liberar();
   await page.unroute(`${api}/tarefas*`);
   console.log("OK: voltar ao quadro mostra a ordem nova antes de recarregar");
+
+  const pendente = Promise.withResolvers();
+  await page.route(
+    `${api}/tarefas/${primeiro}`,
+    (rota) => pendente.resolve(rota),
+    { times: 1 },
+  );
+  await cartao(primeiro).dragTo(cartao(ultimo), {
+    ...PEGAR,
+    targetPosition: { x: 24, y: 4 },
+  });
+  const rotaOrdem = await pendente.promise;
+  assert.deepEqual(rotaOrdem.request().postDataJSON(), { ordem: 0 });
+  const respostaOrdem = await rotaOrdem.fetch();
+  assert.equal((await respostaOrdem.json()).status, "em-revisao");
+  await cartao(primeiro).locator("[data-status-trigger]").press("Enter");
+  await page
+    .getByRole("menuitemradio", { name: "A fazer", exact: true })
+    .click();
+  const movido = coluna("a-fazer").locator(`[data-task-id="${primeiro}"]`);
+  await movido.waitFor();
+  await rotaOrdem.fulfill({ response: respostaOrdem });
+  await (await rotaOrdem.request().response()).finished();
+  await assentar();
+  assert.equal((await lerTarefa(primeiro)).status, "a-fazer");
+  assert.equal(await movido.count(), 1);
+  console.log(
+    "OK: resposta de ordem atrasada preserva a coluna escolhida pelo seletor",
+  );
 
   await page.goto(`${web}/`);
   await page.locator(".e-row").first().waitFor();

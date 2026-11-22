@@ -15,10 +15,18 @@ import { movimentoReduzido } from "./useMovimento";
 import { ContextoPaginaAtiva } from "./useTituloPagina";
 
 const TAREFA_GRAVADA = "pixel:tarefa-gravada";
+const ORDEM_GRAVADA = "pixel:ordem-gravada";
 const TAREFA_EXCLUIDA = "pixel:tarefa-excluida";
+
+type OrdemGravada = Pick<Tarefa, "id" | "ordem">;
 
 export function avisarTarefaGravada(gravada: Tarefa) {
   window.dispatchEvent(new CustomEvent(TAREFA_GRAVADA, { detail: gravada }));
+}
+export function avisarOrdemGravada({ id, ordem }: OrdemGravada) {
+  window.dispatchEvent(
+    new CustomEvent(ORDEM_GRAVADA, { detail: { id, ordem } }),
+  );
 }
 export function avisarTarefaExcluida(excluida: Tarefa, inexistente = false) {
   window.dispatchEvent(
@@ -49,6 +57,12 @@ export function useMudarStatus(
         atuais.map((t) => (t.id === gravada.id ? gravada : t)),
       );
     };
+    const aplicarOrdem = (evento: Event) => {
+      const { id, ordem } = (evento as CustomEvent<OrdemGravada>).detail;
+      setTarefas((atuais) =>
+        atuais.map((t) => (t.id === id ? { ...t, ordem } : t)),
+      );
+    };
     const remover = (evento: Event) => {
       const excluida = (
         evento as CustomEvent<Tarefa & { inexistente: boolean }>
@@ -66,9 +80,11 @@ export function useMudarStatus(
         : `Tarefa ${excluida.titulo} excluída.`;
     };
     window.addEventListener(TAREFA_GRAVADA, aplicar);
+    window.addEventListener(ORDEM_GRAVADA, aplicarOrdem);
     window.addEventListener(TAREFA_EXCLUIDA, remover);
     return () => {
       window.removeEventListener(TAREFA_GRAVADA, aplicar);
+      window.removeEventListener(ORDEM_GRAVADA, aplicarOrdem);
       window.removeEventListener(TAREFA_EXCLUIDA, remover);
     };
   }, [setTarefas]);
