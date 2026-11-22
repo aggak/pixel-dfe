@@ -10,7 +10,7 @@ import { statusTexto } from "../design/formatos";
 import { Icon } from "../design/icon";
 import { soltarTarefa, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
 import { atualizarTarefa, listarTarefas } from "../api";
-import { avisarTarefaGravada } from "../hooks/useMudarStatus";
+import { avisarOrdemGravada } from "../hooks/useMudarStatus";
 import type { Status, Tarefa } from "../tipos";
 import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
 
@@ -158,7 +158,7 @@ function Quadro({
     if (!(await statusSalvo)) return restaurar(mudadas, anteriores, minha);
     const resultados = await Promise.allSettled(
       mudadas.map(([tid, ordem]) =>
-        atualizarTarefa(tid, { ordem }).then(avisarTarefaGravada),
+        atualizarTarefa(tid, { ordem }).then(avisarOrdemGravada),
       ),
     );
     if (resultados.every((resultado) => resultado.status === "fulfilled"))
