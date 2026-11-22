@@ -19,6 +19,7 @@ import { useSeletorStatus } from "../hooks/useSeletorStatus";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { GatinhoAbanando } from "../components/GatinhoAbanando";
 import { useFicha } from "../components/ficha-contexto";
+import { FolhaPrazo } from "../components/FolhaPrazo";
 import { ConfirmarExclusao } from "../components/ConfirmarExclusao";
 import {
   AvisoCompacto,
@@ -27,7 +28,7 @@ import {
 } from "../components/Layout";
 import { SeloPrioridade } from "../components/Selos";
 import { Icon, FolderIcon, EditIcon, TrashIcon } from "../design/icon";
-import { formatarData } from "../design/formatos";
+import { formatarData, lerPrazo } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
 
 function EtiquetasTarefa({
@@ -128,8 +129,15 @@ export function DetalheTarefa() {
     tarefa && projetos?.find((item) => item.id === tarefa.projetoId);
   const projetoInexistente =
     tarefa !== undefined && projetos !== undefined && !projeto;
+  /* A ficha gira em torno do dia da entrega: a folha de calendário mostra a
+     data e a frase sob o título diz quanto falta e em que dia da semana cai.
+     Concluída, a folha continua igual: quem diz "Concluída" é o selo, e a
+     frase só lembra que aquele dia é o prazo, não o dia em que terminou. */
+  const concluida = tarefa?.status === "concluida";
+  const prazo = tarefa && lerPrazo(tarefa.prazo, concluida);
+  const descricao = tarefa?.descricao.trim();
   return (
-    <section className="e-read-task" aria-label="Dados da tarefa">
+    <section className="e-read-task fol" aria-label="Dados da tarefa">
       <div className="e-panel-scroll">
         {carregando && (
           <>
@@ -166,63 +174,86 @@ export function DetalheTarefa() {
           )}
         {tarefa && (
           <div className="e-read-body">
-            <h2 className="e-read-title">{tarefa.titulo}</h2>
-            <div className="e-read-project">
-              <FolderIcon />
-              {carregandoProjetos ? (
-                <Carregando compacto>Carregando projeto…</Carregando>
-              ) : projetoInexistente ? (
-                <span>Projeto não encontrado</span>
-              ) : (
-                <Link
-                  to={`/projetos/${encodeURIComponent(tarefa.projetoId)}`}
-                  onClick={(evento) => {
-                    if (
-                      !evento.ctrlKey &&
-                      !evento.metaKey &&
-                      !evento.shiftKey &&
-                      !evento.altKey
-                    ) {
-                      evento.preventDefault();
-                      navegar(
-                        `/projetos/${encodeURIComponent(tarefa.projetoId)}`,
-                      );
-                    }
-                  }}
-                >
-                  {projeto?.nome ?? `Projeto ${tarefa.projetoId}`}
-                </Link>
-              )}
-              {erroProjetos !== undefined && (
-                <AvisoCompacto
-                  texto="Nome do projeto indisponível."
-                  tentando={tentandoProjetos}
-                  onTentarDeNovo={tentarProjetos}
-                />
-              )}
+            <div
+              className={`fol-topo${prazo ? "" : " sem-folha"}`}
+              data-prazo={prazo?.estado}
+            >
+              {prazo && <FolhaPrazo dia={prazo.dia} mes={prazo.mes} />}
+              <h2 className="e-read-title">{tarefa.titulo}</h2>
+              <p className="fol-prazo">
+                {prazo ? (
+                  <time dateTime={tarefa.prazo}>
+                    {concluida ? (
+                      <>
+                        {prazo.frase}
+                        <span className="sr-only">
+                          , {formatarData(tarefa.prazo, true)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="sr-only">
+                          Prazo: {formatarData(tarefa.prazo, true)}.{" "}
+                        </span>
+                        {prazo.frase}
+                      </>
+                    )}
+                  </time>
+                ) : (
+                  <>Prazo: {tarefa.prazo}</>
+                )}
+              </p>
             </div>
-            <EtiquetasTarefa tarefa={tarefa} onMudarStatus={mudarStatus} />
+            <div className="fol-fatos">
+              <EtiquetasTarefa tarefa={tarefa} onMudarStatus={mudarStatus} />
+              <p className="fol-quem">
+                <Icon name="user" />
+                <span>{tarefa.responsavel}</span>
+              </p>
+              <div className="e-read-project">
+                <FolderIcon />
+                {carregandoProjetos ? (
+                  <Carregando compacto>Carregando projeto…</Carregando>
+                ) : projetoInexistente ? (
+                  <span>Projeto não encontrado</span>
+                ) : (
+                  <Link
+                    to={`/projetos/${encodeURIComponent(tarefa.projetoId)}`}
+                    onClick={(evento) => {
+                      if (
+                        !evento.ctrlKey &&
+                        !evento.metaKey &&
+                        !evento.shiftKey &&
+                        !evento.altKey
+                      ) {
+                        evento.preventDefault();
+                        navegar(
+                          `/projetos/${encodeURIComponent(tarefa.projetoId)}`,
+                        );
+                      }
+                    }}
+                  >
+                    {projeto?.nome ?? `Projeto ${tarefa.projetoId}`}
+                  </Link>
+                )}
+                {erroProjetos !== undefined && (
+                  <AvisoCompacto
+                    texto="Nome do projeto indisponível."
+                    tentando={tentandoProjetos}
+                    onTentarDeNovo={tentarProjetos}
+                  />
+                )}
+              </div>
+            </div>
             {aviso && (
               <p className="sr-only" role="status">
                 {aviso}
               </p>
             )}
-            <div className="e-read-meta">
-              <p>
-                <Icon name="user" />
-                <span>{tarefa.responsavel}</span>
-              </p>
-              <p>
-                <Icon name="calendar" />
-                <time dateTime={tarefa.prazo}>
-                  {formatarData(tarefa.prazo, true)}
-                </time>
-              </p>
-            </div>
             <p
-              className={`e-read-description ${tarefa.descricao.trim() ? "" : "is-empty"}`}
+              className={`e-read-description ${descricao ? "" : "is-empty"}`}
             >
-              {tarefa.descricao.trim() ? tarefa.descricao : "Sem descrição."}
+              {descricao ? tarefa.descricao : "Sem descrição."}
             </p>
           </div>
         )}
