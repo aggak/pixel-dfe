@@ -93,7 +93,7 @@ async function fecharLogoNoWebkit(web) {
   await page.locator(".e-form-modal").waitFor();
   await page.keyboard.press("Escape");
   await page.locator(".e-form-overlay").waitFor({ state: "detached" });
-  assert.equal(new URL(page.url()).pathname, "/");
+  await page.waitForURL((url) => url.pathname === "/");
   await page.locator(".e-task-menu").first().click();
   await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
   await page.locator(".e-confirm-dialog").waitFor();
