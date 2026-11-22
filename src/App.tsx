@@ -241,6 +241,7 @@ function App() {
             fundo={fundo}
             origemInterna={candidato === fundo}
             classeModal={tarefaNova || projeto ? "e-ficha-compacta" : undefined}
+            folhaInferior={!tarefaNova && !projeto}
           >
             <FalhaFormulario key={location.pathname} titulo={tituloInicial}>
               <Suspense

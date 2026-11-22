@@ -16,6 +16,7 @@ import {
 } from "@/components/application/modals/modal";
 import { Icon } from "../design/icon";
 import { useArrastarFicha } from "../hooks/useArrastarFicha";
+import { useFolhaInferior } from "../hooks/useFolhaInferior";
 import { useAncorarFicha } from "../hooks/useAncorarFicha";
 import {
   ContextoFicha,
@@ -30,6 +31,7 @@ import {
   retornoPendente,
 } from "../hooks/useRetornoFoco";
 import "./AncoragemFicha.css";
+import "./FolhaInferior.css";
 
 function Presenca({
   aoSair,
@@ -48,6 +50,7 @@ export function Ficha({
   fundo,
   origemInterna = false,
   classeModal,
+  folhaInferior = false,
   children,
 }: {
   titulo: string;
@@ -56,11 +59,14 @@ export function Ficha({
   fundo: Location;
   origemInterna?: boolean;
   classeModal?: string;
+  folhaInferior?: boolean;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const arraste = useArrastarFicha();
+  const { ref: cabecalho, ...arraste } = useArrastarFicha();
+  // Presa à borda de baixo, a ficha não se move: o cabeçalho deixa de ser alça.
+  const presa = useFolhaInferior(folhaInferior);
   const [aberta, setAberta] = useState(true);
   const [ocupada, setOcupada] = useState(false);
   const [alterada, setAlterada] = useState(false);
@@ -113,6 +119,19 @@ export function Ficha({
   );
   const ultimoFoco = useRef<HTMLElement | null>(null);
   const eraOcupada = useRef(false);
+  useLayoutEffect(() => {
+    // Sem a alça, o foco que estava nela vai para o botão de fechar. O
+    // navegador pode já ter tirado o foco do cabeçalho quando o tabindex saiu.
+    const alca = cabecalho.current;
+    const ativo = document.activeElement;
+    if (
+      presa &&
+      alca &&
+      (ativo === alca ||
+        (ultimoFoco.current === alca && (!ativo || ativo === document.body)))
+    )
+      alca.querySelector("button")?.focus({ preventScroll: true });
+  }, [presa, cabecalho]);
   useEffect(() => {
     const voltou = eraOcupada.current && !ocupada;
     eraOcupada.current = ocupada;
@@ -218,12 +237,18 @@ export function Ficha({
         }}
         isDismissable={!ocupada && !alterada}
         isKeyboardDismissDisabled={ocupada}
-        className="e-form-overlay"
+        className={
+          folhaInferior ? "e-form-overlay e-folha-overlay" : "e-form-overlay"
+        }
       >
         <Modal
-          className={
-            classeModal ? `e-form-modal ${classeModal}` : "e-form-modal"
-          }
+          className={[
+            "e-form-modal",
+            classeModal,
+            folhaInferior && "e-folha",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
           <Dialog aria-label={titulo} className="e-form-dialog">
             <Presenca aoSair={concluirSaida}>
@@ -236,11 +261,16 @@ export function Ficha({
                 aria-busy={ocupada}
               >
                 <header
-                  {...arraste}
+                  ref={cabecalho}
                   className="e-form-header"
-                  tabIndex={0}
-                  aria-label="Mover ficha"
-                  title="Arraste para mover ou use as setas do teclado"
+                  {...(presa
+                    ? null
+                    : {
+                        ...arraste,
+                        tabIndex: 0,
+                        "aria-label": "Mover ficha",
+                        title: "Arraste para mover ou use as setas do teclado",
+                      })}
                 >
                   <div className="e-form-symbol">
                     <Icon name={icone} />
