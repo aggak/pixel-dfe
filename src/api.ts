@@ -108,10 +108,16 @@ function texto(valor: unknown) {
   return typeof valor === "string" ? valor : "";
 }
 
+function referencia(valor: unknown) {
+  return typeof valor === "number" && Number.isFinite(valor)
+    ? String(valor)
+    : texto(valor);
+}
+
 function normalizarTarefa(tarefa: Registro): Tarefa {
   return {
     id: tarefa.id,
-    projetoId: texto(tarefa.projetoId),
+    projetoId: referencia(tarefa.projetoId),
     titulo: texto(tarefa.titulo),
     descricao: texto(tarefa.descricao),
     status: tarefa.status as Tarefa["status"],

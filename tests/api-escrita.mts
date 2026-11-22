@@ -238,6 +238,38 @@ async function executar() {
   );
 
   await conferir(
+    "vínculo numérico com o projeto é lido como texto, igual ao id",
+    async () => {
+      const fetchOriginal = globalThis.fetch;
+      const tarefa = { ...dadosTarefa, id: 2, projetoId: 1 };
+      globalThis.fetch = async (url) => {
+        const caminho = String(url).slice(apiUrl.length);
+        return new Response(
+          JSON.stringify(
+            caminho === "/tarefas"
+              ? [tarefa]
+              : caminho === "/tarefas/2"
+                ? tarefa
+                : { ...dadosProjeto, id: 1, tarefas: [tarefa] },
+          ),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      };
+      try {
+        const esperada = { ...dadosTarefa, id: "2", projetoId: "1" };
+        assert.deepEqual(await api.listarTarefas(), [esperada]);
+        assert.deepEqual(await api.buscarTarefa("2"), esperada);
+        assert.deepEqual(await api.buscarProjetoComTarefas("1"), {
+          projeto: { ...dadosProjeto, id: "1" },
+          tarefas: [esperada],
+        });
+      } finally {
+        globalThis.fetch = fetchOriginal;
+      }
+    },
+  );
+
+  await conferir(
     "sinal já abortado cancela criação e atualização",
     async () => {
       const controle = new AbortController();
