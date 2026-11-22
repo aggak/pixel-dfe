@@ -14,7 +14,6 @@ import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import {
   AbasProjetos,
   AvisoTarefaEscondida,
-  Carregando,
   ErroCarregamento,
   EstadoVazio,
 } from "../components/Layout";
@@ -22,27 +21,26 @@ import { useConsulta } from "../hooks/useConsulta";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 import { useMudarStatus } from "../hooks/useMudarStatus";
 import { useRetornoFoco } from "../hooks/useRetornoFoco";
-import { EditIcon, FolderIcon, Icon, PlusIcon } from "../design/icon";
-import { formatarData } from "../design/formatos";
+import { PlusIcon } from "../design/icon";
+import { ResumoProjeto } from "../components/ResumoProjeto";
 import type { Tarefa } from "../tipos";
 
 export function DetalheProjeto() {
   const { id = "" } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const [detalhes, setDetalhes] = useState(
-    (location.state as { detalhes?: boolean } | null)?.detalhes === true,
-  );
   const consultar = useCallback(
     (signal: AbortSignal) => buscarProjetoComTarefas(id, signal),
     [id],
   );
   const { dados, erro, carregando, tentando, tentarDeNovo, revalidando } =
     useConsulta(consultar);
+  const naoEncontrado = erro instanceof ErroApi && erro.status === 404;
+  const tituloErro = naoEncontrado
+    ? "Projeto não encontrado"
+    : "Não foi possível carregar o projeto";
   useTituloPagina(
-    erro instanceof ErroApi && erro.status === 404
-      ? "Projeto não encontrado"
-      : (dados?.projeto.nome ?? "Projeto"),
+    naoEncontrado ? tituloErro : (dados?.projeto.nome ?? "Projeto"),
   );
   const consultaProjetos = useConsulta(listarProjetos);
   const tentarTudo = () => {
@@ -73,73 +71,37 @@ export function DetalheProjeto() {
         mostrarErro={erro === undefined}
       />
       <main className="e-sheet">
-        <header className="e-tools">
-          <h1 tabIndex={-1}>{dados?.projeto.nome ?? "Projeto"}</h1>
-          <AcaoCabecalho>
-            {dados && (
-              <Button
-                className="e-top-acao-botao"
-                color="primary"
-                size="sm"
-                iconLeading={PlusIcon}
-                aria-label="Nova tarefa"
-                data-action="new-task"
-                onClick={() =>
-                  navigate(novaTarefa, { state: { fundo: location } })
-                }
-              >
-                Nova tarefa
-              </Button>
-            )}
-          </AcaoCabecalho>
-        </header>
-        {(dados || carregando) && (
-          <div className={`e-project-details ${detalhes ? "is-open" : ""}`}>
-            <button
-              className="e-details-trigger"
-              aria-expanded={detalhes}
-              aria-controls="project-details"
-              disabled={!dados}
-              onClick={() => setDetalhes(!detalhes)}
+        <AcaoCabecalho>
+          {(dados || carregando) && (
+            <Button
+              className="e-top-acao-botao"
+              style={carregando ? { visibility: "hidden" } : undefined}
+              color="primary"
+              size="sm"
+              iconLeading={PlusIcon}
+              aria-label="Nova tarefa"
+              data-action="new-task"
+              onClick={() =>
+                navigate(novaTarefa, { state: { fundo: location } })
+              }
             >
-              <FolderIcon />
-              <span>Detalhes do projeto</span>
-              <Icon name={detalhes ? "angle-small-up" : "angle-small-down"} />
-            </button>
-            {detalhes && dados && (
-              <div id="project-details" className="e-details-content">
-                <h2 className="e-project-name">{dados.projeto.nome}</h2>
-                <p>{dados.projeto.descricao}</p>
-                <dl>
-                  <div>
-                    <dt>Disciplina</dt>
-                    <dd>{dados.projeto.disciplina}</dd>
-                  </div>
-                  <div>
-                    <dt>Criado em</dt>
-                    <dd>
-                      <time dateTime={dados.projeto.criadoEm}>
-                        {formatarData(dados.projeto.criadoEm, true)}
-                      </time>
-                    </dd>
-                  </div>
-                </dl>
-                <Button
-                  color="link-color"
-                  size="sm"
-                  className="e-edit-project-details"
-                  iconLeading={EditIcon}
-                  onClick={() =>
-                    navigate(`/projetos/${encodeURIComponent(id)}/editar`, {
-                      state: { fundo: location, detalhes: true },
-                    })
-                  }
-                >
-                  Editar projeto
-                </Button>
-              </div>
-            )}
-          </div>
+              Nova tarefa
+            </Button>
+          )}
+        </AcaoCabecalho>
+        {dados || carregando ? (
+          <ResumoProjeto
+            key={id}
+            concluido={
+              tarefas.length > 0 &&
+              tarefas.every((tarefa) => tarefa.status === "concluida")
+            }
+            projeto={dados?.projeto}
+          />
+        ) : (
+          <h1 className="e-task-page-title" tabIndex={-1}>
+            {tituloErro}
+          </h1>
         )}
         {aviso && (
           <p className="sr-only" role="status">
@@ -164,18 +126,17 @@ export function DetalheProjeto() {
               projetoAtual={id}
             />
           )}
-          {carregando && <Carregando>Carregando projeto…</Carregando>}
-          {erro instanceof ErroApi && erro.status === 404 ? (
+          {naoEncontrado ? (
             <div className="e-load-error" role="alert">
               <GatinhoCochilando />
-              <h2>Projeto não encontrado</h2>
+              <h2>{tituloErro}</h2>
               <p>Este projeto não existe ou foi removido.</p>
               <Link to="/projetos">Voltar para projetos</Link>
             </div>
           ) : (
             erro !== undefined && (
               <ErroCarregamento
-                titulo="Não foi possível carregar o projeto"
+                titulo={tituloErro}
                 erro={erro}
                 onTentarDeNovo={tentarTudo}
                 tentando={tentando}
@@ -206,7 +167,7 @@ export function DetalheProjeto() {
             </section>
           )}
         </div>
-        {dados && (
+        {tarefas.length > 0 && (
           <footer className="e-sheet-footer">
             {tarefas.length} {tarefas.length === 1 ? "tarefa" : "tarefas"}
           </footer>

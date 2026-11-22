@@ -61,10 +61,8 @@ async function executar() {
       .count(),
     1,
   );
-  assert.match(
-    await page.locator(".e-sheet-footer").innerText(),
-    /^0 tarefas$/,
-  );
+  assert.equal(await page.locator("[data-task-id]").count(), 0);
+  assert.equal(await page.locator(".e-sheet-footer").count(), 0);
   await vazio("Este projeto ainda não tem tarefas")
     .getByRole("button", { name: "Criar tarefa" })
     .click();
@@ -119,6 +117,7 @@ async function executar() {
     (tarefa) => tarefa.projetoId === projetoUnico.id,
   );
   await page.goto(`${web}/projetos/${projetoUnico.id}`);
+  assert.equal(await page.locator(".e-sheet-footer").innerText(), "1 tarefa");
   await page
     .getByRole("button", { name: `Ações de ${tarefaUnica.titulo}` })
     .click();
@@ -134,10 +133,8 @@ async function executar() {
       .count(),
     1,
   );
-  assert.match(
-    await page.locator(".e-sheet-footer").innerText(),
-    /^0 tarefas$/,
-  );
+  assert.equal(await page.locator("[data-task-id]").count(), 0);
+  assert.equal(await page.locator(".e-sheet-footer").count(), 0);
   console.log("OK: excluir a última tarefa do projeto mostra o estado vazio");
 
   const semCombinacao = seed.tarefas.find(

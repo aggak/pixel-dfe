@@ -104,7 +104,7 @@ async function executar() {
     "página do projeto mostra e retira carregamento",
     "/projetos/1",
     (url) => url.pathname === "/projetos/1",
-    () => page.locator(".e-content").getByRole("status"),
+    () => status(/^Carregando projeto…$/),
   );
   await conferirRota(
     "detalhes da tarefa mostram e retiram carregamento",
@@ -347,34 +347,32 @@ async function executar() {
     "OK: falha do andamento retira a indicação de carregamento dos cartões",
   );
 
-  const projeto = await reter("/projetos/1");
-  await page.goto(`${web}/projetos/1`);
-  await projeto.requisicao;
-  await page.locator(".e-content").getByRole("status").waitFor();
-  const detalhes = page.getByRole("button", { name: "Detalhes do projeto" });
-  assert.equal(
-    await detalhes.isDisabled(),
-    true,
-    "detalhes do projeto deve ficar desabilitado enquanto carrega",
-  );
-  const topoCarregando = await page
-    .locator(".e-content")
-    .evaluate((conteudo) => conteudo.getBoundingClientRect().top);
-  await projeto.liberar();
-  await page.locator(".e-list").waitFor();
-  assert.equal(await detalhes.isEnabled(), true);
-  assert.equal(
-    await page
-      .locator(".e-content")
-      .evaluate((conteudo) => conteudo.getBoundingClientRect().top),
-    topoCarregando,
-    "a faixa de detalhes não deve empurrar o conteúdo",
-  );
-  await detalhes.click();
-  await page.locator("#project-details").waitFor();
-  console.log(
-    "OK: faixa de detalhes do projeto reservada desde o carregamento, sem salto",
-  );
+  for (const width of [320, 375, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const projeto = await reter("/projetos/1");
+    await page.goto(`${web}/projetos/1`);
+    await projeto.requisicao;
+    const resumo = page.locator("#project-details");
+    const esqueleto = resumo.locator(".e-resumo-esqueleto");
+    await esqueleto.waitFor();
+    const anuncio = resumo.getByRole("status");
+    assert.equal(await anuncio.textContent(), "Carregando projeto…");
+    const caixa = await anuncio.boundingBox();
+    assert.ok(caixa && caixa.width <= 1 && caixa.height <= 1);
+    const principal = page.getByRole("main");
+    assert.equal(await principal.getByRole("status").count(), 1);
+    assert.equal(await principal.locator(".e-gato-carregando").count(), 0);
+    const detalhes = resumo.getByRole("button", {
+      name: "Editar projeto",
+    });
+    assert.equal(await detalhes.count(), 0);
+    await projeto.liberar();
+    await page.locator(".e-list").waitFor();
+    assert.equal(await esqueleto.count(), 0);
+    assert.equal(await anuncio.count(), 0);
+    await detalhes.waitFor();
+  }
+  console.log("OK: cabeçalho do projeto mostra e retira o carregamento");
 
   for (const [rota, resposta] of [
     ["/projetos/1", 500],
@@ -386,7 +384,7 @@ async function executar() {
     await page.goto(`${web}${rota}`);
     await page.getByRole("alert").waitFor();
     assert.equal(
-      await page.getByRole("button", { name: "Detalhes do projeto" }).count(),
+      await page.getByRole("button", { name: "Editar projeto" }).count(),
       0,
       `${rota}: erro sem faixa de detalhes`,
     );
