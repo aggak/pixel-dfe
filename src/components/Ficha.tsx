@@ -19,10 +19,11 @@ import { useArrastarFicha } from "../hooks/useArrastarFicha";
 import { useFolhaInferior } from "../hooks/useFolhaInferior";
 import { useAncorarFicha } from "../hooks/useAncorarFicha";
 import {
+  chaveDoConteudo,
   ContextoFicha,
   ehRotaFicha,
+  lembrarConteudo,
   tarefaDaFicha,
-  type EstadoFicha,
 } from "./ficha-contexto";
 import {
   descartarRetorno,
@@ -167,13 +168,10 @@ export function Ficha({
   ) {
     if (alvos) marcarRetorno(alvos, rolagem.current, origem.current);
     if (ehRotaFicha(destino.split("?")[0])) {
+      const chave = `${chaveDoConteudo(fundo)}:atualizado`;
+      if (atualizar) lembrarConteudo(fundo, chave);
       const fundoAtualizado = atualizar
-        ? {
-            ...fundo,
-            state: {
-              chaveConteudo: `${(fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key}:atualizado`,
-            },
-          }
+        ? { ...fundo, state: { chaveConteudo: chave } }
         : fundo;
       navigate(destino, { state: { fundo: fundoAtualizado }, replace: true });
       return;
@@ -184,8 +182,7 @@ export function Ficha({
       const estadoDestino = atualizar
         ? (estado ?? null)
         : {
-            chaveConteudo:
-              (fundo.state as EstadoFicha | null)?.chaveConteudo ?? fundo.key,
+            chaveConteudo: chaveDoConteudo(fundo),
           };
       if (
         origemInterna &&

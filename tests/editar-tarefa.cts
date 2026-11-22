@@ -564,6 +564,61 @@ async function executar() {
   );
 
   await conferir(
+    "fechar o detalhe depois de salvar não busca de novo a página de fundo",
+    async () => {
+      const leituras = [];
+      const ouvir = (req) => {
+        if (req.url().startsWith(api) && req.method() === "GET")
+          leituras.push(new URL(req.url()).pathname);
+      };
+      await page.goto(`${origem}/`);
+      const cartao = page.locator('[data-task-id="5"]');
+      await cartao.locator(".e-task-title").click();
+      await page
+        .getByRole("button", { name: "Editar tarefa", exact: true })
+        .click();
+      await esperarFormulario("5");
+      const titulo = "Título salvo antes de fechar";
+      await campo("Título").fill(titulo);
+      await salvar().click();
+      await page.getByRole("heading", { name: titulo, exact: true }).waitFor();
+      await cartao.getByText(titulo, { exact: true }).waitFor();
+      await assentar();
+      page.on("request", ouvir);
+      await page.keyboard.press("Escape");
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+      assert.equal(caminho(), "/");
+      await assentar();
+      page.off("request", ouvir);
+      assert.deepEqual(leituras, []);
+      await cartao.getByText(titulo, { exact: true }).waitFor();
+      await page.waitForFunction(
+        () =>
+          document.activeElement ===
+          document.querySelector('[data-task-id="5"] .e-task-title'),
+      );
+      await page.goForward();
+      await page.getByRole("heading", { name: titulo, exact: true }).waitFor();
+      assert.equal(caminho(), "/tarefas/5");
+      await page.goBack();
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+      assert.equal(caminho(), "/");
+      await cartao.locator(".e-task-title").click();
+      await page
+        .getByRole("button", { name: "Editar tarefa", exact: true })
+        .click();
+      await esperarFormulario("5");
+      const segundo = "Título salvo pela segunda vez";
+      await campo("Título").fill(segundo);
+      await salvar().click();
+      await page.getByRole("heading", { name: segundo, exact: true }).waitFor();
+      await cartao.getByText(segundo, { exact: true }).waitFor();
+      await page.keyboard.press("Escape");
+      await page.getByRole("dialog").waitFor({ state: "detached" });
+    },
+  );
+
+  await conferir(
     "sem erros JavaScript e bancos do repositório preservados",
     async () => {
       assert.deepEqual(errosPagina, []);

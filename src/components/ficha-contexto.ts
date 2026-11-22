@@ -22,6 +22,17 @@ export const ContextoTarefaAberta = createContext<string | undefined>(
   undefined,
 );
 export type EstadoFicha = { fundo?: Location; chaveConteudo?: string };
+const conteudos = new Map<string, string>();
+export function chaveDoConteudo(fundo: Location) {
+  return (
+    (fundo.state as EstadoFicha | null)?.chaveConteudo ??
+    conteudos.get(fundo.key) ??
+    fundo.key
+  );
+}
+export function lembrarConteudo(fundo: Location, chave: string) {
+  conteudos.set(fundo.key, chave);
+}
 type Navegacao = {
   navegar: (
     destino: string,
