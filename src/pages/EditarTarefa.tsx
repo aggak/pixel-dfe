@@ -42,8 +42,12 @@ export function EditarTarefa() {
 
   async function salvar(dados: NovaTarefa) {
     const controller = controllerRef.current;
-    if (!controller || controller.signal.aborted) return;
-    await atualizarTarefa(id, dados, controller.signal);
+    if (!controller || controller.signal.aborted || !tarefa) return;
+    const alteracoes: Partial<NovaTarefa> = { ...dados };
+    for (const campo of Object.keys(dados) as (keyof NovaTarefa)[]) {
+      if (dados[campo] === tarefa[campo]) delete alteracoes[campo];
+    }
+    await atualizarTarefa(id, alteracoes, controller.signal);
     if (!controller.signal.aborted)
       navegar(voltarPara, true, undefined, [
         `[data-task-id="${CSS.escape(id)}"] .e-task-title`,
