@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   dataValida,
   diasAtePrazo,
+  formatarData,
   formatarPrazoCartao,
   lerPrazo,
 } from "../src/design/formatos.ts";
@@ -71,6 +72,8 @@ try {
       ["2027-01-10", "10 jan 2027"],
       ["2025-12-31", "31 dez 2025"],
       ["inválido", "inválido"],
+      ["2026-02-30", "2026-02-30"],
+      ["2025-02-29", "2025-02-29"],
     ]) {
       assert.equal(
         formatarPrazoCartao(iso, agora),
@@ -78,6 +81,12 @@ try {
         `${fuso}: prazo ${iso}`,
       );
     }
+    for (const [iso, esperado] of [
+      ["2026-02-28", "28 de fevereiro de 2026"],
+      ["2026-02-30", "2026-02-30"],
+      ["inválido", "inválido"],
+    ])
+      assert.equal(formatarData(iso, true), esperado, `${fuso}: data ${iso}`);
   }
   for (const [fuso, instante, iso, esperado] of [
     ["America/Sao_Paulo", "2027-01-01T01:30:00Z", "2026-01-05", "5 jan"],

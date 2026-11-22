@@ -18,7 +18,7 @@ export const iconesPrioridade: Record<Prioridade, string> = {
 };
 export function formatarData(iso: string, extensa = false) {
   const data = new Date(`${iso}T12:00:00`);
-  if (Number.isNaN(data.getTime())) return iso;
+  if (!dataValida(iso)) return iso;
   return new Intl.DateTimeFormat(
     "pt-BR",
     extensa
@@ -35,7 +35,7 @@ export function dataValida(iso: string) {
 }
 export function formatarPrazoCartao(iso: string, hoje = new Date()) {
   const data = new Date(`${iso}T12:00:00`);
-  if (Number.isNaN(data.getTime())) return iso;
+  if (!dataValida(iso)) return iso;
   return new Intl.DateTimeFormat("pt-BR", {
     day: "numeric",
     month: "short",
