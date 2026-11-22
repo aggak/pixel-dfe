@@ -144,22 +144,31 @@ function ancorarQuadro(modal: HTMLElement, seletor: string) {
     );
   };
 
+  let achou = false;
   const posicionar = () => {
     const cartao = document.querySelector<HTMLElement>(
       `.e-board .e-card${seletor}`,
     );
     if (!cartao) {
       soltar(modal);
-      return false;
+      return;
     }
     let caixa = cartao.getBoundingClientRect();
     const topo = fimDoCabecalho();
-    if (caixa.bottom <= topo || caixa.top >= window.innerHeight) {
+    if (!achou && (caixa.bottom <= topo || caixa.top >= window.innerHeight)) {
       window.scrollBy({
         top: caixa.top - Math.round(window.innerHeight * 0.3),
         behavior: "instant",
       });
       caixa = cartao.getBoundingClientRect();
+    }
+    if (achou) {
+      const transformacao = getComputedStyle(cartao).transform;
+      if (transformacao !== "none") {
+        const deslocamento = new DOMMatrixReadOnly(transformacao);
+        caixa.x -= deslocamento.m41;
+        caixa.y -= deslocamento.m42;
+      }
     }
     const largura = modal.offsetWidth;
     const cabeDireita =
@@ -174,24 +183,29 @@ function ancorarQuadro(modal: HTMLElement, seletor: string) {
       x = cabeDireita ? caixa.right + VAO : caixa.left - VAO - largura;
       y = caixa.top;
     }
+    achou = true;
     modal.setAttribute("data-ancorada", "");
     modal.toggleAttribute("data-ancorada-sem-espaco", semEspaco);
     encaixar();
-    return true;
   };
 
-  const espera = new MutationObserver(() => {
-    if (posicionar()) espera.disconnect();
+  const mudancas = new MutationObserver(() => {
+    if (!modal.style.translate) posicionar();
   });
   const raiz = document.getElementById("root");
-  if (!posicionar() && raiz)
-    espera.observe(raiz, { childList: true, subtree: true });
+  if (raiz)
+    mudancas.observe(raiz, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  posicionar();
 
   const tamanho = new ResizeObserver(encaixar);
   tamanho.observe(modal);
   window.addEventListener("resize", posicionar);
   return () => {
-    espera.disconnect();
+    mudancas.disconnect();
     tamanho.disconnect();
     window.removeEventListener("resize", posicionar);
     soltar(modal);
