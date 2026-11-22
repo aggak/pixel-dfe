@@ -300,10 +300,6 @@ async function executar() {
           `${caminho}: só recarregar o fundo em erro`,
         );
         await ficha().locator(".e-form-header button").click();
-        if (caminho === "/tarefas/1/editar") {
-          await ficha().locator(".e-read-title").waitFor();
-          await ficha().locator(".e-form-header button").click();
-        }
         await ficha().waitFor({ state: "detached" });
         await page.getByRole("main").locator(fundoCarregado).first().waitFor();
         await abas()
