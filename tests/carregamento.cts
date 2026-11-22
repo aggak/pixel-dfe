@@ -217,9 +217,19 @@ async function executar() {
         else await ficha.locator("form").waitFor();
         await page.evaluate(() => document.fonts.ready);
         const cabecalho = ficha.locator(".e-form-header");
-        const topo = await cabecalho.evaluate(
-          (el) => el.getBoundingClientRect().top,
-        );
+        // A ficha ancorada à linha da tarefa (desktop, #236) cresce a partir
+        // do centro quando o formulário chega: ali o ponto que fica parado é
+        // o centro da ficha; nas demais é o topo do cabeçalho.
+        const medir = () =>
+          cabecalho.evaluate((el) => {
+            const modal = el.closest(
+              '.e-form-modal[data-lugar="lista"][data-ancorada]',
+            );
+            if (!modal) return el.getBoundingClientRect().top;
+            const caixa = modal.getBoundingClientRect();
+            return (caixa.top + caixa.bottom) / 2;
+          });
+        const antes = await medir();
         const fechar = ficha.getByRole("button", {
           name: `Fechar ${(nome as string).toLocaleLowerCase("pt-BR")}`,
           exact: true,
@@ -245,10 +255,7 @@ async function executar() {
                 ? 22
                 : 1;
         assert.ok(
-          Math.abs(
-            (await cabecalho.evaluate((el) => el.getBoundingClientRect().top)) -
-              topo,
-          ) < limite,
+          Math.abs((await medir()) - antes) < limite,
           `${caminho} em ${width}px: deslocamento deve ficar abaixo de ${limite}px`,
         );
         assert.equal(

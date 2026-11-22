@@ -240,7 +240,13 @@ function App() {
             destinoFechar={destinoFechar}
             fundo={fundo}
             origemInterna={candidato === fundo}
-            classeModal={tarefaNova || projeto ? "e-ficha-compacta" : undefined}
+            classeModal={
+              tarefaNova || projeto
+                ? "e-ficha-compacta"
+                : editando
+                  ? "e-ficha-aparencia-compacta"
+                  : undefined
+            }
             folhaInferior={!tarefaNova && !projeto}
           >
             <FalhaFormulario key={location.pathname} titulo={tituloInicial}>

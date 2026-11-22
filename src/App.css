@@ -878,7 +878,7 @@ textarea {
     justify-content: center !important;
   }
   .e-form-modal:has(.e-ficha-loading-tarefa) {
-    height: min(537px, calc(100dvh - 20px));
+    height: min(323px, calc(100dvh - 20px));
   }
   .e-form-modal:has(.e-ficha-loading-projeto) {
     height: min(510px, calc(100dvh - 20px));

@@ -184,7 +184,11 @@ async function executar() {
   );
   await page.locator(".e-read-edit").click();
   await salvar.waitFor();
-  assert.ok(667 - (await presaEmbaixo()).topo > 0.76 * 667);
+  // Com menos altura disponível, o editor pode usar mais espaço que a leitura.
+  await page.setViewportSize({ width: 375, height: 400 });
+  const formulario = await presaEmbaixo();
+  assert.ok(formulario.altura - formulario.topo > 0.76 * formulario.altura);
+  await page.setViewportSize({ width: 375, height: 667 });
   await cancelar.click();
   await page.locator(".e-read-edit").waitFor();
   console.log("OK: leitura para em 76% da altura e a edição passa dele");

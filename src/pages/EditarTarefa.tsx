@@ -87,6 +87,7 @@ export function EditarTarefa() {
           key={id}
           valoresIniciais={tarefa}
           edicao
+          compacto
           onSalvar={salvar}
           onCancelar={fechar}
           onEstadoEnvio={setOcupada}

@@ -117,7 +117,7 @@ async function executar() {
       assert.equal(await campo("Descrição").inputValue(), tarefa.descricao);
       await page.reload();
       await esperarFormulario("1");
-      assert.equal(await campo("Prazo").inputValue(), tarefa.prazo);
+      assert.equal(await ui.valor("Prazo"), tarefa.prazo);
       await page.goto(`${origem}/`);
       await page
         .getByRole("link", { name: tarefa.titulo, exact: true })
@@ -161,9 +161,10 @@ async function executar() {
         ["Título", dados.titulo],
         ["Descrição", dados.descricao],
         ["Responsável", dados.responsavel],
-        ["Prazo", dados.prazo],
       ])
         await campo(rotulo).fill(valor);
+      await ui.preencherPrazo(dados.prazo);
+      assert.equal(await ui.valor("Prazo"), dados.prazo);
       for (const rotulo of ["Projeto", "Status", "Prioridade"])
         assert.equal(
           await ui.valor(rotulo),
@@ -365,7 +366,7 @@ async function executar() {
       await salvar().click();
       await page
         .getByRole("alert")
-        .filter({ hasText: "Não foi possível salvar a tarefa" })
+        .filter({ hasText: "Não foi possível salvar. Tente novamente." })
         .waitFor();
       assert.equal(caminho(), "/tarefas/2/editar");
       assert.equal(
@@ -477,23 +478,25 @@ async function executar() {
       );
       await campo("Título").focus();
       assert.equal(await focoVisivel(campo("Título")), true);
-      await page.keyboard.press("Tab");
-      assert.equal(
-        await ui
-          .seletor("Projeto")
-          .evaluate((el) => el === document.activeElement),
-        true,
-      );
-      assert.equal(await focoVisivel(ui.seletor("Projeto")), true);
       await ui.abrirDescricao();
-      await campo("Descrição").focus();
-      assert.equal(
-        await campo("Descrição").evaluate(
-          (el) => el === document.activeElement,
-        ),
-        true,
-      );
-      assert.equal(await focoVisivel(campo("Descrição")), true);
+      await campo("Título").focus();
+      for (const alvo of [
+        campo("Responsável"),
+        campo("Descrição"),
+        ui.seletor("Projeto"),
+        ui.atalhoPrazo(),
+        ui.seletor("Status"),
+        ui.seletor("Prioridade"),
+        ui.alternarDescricao(),
+      ]) {
+        await page.keyboard.press("Tab");
+        assert.equal(
+          await alvo.evaluate((el) => el === document.activeElement),
+          true,
+          `ordem de tabulação: ${alvo}`,
+        );
+        assert.equal(await focoVisivel(alvo), true, `foco visível: ${alvo}`);
+      }
       if (process.env.EDITAR_TAREFA_EVIDENCIAS) {
         await mkdir(process.env.EDITAR_TAREFA_EVIDENCIAS, { recursive: true });
         await page.screenshot({

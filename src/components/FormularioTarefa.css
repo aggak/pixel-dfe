@@ -72,63 +72,73 @@
   border: 0;
 }
 
-:is(.e-form-modal.e-ficha-compacta, .e-nova-tarefa-popover) {
+/* .e-ficha-aparencia-compacta veste a ficha de editar tarefa com a mesma
+   aparência, sem o lugar de .e-ficha-compacta: largura, cantos, sombra,
+   ancoragem ao cartão e folha inferior continuam os da ficha de tarefa. */
+:is(
+  .e-form-modal.e-ficha-compacta,
+  .e-form-modal.e-ficha-aparencia-compacta,
+  .e-nova-tarefa-popover
+) {
   --nova-realce: var(--e-campo-realce);
 }
 
-.e-form-modal.e-ficha-compacta {
+.e-form-modal:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) {
   --e-sheet: var(--e-ficha-compacta-fundo);
   --nova-campo: var(--e-campo-fundo);
   --nova-contorno: var(--e-campo-borda);
   --nova-recuo: 18px;
   border-color: var(--e-line);
+}
+
+.e-form-modal.e-ficha-compacta {
   border-radius: 13px !important;
   box-shadow: var(--e-ficha-compacta-sombra) !important;
 }
 
-.e-ficha-compacta .e-form-header {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-form-header {
   padding: 10px var(--nova-recuo) 7px;
 }
 
-.e-ficha-compacta .e-form-header h2 {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-form-header h2 {
   font-size: 15px;
   font-weight: 550;
 }
 
-.e-ficha-compacta .e-form-symbol {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-form-symbol {
   width: 24px;
   height: 24px;
   border-radius: 5px;
 }
 
-.e-ficha-compacta .e-title-field {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-title-field {
   padding: 1px var(--nova-recuo) 7px;
 }
 
-.e-ficha-compacta .formulario-tarefa [data-label] {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .formulario-tarefa [data-label] {
   color: var(--e-muted) !important;
   font-size: 12px !important;
   font-weight: 500;
   line-height: 1.3;
 }
 
-.e-ficha-compacta .formulario-tarefa [data-label] > span {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .formulario-tarefa [data-label] > span {
   color: inherit;
 }
 
-.e-ficha-compacta :is(.e-title-field, .e-tarefa-responsavel) input {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) :is(.e-title-field, .e-tarefa-responsavel) input {
   min-height: 34px;
   padding-block: 5px !important;
   line-height: 1.35 !important;
 }
 
-.e-ficha-compacta .e-title-field input {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-title-field input {
   font-size: 16px !important;
   font-weight: 500;
   letter-spacing: 0;
 }
 
-.e-ficha-compacta .formulario-tarefa :is(
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .formulario-tarefa :is(
   [data-input-wrapper] > [role="presentation"],
   textarea
 ) {
@@ -138,11 +148,11 @@
   box-shadow: none !important;
 }
 
-.e-ficha-compacta .e-title-field [data-input-wrapper] > [role="presentation"] {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-title-field [data-input-wrapper] > [role="presentation"] {
   padding-inline: 9px !important;
 }
 
-.e-ficha-compacta .formulario-tarefa :is(
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .formulario-tarefa :is(
   [data-input-wrapper] > [role="presentation"]:focus-within,
   textarea:focus
 ) {
@@ -150,7 +160,7 @@
   box-shadow: inset 0 -1px var(--nova-foco, var(--e-action)) !important;
 }
 
-.e-ficha-compacta .formulario-tarefa :is(
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .formulario-tarefa :is(
   [data-input-wrapper] > [role="presentation"][data-invalid]
 ) {
   --nova-foco: var(--e-error);
@@ -246,11 +256,11 @@
   padding-block: 5px 2px;
 }
 
-.e-ficha-compacta .e-description-body {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-description-body {
   padding: 6px 0 3px;
 }
 
-.e-ficha-compacta .e-description-body textarea {
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-description-body textarea {
   display: block;
   padding: 10px 11px;
   line-height: 1.55 !important;
@@ -402,13 +412,13 @@
 }
 
 @media (max-width: 650px) {
-  .e-form-modal.e-ficha-compacta {
+  .e-form-modal:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) {
     --nova-recuo: 13px;
   }
 }
 
 @media (max-width: 650px), (pointer: coarse) {
-  .e-ficha-compacta :is(.e-title-field, .e-tarefa-responsavel) input {
+  :is(.e-ficha-compacta, .e-ficha-aparencia-compacta) :is(.e-title-field, .e-tarefa-responsavel) input {
     min-height: 44px;
     font-size: 16px !important;
   }
