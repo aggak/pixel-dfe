@@ -327,9 +327,13 @@ async function executar() {
     }
   }
 
-  for (const [caminho, aviso] of [
-    ["/tarefas/1", "Nome do projeto indisponível."],
-    ["/tarefas/1/editar", "Não foi possível carregar os projetos."],
+  for (const [caminho, aviso, tentar] of [
+    ["/tarefas/1", "Nome do projeto indisponível.", "Tentar de novo"],
+    [
+      "/tarefas/1/editar",
+      "Não foi possível carregar os projetos.",
+      "Tentar novamente",
+    ],
   ]) {
     let falhar = true;
     let chamadasTarefas = 0;
@@ -349,7 +353,7 @@ async function executar() {
         .waitFor({ state: "attached" });
       const chamadasIniciais = chamadasTarefas;
       falhar = false;
-      await ficha().getByRole("button", { name: "Tentar de novo" }).click();
+      await ficha().getByRole("button", { name: tentar, exact: true }).click();
       await ficha().getByText(aviso).waitFor({ state: "detached" });
       await abas()
         .getByRole("link", { name: "Gerenciador de Tarefas" })

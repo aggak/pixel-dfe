@@ -168,8 +168,7 @@ async function executar() {
   await ficha()
     .getByRole("alert")
     .filter({
-      hasText:
-        "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo.",
+      hasText: "Não foi possível salvar. Tente novamente.",
     })
     .waitFor();
   assert.equal(await ui.valor("Título"), "Criar o repositório no GitHub");

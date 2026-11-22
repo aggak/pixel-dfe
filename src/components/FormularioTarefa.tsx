@@ -115,6 +115,8 @@ export function FormularioTarefa({
   const [descricaoAberta, setDescricaoAberta] = useState(
     Boolean(valoresIniciais?.descricao),
   );
+  // A descrição que já vem aberta não tira o foco inicial do título.
+  const [focarDescricao, setFocarDescricao] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
@@ -419,7 +421,7 @@ export function FormularioTarefa({
       }
     />
   );
-  const campoPrazo = edicao ? (
+  const campoPrazo = edicao && !compacto ? (
     <Input
       name="prazo"
       label="Prazo"
@@ -513,7 +515,10 @@ export function FormularioTarefa({
       aria-label={compacto ? rotuloDescricao : undefined}
       aria-expanded={descricaoAberta}
       aria-controls={descricaoAberta ? `${id}-descricao` : undefined}
-      onClick={() => setDescricaoAberta((aberta) => !aberta)}
+      onClick={() => {
+        setFocarDescricao(true);
+        setDescricaoAberta((aberta) => !aberta);
+      }}
     >
       <Icon
         name={compacto ? "document" : descricaoAberta ? "minus-small" : "plus-small"}
@@ -538,7 +543,7 @@ export function FormularioTarefa({
         }
         rows={3}
         size="sm"
-        autoFocus={compacto}
+        autoFocus={compacto && focarDescricao}
         value={descricao}
         onChange={setDescricao}
       />
