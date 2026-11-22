@@ -769,6 +769,39 @@ async function executar() {
   );
   console.log("OK: Enter abre a ficha e Esc fecha devolvendo o foco ao link");
 
+  const idsDaLista = await page
+    .locator(".e-row[data-task-id]")
+    .evaluateAll((linhas) => linhas.map((linha) => linha.dataset.taskId));
+  for (const id of [idsDaLista[0], idsDaLista.at(-1)]) {
+    await page.goto(`${web}/tarefas/${id}`);
+    await page.waitForFunction(
+      () =>
+        document.activeElement?.getAttribute("aria-label") ===
+        "Fechar detalhes da tarefa",
+    );
+    await page.locator(`.e-row[data-task-id="${id}"]`).waitFor();
+    await page.keyboard.press("Escape");
+    await page.waitForURL(`${web}/`);
+    await page.waitForFunction(
+      (id) =>
+        document.activeElement ===
+        document.querySelector(`[data-task-id="${id}"] .e-task-title`),
+      id,
+    );
+    assert.equal(
+      await page.evaluate(() => {
+        const caixa = document.activeElement.getBoundingClientRect();
+        const topo = document.querySelector(".e-top").getBoundingClientRect();
+        return caixa.top >= topo.bottom && caixa.bottom <= innerHeight;
+      }),
+      true,
+      `tarefa ${id}: o cartão focado ficou fora da tela`,
+    );
+  }
+  console.log(
+    "OK: ficha aberta pelo endereço devolve o foco ao cartão da tarefa, à vista",
+  );
+
   for (const largura of [1280, 375]) {
     await page.setViewportSize({ width: largura, height: 800 });
     for (const caminho of paginas) {

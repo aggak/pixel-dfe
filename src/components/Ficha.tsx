@@ -179,6 +179,7 @@ export function Ficha({
       return;
     }
     if (pendente.current) return;
+    const tarefa = tarefaDaFicha(location.pathname);
     pendente.current = () => {
       const indice = window.history.state?.idx;
       const estadoDestino = atualizar
@@ -212,13 +213,23 @@ export function Ficha({
       if (retornoPendente()) return;
       requestAnimationFrame(() => {
         const anterior = origem.current;
-        if (anterior?.isConnected) anterior.focus({ preventScroll: true });
-        else
-          primeiroVisivel([
-            '[data-action="new-task"]',
-            '[data-action="new-project"]',
-            "main h1",
-          ])?.focus({ preventScroll: true });
+        if (anterior?.isConnected)
+          return anterior.focus({ preventScroll: true });
+        const alvo = primeiroVisivel([
+          ...(tarefa
+            ? [`[data-task-id="${CSS.escape(tarefa)}"] .e-task-title`]
+            : []),
+          '[data-action="new-task"]',
+          '[data-action="new-project"]',
+          "main h1",
+        ]);
+        if (!alvo) return;
+        alvo.focus({ preventScroll: true });
+        const caixa = alvo.getBoundingClientRect();
+        const topo =
+          document.querySelector(".e-top")?.getBoundingClientRect().bottom ?? 0;
+        if (caixa.top < topo || caixa.bottom > window.innerHeight)
+          alvo.scrollIntoView({ block: "center", inline: "nearest" });
       });
     };
     setAberta(false);
