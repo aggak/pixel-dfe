@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -23,6 +24,8 @@ export function useConsulta<T>(
   const [ultimaTentativaFundo, setUltimaTentativaFundo] =
     useState(tentativaFundo);
   const [tentativa, setTentativa] = useState(0);
+  const [geracao, setGeracao] = useState(0);
+  const leitura = useRef<AbortController | null>(null);
   const [resultado, setResultado] = useState<{
     consulta: typeof consultar;
     tentativa: number;
@@ -33,17 +36,29 @@ export function useConsulta<T>(
 
   useEffect(() => {
     const controller = new AbortController();
+    leitura.current = controller;
+    const encerrar = () => {
+      if (leitura.current === controller) leitura.current = null;
+      return !controller.signal.aborted;
+    };
     consultar(controller.signal)
       .then((dados) => {
-        if (!controller.signal.aborted)
+        if (encerrar())
           setResultado({ consulta: consultar, tentativa, atualizacao, dados });
       })
       .catch((erro: unknown) => {
-        if (!controller.signal.aborted)
+        if (encerrar())
           setResultado({ consulta: consultar, tentativa, atualizacao, erro });
       });
     return () => controller.abort();
-  }, [consultar, tentativa, atualizacao]);
+  }, [consultar, tentativa, atualizacao, geracao]);
+
+  const refazer = useCallback(() => {
+    if (!leitura.current) return;
+    leitura.current.abort();
+    leitura.current = null;
+    setGeracao((atual) => atual + 1);
+  }, []);
 
   const tentarDeNovo = useCallback(() => {
     setTentativa((atual) => atual + 1);
@@ -74,5 +89,6 @@ export function useConsulta<T>(
     revalidando: !atual,
     tentando,
     tentarDeNovo,
+    refazer,
   };
 }

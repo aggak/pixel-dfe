@@ -4,7 +4,9 @@ import {
   useMemo,
   useRef,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
@@ -50,13 +52,20 @@ export function VisaoTarefas({
 }) {
   useTituloPagina(titulo);
   const consultaTarefas = useConsulta(listarTarefas, ultimasTarefas);
-  const { dados, erro, carregando, tentando } = consultaTarefas;
+  const { dados, erro, carregando, tentando, refazer } = consultaTarefas;
   const [tarefas, setTarefas] = useState<Tarefa[]>(dados ?? []);
   const [origem, setOrigem] = useState(dados);
   if (dados !== origem) {
     setOrigem(dados);
     setTarefas(dados ?? []);
   }
+  const gravar = useCallback<Dispatch<SetStateAction<Tarefa[]>>>(
+    (acao) => {
+      refazer();
+      setTarefas(acao);
+    },
+    [refazer],
+  );
   const { filtros, limpar } = useFiltros();
   const filtrosAtivos =
     filtros.busca !== FILTROS_INICIAIS.busca ||
@@ -80,14 +89,14 @@ export function VisaoTarefas({
   }, []);
   const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(
     tarefas,
-    setTarefas,
+    gravar,
     aoGravar,
   );
   const location = useLocation();
   const navigate = useNavigate();
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
-    setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
+    gravar((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
   };
   useEffect(() => {
     if (dados !== undefined) ultimasTarefas = tarefas;
