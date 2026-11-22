@@ -17,7 +17,10 @@
     ) {
     max-height: calc(100dvh - var(--ficha-y) - 12px) !important;
   }
-  .e-card[data-ficha-aberta] {
+  .e-form-modal[data-lugar="lista"][data-ancorada]:not(.e-ficha-compacta) {
+    max-height: calc(100dvh - var(--ficha-topo, 0px) - 20px) !important;
+  }
+  :is(.e-card, .e-row)[data-ficha-aberta] {
     background-color: var(--e-mark);
     outline: 2px solid var(--e-action);
     outline-offset: -2px;

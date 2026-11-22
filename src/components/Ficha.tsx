@@ -101,11 +101,15 @@ export function Ficha({
     }
   }, [location.pathname]);
   const casca = useRef<HTMLDivElement>(null);
-  const rotaFundo = fundo.pathname.replace(/\/+$/, "").toLowerCase();
+  const rotaFundo = fundo.pathname.replace(/\/+$/, "").toLowerCase() || "/";
   useAncorarFicha(
     casca,
     tarefaDaFicha(location.pathname),
-    rotaFundo === "/quadro" ? "quadro" : undefined,
+    rotaFundo === "/quadro"
+      ? "quadro"
+      : rotaFundo === "/" || /^\/projetos\/[^/]+$/.test(rotaFundo)
+        ? "lista"
+        : undefined,
   );
   const ultimoFoco = useRef<HTMLElement | null>(null);
   const eraOcupada = useRef(false);
