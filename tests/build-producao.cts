@@ -653,7 +653,11 @@ async function executar() {
     .getByRole("heading", { level: 1, name: edicaoProjeto.nome, exact: true })
     .waitFor();
   assert.deepEqual(gravacoes, [
-    { metodo: "PATCH", caminho: "/projetos/1", dados: edicaoProjeto },
+    {
+      metodo: "PATCH",
+      caminho: "/projetos/1",
+      dados: { nome: edicaoProjeto.nome },
+    },
   ]);
   assert.deepEqual(
     (await lerBanco()).projetos.find((p) => p.id === "1"),
@@ -745,7 +749,14 @@ async function executar() {
     .getByRole("heading", { name: edicaoTarefa.titulo, exact: true })
     .waitFor();
   assert.deepEqual(gravacoes, [
-    { metodo: "PATCH", caminho: "/tarefas/1", dados: edicaoTarefa },
+    {
+      metodo: "PATCH",
+      caminho: "/tarefas/1",
+      dados: {
+        titulo: edicaoTarefa.titulo,
+        responsavel: edicaoTarefa.responsavel,
+      },
+    },
   ]);
   assert.deepEqual(
     (await lerBanco()).tarefas.find((t) => t.id === "1"),
