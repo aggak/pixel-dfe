@@ -1,0 +1,68 @@
+/* Folha inferior: lugar da ficha de tarefa no celular.
+   Em pé (até 650 px de largura) e deitado (até 500 px de altura), ler e
+   editar uma tarefa abrem numa folha presa à borda de baixo, na largura
+   toda da tela. A folha tem a altura do conteúdo e um teto; passando dele,
+   a descrição (ou o formulário) rola por dentro e as ações continuam à
+   vista no rodapé. As áreas seguras viram respiro interno, então o fundo da
+   folha vai até as bordas. As margens e a densidade do conteúdo são de cada
+   ficha; aqui ficam só o lugar, a altura e as áreas seguras. A folha não se
+   arrasta: Ficha.tsx tira a alça do cabeçalho pelo mesmo recorte
+   (useFolhaInferior). Nova tarefa e projetos não recebem .e-folha e ficam
+   onde o site as põe. */
+@media (max-width: 650px), (max-height: 500px) {
+  .e-form-overlay.e-folha-overlay {
+    --modal-pt: 0px;
+    --modal-pb: 0px;
+    padding: 0 !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+  }
+  .e-form-modal.e-folha {
+    --folha-segura-cima: env(safe-area-inset-top, 0px);
+    --folha-segura-baixo: env(safe-area-inset-bottom, 0px);
+    --folha-segura-esquerda: env(safe-area-inset-left, 0px);
+    --folha-segura-direita: env(safe-area-inset-right, 0px);
+    --folha-teto: calc(100dvh - max(12px, var(--folha-segura-cima)));
+    width: 100% !important;
+    max-width: none;
+    height: auto;
+    margin: 0;
+    padding: 0 var(--folha-segura-direita) var(--folha-segura-baixo)
+      var(--folha-segura-esquerda);
+    max-height: var(--folha-teto) !important;
+    border-width: 1px 0 0;
+    border-radius: 14px 14px 0 0 !important;
+    /* Desfaz o deslocamento de um arraste feito antes, na tela larga. */
+    translate: none !important;
+  }
+  /* Com movimento reduzido, a regra geral de App.css zera a duração. */
+  .e-form-modal.e-folha[data-entering] {
+    animation: folha-inferior-subir 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .e-form-modal.e-folha[data-exiting] {
+    animation: folha-inferior-subir 160ms ease-in reverse both;
+  }
+  .e-form-modal.e-folha .e-form-header {
+    cursor: default;
+    touch-action: auto;
+  }
+  /* A área segura de baixo é respiro da folha, com ou sem rodapé. O rodapé
+     devolve até 10 px dela, o menor respiro que as fichas dão às ações,
+     para não somar os dois inteiros; o respiro de cada ficha não muda. */
+  .e-form-modal.e-folha .e-form-footer {
+    margin-bottom: calc(-1 * min(10px, var(--folha-segura-baixo)));
+  }
+}
+@keyframes folha-inferior-subir {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* Em pé, ler uma tarefa (.fol) deixa a página de trás aparecendo em cima.
+   O formulário de edição não tem .fol e pode ir até o teto. */
+@media (max-width: 650px) {
+  .e-form-modal.e-folha:has(.fol) {
+    max-height: min(var(--folha-teto), 76dvh) !important;
+  }
+}
