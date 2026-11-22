@@ -58,7 +58,52 @@ async function executar() {
   await ficha.waitFor({ state: "detached" });
   assert.equal(new URL(page.url()).pathname, "/");
   console.log("OK: arraste, teclado, limites, resize e fechamento da ficha");
+  await fecharDuranteDeslize(browser, web);
   await fecharLogoNoWebkit(web);
+}
+
+async function fecharDuranteDeslize(browser, web) {
+  const page = await browser.newPage({
+    viewport: { width: 1280, height: 900 },
+  });
+  page.setDefaultTimeout(5000);
+  await page.route("**/*", (rota) => {
+    const url = new URL(rota.request().url());
+    return url.hostname === "127.0.0.1" ? rota.continue() : rota.abort();
+  });
+  await page.goto(`${web}/tarefas/1`, { waitUntil: "domcontentloaded" });
+  await page.addStyleTag({
+    content: ".e-form-modal[data-entering]{animation-duration:4s!important}",
+  });
+  await page.locator(".e-form-modal[data-ancorada][data-entering]").waitFor();
+  await page.locator('main .e-list .e-row[data-task-id="1"]').waitFor();
+  const empurrarLista = (margem) =>
+    page.evaluate((margem) => {
+      document.querySelector<HTMLElement>("main .e-list").style.marginTop =
+        `${margem}px`;
+      dispatchEvent(new Event("resize"));
+    }, margem);
+  const deslizando = () =>
+    page
+      .locator(".e-form-modal")
+      .evaluate((ficha) =>
+        ficha
+          .getAnimations()
+          .some(
+            (animacao) =>
+              animacao instanceof CSSTransition &&
+              animacao.playState === "running",
+          ),
+      );
+  await empurrarLista(40);
+  assert.equal(await deslizando(), true, "a ficha não deslizou ao entrar");
+  await page.keyboard.press("Escape");
+  await page.locator(".e-form-modal[data-exiting]").waitFor();
+  await empurrarLista(80);
+  await page.locator(".e-form-overlay").waitFor({ state: "detached" });
+  await page.waitForURL((url) => url.pathname === "/");
+  await page.close();
+  console.log("OK: fechar com a ficha ainda entrando e deslizando não trava");
 }
 
 async function fecharLogoNoWebkit(web) {

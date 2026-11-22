@@ -506,6 +506,7 @@ textarea {
 }
 .e-form-modal[data-exiting] {
   animation: ficha-entrada 160ms ease-in reverse both;
+  transition-property: none;
 }
 .e-ficha-content {
   animation: ficha-conteudo-entrada 160ms ease-out;
