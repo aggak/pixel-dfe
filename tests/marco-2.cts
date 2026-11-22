@@ -138,7 +138,7 @@ async function executar() {
           );
         }
       }
-      for (const [i, tarefa] of tarefas.entries()) {
+      for (const tarefa of tarefas) {
         await abrir(`/tarefas/${tarefa.id}`);
         const prazo = ficha().locator("time");
         const extensa = new Intl.DateTimeFormat("pt-BR", {

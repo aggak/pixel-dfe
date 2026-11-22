@@ -49,7 +49,15 @@ async function executar() {
     await coluna("a-fazer").locator(`[data-task-id="${alvo.id}"]`).count(),
     0,
   );
-  assert.deepEqual(patches.at(-1).corpo, { status: "em-revisao" });
+  const statusGravado = patches.findIndex(
+    (patch) => patch.corpo.status === "em-revisao",
+  );
+  assert.ok(statusGravado >= 0);
+  assert.ok(
+    patches.every(
+      (patch, indice) => !("ordem" in patch.corpo) || indice > statusGravado,
+    ),
+  );
   assert.equal((await lerTarefa(alvo.id)).status, "em-revisao");
   await page
     .locator("main p[role=status]")
@@ -72,6 +80,7 @@ async function executar() {
       ? rota.fulfill({ status: 500, body: "{}" })
       : rota.continue(),
   );
+  const antesDaFalha = patches.length;
   await cartao(outra.id).dragTo(coluna("concluida"), PEGAR);
   await cartao(outra.id).locator("[role=alert]").waitFor();
   assert.equal(
@@ -79,8 +88,14 @@ async function executar() {
     1,
   );
   assert.equal((await lerTarefa(outra.id)).status, "a-fazer");
+  await page.waitForTimeout(300);
+  assert.ok(
+    patches.slice(antesDaFalha).every((patch) => !("ordem" in patch.corpo)),
+  );
   await page.unroute(`${api}/tarefas/${outra.id}`);
-  console.log("OK: falha ao gravar mantém o cartão na coluna e mostra o erro");
+  console.log(
+    "OK: falha ao gravar o status mantém o cartão, mostra o erro e não grava a ordem",
+  );
 
   await cartao(outra.id).dragTo(coluna("concluida"), PEGAR);
   await coluna("concluida").locator(`[data-task-id="${outra.id}"]`).waitFor();
@@ -152,6 +167,20 @@ async function executar() {
     await idsNaColuna("em-revisao"),
   );
   console.log("OK: nova tentativa de reordenar salva e tira o aviso");
+
+  const salvaAntesDeSair = await ordemSalva("em-revisao");
+  await page.locator('a[href="/projetos"]').first().click();
+  await page.waitForURL("**/projetos");
+  await page.route(`${api}/tarefas*`, async (rota) => {
+    if (rota.request().method() === "GET")
+      await new Promise((pronto) => setTimeout(pronto, 1500));
+    await rota.continue();
+  });
+  await page.goBack();
+  await coluna("em-revisao").locator("[data-task-id]").first().waitFor();
+  assert.deepEqual(await idsNaColuna("em-revisao"), salvaAntesDeSair);
+  await page.unroute(`${api}/tarefas*`);
+  console.log("OK: voltar ao quadro mostra a ordem nova antes de recarregar");
 
   await page.goto(`${web}/`);
   await page.locator(".e-row").first().waitFor();

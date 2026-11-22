@@ -10,6 +10,7 @@ import { statusTexto } from "../design/formatos";
 import { Icon } from "../design/icon";
 import { soltarTarefa, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
 import { atualizarTarefa, listarTarefas } from "../api";
+import { avisarTarefaGravada } from "../hooks/useMudarStatus";
 import type { Status, Tarefa } from "../tipos";
 import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
 
@@ -41,7 +42,12 @@ function Coluna({
   children,
 }: {
   status: Status;
-  onSoltar: (id: string, status: Status, ancora: Ancora) => void;
+  onSoltar: (
+    id: string,
+    status: Status,
+    ancora: Ancora,
+    statusSalvo: Promise<boolean>,
+  ) => void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -66,8 +72,8 @@ function Coluna({
       );
       if (!item || !isTextDropItem(item) || !ref.current) return;
       const id = await item.getText(TIPO_TAREFA);
-      onSoltar(id, status, ancoraNoPonto(ref.current, y));
-      soltarTarefa(id, status);
+      const ancora = ancoraNoPonto(ref.current, y);
+      onSoltar(id, status, ancora, soltarTarefa(id, status));
     },
   });
   useEffect(() => {
@@ -115,7 +121,12 @@ function Quadro({
     );
   const todas = aplicar(todasTarefas);
   const { recortar, abertas } = useConcluidasRecolhidas(todasTarefas);
-  const soltar = (id: string, status: Status, ancora: Ancora) => {
+  const soltar = (
+    id: string,
+    status: Status,
+    ancora: Ancora,
+    statusSalvo: Promise<boolean>,
+  ) => {
     const ids = ordenarPorOrdem(
       todas.filter((tarefa) => tarefa.status === status && tarefa.id !== id),
     ).map((tarefa) => tarefa.id);
@@ -136,15 +147,19 @@ function Quadro({
     const minha = ++rodada.current;
     setFalhaOrdem(false);
     setOrdemLocal((atual) => ({ ...atual, ...Object.fromEntries(mudadas) }));
-    void salvarOrdem(mudadas, anteriores, minha);
+    void salvarOrdem(mudadas, anteriores, minha, statusSalvo);
   };
   const salvarOrdem = async (
     mudadas: (readonly [string, number])[],
     anteriores: Map<string, number | undefined>,
     minha: number,
+    statusSalvo: Promise<boolean>,
   ) => {
+    if (!(await statusSalvo)) return restaurar(mudadas, anteriores, minha);
     const resultados = await Promise.allSettled(
-      mudadas.map(([tid, ordem]) => atualizarTarefa(tid, { ordem })),
+      mudadas.map(([tid, ordem]) =>
+        atualizarTarefa(tid, { ordem }).then(avisarTarefaGravada),
+      ),
     );
     if (resultados.every((resultado) => resultado.status === "fulfilled"))
       return;
@@ -153,6 +168,13 @@ function Quadro({
       (lista) => new Map(lista.map((tarefa) => [tarefa.id, tarefa.ordem])),
       () => anteriores,
     );
+    restaurar(mudadas, salvas, minha);
+  };
+  const restaurar = (
+    mudadas: (readonly [string, number])[],
+    salvas: Map<string, number | undefined>,
+    minha: number,
+  ) => {
     if (rodada.current !== minha) return;
     setOrdemLocal((atual) => {
       const proxima = { ...atual };

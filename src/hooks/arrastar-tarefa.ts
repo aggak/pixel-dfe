@@ -3,12 +3,20 @@ import type { Status } from "../tipos";
 export const TIPO_TAREFA = "application/x-pixel-tarefa";
 const SOLTAR_TAREFA = "pixel:soltar-tarefa";
 
-type Soltura = { id: string; status: Status };
+type Soltura = {
+  id: string;
+  status: Status;
+  responder: (salvo: Promise<boolean>) => void;
+};
 
 export function soltarTarefa(id: string, status: Status) {
+  let salvo: Promise<boolean> | undefined;
   window.dispatchEvent(
-    new CustomEvent<Soltura>(SOLTAR_TAREFA, { detail: { id, status } }),
+    new CustomEvent<Soltura>(SOLTAR_TAREFA, {
+      detail: { id, status, responder: (resposta) => (salvo = resposta) },
+    }),
   );
+  return salvo ?? Promise.resolve(false);
 }
 
 export function ouvirSoltura(ouvinte: (soltura: Soltura) => void) {
