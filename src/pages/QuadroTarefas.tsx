@@ -9,7 +9,7 @@ import { agruparPorStatus, ordenarPorOrdem } from "../derivar";
 import { statusTexto } from "../design/formatos";
 import { Icon } from "../design/icon";
 import { soltarTarefa, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
-import { atualizarTarefa } from "../api";
+import { atualizarTarefa, listarTarefas } from "../api";
 import type { Status, Tarefa } from "../tipos";
 import { useConcluidasRecolhidas } from "../hooks/useConcluidasRecolhidas";
 
@@ -104,6 +104,8 @@ function Quadro({
   todasTarefas: Tarefa[];
 }) {
   const [ordemLocal, setOrdemLocal] = useState<Record<string, number>>({});
+  const [falhaOrdem, setFalhaOrdem] = useState(false);
+  const rodada = useRef(0);
   const { filtros } = useFiltros();
   const aplicar = (lista: Tarefa[]) =>
     lista.map((tarefa) =>
@@ -131,51 +133,90 @@ function Quadro({
       anteriores.get(tid) === ordem ? [] : [[tid, ordem] as const],
     );
     if (mudadas.length === 0) return;
+    const minha = ++rodada.current;
+    setFalhaOrdem(false);
     setOrdemLocal((atual) => ({ ...atual, ...Object.fromEntries(mudadas) }));
-    void Promise.allSettled(
+    void salvarOrdem(mudadas, anteriores, minha);
+  };
+  const salvarOrdem = async (
+    mudadas: (readonly [string, number])[],
+    anteriores: Map<string, number | undefined>,
+    minha: number,
+  ) => {
+    const resultados = await Promise.allSettled(
       mudadas.map(([tid, ordem]) => atualizarTarefa(tid, { ordem })),
     );
+    if (resultados.every((resultado) => resultado.status === "fulfilled"))
+      return;
+    setFalhaOrdem(true);
+    const salvas = await listarTarefas().then(
+      (lista) => new Map(lista.map((tarefa) => [tarefa.id, tarefa.ordem])),
+      () => anteriores,
+    );
+    if (rodada.current !== minha) return;
+    setOrdemLocal((atual) => {
+      const proxima = { ...atual };
+      for (const [tid] of mudadas) {
+        const ordem = salvas.get(tid);
+        if (ordem === undefined) delete proxima[tid];
+        else proxima[tid] = ordem;
+      }
+      return proxima;
+    });
   };
   return (
-    <AnimarPosicoes
-      classe="e-board"
-      rotulo="Quadro de tarefas por status"
-      seletor=":scope > .e-column > .e-card[data-task-id]"
-      tarefas={todas}
-      filtros={filtros}
-      concluidasAbertas={abertas}
-      considerarOrdem
-    >
-      {agruparPorStatus(ordenarPorOrdem(aplicar(tarefas))).map((coluna) => {
-        const { visiveis, botao } =
-          coluna.status === "concluida"
-            ? recortar(coluna.tarefas)
-            : { visiveis: coluna.tarefas, botao: null };
-        return (
-          <Coluna key={coluna.status} status={coluna.status} onSoltar={soltar}>
-            <h2>
-              <span className="e-column-name">
-                <Icon name={iconesStatus[coluna.status]} />
-                <span>{statusTexto[coluna.status]}</span>
-              </span>
-              <Badge type="modern" color="gray" size="sm">
-                {coluna.tarefas.length}
-              </Badge>
-            </h2>
-            {visiveis.map((tarefa) => cartao(tarefa, "quadro"))}
-            {botao}
-            {coluna.tarefas.length === 0 && (
-              <p className="e-column-empty">
-                <GatinhoLavando />
-                {todasTarefas.some((tarefa) => tarefa.status === coluna.status)
-                  ? "Nenhuma tarefa encontrada"
-                  : "Nenhuma tarefa"}
-              </p>
-            )}
-          </Coluna>
-        );
-      })}
-    </AnimarPosicoes>
+    <>
+      {falhaOrdem && (
+        <p className="e-task-error" role="alert" tabIndex={-1}>
+          Não foi possível salvar a nova ordem. O quadro voltou à ordem salva.
+        </p>
+      )}
+      <AnimarPosicoes
+        classe="e-board"
+        rotulo="Quadro de tarefas por status"
+        seletor=":scope > .e-column > .e-card[data-task-id]"
+        tarefas={todas}
+        filtros={filtros}
+        concluidasAbertas={abertas}
+        considerarOrdem
+      >
+        {agruparPorStatus(ordenarPorOrdem(aplicar(tarefas))).map((coluna) => {
+          const { visiveis, botao } =
+            coluna.status === "concluida"
+              ? recortar(coluna.tarefas)
+              : { visiveis: coluna.tarefas, botao: null };
+          return (
+            <Coluna
+              key={coluna.status}
+              status={coluna.status}
+              onSoltar={soltar}
+            >
+              <h2>
+                <span className="e-column-name">
+                  <Icon name={iconesStatus[coluna.status]} />
+                  <span>{statusTexto[coluna.status]}</span>
+                </span>
+                <Badge type="modern" color="gray" size="sm">
+                  {coluna.tarefas.length}
+                </Badge>
+              </h2>
+              {visiveis.map((tarefa) => cartao(tarefa, "quadro"))}
+              {botao}
+              {coluna.tarefas.length === 0 && (
+                <p className="e-column-empty">
+                  <GatinhoLavando />
+                  {todasTarefas.some(
+                    (tarefa) => tarefa.status === coluna.status,
+                  )
+                    ? "Nenhuma tarefa encontrada"
+                    : "Nenhuma tarefa"}
+                </p>
+              )}
+            </Coluna>
+          );
+        })}
+      </AnimarPosicoes>
+    </>
   );
 }
 

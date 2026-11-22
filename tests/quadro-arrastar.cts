@@ -87,6 +87,72 @@ async function executar() {
   assert.equal(await cartao(outra.id).locator("[role=alert]").count(), 0);
   console.log("OK: nova tentativa depois do erro funciona");
 
+  const idsNaColuna = (status) =>
+    coluna(status)
+      .locator("[data-task-id]")
+      .evaluateAll((cartoes) =>
+        cartoes.map((c) => c.getAttribute("data-task-id")),
+      );
+  const ordemSalva = async (status) =>
+    (await (await fetch(`${api}/tarefas`)).json())
+      .filter((t) => t.status === status)
+      .sort(
+        (a, b) =>
+          (a.ordem ?? Number.MAX_SAFE_INTEGER) -
+          (b.ordem ?? Number.MAX_SAFE_INTEGER),
+      )
+      .map((t) => t.id);
+  const original = await idsNaColuna("em-revisao");
+  assert.ok(original.length >= 2);
+  const [primeiro] = original;
+  const ultimo = original.at(-1);
+  const alertaOrdem = page
+    .locator("main p[role=alert]")
+    .filter({ hasText: "Não foi possível salvar a nova ordem." });
+  await page.route(`${api}/tarefas/${ultimo}`, (rota) =>
+    rota.request().method() === "PATCH"
+      ? rota.fulfill({ status: 500, body: "{}" })
+      : rota.continue(),
+  );
+  await cartao(ultimo).dragTo(cartao(primeiro), {
+    ...PEGAR,
+    targetPosition: { x: 24, y: 4 },
+  });
+  await alertaOrdem.waitFor();
+  await page.waitForFunction(
+    async ([status, esperado]) =>
+      JSON.stringify(
+        [
+          ...document.querySelectorAll(
+            `[data-status-column="${status}"] [data-task-id]`,
+          ),
+        ].map((c) => c.getAttribute("data-task-id")),
+      ) === esperado,
+    ["em-revisao", JSON.stringify(await ordemSalva("em-revisao"))],
+  );
+  assert.equal((await idsNaColuna("em-revisao"))[0], primeiro);
+  await page.unroute(`${api}/tarefas/${ultimo}`);
+  console.log("OK: falha ao salvar a ordem avisa e volta à ordem salva");
+
+  await cartao(ultimo).dragTo(cartao(primeiro), {
+    ...PEGAR,
+    targetPosition: { x: 24, y: 4 },
+  });
+  await page.waitForFunction(
+    (id) =>
+      document
+        .querySelector('[data-status-column="em-revisao"] [data-task-id]')
+        ?.getAttribute("data-task-id") === id,
+    ultimo,
+  );
+  assert.equal(await alertaOrdem.count(), 0);
+  await page.waitForTimeout(300);
+  assert.deepEqual(
+    await ordemSalva("em-revisao"),
+    await idsNaColuna("em-revisao"),
+  );
+  console.log("OK: nova tentativa de reordenar salva e tira o aviso");
+
   await page.goto(`${web}/`);
   await page.locator(".e-row").first().waitFor();
   assert.equal(await page.locator('.e-row[draggable="true"]').count(), 0);
