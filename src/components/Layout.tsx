@@ -85,7 +85,7 @@ class FalhaPagina extends Component<
 }
 type DadosAbas = {
   atual?: string;
-  projetos: ReturnType<typeof useConsulta<Projeto[]>>;
+  projetos: Omit<ReturnType<typeof useConsulta<Projeto[]>>, "refazer">;
   mostrarErro?: boolean;
 };
 const ContextoAbas = createContext<Dispatch<

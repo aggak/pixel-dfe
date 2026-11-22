@@ -1,4 +1,9 @@
-import { useCallback, useState } from "react";
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { Button } from "@/components/base/buttons/button";
 import {
@@ -33,8 +38,15 @@ export function DetalheProjeto() {
     (signal: AbortSignal) => buscarProjetoComTarefas(id, signal),
     [id],
   );
-  const { dados, erro, carregando, tentando, tentarDeNovo, revalidando } =
-    useConsulta(consultar);
+  const {
+    dados,
+    erro,
+    carregando,
+    tentando,
+    tentarDeNovo,
+    revalidando,
+    refazer,
+  } = useConsulta(consultar);
   const naoEncontrado = erro instanceof ErroApi && erro.status === 404;
   const tituloErro = naoEncontrado
     ? "Projeto não encontrado"
@@ -53,14 +65,21 @@ export function DetalheProjeto() {
     setOrigem(dados);
     setTarefas(dados?.tarefas ?? []);
   }
+  const gravar = useCallback<Dispatch<SetStateAction<Tarefa[]>>>(
+    (acao) => {
+      refazer();
+      setTarefas(acao);
+    },
+    [refazer],
+  );
   const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(
     tarefas,
-    setTarefas,
+    gravar,
   );
   useRetornoFoco(dados !== undefined && !revalidando);
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
-    setTarefas((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
+    gravar((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
   };
   const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;
   return (

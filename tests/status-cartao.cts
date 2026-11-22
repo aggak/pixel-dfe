@@ -1,7 +1,12 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { contraste, focoVisivel, TEXTO_STATUS } = require("./ui.cts");
+const {
+  contraste,
+  criarEsperas,
+  focoVisivel,
+  TEXTO_STATUS,
+} = require("./ui.cts");
 
 const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
@@ -660,6 +665,69 @@ async function executar() {
   await page.unroute(`${api}/tarefas/${alvo.id}`);
   console.log(
     "OK: 404 na única tarefa mantém aviso e foco no estado vazio; 404 atrasado preserva foco na busca",
+  );
+
+  await page.goto(`${web}/`);
+  await cartao(alvo.id).waitFor();
+  const { segurar, assentar } = criarEsperas(page);
+  const antigas = await (await fetch(`${api}/tarefas`)).json();
+  const antes = antigas.find((t) => t.id === alvo.id).status;
+  const depois = antes === "em-revisao" ? "a-fazer" : "em-revisao";
+  let anteriores = [];
+  const leituras = [];
+  const contarLeitura = (requisicao) => {
+    if (requisicao.method() === "GET" && requisicao.url() === `${api}/tarefas`)
+      leituras.push(requisicao);
+  };
+  page.on("requestfinished", contarLeitura);
+  const retida = await segurar(`${api}/tarefas`, {
+    metodo: "GET",
+    responder: (rota) =>
+      anteriores.includes(rota.request())
+        ? rota.fulfill({ json: antigas })
+        : rota.continue(),
+  });
+  const pediu = page.waitForRequest(`${api}/tarefas`);
+  await page
+    .getByRole("navigation", { name: "Visualização das tarefas" })
+    .getByRole("link", { name: "Quadro", exact: true })
+    .click();
+  await quadro.waitFor();
+  await page.waitForFunction(() => location.pathname === "/quadro");
+  await pediu;
+  await assentar();
+  anteriores = [...retida.pedidos];
+  assert.ok(anteriores.length > 0);
+  await escolher(alvo, depois);
+  await coluna(depois).locator(`[data-task-id="${alvo.id}"]`).waitFor();
+  await retida.liberar();
+  await page.unroute(`${api}/tarefas`);
+  assert.equal((await lerTarefa(alvo.id)).status, depois);
+  assert.equal(
+    await coluna(depois).locator(`[data-task-id="${alvo.id}"]`).count(),
+    1,
+  );
+  assert.equal(
+    await coluna(antes).locator(`[data-task-id="${alvo.id}"]`).count(),
+    0,
+  );
+  assert.equal(
+    await page.getByText("Carregando tarefas…", { exact: true }).count(),
+    0,
+  );
+  leituras.length = 0;
+  const listou = page.waitForResponse(`${api}/tarefas`);
+  await page
+    .getByRole("navigation", { name: "Visualização das tarefas" })
+    .getByRole("link", { name: "Lista", exact: true })
+    .click();
+  await lista.locator(`[data-task-id="${alvo.id}"]`).waitFor();
+  await listou;
+  await assentar();
+  assert.equal(leituras.length, 1);
+  page.off("requestfinished", contarLeitura);
+  console.log(
+    "OK: a leitura iniciada antes de mudar o status não devolve o cartão à coluna antiga; sem gravação no meio, uma leitura por tela",
   );
 
   assert.deepEqual(errosJs, []);
