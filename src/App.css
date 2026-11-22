@@ -400,12 +400,14 @@ textarea {
   justify-content: flex-end !important;
   backdrop-filter: none !important;
   background: var(--e-veu) !important;
+  transition-property: none;
   --modal-pt: 14px;
   --modal-pb: 14px;
 }
 .e-form-modal {
   width: 438px !important;
   max-width: 100%;
+  transition-property: left, top, background-color, border-color, box-shadow;
   margin-top: 89px;
   max-height: calc(100dvh - 125px) !important;
   border-radius: 13px !important;
@@ -2331,10 +2333,12 @@ textarea {
 .e-confirm-overlay {
   background: var(--e-veu-forte) !important;
   backdrop-filter: none !important;
+  transition-property: none;
 }
 .e-confirm-modal {
   width: 420px !important;
   max-width: 100%;
+  transition-property: none;
   border: 1px solid var(--e-line);
   background: var(--e-sheet) !important;
   color: var(--e-ink);

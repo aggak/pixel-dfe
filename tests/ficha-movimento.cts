@@ -1,4 +1,7 @@
 const assert = require("node:assert/strict");
+const { homedir } = require("node:os");
+const { join } = require("node:path");
+const { webkit } = require("playwright");
 const { criarApoio } = require("./apoio.cts");
 
 const apoio = criarApoio();
@@ -55,6 +58,50 @@ async function executar() {
   await ficha.waitFor({ state: "detached" });
   assert.equal(new URL(page.url()).pathname, "/");
   console.log("OK: arraste, teclado, limites, resize e fechamento da ficha");
+  await fecharLogoNoWebkit(web);
+}
+
+async function fecharLogoNoWebkit(web) {
+  const compat = join(homedir(), ".cache/ms-playwright/compat-ubuntu-noble");
+  let browser;
+  try {
+    browser = apoio.registrar(
+      await webkit.launch({
+        headless: true,
+        env: {
+          ...process.env,
+          LD_LIBRARY_PATH: [compat, process.env.LD_LIBRARY_PATH]
+            .filter(Boolean)
+            .join(":"),
+        },
+      }),
+    );
+  } catch (erro) {
+    console.warn(
+      `AVISO: WebKit não abriu; caso de fechar logo depois de abrir pulado (${String(erro.message).split("\n")[0]})`,
+    );
+    return;
+  }
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  page.setDefaultTimeout(5000);
+  await page.route("**/*", (rota) => {
+    const url = new URL(rota.request().url());
+    return url.hostname === "127.0.0.1" ? rota.continue() : rota.abort();
+  });
+  await page.goto(web, { waitUntil: "domcontentloaded" });
+  await page.locator(".e-task-title").first().click();
+  await page.locator(".e-form-modal").waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator(".e-form-overlay").waitFor({ state: "detached" });
+  assert.equal(new URL(page.url()).pathname, "/");
+  await page.locator(".e-task-menu").first().click();
+  await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
+  await page.locator(".e-confirm-dialog").waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator(".e-confirm-overlay").waitFor({ state: "detached" });
+  await page.getByRole("link", { name: "Projetos", exact: true }).click();
+  await page.waitForURL((url) => url.pathname === "/projetos");
+  console.log("OK: WebKit fecha ficha e confirmação logo depois de abrir");
 }
 
 executar()
