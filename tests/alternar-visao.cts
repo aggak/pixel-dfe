@@ -559,7 +559,6 @@ async function executar() {
       exact: true,
     })
     .waitFor();
-  await page.getByRole("button", { name: "Detalhes do projeto" }).click();
   await page.locator(".e-edit-project-details").click();
   const fichaEdicao = page.getByRole("dialog", {
     name: "Editar projeto",

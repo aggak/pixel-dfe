@@ -44,7 +44,7 @@ async function executar() {
     await page.waitForFunction(
       () =>
         !document.querySelector(
-          ".e-loading-state, .e-ficha-state[role=status]",
+          ".e-loading-state, .e-ficha-state[role=status], .e-resumo-projeto[data-carregando]",
         ) &&
         document
           .getAnimations()
@@ -108,8 +108,6 @@ async function executar() {
         `/tarefas/${dadosLongos.tarefas[0].id}`,
       ]) {
         await abrir(page, caminho);
-        if (caminho === `/projetos/${dadosLongos.projetos[0].id}`)
-          await page.locator(".e-details-trigger").click();
         const conferirTexto = async () => {
           const problemas = await page.evaluate(() => {
             const problemas = [];
@@ -123,9 +121,10 @@ async function executar() {
               ".e-card-pessoa",
               ".e-card-prazo",
               ".e-tools h1:not(.e-task-page-title)",
-              ".e-project-name",
-              ".e-details-content>p",
-              ".e-details-content dd",
+              ".e-resumo-titulo:focus",
+              ".e-resumo-rotulo > span:first-of-type",
+              ".e-resumo-assunto",
+              ".e-resumo-data",
               ".e-read-project>a",
               ".e-read-meta p",
               ".e-confirm-dialog>p",
@@ -162,6 +161,16 @@ async function executar() {
           );
         };
         await conferirTexto();
+        if (caminho === `/projetos/${dadosLongos.projetos[0].id}`) {
+          await page
+            .getByRole("heading", {
+              level: 1,
+              name: dadosLongos.projetos[0].nome,
+              exact: true,
+            })
+            .focus();
+          await conferirTexto();
+        }
         if (caminho === "/") {
           await page.locator(".e-task-menu").click();
           await page
@@ -1011,7 +1020,9 @@ async function executar() {
       hasTouch: celular,
     });
     await abrir(seletor, "/");
-    const configuracoes = seletor.getByRole("button", { name: "Configurações" });
+    const configuracoes = seletor.getByRole("button", {
+      name: "Configurações",
+    });
     const aparencia = seletor.getByRole("dialog", { name: "Aparência" });
     const html = seletor.locator("html");
     const temaInicial = await html.getAttribute("data-tema");
@@ -1035,7 +1046,9 @@ async function executar() {
     await seletor.keyboard.press("Escape");
     await aparencia.waitFor({ state: "hidden" });
     await seletor.waitForFunction(() =>
-      document.activeElement?.matches('.e-top-configuracoes[aria-expanded="false"]'),
+      document.activeElement?.matches(
+        '.e-top-configuracoes[aria-expanded="false"]',
+      ),
     );
 
     await abrirAparencia();
@@ -1055,7 +1068,9 @@ async function executar() {
     await seletor.getByRole("link", { name: "Projetos", exact: true }).click();
     await seletor.waitForURL(`${web}/projetos`);
     await seletor.reload();
-    await seletor.getByRole("heading", { name: "Projetos", exact: true }).waitFor();
+    await seletor
+      .getByRole("heading", { name: "Projetos", exact: true })
+      .waitFor();
     assert.equal(await html.getAttribute("data-tema"), "ameixa-clara");
     await seletor.close();
   }

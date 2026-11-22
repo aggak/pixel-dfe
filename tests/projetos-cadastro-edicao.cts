@@ -634,9 +634,6 @@ async function executar() {
         .getByRole("heading", { name: seed.projetos[0].nome, exact: true })
         .waitFor();
       await page
-        .getByRole("button", { name: "Detalhes do projeto", exact: true })
-        .click();
-      await page
         .getByRole("button", { name: "Editar projeto", exact: true })
         .click();
       await page
@@ -707,17 +704,14 @@ async function executar() {
   );
 
   await conferir(
-    "editar com os detalhes abertos mantém o painel e o foco em Editar projeto; pela lista, o foco vai ao título",
+    "editar pela página do projeto devolve o foco a Editar projeto; pela lista, o foco vai ao título",
     async () => {
       await page.goto(`${origem}/projetos/1`);
-      const gatilho = page.locator(".e-details-trigger");
-      if ((await gatilho.getAttribute("aria-expanded")) === "false")
-        await gatilho.click();
       await page
         .getByRole("button", { name: "Editar projeto", exact: true })
         .click();
       await esperarEdicao("1");
-      const descricao = "Descrição revisada com os detalhes abertos";
+      const descricao = "Descrição revisada pela página do projeto";
       await campo("Descrição").fill(descricao);
       await salvarEdicao().click();
       await ate(
@@ -728,10 +722,6 @@ async function executar() {
         .locator("#project-details")
         .getByText(descricao, { exact: true })
         .waitFor();
-      assert.equal(
-        await page.locator(".e-details-trigger").getAttribute("aria-expanded"),
-        "true",
-      );
       await ate("foco em Editar projeto", () =>
         page.evaluate(
           () =>
@@ -753,10 +743,6 @@ async function executar() {
         ),
       );
       assert.equal(await focoNaTela(), true);
-      assert.equal(
-        await page.locator(".e-details-trigger").getAttribute("aria-expanded"),
-        "false",
-      );
     },
   );
 

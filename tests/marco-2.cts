@@ -221,10 +221,13 @@ async function executar() {
           (tarefa) => tarefa.projetoId === projeto.id,
         );
         assert.equal(await page.locator("article").count(), tarefas.length);
-        await page
-          .getByRole("button", { name: "Detalhes do projeto", exact: true })
-          .click();
-        await page.locator("#project-details").waitFor();
+        assert.equal(
+          await page.locator(".e-sheet-footer").innerText(),
+          `${tarefas.length} ${tarefas.length === 1 ? "tarefa" : "tarefas"}`,
+        );
+        const resumo = page.locator("#project-details");
+        await resumo.getByText(projeto.disciplina, { exact: true }).waitFor();
+        await resumo.getByRole("button", { name: "Editar projeto" }).waitFor();
         const conteudo = await texto();
         for (const tarefa of tarefas)
           assert.ok(conteudo.includes(tarefa.titulo));
@@ -233,9 +236,11 @@ async function executar() {
         ))
           assert.ok(!conteudo.includes(tarefa.titulo));
         assert.ok(conteudo.includes(projeto.descricao));
-        assert.ok(conteudo.includes(projeto.disciplina));
         assert.equal(
-          await page.locator("#project-details time").getAttribute("datetime"),
+          await resumo
+            .getByText(/Criado em/)
+            .locator("time")
+            .getAttribute("datetime"),
           projeto.criadoEm,
         );
       }

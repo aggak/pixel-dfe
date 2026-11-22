@@ -37,8 +37,10 @@ export function marcarVolta(chave: string, y: number) {
 export function primeiroVisivel(seletores: string[]) {
   for (const seletor of seletores) {
     const alvo = document.querySelector<HTMLElement>(seletor);
-    const caixa = alvo?.getBoundingClientRect();
-    if (alvo && caixa && caixa.width > 1 && caixa.height > 1) return alvo;
+    if (!alvo) continue;
+    const caixa = alvo.getBoundingClientRect();
+    const minimo = alvo.hasAttribute("data-visivel-ao-focar") ? 0 : 1;
+    if (caixa.width > minimo && caixa.height > minimo) return alvo;
   }
   return null;
 }
@@ -73,11 +75,11 @@ export function useRetornoFoco(pronto: boolean) {
       !menuDoCartao
     )
       return;
+    alvo.focus({ preventScroll: true });
     const caixa = alvo.getBoundingClientRect();
     const topo =
       document.querySelector(".e-top")?.getBoundingClientRect().bottom ?? 0;
     if (caixa.top < topo || caixa.bottom > window.innerHeight)
       alvo.scrollIntoView({ block: "center", inline: "nearest" });
-    alvo.focus({ preventScroll: true });
   }, [pronto, ativa, pathname, search]);
 }

@@ -154,10 +154,6 @@ textarea {
 .e-task-clear {
   flex-shrink: 0;
 }
-.e-project-details {
-  border-bottom: 1px solid var(--e-line);
-  padding: 0 20px;
-}
 .e-details-trigger {
   display: flex;
   gap: 8px;
@@ -173,33 +169,6 @@ textarea {
 }
 .e-details-trigger:hover:not(:disabled) {
   color: var(--e-ink);
-}
-.e-details-content {
-  padding: 0 0 18px;
-  max-width: 650px;
-  color: var(--e-muted);
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-.e-details-content > p {
-  color: var(--e-ink);
-  margin: 1px 0 15px;
-  font-size: 14px;
-}
-.e-details-content dl {
-  display: flex;
-  gap: 35px;
-  margin: 0;
-}
-.e-details-content dl > div {
-  min-width: 0;
-}
-.e-details-content dt {
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-.e-details-content dd {
-  margin: 0;
 }
 .e-content {
   padding: 4px 20px 24px;
@@ -457,7 +426,9 @@ textarea {
 .e-form-modal.e-ficha-compacta {
   width: var(--nova-largura-ficha, 408px) !important;
   margin-top: 0;
-  max-height: calc(var(--nova-altura-visivel) - var(--modal-pt) - var(--modal-pb)) !important;
+  max-height: calc(
+    var(--nova-altura-visivel) - var(--modal-pt) - var(--modal-pb)
+  ) !important;
 }
 .e-form-overlay[data-entering]:has(> .e-ficha-compacta) {
   animation: e-ficha-nova-fundo-entrar 140ms ease-out both;
@@ -819,22 +790,9 @@ textarea {
     justify-self: end;
     min-height: 44px;
   }
-  .e-project-details {
-    padding: 0 13px;
-  }
   .e-details-trigger {
     min-height: 44px;
     font-size: 12px;
-  }
-  .e-details-content {
-    font-size: 12px;
-  }
-  .e-details-content dl {
-    gap: 18px;
-    flex-wrap: wrap;
-  }
-  .e-details-content > p {
-    font-size: 13px;
   }
   .e-content {
     padding: 3px 12px 15px;
@@ -1297,10 +1255,6 @@ textarea {
 .e-project-card h2 {
   overflow-wrap: anywhere;
 }
-.e-edit-project-details {
-  margin-top: 15px;
-  font-size: 12px;
-}
 .e-loading-state {
   min-height: 270px;
   display: flex;
@@ -1410,9 +1364,6 @@ textarea {
     font-size: 12px;
     line-height: 1.5;
   }
-  .e-edit-project-details {
-    min-height: 44px;
-  }
   .e-projects .e-page-heading h1 {
     font-size: 22px;
   }
@@ -1422,14 +1373,6 @@ textarea {
   max-width: min(240px, calc(100vw - 64px));
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.e-project-name {
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  color: var(--e-ink);
-  margin: 0 0 10px;
 }
 .e-form-modal {
   display: flex;
@@ -1654,9 +1597,19 @@ textarea {
 }
 .e-form-overlay textarea::-webkit-resizer {
   background:
-    linear-gradient(135deg, transparent 44%, var(--e-control) 45% 55%, transparent 56%)
+    linear-gradient(
+        135deg,
+        transparent 44%,
+        var(--e-control) 45% 55%,
+        transparent 56%
+      )
       right 4px bottom 4px / 9px 9px no-repeat,
-    linear-gradient(135deg, transparent 43%, var(--e-control) 44% 56%, transparent 57%)
+    linear-gradient(
+        135deg,
+        transparent 43%,
+        var(--e-control) 44% 56%,
+        transparent 57%
+      )
       right 3px bottom 3px / 4px 4px no-repeat;
 }
 @supports (-webkit-hyphens: none) {
@@ -3242,4 +3195,133 @@ textarea {
   box-shadow:
     0 8px 0 -6px var(--e-action),
     var(--e-cartao-sombra);
+}
+
+.e-resumo-projeto {
+  position: relative;
+  border-bottom: 1px solid var(--e-line);
+  overflow-wrap: anywhere;
+}
+.e-resumo-titulo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.e-resumo-titulo:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 6px;
+  clip-path: none;
+  white-space: normal;
+  font-size: 16px;
+  font-weight: 500;
+}
+.e-resumo-resumo {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px 20px;
+}
+.e-resumo-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--e-muted);
+  font-size: 12px;
+}
+.e-resumo-concluido {
+  display: inline-flex;
+  color: var(--e-status-concluida);
+}
+.e-resumo-assunto,
+.e-resumo-esqueleto {
+  font-size: 15px;
+  line-height: 1.55;
+}
+.e-resumo-assunto {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--e-ink);
+}
+.e-resumo-esqueleto-rotulo,
+.e-resumo-esqueleto {
+  display: block;
+  width: 160px;
+  background: linear-gradient(var(--e-line) 0 0) center / 100% 12px no-repeat;
+  height: 18px;
+}
+.e-resumo-esqueleto {
+  width: min(520px, 100%);
+  background-size: 100% 18px;
+  height: 1lh;
+}
+.e-resumo-dados {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  min-height: 24px;
+  color: var(--e-muted);
+  font-size: 12px;
+}
+.e-resumo-data {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+}
+.e-resumo-dados .e-edit-project-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: var(--e-action);
+}
+@media (max-width: 650px) {
+  .e-resumo-resumo {
+    padding: 14px 12px 16px;
+  }
+  .e-resumo-dados .e-edit-project-details {
+    min-height: 44px;
+  }
+}
+.e-resumo-espiao {
+  position: absolute;
+  bottom: 0;
+  right: 24px;
+  width: 36px;
+  height: 20px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.e-resumo-espiao-gato {
+  display: block;
+  width: 36px;
+  height: 36px;
+  background: var(--e-gato) 0 0 / 3456px 100% no-repeat;
+  image-rendering: pixelated;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .e-resumo-espiao-gato {
+    animation:
+      e-resumo-espiao-sobe 360ms steps(4, end) both,
+      e-gato-olhando-quadros-36 8s steps(96) 360ms infinite;
+  }
+}
+@keyframes e-resumo-espiao-sobe {
+  from {
+    transform: translateY(20px);
+  }
+}
+@keyframes e-gato-olhando-quadros-36 {
+  to {
+    background-position-x: -3456px;
+  }
 }
