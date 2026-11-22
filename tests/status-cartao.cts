@@ -408,6 +408,20 @@ async function executar() {
   );
   await opcao(naFicha, "concluida").click();
   await coluna("concluida").locator(`[data-task-id="${naFicha.id}"]`).waitFor();
+  await page.waitForFunction((id) => {
+    const ficha = document
+      .querySelector(".e-form-modal[data-ancorada]")
+      ?.getBoundingClientRect();
+    const cartao = document
+      .querySelector(`.e-board [data-task-id="${id}"]`)
+      ?.getBoundingClientRect();
+    return (
+      ficha &&
+      cartao &&
+      Math.abs(cartao.left - ficha.right - 8) < 1 &&
+      Math.abs(ficha.top - cartao.top) < 1
+    );
+  }, naFicha.id);
   assert.equal(await tarefasNaTela(naFicha.id), 1);
   assert.equal(await rodape.innerText(), textoTotal(total));
   assert.deepEqual(patches.at(-1), {
@@ -471,6 +485,7 @@ async function executar() {
       "Esta tarefa não existe mais. Ela pode ter sido excluída.",
   );
   await cartao(naFicha.id).waitFor({ state: "detached" });
+  assert.equal(await page.locator(".e-form-modal[data-ancorada]").count(), 0);
   assert.equal(await rodape.innerText(), textoTotal(total - 1));
   await page.waitForFunction(() =>
     document.activeElement?.matches(".e-read-tags [data-status-trigger]"),
