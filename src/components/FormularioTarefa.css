@@ -179,6 +179,14 @@
   color: var(--e-muted);
 }
 
+.e-tarefa-responsavel > [data-input-wrapper] > [role="presentation"][data-invalid] > .e-uicon:last-child {
+  color: var(--e-error);
+}
+
+:is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-title-field span:has(> [role="alert"]) {
+  font-size: 12px;
+}
+
 .e-tarefa-atalhos {
   display: flex;
   flex-wrap: wrap;
