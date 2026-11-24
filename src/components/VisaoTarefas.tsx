@@ -94,7 +94,7 @@ export function VisaoTarefas({
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
     gravar((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
-    avisarExclusao(tarefa);
+    if (!filtrosAtivos) avisarExclusao(tarefa);
   };
   useEffect(() => {
     if (dados !== undefined) ultimasTarefas = tarefas;
