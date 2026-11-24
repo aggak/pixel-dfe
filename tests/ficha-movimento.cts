@@ -43,6 +43,9 @@ async function executar() {
   const dica = page.locator(`[id="${idDica}"]`);
   assert.equal(await dica.isVisible(), true);
   assert.match(await dica.innerText(), /setas.*Shift/);
+  const aviso = await dica.boundingBox();
+  const conteudo = await ficha.locator(".e-ficha-content").boundingBox();
+  assert.ok(aviso.y + aviso.height <= conteudo.y + 1);
   await page.keyboard.press("ArrowLeft");
   const teclado = await ficha.boundingBox();
   assert.ok(Math.abs(teclado.x - depois.x + 10) < 2);

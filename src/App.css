@@ -524,7 +524,6 @@ textarea {
   padding-right: 36px !important;
 }
 .e-form-header {
-  position: relative;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -543,19 +542,15 @@ textarea {
 .e-ficha-dica-mover {
   display: none;
 }
+.e-form-header:has(> .e-form-symbol:focus-visible) {
+  flex-wrap: wrap;
+}
 .e-form-symbol:focus-visible + .e-ficha-dica-mover {
-  position: absolute;
-  top: 100%;
-  inset-inline: 12px auto;
-  z-index: 1;
   display: block;
-  max-width: calc(100% - 24px);
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--e-ink);
-  color: var(--e-back);
+  flex-basis: 100%;
+  order: 1;
+  color: var(--e-muted);
   font-size: 12px;
-  pointer-events: none;
 }
 .e-form-symbol {
   width: 26px;
