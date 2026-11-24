@@ -93,9 +93,18 @@ async function executar() {
   await page.unroute(urlFalha);
   console.log("OK: falha da API avisa e mantém a tarefa e a contagem");
 
+  const anunciado = (tarefa) =>
+    page.waitForFunction(
+      (texto) =>
+        [...document.querySelectorAll("main p[role=status]")].some(
+          (p) => p.textContent === texto,
+        ),
+      `Tarefa ${tarefa.titulo} excluída.`,
+    );
   await abrir(naLista);
   await confirmar(naLista);
   await cartao(naLista).waitFor({ state: "detached" });
+  await anunciado(naLista);
   assert.equal(await existeNaApi(naLista), false);
   assert.equal(
     await page.locator(".e-sheet-footer").innerText(),
@@ -113,6 +122,7 @@ async function executar() {
   await abrir(noQuadro);
   await confirmar(noQuadro);
   await cartao(noQuadro).waitFor({ state: "detached" });
+  await anunciado(noQuadro);
   assert.equal(await existeNaApi(noQuadro), false);
   assert.equal(
     await page.locator(".e-sheet-footer").innerText(),
@@ -126,6 +136,7 @@ async function executar() {
   await abrir(noProjeto);
   await confirmar(noProjeto);
   await cartao(noProjeto).waitFor({ state: "detached" });
+  await anunciado(noProjeto);
   assert.equal(await existeNaApi(noProjeto), false);
   assert.equal(
     await page.locator(".e-sheet-footer").innerText(),
@@ -208,14 +219,6 @@ async function executar() {
         document.activeElement.closest<HTMLElement>("[data-task-id]")?.dataset
           .taskId === alvo,
       id,
-    );
-  const anunciado = (tarefa) =>
-    page.waitForFunction(
-      (texto) =>
-        [...document.querySelectorAll("main p[role=status]")].some(
-          (p) => p.textContent === texto,
-        ),
-      `Tarefa ${tarefa.titulo} excluída.`,
     );
 
   await page.goto(web);

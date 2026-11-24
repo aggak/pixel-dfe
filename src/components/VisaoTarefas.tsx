@@ -87,16 +87,14 @@ export function VisaoTarefas({
     setSaiu({ tarefa: gravada, filtros: filtrosAtuais.current });
     return true;
   }, []);
-  const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(
-    tarefas,
-    gravar,
-    aoGravar,
-  );
+  const { mudarStatus, avisarExclusao, aviso, inexistente, alertaInexistente } =
+    useMudarStatus(tarefas, gravar, aoGravar);
   const location = useLocation();
   const navigate = useNavigate();
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
     gravar((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
+    avisarExclusao(tarefa);
   };
   useEffect(() => {
     if (dados !== undefined) ultimasTarefas = tarefas;

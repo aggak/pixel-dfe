@@ -72,14 +72,13 @@ export function DetalheProjeto() {
     },
     [refazer],
   );
-  const { mudarStatus, aviso, inexistente, alertaInexistente } = useMudarStatus(
-    tarefas,
-    gravar,
-  );
+  const { mudarStatus, avisarExclusao, aviso, inexistente, alertaInexistente } =
+    useMudarStatus(tarefas, gravar);
   useRetornoFoco(dados !== undefined && !revalidando);
   const excluir = async (tarefa: Tarefa) => {
     await excluirTarefaSeExistir(tarefa.id);
     gravar((atuais) => atuais.filter((atual) => atual.id !== tarefa.id));
+    avisarExclusao(tarefa);
   };
   const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;
   return (
