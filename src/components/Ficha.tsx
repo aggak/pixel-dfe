@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -65,7 +66,9 @@ export function Ficha({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { ref: cabecalho, ...arraste } = useArrastarFicha();
+  const { ref: cabecalho, onKeyDown, ...arraste } = useArrastarFicha();
+  const alca = useRef<HTMLDivElement>(null);
+  const idDicaMover = useId();
   // Presa à borda de baixo, a ficha não se move: o cabeçalho deixa de ser alça.
   const presa = useFolhaInferior(folhaInferior);
   const [aberta, setAberta] = useState(true);
@@ -122,16 +125,18 @@ export function Ficha({
   const eraOcupada = useRef(false);
   useLayoutEffect(() => {
     // Sem a alça, o foco que estava nela vai para o botão de fechar. O
-    // navegador pode já ter tirado o foco do cabeçalho quando o tabindex saiu.
-    const alca = cabecalho.current;
+    // navegador pode já ter tirado o foco da alça quando o tabindex saiu.
     const ativo = document.activeElement;
     if (
       presa &&
-      alca &&
-      (ativo === alca ||
-        (ultimoFoco.current === alca && (!ativo || ativo === document.body)))
+      alca.current &&
+      (ativo === alca.current ||
+        (ultimoFoco.current === alca.current &&
+          (!ativo || ativo === document.body)))
     )
-      alca.querySelector("button")?.focus({ preventScroll: true });
+      cabecalho.current
+        ?.querySelector("button")
+        ?.focus({ preventScroll: true });
   }, [presa, cabecalho]);
   useEffect(() => {
     const voltou = eraOcupada.current && !ocupada;
@@ -270,20 +275,42 @@ export function Ficha({
                 aria-busy={ocupada}
               >
                 <header
+                  role="presentation"
                   ref={cabecalho}
                   className="e-form-header"
                   {...(presa
                     ? null
                     : {
                         ...arraste,
-                        tabIndex: 0,
-                        "aria-label": "Mover ficha",
-                        title: "Arraste para mover ou use as setas do teclado",
+                        title: "Arraste para mover a ficha",
                       })}
                 >
-                  <div className="e-form-symbol">
+                  <div
+                    ref={alca}
+                    className="e-form-symbol"
+                    {...(presa
+                      ? null
+                      : {
+                          role: "application",
+                          tabIndex: 0,
+                          "aria-label": "Mover ficha",
+                          "aria-roledescription": "controle de movimento",
+                          "aria-describedby": idDicaMover,
+                          onKeyDown,
+                        })}
+                  >
                     <Icon name={icone} />
                   </div>
+                  {!presa && (
+                    <span
+                      aria-hidden="true"
+                      className="e-ficha-dica-mover"
+                      id={idDicaMover}
+                    >
+                      Use as setas para mover a ficha. Segure Shift para mover
+                      mais longe.
+                    </span>
+                  )}
                   <Heading slot="title">{titulo}</Heading>
                   <Button
                     color="tertiary"

@@ -19,6 +19,7 @@ async function executar() {
 
   const ficha = page.locator(".e-form-modal");
   const cabecalho = page.locator(".e-form-header");
+  const alca = page.getByRole("application", { name: "Mover ficha" });
   const medir = () =>
     page.evaluate(() => {
       const caixa = document
@@ -42,6 +43,7 @@ async function executar() {
     return caixa;
   }
   async function semAlca() {
+    assert.equal(await alca.count(), 0);
     for (const atributo of ["tabindex", "aria-label", "title"])
       assert.equal(await cabecalho.getAttribute(atributo), null);
     const antes = await ficha.boundingBox();
@@ -98,20 +100,14 @@ async function executar() {
   // Tela larga: a ficha volta a ser movida pelo cabeçalho; ao estreitar de
   // novo, o deslocamento não acompanha a folha.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.waitForFunction(
-    () =>
-      document.querySelector(".e-form-header").getAttribute("aria-label") ===
-      "Mover ficha",
-  );
-  assert.equal(await cabecalho.getAttribute("tabindex"), "0");
+  await alca.waitFor();
+  assert.equal(await alca.getAttribute("tabindex"), "0");
   const solta = await ficha.boundingBox();
-  await cabecalho.focus();
+  await alca.focus();
   await page.keyboard.press("Shift+ArrowLeft");
   assert.ok(Math.abs((await ficha.boundingBox()).x - solta.x + 40) < 2);
   await page.setViewportSize({ width: 375, height: 667 });
-  await page.waitForFunction(
-    () => !document.querySelector(".e-form-header").hasAttribute("tabindex"),
-  );
+  await alca.waitFor({ state: "detached" });
   await presaEmbaixo();
   assert.ok(
     await page.evaluate(() =>
@@ -214,7 +210,7 @@ async function executar() {
     await page.goto(web + rota, { waitUntil: "domcontentloaded" });
     await page.locator("form").waitFor();
     assert.ok(await ficha.evaluate((no) => !no.matches(".e-folha")));
-    assert.equal(await cabecalho.getAttribute("aria-label"), "Mover ficha");
+    await alca.waitFor();
     const caixa = await medir();
     assert.ok(caixa.esquerda > 0 && caixa.direita < caixa.largura);
   }
