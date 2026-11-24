@@ -60,6 +60,37 @@ async function executar() {
     },
   );
   await conferir(
+    "a linha inteira da tarefa abre a ficha; status e ações continuam com seus menus",
+    async () => {
+      for (const rota of ["/", "/projetos/1"]) {
+        await abrir(rota);
+        const linha = page.locator(".e-list > .e-row").first();
+        const titulo = (
+          await linha.locator(".e-task-title").innerText()
+        ).trim();
+        const caixa = await linha.boundingBox();
+        await page.mouse.click(
+          caixa.x + caixa.width * 0.45,
+          caixa.y + caixa.height / 2,
+        );
+        await ficha().locator(".e-read-title").waitFor();
+        assert.equal(
+          await ficha().locator(".e-read-title").innerText(),
+          titulo,
+        );
+        await page.keyboard.press("Escape");
+        await ficha().waitFor({ state: "detached" });
+        for (const controle of ["[data-status-trigger]", ".e-task-menu"]) {
+          await linha.locator(controle).click();
+          await page.getByRole("menu").waitFor();
+          assert.equal(new URL(page.url()).pathname, rota);
+          await page.keyboard.press("Escape");
+          await page.getByRole("menu").waitFor({ state: "detached" });
+        }
+      }
+    },
+  );
+  await conferir(
     "detalhe direto apresenta os campos e permite recarregar",
     async () => {
       await abrir("/tarefas/2");
