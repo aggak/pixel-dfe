@@ -39,7 +39,7 @@ export function AndamentoProjeto({
   if (!tarefas)
     return (
       <div className="e-proj-foot">
-        {carregando && (
+        {carregando ? (
           <>
             <div className="e-proj-foot-txt">
               <span className="e-proj-prog">
@@ -49,6 +49,10 @@ export function AndamentoProjeto({
             </div>
             <span className="e-proj-bar e-proj-bar-vazia" aria-hidden="true" />
           </>
+        ) : (
+          <div className="e-proj-foot-txt">
+            <span className="e-proj-prog">Andamento indisponível</span>
+          </div>
         )}
       </div>
     );
@@ -56,27 +60,41 @@ export function AndamentoProjeto({
   const concluidas = tarefas.filter(
     (tarefa) => tarefa.status === "concluida",
   ).length;
-  const porcento = total ? Math.round((concluidas / total) * 100) : 0;
+  const concluido = total > 0 && concluidas === total;
+  const porcento = total ? (concluidas / total) * 100 : 0;
+  const percentual = concluido
+    ? 100
+    : concluidas > 0
+      ? Math.min(99, Math.max(1, Math.round(porcento)))
+      : 0;
   return (
-    <div className="e-proj-foot">
-      <div className="e-proj-foot-txt">
-        {total === 0 && <span className="e-proj-prog">Sem tarefas ainda</span>}
-        {total > 0 && concluidas === total && (
-          <span className="e-proj-prog e-proj-ok">
-            <PawIcon />
-            {total === 1 ? "Tarefa concluída" : `Todas as ${total} concluídas`}
-          </span>
-        )}
-        {total > 0 && concluidas < total && (
-          <span className="e-proj-prog">
-            <b>{concluidas}</b> de {total}{" "}
-            {concluidas === 1 ? "concluída" : "concluídas"}
-          </span>
-        )}
-      </div>
+    <div
+      className="e-proj-foot"
+      data-concluido={concluido || undefined}
+      data-vazio={total === 0 || undefined}
+    >
+      {(total === 0 || concluido) && (
+        <div className="e-proj-foot-txt">
+          {total === 0 ? (
+            <span className="e-proj-prog">Sem tarefas ainda</span>
+          ) : (
+            <span className="e-proj-prog e-proj-ok">
+              <PawIcon />
+              {total === 1 ? "Tarefa concluída" : "Todas as tarefas concluídas"}
+            </span>
+          )}
+        </div>
+      )}
       <span
         className={`e-proj-bar${total ? "" : " e-proj-bar-vazia"}`}
-        aria-hidden="true"
+        {...(total > 0
+          ? {
+              role: "progressbar",
+              "aria-label": "Tarefas concluídas",
+              "aria-valuenow": percentual,
+              "aria-valuetext": `${concluidas} de ${total}`,
+            }
+          : { "aria-hidden": true })}
       >
         {porcento > 0 && <i style={{ width: `${porcento}%` }} />}
       </span>

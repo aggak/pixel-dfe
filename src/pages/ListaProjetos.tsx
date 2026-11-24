@@ -103,14 +103,14 @@ export function ListaProjetos() {
               <div className="e-proj-cab">
                 <IconeFelino tema={temas.get(projeto.id)} />
                 <div className="e-proj-cab-txt">
-                  <span className="e-project-discipline">
-                    {projeto.disciplina}
-                  </span>
                   <h2>
                     <Link to={`/projetos/${encodeURIComponent(projeto.id)}`}>
                       {projeto.nome}
                     </Link>
                   </h2>
+                  <span className="e-project-discipline">
+                    {projeto.disciplina}
+                  </span>
                 </div>
                 <Button
                   color="tertiary"
