@@ -112,7 +112,7 @@ export function PrazoNovaTarefa({
   const seletor = (
     <DialogTrigger isOpen={aberto} onOpenChange={setAberto}>
       {formulario ? (
-        <Tooltip title={dica} isDisabled={aberto}>
+        <Tooltip title={dica} isDisabled={aberto || Boolean(erro)}>
           {botao}
         </Tooltip>
       ) : botao}

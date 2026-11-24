@@ -222,6 +222,36 @@ async function executar() {
     },
   );
   await conferir(
+    "o foco no prazo inválido mantém a mensagem de erro à vista",
+    async () => {
+      await abrir("/tarefas/nova");
+      await ui.escolher("Projeto", seed.projetos[0].nome);
+      await campo("Título").fill(base.titulo);
+      await campo("Responsável").fill(base.responsavel);
+      await botaoSalvar().press("Enter");
+
+      const atalho = ui.atalhoPrazo();
+      const erro = page.getByText("Informe o prazo.", { exact: true });
+      await erro.waitFor();
+      await ate("foco no prazo", () =>
+        atalho.evaluate((el) => document.activeElement === el),
+      );
+      await assentar();
+      assert.equal(
+        await page.getByRole("tooltip", { name: "Prazo", exact: true }).count(),
+        0,
+      );
+      assert.equal(
+        await atalho.getAttribute("aria-describedby"),
+        await erro.getAttribute("id"),
+      );
+
+      await ui.preencherPrazo(base.prazo);
+      await atalho.hover();
+      await page.getByRole("tooltip", { name: /^Prazo:/ }).waitFor();
+    },
+  );
+  await conferir(
     "ações nos projetos 1 e 2 preselecionam o projeto de origem",
     async () => {
       for (const projeto of seed.projetos) {
