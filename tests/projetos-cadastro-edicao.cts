@@ -34,7 +34,7 @@ async function executar() {
   const idsSeed = JSON.stringify(seed.projetos.map((p) => p.id));
   const api = await subir(
     "a API temporária",
-    "node_modules/json-server/lib/bin.js",
+    "api/servidor.mjs",
     (porta) => [banco, "--host", "127.0.0.1", "--port", String(porta)],
     process.env,
     "/projetos",
@@ -954,6 +954,44 @@ async function executar() {
         await readFile(join(raiz, "db.seed.json"), "utf8"),
         seedOriginal,
       );
+    },
+  );
+
+  await conferir(
+    "avisa quando outra pessoa ocupa a décima vaga e esconde a ação de criar",
+    async () => {
+      const criarNaApi = (nome) =>
+        fetch(`${api}/projetos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...seed.projetos[0], nome }),
+        });
+      const { projetos } = await lerBanco();
+      for (let quantidade = projetos.length; quantidade < 9; quantidade++) {
+        assert.equal(
+          (await criarNaApi(`Projeto ${quantidade + 1}`)).status,
+          201,
+        );
+      }
+      await page.goto(`${origem}/projetos`);
+      const novoProjeto = page.getByRole("button", {
+        name: "Novo projeto",
+        exact: true,
+      });
+      await novoProjeto.click();
+      await campo("Nome").fill("Rascunho na última vaga");
+      await campo("Disciplina").fill("Desenvolvimento Frontend");
+      assert.equal((await criarNaApi("Décimo projeto")).status, 201);
+      await salvarNovo().click();
+      const aviso = "Limite de 10 projetos atingido.";
+      await page.getByRole("alert").filter({ hasText: aviso }).waitFor();
+      assert.equal(await campo("Nome").inputValue(), "Rascunho na última vaga");
+      assert.equal((await lerBanco()).projetos.length, 10);
+
+      await page.goto(`${origem}/projetos`);
+      await page.getByRole("status").filter({ hasText: aviso }).waitFor();
+      assert.equal(await novoProjeto.count(), 0);
+      assert.equal(await page.locator("[data-project-id]").count(), 10);
     },
   );
 

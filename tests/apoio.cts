@@ -180,7 +180,7 @@ function criarApoio() {
   }
 
   function iniciarApi(banco, porta) {
-    return iniciar("node_modules/json-server/lib/bin.js", [
+    return iniciar("api/servidor.mjs", [
       banco,
       "--host",
       "127.0.0.1",
