@@ -3353,6 +3353,18 @@ textarea {
 .e-row .e-read-meta i {
   font-size: 13px;
 }
+.e-lista-pessoa-prazo {
+  display: contents;
+}
+@media (max-width: 650px) {
+  .e-lista-pessoa-prazo {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: start;
+    column-gap: inherit;
+    min-width: 0;
+  }
+}
 .e-card.e-card-soltar-antes {
   box-shadow:
     0 -8px 0 -6px var(--e-action),

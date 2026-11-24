@@ -108,6 +108,18 @@ async function executar() {
         `/tarefas/${dadosLongos.tarefas[0].id}`,
       ]) {
         await abrir(page, caminho);
+        if (caminho === "/" && largura <= 650) {
+          const meta = page.locator(".e-row .e-read-meta");
+          const pessoa = await meta
+            .getByText(dadosLongos.tarefas[0].responsavel, { exact: true })
+            .boundingBox();
+          const prazo = await meta.locator("time").boundingBox();
+          assert.ok(
+            prazo.x >= pessoa.x + pessoa.width - 1 &&
+              Math.abs(pessoa.y - prazo.y) <= 1,
+            `${largura}px: o prazo fica ao lado do responsável com nomes longos`,
+          );
+        }
         const conferirTexto = async () => {
           const problemas = await page.evaluate(() => {
             const problemas = [];
@@ -135,7 +147,10 @@ async function executar() {
             for (const seletor of seletores)
               for (const el of document.querySelectorAll(seletor)) {
                 const caixa = el.getBoundingClientRect();
-                const pai = el.parentElement.getBoundingClientRect();
+                let conteiner = el.parentElement;
+                while (getComputedStyle(conteiner).display === "contents")
+                  conteiner = conteiner.parentElement;
+                const pai = conteiner.getBoundingClientRect();
                 if (el.scrollWidth > el.clientWidth + 1)
                   problemas.push(`${seletor}: conteúdo excede a largura`);
                 if (

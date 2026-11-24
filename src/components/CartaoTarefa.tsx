@@ -200,15 +200,17 @@ export function CartaoTarefa({
                   <span className="e-task-project">{nomeProjeto}</span>
                 </p>
               )}
-              <p>
-                <Icon name="user" />
-                <span>{tarefa.responsavel}</span>
-              </p>
-              <p>
-                <Icon name="calendar" />
-                <time {...prazo}>{formatarPrazoCartao(tarefa.prazo)}</time>
-                {avisoVencida}
-              </p>
+              <div className="e-lista-pessoa-prazo">
+                <p>
+                  <Icon name="user" />
+                  <span>{tarefa.responsavel}</span>
+                </p>
+                <p>
+                  <Icon name="calendar" />
+                  <time {...prazo}>{formatarPrazoCartao(tarefa.prazo)}</time>
+                  {avisoVencida}
+                </p>
+              </div>
             </div>
             {alerta}
             {avisoExclusao}
