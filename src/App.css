@@ -535,9 +535,22 @@ textarea {
 .e-form-header[data-arrastando] {
   cursor: grabbing;
 }
-.e-form-header:focus-visible {
+.e-form-symbol:focus-visible {
   outline: 2px solid var(--e-action);
-  outline-offset: -4px;
+  outline-offset: 2px;
+}
+.e-ficha-dica-mover {
+  display: none;
+}
+.e-form-header:has(> .e-form-symbol:focus-visible) {
+  flex-wrap: wrap;
+}
+.e-form-symbol:focus-visible + .e-ficha-dica-mover {
+  display: block;
+  flex-basis: 100%;
+  order: 1;
+  color: var(--e-muted);
+  font-size: 12px;
 }
 .e-form-symbol {
   width: 26px;
