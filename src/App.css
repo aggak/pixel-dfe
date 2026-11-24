@@ -3370,6 +3370,11 @@ textarea {
   overflow-wrap: anywhere;
 }
 .e-resumo-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+.e-resumo-projeto[data-carregando] .e-resumo-titulo:not(:focus) {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -3377,16 +3382,6 @@ textarea {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
-}
-.e-resumo-titulo:focus {
-  position: static;
-  width: auto;
-  height: auto;
-  margin: 0 0 6px;
-  clip-path: none;
-  white-space: normal;
-  font-size: 16px;
-  font-weight: 500;
 }
 .e-resumo-resumo {
   display: grid;
