@@ -147,6 +147,7 @@ async function executar() {
     "og-image.png",
     "design-licenses/THIRD_PARTY_NOTICES.txt",
     "design-licenses/RUNTIME_LICENSES.txt",
+    "design-licenses/COMMISSIONER_OFL.txt",
   ]) {
     assert.ok(
       producao.lista.includes(arquivo),
@@ -345,6 +346,17 @@ async function executar() {
   );
   assert.deepEqual(
     pedidosProducao.filter((pedido) => !pedido.startsWith("GET ")),
+    [],
+  );
+  for (const peso of ["400", "500", "600"]) {
+    const carregados = await paginaProducao.evaluate(async (peso) => {
+      const faces = await document.fonts.load(`${peso} 14px Commissioner`, "Concluída");
+      return faces.map((face) => face.weight);
+    }, peso);
+    assert.deepEqual(carregados, [peso]);
+  }
+  assert.deepEqual(
+    externosProducao.filter((url) => /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(url)),
     [],
   );
   await contextoProducao.close();
@@ -841,9 +853,7 @@ async function executar() {
   );
 
   assert.deepEqual(pedidosRailway, []);
-  console.log(
-    "OK: o build local nunca chamou a API de produção; fontes e ícones de CDN ficaram bloqueados",
-  );
+  console.log("OK: o build local nunca chamou a API de produção");
   await contexto.close();
 
   assert.deepEqual(errosPagina, []);
