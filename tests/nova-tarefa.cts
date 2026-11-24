@@ -222,6 +222,60 @@ async function executar() {
     },
   );
   await conferir(
+    "o seletor abre com o projeto atual à vista no cadastro e na edição pelo celular",
+    async () => {
+      const celular = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+      });
+      const uiCelular = criarUi(celular);
+      const projetos = Array.from({ length: 10 }, (_, i) => ({
+        ...seed.projetos[0],
+        id: String(i + 1),
+        nome: `Projeto ${String(i + 1).padStart(2, "0")}`,
+      }));
+      try {
+        await celular.route(`${apiUrl}/projetos`, (rota) =>
+          rota.fulfill({ json: projetos }),
+        );
+        await celular.route(`${apiUrl}/tarefas/1`, (rota) =>
+          rota.fulfill({ json: { ...seed.tarefas[0], projetoId: "10" } }),
+        );
+        for (const [rota, id] of [
+          ["/tarefas/nova?projetoId=7", "7"],
+          ["/tarefas/1/editar", "10"],
+        ]) {
+          await celular.goto(`${origem}${rota}`);
+          await ate("projeto do formulário", async () =>
+            (await uiCelular.valor("Projeto")) === id,
+          );
+          const seletor = uiCelular.seletor("Projeto");
+          if (id === "7") await seletor.tap();
+          else await seletor.press("Enter");
+          const selecionado = celular.getByRole("option", {
+            name: projetos[Number(id) - 1].nome,
+            selected: true,
+          });
+          await ate("projeto selecionado inteiro à vista", () =>
+            selecionado.evaluate((el) => {
+              const area = el
+                .closest(".e-nova-tarefa-opcoes")
+                .getBoundingClientRect();
+              const opcao = el.getBoundingClientRect();
+              return opcao.top >= area.top && opcao.bottom <= area.bottom;
+            }),
+          );
+          await celular.keyboard.press("ArrowUp");
+          await celular.keyboard.press("Enter");
+          assert.equal(await uiCelular.valor("Projeto"), String(Number(id) - 1));
+        }
+      } finally {
+        await celular.close();
+      }
+    },
+  );
+  await conferir(
     "o foco no prazo inválido mantém a mensagem de erro à vista",
     async () => {
       await abrir("/tarefas/nova");

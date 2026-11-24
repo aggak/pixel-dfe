@@ -146,6 +146,22 @@ const SelectValue = ({
   );
 };
 
+function revealSelectedOption(popover: HTMLElement | null) {
+  if (!popover) return;
+  const frame = requestAnimationFrame(() => {
+    const selected = popover.querySelector(
+      '[role="option"][aria-selected="true"]',
+    );
+    if (!selected || popover.scrollHeight <= popover.clientHeight) return;
+    const option = selected.getBoundingClientRect();
+    const top = popover.getBoundingClientRect().top + popover.clientTop;
+    const bottom = top + popover.clientHeight;
+    if (option.top < top) popover.scrollTop += option.top - top;
+    else if (option.bottom > bottom) popover.scrollTop += option.bottom - bottom;
+  });
+  return () => cancelAnimationFrame(frame);
+}
+
 const Select = ({
   placeholder = "Select",
   icon,
@@ -198,6 +214,7 @@ const Select = ({
               )}
 
               <Popover
+                ref={triggerTooltip ? revealSelectedOption : undefined}
                 size={size}
                 className={rest.popoverClassName}
                 {...(triggerTooltip
