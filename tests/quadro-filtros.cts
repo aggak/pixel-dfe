@@ -322,6 +322,26 @@ async function executar() {
       "OK: acesso direto e recarga; 4, 2 e 1 colunas sem rolagem horizontal",
     );
 
+    await page.setViewportSize({ width: 320, height: 300 });
+    const distancia = await page.evaluate(() => {
+      const coluna = [
+        ...document.querySelectorAll<HTMLElement>(".e-column"),
+      ].sort((a, b) => b.offsetHeight - a.offsetHeight)[0];
+      [...coluna.querySelectorAll("[data-task-id]")]
+        .at(-1)
+        .scrollIntoView({ block: "end" });
+      const titulo = coluna.querySelector("h2").getBoundingClientRect();
+      const cabecalho = document
+        .querySelector(".e-top")
+        .getBoundingClientRect();
+      return { topo: titulo.top - cabecalho.bottom, rolagem: scrollY };
+    });
+    assert.ok(distancia.rolagem > 0);
+    assert.ok(Math.abs(distancia.topo) < 1, JSON.stringify(distancia));
+    console.log(
+      "OK: ao rolar, o título da coluna fica preso logo abaixo do cabeçalho",
+    );
+
     assert.deepEqual(errosJs, []);
     const atuais = await Promise.all(
       ["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) =>
@@ -330,7 +350,7 @@ async function executar() {
     );
     assert.deepEqual(atuais, originais);
     console.log(
-      "9 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.",
+      "10 cenários aprovados; nenhum erro JavaScript não tratado e bancos preservados.",
     );
   } finally {
     await apoio.encerrar();
