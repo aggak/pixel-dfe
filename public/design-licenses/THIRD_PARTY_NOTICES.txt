@@ -15,7 +15,7 @@ Their full license texts are in RUNTIME_LICENSES.txt, next to this file.
 
 Commissioner typeface
 Designers: Kostas Bartsokas and contributors. License: SIL Open Font License 1.1.
-Loaded from Google Fonts at runtime; the font files are not part of Pixel's build.
+WOFF2 files from Google Fonts are included in Pixel's build. Full license text in COMMISSIONER_OFL.txt, next to this file.
 
 pixel-art-atlas-1.4m sprites
 Dataset: https://huggingface.co/datasets/Angais/pixel-art-atlas-1.4m

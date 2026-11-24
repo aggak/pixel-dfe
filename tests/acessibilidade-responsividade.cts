@@ -576,7 +576,7 @@ async function executar() {
   };
   const page = await abrirCelular();
   const semFonte = await abrirCelular();
-  await semFonte.route(/fonts\.(googleapis|gstatic)\.com/, (rota) =>
+  await semFonte.route("**/commissioner-*.woff2", (rota) =>
     rota.abort().catch(() => {}),
   );
   const prepararFonte = async (aba, fonte, caminho) => {
@@ -589,15 +589,10 @@ async function executar() {
           face.status === "loaded",
       );
     });
-    if (fonte === "reserva")
-      assert.equal(
-        commissioner,
-        false,
-        `${caminho}: a Commissioner carregou mesmo bloqueada`,
-      );
+    assert.equal(commissioner, fonte === "local", `${caminho}: fonte ${fonte}`);
   };
   for (const [fonte, aba] of [
-    ["web", page],
+    ["local", page],
     ["reserva", semFonte],
   ]) {
     for (const largura of [375, 320]) {
@@ -659,12 +654,12 @@ async function executar() {
     }
   }
   console.log(
-    "OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte da web e com a de reserva",
+    "OK: alvos de toque com pelo menos 44 × 44 px em 375 e 320 px, com a fonte local e com a de reserva",
   );
 
   for (const largura of [375, 320]) {
     await page.setViewportSize({ width: largura, height: 800 });
-    await prepararFonte(page, "web", "/");
+    await prepararFonte(page, "local", "/");
     await page.locator(".e-task-menu").first().click();
     await page
       .getByRole("menuitem", { name: "Excluir tarefa", exact: true })
@@ -686,7 +681,7 @@ async function executar() {
   );
 
   for (const [fonte, aba] of [
-    ["web", page],
+    ["local", page],
     ["reserva", semFonte],
   ]) {
     await aba.setViewportSize({ width: 375, height: 800 });
@@ -741,7 +736,7 @@ async function executar() {
   }
   await semFonte.close();
   console.log(
-    "OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte da web e com a de reserva",
+    "OK: o anel de foco dos links ampliados não cobre o texto vizinho, com a fonte local e com a de reserva",
   );
 
   await page.setViewportSize({ width: 1280, height: 900 });
