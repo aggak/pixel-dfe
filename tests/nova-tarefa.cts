@@ -195,6 +195,33 @@ async function executar() {
     },
   );
   await conferir(
+    "projeto e prazo escolhidos ficam escritos nos atalhos; em 320 px voltam a ser só ícones",
+    async () => {
+      await abrir("/tarefas/nova");
+      const escrito = (alvo) =>
+        alvo.evaluate((el) =>
+          el.getBoundingClientRect().width > 1 ? el.textContent.trim() : "",
+        );
+      const nomeProjeto = ui.seletor("Projeto").locator("section, p").first();
+      const dataPrazo = ui.atalhoPrazo().locator("span");
+      assert.equal(await escrito(nomeProjeto), "");
+      assert.equal(await dataPrazo.count(), 0);
+      await ui.escolher("Projeto", seed.projetos[1].nome);
+      await ui.preencherPrazo("2031-03-09");
+      assert.equal(await escrito(nomeProjeto), seed.projetos[1].nome);
+      assert.equal(await escrito(dataPrazo), "9 mar 2031");
+      const atalhos = page.locator(".e-tarefa-atalhos");
+      const cabe = () =>
+        atalhos.evaluate((el) => el.scrollWidth <= el.clientWidth);
+      assert.equal(await cabe(), true);
+      await page.setViewportSize({ width: 320, height: 700 });
+      assert.equal(await escrito(nomeProjeto), "");
+      assert.equal(await escrito(dataPrazo), "");
+      assert.equal(await cabe(), true);
+      await page.setViewportSize({ width: 1280, height: 900 });
+    },
+  );
+  await conferir(
     "ações nos projetos 1 e 2 preselecionam o projeto de origem",
     async () => {
       for (const projeto of seed.projetos) {

@@ -573,6 +573,19 @@ export function FormularioTarefa({
     </>
   );
 
+  // No formulário compacto o aviso fica entre os atalhos e os botões, para
+  // que os atalhos não saiam do lugar quando o envio falha.
+  const avisoEnvio = erroEnvio && (
+    <div className="e-form-error" role="alert">
+      <Icon name="exclamation" />
+      {erroEnvio === "inexistente"
+        ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos."
+        : compacto
+          ? "Não foi possível salvar. Tente novamente."
+          : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo."}
+    </div>
+  );
+
   return (
     <form
       id={compacto ? id : undefined}
@@ -646,16 +659,7 @@ export function FormularioTarefa({
         )}
       </div>
 
-      {erroEnvio && (
-        <div className="e-form-error" role="alert">
-          <Icon name="exclamation" />
-          {erroEnvio === "inexistente"
-            ? "Esta tarefa não existe mais. Ela pode ter sido excluída; seus dados foram mantidos."
-            : compacto
-              ? "Não foi possível salvar. Tente novamente."
-              : "Não foi possível salvar a tarefa. Seus dados foram mantidos; tente de novo."}
-        </div>
-      )}
+      {!compacto && avisoEnvio}
 
       <div className={compacto ? "e-form-footer e-tarefa-rodape" : "e-form-footer"}>
         {compacto ? (
@@ -671,6 +675,7 @@ export function FormularioTarefa({
               {seletorPrioridade}
               <Tooltip title={rotuloDescricao}>{botaoDescricao}</Tooltip>
             </div>
+            {avisoEnvio}
             <div className="e-tarefa-envio">{acoesEnvio}</div>
           </>
         ) : (

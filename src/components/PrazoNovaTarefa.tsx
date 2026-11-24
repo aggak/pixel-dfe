@@ -18,7 +18,11 @@ import { HintText } from "@/components/base/input/hint-text";
 import { InputBase, TextField } from "@/components/base/input/input";
 import { Label } from "@/components/base/input/label";
 import { Tooltip } from "@/components/base/tooltip/tooltip";
-import { dataValida, formatarData } from "../design/formatos";
+import {
+  dataValida,
+  formatarData,
+  formatarPrazoCartao,
+} from "../design/formatos";
 import { Icon } from "../design/icon";
 import "./PrazoNovaTarefa.css";
 
@@ -102,6 +106,7 @@ export function PrazoNovaTarefa({
       aria-describedby={formulario && erro ? idErro : undefined}
     >
       <Icon name="calendar" />
+      {formulario && data && <span>{formatarPrazoCartao(valor)}</span>}
     </Button>
   );
   const seletor = (
