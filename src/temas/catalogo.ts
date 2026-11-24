@@ -44,9 +44,7 @@ export const CORES_DOS_COMPONENTES = [
   "--e-menu-sombra",
   "--e-cartao-sombra",
   "--e-aba-sombra",
-  "--e-confirmar-sombra",
   "--e-veu",
-  "--e-veu-forte",
 ] as const;
 
 export const PALETA_PIXEL: Record<string, string> = {

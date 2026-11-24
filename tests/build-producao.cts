@@ -809,17 +809,18 @@ async function executar() {
   );
 
   const cartao = page.locator(`[data-task-id="${tarefaCriada.id}"]`);
-  const dialogoExcluir = page.getByRole("dialog", {
-    name: `Excluir ${novaTarefa.titulo}`,
-  });
+  const confirmarExclusao = page.locator('[role="menuitem"][data-pronto]');
   await cartao
     .getByRole("button", { name: `Ações de ${novaTarefa.titulo}` })
     .click();
   await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-  await dialogoExcluir.waitFor();
-  assert.match(await dialogoExcluir.innerText(), /não pode ser desfeita/);
+  await confirmarExclusao.waitFor();
+  assert.match(
+    await page.locator(".e-popover [role=status]").innerText(),
+    /não pode ser desfeita/,
+  );
   gravacoes.length = 0;
-  await dialogoExcluir.getByRole("button", { name: "Excluir tarefa" }).click();
+  await confirmarExclusao.click();
   await cartao.waitFor({ state: "detached" });
   assert.deepEqual(gravacoes, [
     { metodo: "DELETE", caminho: `/tarefas/${tarefaCriada.id}`, dados: null },

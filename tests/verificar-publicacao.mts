@@ -255,16 +255,16 @@ async function conferirPublicacao() {
       "OK: o selo do cartão muda o status para Em andamento, a API hospedada grava e o quadro mantém após recarregar",
     );
 
-    const dialogo = page.getByRole("dialog", { name: `Excluir ${titulo}` });
+    const confirmar = page.locator('[role="menuitem"][data-pronto]');
     await cartao.getByRole("button", { name: `Ações de ${titulo}` }).click();
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-    await dialogo.waitFor();
+    await confirmar.waitFor();
     const respostaDelete = page.waitForResponse(
       (r) =>
         r.url() === `${API}/tarefas/${encodeURIComponent(criada.id)}` &&
         r.request().method() === "DELETE",
     );
-    await dialogo.getByRole("button", { name: "Excluir tarefa" }).click();
+    await confirmar.click();
     assert.equal((await respostaDelete).status(), 200);
     await cartao.waitFor({ state: "detached" });
     assert.equal(await rodape.innerText(), textoTotal(tarefasIniciais.length));

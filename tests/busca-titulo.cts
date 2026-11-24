@@ -176,10 +176,7 @@ async function executar() {
     const excluirPeloMenu = async (titulo) => {
       await lista.getByRole("button", { name: `Ações de ${titulo}` }).click();
       await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-      await page
-        .getByRole("dialog", { name: `Excluir ${titulo}` })
-        .getByRole("button", { name: "Excluir tarefa" })
-        .click();
+      await page.locator('[role="menuitem"][data-pronto]').click();
     };
     await busca.fill("json-server");
     await lista.getByRole("link", { name: "Subir o json-server" }).waitFor();
@@ -217,10 +214,7 @@ async function executar() {
       .click();
     const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
     await ficha.getByRole("button", { name: "Excluir tarefa" }).click();
-    await page
-      .getByRole("dialog", { name: "Excluir Criar o repositório" })
-      .getByRole("button", { name: "Excluir tarefa" })
-      .click();
+    await ficha.locator(".e-read-delete[data-pronto]").click();
     await ficha.waitFor({ state: "detached" });
     await page.waitForFunction(
       () =>

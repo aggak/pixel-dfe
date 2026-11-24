@@ -486,10 +486,7 @@ async function executar() {
       .getByRole("button", { name: `Ações de ${tituloExcluir}` })
       .click();
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-    await page
-      .getByRole("dialog", { name: `Excluir ${tituloExcluir}` })
-      .getByRole("button", { name: "Excluir tarefa" })
-      .click();
+    await page.locator('[role="menuitem"][data-pronto]').click();
     await page.waitForFunction(
       (titulo) =>
         [...document.querySelectorAll(".e-task-title")].every(

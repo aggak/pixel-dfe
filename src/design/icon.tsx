@@ -170,5 +170,26 @@ export const RefreshIcon = (p: HTMLAttributes<HTMLElement>) => (
   <Icon {...p} name="refresh" />
 );
 export const TrashIcon = (p: HTMLAttributes<HTMLElement>) => (
-  <Icon {...p} name="trash" />
+  <i
+    {...p}
+    aria-hidden="true"
+    className={`e-uicon e-lixeira ${p.className || ""}`}
+  >
+    <svg
+      viewBox="0 0 7 7"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        className="e-lixeira-tampa"
+        fill="currentColor"
+        d="M2 0h3v1h-3zM0 1h7v1h-7z"
+      />
+      <path
+        fill="currentColor"
+        d="M1 2h1v1h-1zM5 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3z"
+      />
+    </svg>
+  </i>
 );

@@ -2321,50 +2321,55 @@ textarea {
   outline: 2px solid var(--e-action);
   outline-offset: 3px;
 }
-.e-confirm-overlay {
-  background: var(--e-veu-forte) !important;
-  backdrop-filter: none !important;
-  transition-property: none;
+.e-lixeira > svg {
+  overflow: visible;
 }
-.e-confirm-modal {
-  width: 420px !important;
-  max-width: 100%;
-  transition-property: none;
-  border: 1px solid var(--e-line);
-  background: var(--e-sheet) !important;
-  color: var(--e-ink);
-  border-radius: 13px !important;
-  box-shadow: var(--e-confirmar-sombra) !important;
+.e-excluir-armado .e-lixeira-tampa {
+  transform: translate(1px, -1px);
 }
-.e-confirm-dialog {
-  padding: 22px;
-  overflow: visible !important;
+.e-popover .e-excluir-armado > div {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--e-error) 16%, transparent) !important;
 }
-.e-confirm-dialog h2 {
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 600;
+.e-popover .e-excluir-armado > div,
+.e-popover .e-excluir-armado > div * {
+  color: var(--e-error) !important;
 }
-.e-confirm-dialog > p {
-  margin: 0;
-  color: var(--e-muted);
-  line-height: 1.5;
-  overflow-wrap: anywhere;
+.e-read-delete.e-excluir-armado {
+  position: relative;
+  overflow: hidden;
 }
-.e-confirm-dialog .e-confirm-error {
-  margin-top: 14px;
-  color: var(--e-error);
+.e-popover .e-excluir-armado > div::after,
+.e-read-delete.e-excluir-armado::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.6;
+  transform-origin: left;
+  animation: e-excluir-esvaziar 5s steps(10, end) both;
 }
-.e-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 9px;
-  margin-top: 22px;
-}
-@media (max-width: 650px), (pointer: coarse) {
-  .e-confirm-actions button {
-    min-height: 44px;
+@keyframes e-excluir-esvaziar {
+  to {
+    transform: scaleX(0);
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .e-popover .e-excluir-armado > div::after,
+  .e-read-delete.e-excluir-armado::after {
+    animation: none;
+  }
+}
+.e-task-saindo {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.e-form-footer > .e-task-error {
+  flex-basis: 100%;
+  margin: 0 0 4px;
+  text-align: right;
 }
 @media (max-width: 650px), (pointer: coarse) {
   .e-status-trigger::after {
