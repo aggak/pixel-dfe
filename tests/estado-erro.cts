@@ -483,7 +483,13 @@ async function executar() {
   await page.goto(`${web}/projetos`);
   await page.locator("[data-project-id]").first().waitFor();
   await avisoAndamento().waitFor();
-  assert.equal(await page.locator(".e-proj-prog").count(), 0);
+  const semAndamento = page.getByText("Andamento indisponível", { exact: true });
+  const barra = page.getByRole("progressbar", { name: "Tarefas concluídas" });
+  assert.equal(
+    await semAndamento.count(),
+    await page.locator("[data-project-id]").count(),
+  );
+  assert.equal(await barra.count(), 0);
   assert.equal(await page.getByRole("main").getByRole("alert").count(), 0);
   await tentar().focus();
   await page.keyboard.press("Enter");
@@ -495,7 +501,8 @@ async function executar() {
   );
   falharAndamento = false;
   await page.keyboard.press("Enter");
-  await page.locator(".e-proj-prog").first().waitFor();
+  await barra.first().waitFor();
+  assert.equal(await semAndamento.count(), 0);
   assert.equal(await avisoAndamento().count(), 0);
   await page.waitForFunction(
     () => document.activeElement === document.querySelector("main h1"),
@@ -642,12 +649,12 @@ async function executar() {
   );
 
   const barreira = () => alerta("Não foi possível mostrar esta página");
-  const statusQuebrado = alterarResposta((lista) =>
+  const idQuebrado = alterarResposta((lista) =>
     lista.map((tarefa, indice) =>
-      indice === 0 ? { ...tarefa, status: "__proto__" } : tarefa,
+      indice === 0 ? { ...tarefa, id: "\ud800" } : tarefa,
     ),
   );
-  await page.route(`${api}/tarefas`, statusQuebrado);
+  await page.route(`${api}/tarefas`, idQuebrado);
   await page.goto(`${web}/`);
   await barreira().waitFor();
   assert.equal(
@@ -674,7 +681,7 @@ async function executar() {
   assert.equal(await barreira().count(), 0);
   await page.goBack();
   await barreira().waitFor();
-  await page.unroute(`${api}/tarefas`, statusQuebrado);
+  await page.unroute(`${api}/tarefas`, idQuebrado);
   await tentar().click();
   await page.locator("[data-task-id]").first().waitFor();
   assert.equal(await barreira().count(), 0);

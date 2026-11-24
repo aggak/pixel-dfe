@@ -150,12 +150,18 @@ async function executar() {
     { width: 844, height: 390 },
   ];
   const cancelar = page.getByRole("button", { name: "Cancelar" });
+  // Cancelar fecha a edição; a leitura volta ao abrir a tarefa de novo.
+  async function cancelarEReabrir() {
+    await cancelar.click();
+    await ficha.waitFor({ state: "detached" });
+    await titulo.click();
+    await page.locator(".e-read-edit").waitFor();
+  }
   for (const tela of TELAS) {
     await page.setViewportSize(tela);
     await dentroDaAreaSegura([salvar, cancelar]);
   }
-  await cancelar.click();
-  await page.locator(".e-read-edit").waitFor();
+  await cancelarEReabrir();
   for (const tela of TELAS) {
     await page.setViewportSize(tela);
     await dentroDaAreaSegura([
@@ -189,8 +195,7 @@ async function executar() {
   const formulario = await presaEmbaixo();
   assert.ok(formulario.altura - formulario.topo > 0.76 * formulario.altura);
   await page.setViewportSize({ width: 375, height: 667 });
-  await cancelar.click();
-  await page.locator(".e-read-edit").waitFor();
+  await cancelarEReabrir();
   console.log("OK: leitura para em 76% da altura e a edição passa dele");
 
   // Fechar devolve o foco a quem abriu a ficha.
