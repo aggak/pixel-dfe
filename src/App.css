@@ -1886,6 +1886,9 @@ textarea {
   flex: none;
   white-space: nowrap;
 }
+.e-task time[data-vencido] {
+  color: var(--e-error);
+}
 .e-card-separador {
   font-size: 11px;
 }

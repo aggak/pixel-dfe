@@ -5,7 +5,11 @@ import { Button } from "@/components/base/buttons/button";
 import { Dropdown } from "@/components/base/dropdown/dropdown";
 import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, FolderIcon, TrashIcon } from "../design/icon";
-import { formatarData, formatarPrazoCartao } from "../design/formatos";
+import {
+  diasAtePrazo,
+  formatarData,
+  formatarPrazoCartao,
+} from "../design/formatos";
 import { SeloPrioridade } from "./Selos";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { useSeletorStatus } from "../hooks/useSeletorStatus";
@@ -136,19 +140,25 @@ export function CartaoTarefa({
       </Dropdown.Root>
     </div>
   );
+  const vencida = !concluida && (diasAtePrazo(tarefa.prazo) ?? 0) < 0;
+  const prazo = {
+    dateTime: tarefa.prazo,
+    title: `Prazo: ${formatarData(tarefa.prazo, true)}${vencida ? " (vencido)" : ""}`,
+    "data-vencido": vencida || undefined,
+  };
+  const avisoVencida = vencida && (
+    <span className="sr-only">, prazo vencido</span>
+  );
   const pessoaPrazo = (
     <>
       <span className="e-card-pessoa">{tarefa.responsavel}</span>
       <span className="e-card-separador" aria-hidden="true">
         ·
       </span>
-      <time
-        className="e-card-prazo"
-        dateTime={tarefa.prazo}
-        title={`Prazo: ${formatarData(tarefa.prazo, true)}`}
-      >
+      <time className="e-card-prazo" {...prazo}>
         {formatarPrazoCartao(tarefa.prazo)}
       </time>
+      {avisoVencida}
     </>
   );
   return (
@@ -196,12 +206,8 @@ export function CartaoTarefa({
               </p>
               <p>
                 <Icon name="calendar" />
-                <time
-                  dateTime={tarefa.prazo}
-                  title={`Prazo: ${formatarData(tarefa.prazo, true)}`}
-                >
-                  {formatarPrazoCartao(tarefa.prazo)}
-                </time>
+                <time {...prazo}>{formatarPrazoCartao(tarefa.prazo)}</time>
+                {avisoVencida}
               </p>
             </div>
             {alerta}
