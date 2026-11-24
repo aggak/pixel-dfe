@@ -3304,6 +3304,14 @@ textarea {
 .e-list > .e-row .e-task-menu {
   right: 12px;
 }
+.e-list > .e-row .e-task-title::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+.e-list > .e-row :is(.e-task-menu, .e-status-trigger) {
+  z-index: 1;
+}
 @media (max-width: 650px) {
   .e-list > .e-row {
     padding-right: 68px;
