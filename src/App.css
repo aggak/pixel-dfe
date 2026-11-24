@@ -804,7 +804,6 @@ textarea {
   .e-task-tools .e-task-clear {
     grid-column: 1/-1;
     justify-self: end;
-    min-height: 44px;
   }
   .e-details-trigger {
     min-height: 44px;
@@ -2008,9 +2007,6 @@ textarea {
   }
 }
 @media (max-width: 650px) {
-  .e-board-content > .e-board {
-    margin-top: 14px;
-  }
   .e-board {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -2114,12 +2110,6 @@ textarea {
   .e-logo {
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
-  }
-  .e-task-search input {
-    min-height: 44px;
-  }
-  .e-task-filter button {
     min-height: 44px;
   }
   .e-not-found > a {
@@ -2851,7 +2841,6 @@ textarea {
   .e-task-tools {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
   }
   .e-task-tools .e-task-search {
     grid-column: 1;
@@ -2868,6 +2857,24 @@ textarea {
   .e-task-tools > .e-view-switch a {
     flex: 1;
     justify-content: center;
+  }
+}
+@media (max-width: 650px), (pointer: coarse) and (max-height: 500px) {
+  .e-task-tools {
+    padding-block: 6px;
+    row-gap: 6px;
+  }
+  .e-task-search,
+  .e-task-filter {
+    row-gap: 2px;
+  }
+  .e-task-search input,
+  .e-task-filter button,
+  .e-task-clear {
+    min-height: 44px;
+  }
+  .e-board-content > .e-board {
+    margin-top: 8px;
   }
 }
 @media (width < 406px) {
