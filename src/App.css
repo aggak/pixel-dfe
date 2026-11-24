@@ -1745,15 +1745,23 @@ textarea {
   min-width: 0;
 }
 .e-column > h2 {
+  position: sticky;
+  top: 64px;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 0 0 14px;
+  margin: -10px 0 14px;
+  padding-top: 10px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--e-line);
+  background: var(--e-sheet);
   font-size: 13px;
   font-weight: 500;
+}
+.e-board .e-card {
+  scroll-margin-top: 44px;
 }
 .e-column > h2 > span:last-child {
   background: var(--e-back);
@@ -1995,6 +2003,7 @@ textarea {
     gap: 20px;
   }
   .e-column > h2 {
+    top: 59px;
     margin-bottom: 10px;
     padding-bottom: 9px;
   }
@@ -3265,6 +3274,14 @@ textarea {
 .e-column.e-column-alvo {
   outline-color: color-mix(in srgb, var(--e-action) 60%, transparent);
   background: color-mix(in srgb, var(--e-action) 6%, transparent);
+}
+.e-column.e-column-alvo > h2 {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--e-action) 6%, transparent),
+      color-mix(in srgb, var(--e-action) 6%, transparent)
+    ),
+    var(--e-sheet);
 }
 @media (prefers-reduced-motion: no-preference) {
   .e-column {
