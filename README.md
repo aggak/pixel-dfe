@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://pixel-dfe-project.up.railway.app/">
-    <img src="docs/images/cartoes-andamento-escuro.png" width="1000" alt="Visão geral dos projetos da Pixel, com progresso das tarefas e próximos prazos">
+    <img src="docs/images/visao-geral.png" width="1000" alt="Pixel no computador, com o quadro de tarefas, e no celular, com os detalhes de uma tarefa">
   </a>
 </p>
 
@@ -24,7 +24,40 @@
 - **Tudo à mão:** crie, edite e exclua tarefas; ajuste status, prioridade e responsável.
 - **Sem perder o contexto:** abra detalhes e formulários em fichas sobre a página.
 
-![Navegação por abas com o projeto selecionado em destaque](docs/images/abas-etiqueta-detalhe.png)
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/quadro-arrastar.gif" alt="Cartão arrastado da coluna A fazer para Em andamento e, depois, reordenado dentro da coluna">
+      <br>
+      <strong>Arraste para mudar o status</strong>
+      <br>
+      <sub>Mova cartões entre colunas ou mude a ordem dentro de uma delas.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/ficha-tarefa.png" alt="Detalhes de uma tarefa abertos ao lado do cartão, sem sair do quadro">
+      <br>
+      <strong>Detalhes sem sair da tela</strong>
+      <br>
+      <sub>A ficha abre ao lado do cartão e a página continua no lugar.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/projetos.png" alt="Cartões de projeto com ícone, disciplina, descrição e barra de andamento">
+      <br>
+      <strong>Projetos com andamento</strong>
+      <br>
+      <sub>Cada projeto mostra a disciplina e quanto das tarefas já foi concluído.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/images/temas.png" alt="O mesmo quadro nos temas Ameixa, Floresta e Ameixa clara">
+      <br>
+      <strong>Três temas</strong>
+      <br>
+      <sub>Ameixa, Floresta e Ameixa clara, escolhidos em Configurações.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Personalidade em cada detalhe
 
