@@ -725,6 +725,19 @@ async function executar() {
         ])
           await page.getByText(mensagem, { exact: true }).waitFor();
         assert.equal(posts.length, 0);
+        const cor = (alvo) => alvo.evaluate((el) => getComputedStyle(el).color);
+        const corErro = await cor(
+          page.getByText("Selecione um projeto.", { exact: true }),
+        );
+        const iconeProjeto = ui.seletor("Projeto").locator(".e-uicon").first();
+        await ate("ícones de projeto e prazo na cor de erro", async () =>
+          (await cor(iconeProjeto)) === corErro &&
+          (await cor(ui.atalhoPrazo())) === corErro,
+        );
+        await ui.seletor("Projeto").hover();
+        await ate("cor de erro mantida sob o ponteiro", async () =>
+          (await cor(iconeProjeto)) === corErro,
+        );
         await ui.escolher("Status", "Em andamento");
         await campo("Título").fill(dados.titulo);
         await ui.abrirDescricao();

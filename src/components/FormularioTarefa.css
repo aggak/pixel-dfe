@@ -246,8 +246,13 @@
   content: "";
 }
 
-.e-tarefa-atalhos button[data-invalido] {
+.e-tarefa-atalhos :is(button[data-invalido], .e-tarefa-seletor button[aria-invalid="true"]),
+.e-tarefa-atalhos :is(button[data-invalido], .e-tarefa-seletor button[aria-invalid="true"]):enabled:is([data-hovered], [aria-expanded="true"]) {
   color: var(--e-error);
+}
+
+.e-tarefa-seletor button[aria-invalid="true"] .e-uicon {
+  color: inherit;
 }
 
 .e-tarefa-avisos:not(:empty) {
