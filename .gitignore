@@ -20,6 +20,16 @@ lighthouse/
 *.sw?
 
 prototipos/
+
+# Arquivos de agentes
+.claude/
+.opencode/
+.codex/
+.cursor/
+.agents/
+.playwright-mcp/
+AGENTS.md
+CLAUDE.md
 .env
 .env.*
 !.env.development
