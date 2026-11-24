@@ -193,6 +193,28 @@ async function executar() {
   );
 
   await conferir(
+    "status e prioridade fora das opções viram A fazer e Média na leitura",
+    async () => {
+      const resposta = await fetch(`${apiUrl}/tarefas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...dadosTarefa,
+          status: "bloqueada",
+          prioridade: 3,
+        }),
+      });
+      const { id } = await resposta.json();
+      const lida = await api.buscarTarefa(id);
+      assert.equal(lida.status, "a-fazer");
+      assert.equal(lida.prioridade, "media");
+      const listada = (await api.listarTarefas()).find((t) => t.id === id);
+      assert.deepEqual(listada, lida);
+      await fetch(`${apiUrl}/tarefas/${id}`, { method: "DELETE" });
+    },
+  );
+
+  await conferir(
     "atualizações de IDs inexistentes rejeitam com ErroApi 404",
     async () => {
       const eh404 = (erro) =>

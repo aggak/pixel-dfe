@@ -1,3 +1,4 @@
+import { prioridadeTexto, statusTexto } from "./design/formatos";
 import type { NovaTarefa, Projeto, Tarefa } from "./tipos";
 
 const API_URL = (
@@ -114,14 +115,24 @@ function referencia(valor: unknown) {
     : texto(valor);
 }
 
+function opcao<T extends string>(
+  valor: unknown,
+  opcoes: Record<T, string>,
+  padrao: T,
+): T {
+  return typeof valor === "string" && Object.hasOwn(opcoes, valor)
+    ? (valor as T)
+    : padrao;
+}
+
 function normalizarTarefa(tarefa: Registro): Tarefa {
   return {
     id: tarefa.id,
     projetoId: referencia(tarefa.projetoId),
     titulo: texto(tarefa.titulo),
     descricao: texto(tarefa.descricao),
-    status: tarefa.status as Tarefa["status"],
-    prioridade: tarefa.prioridade as Tarefa["prioridade"],
+    status: opcao(tarefa.status, statusTexto, "a-fazer"),
+    prioridade: opcao(tarefa.prioridade, prioridadeTexto, "media"),
     responsavel: texto(tarefa.responsavel),
     prazo: texto(tarefa.prazo),
     ...(typeof tarefa.ordem === "number" ? { ordem: tarefa.ordem } : {}),
