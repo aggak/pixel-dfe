@@ -575,6 +575,31 @@ async function executar() {
     return aba;
   };
   const page = await abrirCelular();
+  for (const [width, height, alturaMaxima] of [
+    [390, 844, 216],
+    [844, 390, 160],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const caminho of ["/", "/quadro"]) {
+      await abrir(page, caminho);
+      const barra = page.locator(".e-task-tools");
+      assert.ok(
+        (await barra.boundingBox()).height <= alturaMaxima,
+        `${width}×${height} ${caminho}: espaço ocupado pela barra de tarefas`,
+      );
+      for (const alvo of [
+        barra.getByRole("searchbox"),
+        barra.getByRole("button", { name: /Status/ }),
+        barra.getByRole("button", { name: /Prioridade/ }),
+      ]) {
+        const caixa = await alvo.boundingBox();
+        assert.ok(
+          caixa && caixa.width >= 44 && caixa.height >= 44,
+          `${width}px ${caminho}: ${alvo}`,
+        );
+      }
+    }
+  }
   const semFonte = await abrirCelular();
   await semFonte.route("**/commissioner-*.woff2", (rota) =>
     rota.abort().catch(() => {}),
