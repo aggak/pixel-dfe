@@ -745,6 +745,39 @@ async function executar() {
     "OK: a leitura iniciada antes de mudar o status não devolve o cartão à coluna antiga; sem gravação no meio, uma leitura por tela",
   );
 
+  const criar = async (titulo, prazo, status) =>
+    (
+      await fetch(`${api}/tarefas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...seed.tarefas[0], id: undefined, titulo, prazo, status }),
+      })
+    ).json();
+  const vencida = await criar("Prazo vencido", "2000-01-01", "a-fazer");
+  const futura = await criar("Prazo futuro", "2999-01-01", "a-fazer");
+  const entregue = await criar("Prazo vencido e concluída", "2000-01-01", "concluida");
+  for (const [rota, regiao] of [
+    ["/", lista],
+    ["/quadro", quadro],
+  ]) {
+    await page.goto(`${web}${rota}`);
+    await regiao.waitFor();
+    const prazo = (tarefa) => cartao(tarefa.id).locator("time");
+    await cartao(vencida.id).waitFor();
+    assert.equal(await prazo(vencida).getAttribute("data-vencido"), "true");
+    assert.match(await prazo(vencida).getAttribute("title"), /\(vencido\)$/);
+    assert.equal(
+      await cartao(vencida.id).getByText(", prazo vencido", { exact: true }).count(),
+      1,
+    );
+    assert.equal(await prazo(futura).getAttribute("data-vencido"), null);
+    if (await cartao(entregue.id).count())
+      assert.equal(await prazo(entregue).getAttribute("data-vencido"), null);
+  }
+  console.log(
+    "OK: o prazo vencido de tarefa não concluída é marcado no cartão, na lista e no quadro",
+  );
+
   assert.deepEqual(errosJs, []);
   const atuais = await Promise.all(
     ["db.json", "db.seed.json", "src/tipos.ts"].map((arquivo) =>
