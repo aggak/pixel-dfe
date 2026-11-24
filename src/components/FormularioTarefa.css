@@ -436,6 +436,11 @@
     font-size: 16px !important;
   }
 
+  :is(.e-ficha-compacta, .e-ficha-aparencia-compacta) .e-description-body textarea {
+    font-size: 16px !important;
+    line-height: 1.356 !important;
+  }
+
   .e-tarefa-atalhos :is(.e-tarefa-atalho, .e-tarefa-seletor button[aria-haspopup="listbox"]) {
     width: 44px;
     height: 44px;

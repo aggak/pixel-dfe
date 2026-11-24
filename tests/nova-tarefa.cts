@@ -667,6 +667,20 @@ async function executar() {
         ),
         true,
       );
+      await ui.abrirDescricao();
+      assert.deepEqual(
+        await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>("input, textarea")]
+            .filter(
+              (el) =>
+                el.offsetWidth > 1 &&
+                parseFloat(getComputedStyle(el).fontSize) < 16,
+            )
+            .map((el) => el.getAttribute("name") || el.getAttribute("type")),
+        ),
+        [],
+        "campos de texto com menos de 16 px ampliam a página no iOS",
+      );
       await campo("Responsável").click();
       assert.equal(
         await page.evaluate(

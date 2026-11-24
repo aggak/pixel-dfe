@@ -2079,6 +2079,9 @@ textarea {
   .e-view-switch a {
     min-height: 44px;
   }
+  .e-task-search input {
+    font-size: 16px;
+  }
 }
 @media (max-width: 650px) {
   .e-view-switch a {
