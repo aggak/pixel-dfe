@@ -122,10 +122,7 @@ async function executar() {
     .getByRole("button", { name: `Ações de ${tarefaUnica.titulo}` })
     .click();
   await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Excluir tarefa" })
-    .click();
+  await page.locator('[role="menuitem"][data-pronto]').click();
   await vazio("Este projeto ainda não tem tarefas").waitFor();
   assert.equal(
     await vazio("Este projeto ainda não tem tarefas")

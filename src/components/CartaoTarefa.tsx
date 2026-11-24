@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { useDrag } from "react-aria-components";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/base/buttons/button";
@@ -7,9 +7,9 @@ import type { Status, Tarefa } from "../tipos";
 import { Icon, EditIcon, FolderIcon, TrashIcon } from "../design/icon";
 import { formatarData, formatarPrazoCartao } from "../design/formatos";
 import { SeloPrioridade } from "./Selos";
-import { ConfirmarExclusao } from "./ConfirmarExclusao";
 import { ALVOS_RESERVA, primeiroVisivel } from "../hooks/useRetornoFoco";
 import { useSeletorStatus } from "../hooks/useSeletorStatus";
+import { useExcluirEmDoisToques } from "../hooks/useExcluirEmDoisToques";
 import { ouvirSoltura, TIPO_TAREFA } from "../hooks/arrastar-tarefa";
 import { ContextoTarefaAberta } from "./ficha-contexto";
 
@@ -26,7 +26,6 @@ export function CartaoTarefa({
   onMudarStatus: (tarefa: Tarefa, status: Status) => Promise<void>;
   onExcluir: (tarefa: Tarefa) => Promise<void>;
 }) {
-  const [confirmando, setConfirmando] = useState(false);
   const fichaAberta = useContext(ContextoTarefaAberta) === tarefa.id;
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,7 +44,6 @@ export function CartaoTarefa({
         onDragEnd: dragProps.onDragEnd,
       }
     : {};
-  const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}${isDragging ? " e-card-arrastando" : ""}`;
   const { seletorStatus, alerta, mudar } = useSeletorStatus(
     tarefa,
     onMudarStatus,
@@ -74,11 +72,16 @@ export function CartaoTarefa({
       }),
     );
   };
-  const excluir = async () => {
+  const exclusao = useExcluirEmDoisToques(async () => {
     await onExcluir(tarefa);
-    setConfirmando(false);
     focarVizinho();
-  };
+  });
+  const classe = `e-task ${emQuadro ? "e-card" : "e-row"}${concluida ? " e-task-done" : ""}${isDragging ? " e-card-arrastando" : ""}${exclusao.excluindo ? " e-task-saindo" : ""}`;
+  const avisoExclusao = exclusao.falha && (
+    <p className="e-task-error" role="alert">
+      Não foi possível excluir a tarefa. Tente de novo.
+    </p>
+  );
   const tagPrioridade = (
     <SeloPrioridade key="prioridade" prioridade={tarefa.prioridade} />
   );
@@ -92,7 +95,11 @@ export function CartaoTarefa({
       >
         {tarefa.titulo}
       </Link>
-      <Dropdown.Root>
+      <Dropdown.Root
+        onOpenChange={(aberto) => {
+          if (!aberto) exclusao.desarmar();
+        }}
+      >
         <Button
           color="tertiary"
           size="sm"
@@ -111,11 +118,20 @@ export function CartaoTarefa({
             />
             <Dropdown.Item
               id="excluir"
-              label="Excluir tarefa"
+              label={exclusao.armado ? "Confirmar exclusão" : "Excluir tarefa"}
               icon={TrashIcon}
-              onAction={() => setConfirmando(true)}
+              className={exclusao.armado ? "e-excluir-armado" : undefined}
+              data-pronto={exclusao.pronto || undefined}
+              shouldCloseOnSelect={exclusao.pronto}
+              onAction={() => void exclusao.tocar()}
             />
           </Dropdown.Menu>
+          {exclusao.armado && (
+            <span className="sr-only" role="status">
+              Pressione de novo para excluir {tarefa.titulo}. Esta ação não pode
+              ser desfeita.
+            </span>
+          )}
         </Dropdown.Popover>
       </Dropdown.Root>
     </div>
@@ -161,6 +177,7 @@ export function CartaoTarefa({
             {tagPrioridade}
           </div>
           {alerta}
+          {avisoExclusao}
         </div>
       ) : (
         <>
@@ -188,6 +205,7 @@ export function CartaoTarefa({
               </p>
             </div>
             {alerta}
+            {avisoExclusao}
           </div>
           <div className="e-task-tags">
             {seletorStatus}
@@ -195,12 +213,6 @@ export function CartaoTarefa({
           </div>
         </>
       )}
-      <ConfirmarExclusao
-        tarefa={tarefa}
-        aberta={confirmando}
-        onFechar={() => setConfirmando(false)}
-        onExcluir={excluir}
-      />
     </article>
   );
 }

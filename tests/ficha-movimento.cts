@@ -141,12 +141,12 @@ async function fecharLogoNoWebkit(web) {
   await page.waitForURL((url) => url.pathname === "/");
   await page.locator(".e-task-menu").first().click();
   await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-  await page.locator(".e-confirm-dialog").waitFor();
+  await page.locator('[role="menuitem"].e-excluir-armado').waitFor();
   await page.keyboard.press("Escape");
-  await page.locator(".e-confirm-overlay").waitFor({ state: "detached" });
+  await page.locator(".e-popover").waitFor({ state: "detached" });
   await page.getByRole("link", { name: "Projetos", exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/projetos");
-  console.log("OK: WebKit fecha ficha e confirmação logo depois de abrir");
+  console.log("OK: WebKit fecha ficha e menu armado logo depois de abrir");
 }
 
 executar()

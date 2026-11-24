@@ -27,31 +27,49 @@ async function executar() {
     if (requisicao.method() === "DELETE") exclusoes.push(requisicao.url());
   });
   const cartao = (tarefa) => page.locator(`[data-task-id="${tarefa.id}"]`);
-  const dialogo = (tarefa) =>
-    page.getByRole("dialog", { name: `Excluir ${tarefa.titulo}` });
+  const itemExcluir = page.getByRole("menuitem", { name: "Excluir tarefa" });
+  const itemConfirmar = page.locator('[role="menuitem"][data-pronto]');
   const abrir = async (tarefa) => {
     await cartao(tarefa)
       .getByRole("button", { name: `Ações de ${tarefa.titulo}` })
       .click();
-    await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-    await dialogo(tarefa).waitFor();
+    await itemExcluir.click();
+    await itemConfirmar.waitFor();
   };
-  const confirmar = async (tarefa) =>
-    dialogo(tarefa).getByRole("button", { name: "Excluir tarefa" }).click();
+  const confirmar = () => itemConfirmar.click();
   const existeNaApi = async (tarefa) =>
     (await fetch(`${api}/tarefas/${tarefa.id}`)).ok;
   const [naLista, noQuadro, noProjeto] = tarefas;
 
   await page.goto(web);
   await cartao(naLista).waitFor();
-  await abrir(naLista);
-  assert.match(await dialogo(naLista).innerText(), /não pode ser desfeita/);
-  await dialogo(naLista).getByRole("button", { name: "Cancelar" }).click();
-  await dialogo(naLista).waitFor({ state: "detached" });
+  await cartao(naLista)
+    .getByRole("button", { name: `Ações de ${naLista.titulo}` })
+    .click();
+  await itemExcluir.dblclick();
+  await itemConfirmar.waitFor();
+  assert.equal(await itemConfirmar.innerText(), "Confirmar exclusão");
+  assert.equal(
+    await page.locator(".e-popover [role=status]").innerText(),
+    `Pressione de novo para excluir ${naLista.titulo}. Esta ação não pode ser desfeita.`,
+  );
+  assert.equal(exclusoes.length, 0);
+  console.log(
+    "OK: o primeiro toque só arma o item do menu, mesmo num clique duplo, e avisa que não pode ser desfeita",
+  );
+
+  await itemExcluir.waitFor({ timeout: 8000 });
+  assert.equal(await itemConfirmar.count(), 0);
+  await itemExcluir.click();
+  await itemConfirmar.waitFor();
+  await page.keyboard.press("Escape");
+  await itemConfirmar.waitFor({ state: "detached" });
   assert.equal(exclusoes.length, 0);
   assert.equal(await cartao(naLista).count(), 1);
   assert.equal(await existeNaApi(naLista), true);
-  console.log("OK: cancelar mantém a tarefa na lista e não chama DELETE");
+  console.log(
+    "OK: sem o segundo toque o item desarma sozinho; Esc fecha o menu, mantém a tarefa e não chama DELETE",
+  );
 
   const urlFalha = `${api}/tarefas/${naLista.id}`;
   await page.route(urlFalha, (rota) =>
@@ -61,7 +79,11 @@ async function executar() {
   );
   await abrir(naLista);
   await confirmar(naLista);
-  await dialogo(naLista).getByRole("alert").waitFor();
+  await cartao(naLista).getByRole("alert").waitFor();
+  assert.equal(
+    await cartao(naLista).getByRole("alert").innerText(),
+    "Não foi possível excluir a tarefa. Tente de novo.",
+  );
   assert.equal(await cartao(naLista).count(), 1);
   assert.equal(await existeNaApi(naLista), true);
   assert.equal(
@@ -71,6 +93,7 @@ async function executar() {
   await page.unroute(urlFalha);
   console.log("OK: falha da API avisa e mantém a tarefa e a contagem");
 
+  await abrir(naLista);
   await confirmar(naLista);
   await cartao(naLista).waitFor({ state: "detached" });
   assert.equal(await existeNaApi(naLista), false);
@@ -157,6 +180,11 @@ async function executar() {
   let restantes = tarefas.length - 4 + pelaFicha.length;
   const ficha = page.getByRole("dialog", { name: "Detalhes da tarefa" });
   const botaoFicha = ficha.getByRole("button", { name: "Excluir tarefa" });
+  const botaoConfirmar = ficha.locator(".e-read-delete[data-pronto]");
+  const excluirNaFicha = async () => {
+    await botaoFicha.click();
+    await botaoConfirmar.click();
+  };
   const rodape = page.locator(".e-sheet-footer");
   const total = (n) => `${n} ${n === 1 ? "tarefa" : "tarefas"}`;
   const abrirFicha = async (tarefa) => {
@@ -199,13 +227,17 @@ async function executar() {
     "Editar tarefa",
   ]);
   await botaoFicha.click();
-  await dialogo(daLista).waitFor();
-  assert.match(
-    await dialogo(daLista).innerText(),
-    /Excluir tarefa\?[\s\S]*“Excluir pela ficha 1”\? Esta ação não pode ser desfeita\./,
+  await botaoConfirmar.waitFor();
+  assert.equal(await botaoConfirmar.innerText(), "Confirmar exclusão");
+  assert.equal(
+    await ficha
+      .getByRole("status")
+      .filter({ hasText: "Pressione de novo" })
+      .innerText(),
+    "Pressione de novo para excluir Excluir pela ficha 1. Esta ação não pode ser desfeita.",
   );
-  await dialogo(daLista).getByRole("button", { name: "Cancelar" }).click();
-  await dialogo(daLista).waitFor({ state: "detached" });
+  await page.keyboard.press("Escape");
+  await botaoConfirmar.waitFor({ state: "detached" });
   await page.waitForFunction(
     () =>
       document.activeElement?.textContent === "Excluir tarefa" &&
@@ -217,7 +249,7 @@ async function executar() {
     0,
   );
   console.log(
-    "OK: na ficha, Excluir tarefa abre a mesma confirmação; cancelar mantém a ficha e devolve o foco ao botão",
+    "OK: na ficha, o primeiro toque arma o botão; Esc desarma, mantém a ficha e o foco no botão",
   );
 
   const urlDaLista = `${api}/tarefas/${daLista.id}`;
@@ -230,9 +262,8 @@ async function executar() {
       ? rota.fulfill({ status: 500, body: "{}" })
       : rota.continue(),
   );
-  await botaoFicha.click();
-  await confirmar(daLista);
-  await dialogo(daLista).getByRole("button", { name: "Excluindo…" }).waitFor();
+  await excluirNaFicha();
+  await ficha.getByRole("button", { name: "Excluindo…" }).waitFor();
   assert.equal(
     await ficha
       .getByRole("button", { name: "Fechar detalhes da tarefa" })
@@ -247,12 +278,11 @@ async function executar() {
         requestAnimationFrame(() => requestAnimationFrame(resolve)),
       ),
   );
-  assert.equal(await dialogo(daLista).count(), 1);
   assert.equal(await ficha.count(), 1);
   decidir(500);
-  await dialogo(daLista).getByRole("alert").waitFor();
+  await ficha.getByRole("alert").waitFor();
   assert.equal(
-    await dialogo(daLista).getByRole("alert").innerText(),
+    await ficha.getByRole("alert").innerText(),
     "Não foi possível excluir a tarefa. Tente de novo.",
   );
   assert.equal(await cartao(daLista).count(), 1);
@@ -264,7 +294,7 @@ async function executar() {
   );
 
   const vizinhoDaLista = await vizinhoDe(daLista);
-  await confirmar(daLista);
+  await excluirNaFicha();
   await ficha.waitFor({ state: "detached" });
   await cartao(daLista).waitFor({ state: "detached" });
   assert.equal(await existeNaApi(daLista), false);
@@ -278,10 +308,13 @@ async function executar() {
 
   await page.goto(`${web}/quadro`);
   await abrirFicha(doQuadro);
-  await botaoFicha.click();
-  await dialogo(doQuadro)
-    .getByRole("button", { name: "Excluir tarefa" })
-    .dblclick();
+  await botaoFicha.dblclick();
+  await botaoConfirmar.waitFor();
+  assert.equal(
+    exclusoes.filter((url) => url.endsWith(`/${doQuadro.id}`)).length,
+    0,
+  );
+  await botaoConfirmar.dblclick();
   await ficha.waitFor({ state: "detached" });
   await cartao(doQuadro).waitFor({ state: "detached" });
   assert.equal(
@@ -295,7 +328,7 @@ async function executar() {
     true,
   );
   console.log(
-    "OK: na ficha sobre o quadro, duplo clique gera um só DELETE e o cartão sai do quadro e da contagem",
+    "OK: na ficha sobre o quadro, o clique duplo só arma; no segundo toque, outro clique duplo gera um só DELETE e o cartão sai do quadro e da contagem",
   );
 
   await page.goto(`${web}/projetos/1`);
@@ -308,8 +341,7 @@ async function executar() {
       : rota.continue(),
   );
   await abrirFicha(doProjeto);
-  await botaoFicha.click();
-  await confirmar(doProjeto);
+  await excluirNaFicha();
   await ficha.waitFor({ state: "detached" });
   await cartao(doProjeto).waitFor({ state: "detached" });
   await page.unroute(urlDoProjeto);
@@ -327,8 +359,7 @@ async function executar() {
 
   await page.goto(`${web}/tarefas/${direta.id}`);
   await ficha.locator(".e-read-title").waitFor();
-  await botaoFicha.click();
-  await confirmar(direta);
+  await excluirNaFicha();
   await ficha.waitFor({ state: "detached" });
   await cartao(direta).waitFor({ state: "detached" });
   assert.equal(await existeNaApi(direta), false);

@@ -20,7 +20,6 @@ import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import { GatinhoAbanando } from "../components/GatinhoAbanando";
 import { useFicha } from "../components/ficha-contexto";
 import { FolhaPrazo } from "../components/FolhaPrazo";
-import { ConfirmarExclusao } from "../components/ConfirmarExclusao";
 import {
   AvisoCompacto,
   Carregando,
@@ -28,6 +27,7 @@ import {
 } from "../components/Layout";
 import { SeloPrioridade } from "../components/Selos";
 import { Icon, FolderIcon, EditIcon, TrashIcon } from "../design/icon";
+import { useExcluirEmDoisToques } from "../hooks/useExcluirEmDoisToques";
 import { formatarData, lerPrazo } from "../design/formatos";
 import type { Status, Tarefa } from "../tipos";
 
@@ -83,7 +83,6 @@ export function DetalheTarefa() {
   } = useConsulta(listarProjetos);
   const { navegar, destinoFechar, setOcupada } = useFicha();
   const [aviso, setAviso] = useState("");
-  const [confirmando, setConfirmando] = useState(false);
   const mudarStatus = async (atual: Tarefa, status: Status) => {
     let nova: Tarefa;
     try {
@@ -125,6 +124,7 @@ export function DetalheTarefa() {
         : [],
     );
   };
+  const exclusao = useExcluirEmDoisToques(excluir);
   const projeto =
     tarefa && projetos?.find((item) => item.id === tarefa.projetoId);
   const projetoInexistente =
@@ -260,14 +260,40 @@ export function DetalheTarefa() {
       </div>
       {tarefa && (
         <footer className="e-form-footer">
+          {exclusao.falha && (
+            <p className="e-task-error" role="alert">
+              Não foi possível excluir a tarefa. Tente de novo.
+            </p>
+          )}
+          {exclusao.armado && (
+            <span className="sr-only" role="status">
+              Pressione de novo para excluir {tarefa.titulo}. Esta ação não
+              pode ser desfeita.
+            </span>
+          )}
           <Button
-            color="tertiary-destructive"
+            color={
+              exclusao.armado ? "primary-destructive" : "tertiary-destructive"
+            }
             size="sm"
             iconLeading={TrashIcon}
-            className="e-read-delete"
-            onClick={() => setConfirmando(true)}
+            className={`e-read-delete${exclusao.armado ? " e-excluir-armado" : ""}`}
+            data-pronto={exclusao.pronto || undefined}
+            onBlur={exclusao.desarmar}
+            onKeyDown={(evento) => {
+              if (evento.key === "Escape" && exclusao.armado)
+                exclusao.desarmar();
+              else evento.continuePropagation();
+            }}
+            onClick={() => void exclusao.tocar()}
+            isLoading={exclusao.excluindo}
+            showTextWhileLoading
           >
-            Excluir tarefa
+            {exclusao.excluindo
+              ? "Excluindo…"
+              : exclusao.armado
+                ? "Confirmar exclusão"
+                : "Excluir tarefa"}
           </Button>
           <Button
             color="secondary"
@@ -280,12 +306,6 @@ export function DetalheTarefa() {
           >
             Editar tarefa
           </Button>
-          <ConfirmarExclusao
-            tarefa={tarefa}
-            aberta={confirmando}
-            onFechar={() => setConfirmando(false)}
-            onExcluir={excluir}
-          />
         </footer>
       )}
     </section>

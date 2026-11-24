@@ -175,10 +175,10 @@ async function executar() {
   await page.unroute(`${api}/tarefas/998`);
   console.log("OK: resposta lenta com 404 encerra a indicação de carregamento");
 
-  async function abrirExclusao(titulo) {
+  async function excluirPeloMenu(titulo) {
     await page.getByRole("button", { name: `Ações de ${titulo}` }).click();
     await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-    return page.getByRole("dialog", { name: `Excluir ${titulo}` });
+    await page.locator('[role="menuitem"][data-pronto]').click();
   }
   for (const [caminho, id, titulo] of [
     ["/", "2", "Subir o json-server"],
@@ -187,15 +187,11 @@ async function executar() {
     await page.goto(`${web}${caminho}`);
     await page.locator(`[data-task-id="${id}"]`).waitFor();
     await removerNaApi("tarefas", id);
-    const dialogo = await abrirExclusao(titulo);
-    await dialogo
-      .getByRole("button", { name: "Excluir tarefa", exact: true })
-      .click();
-    await dialogo.waitFor({ state: "detached" });
+    await excluirPeloMenu(titulo);
     await page.locator(`[data-task-id="${id}"]`).waitFor({ state: "detached" });
     assert.equal(await alerta("Não foi possível excluir").count(), 0);
     console.log(
-      `OK: ${caminho} excluir tarefa já excluída fecha o diálogo e remove o cartão`,
+      `OK: ${caminho} excluir tarefa já excluída remove o cartão sem aviso de falha`,
     );
   }
 

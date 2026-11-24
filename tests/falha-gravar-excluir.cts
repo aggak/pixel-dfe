@@ -71,15 +71,21 @@ async function executar() {
         el.contains(document.activeElement) && document.activeElement !== el,
     );
 
-  async function conferirLimite(caminho, metodo, botao, aviso) {
+  async function conferirLimite(
+    caminho,
+    metodo,
+    botao,
+    aviso,
+    liberado = botao,
+  ) {
     const semResposta = (rota) =>
       rota.request().method() === metodo ? undefined : rota.continue();
     await page.route(`${api}${caminho}`, semResposta);
     try {
       await botao.click();
       await aviso.waitFor();
-      assert.equal(await botao.isEnabled(), true);
-      assert.equal(await botao.getAttribute("data-pending"), null);
+      assert.equal(await liberado.isEnabled(), true);
+      assert.equal(await liberado.getAttribute("data-pending"), null);
       console.log(
         `OK: ${metodo} ${caminho} sem resposta avisa e libera nova tentativa`,
       );
@@ -277,44 +283,41 @@ async function executar() {
   ]) {
     await page.goto(`${web}${caminho}`);
     await page.locator(`[data-task-id="${id}"]`).waitFor();
-    await page.getByRole("button", { name: `Ações de ${titulo}` }).click();
-    await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
-    const dialogo = page.getByRole("dialog", { name: `Excluir ${titulo}` });
-    await conferirLimite(
-      `/tarefas/${id}`,
-      "DELETE",
-      dialogo.getByRole("button", { name: "Excluir tarefa", exact: true }),
-      dialogo.getByRole("alert").filter({
-        hasText: "Não foi possível excluir a tarefa. Tente de novo.",
-      }),
-    );
+    const menu = page.getByRole("button", { name: `Ações de ${titulo}` });
+    const confirmar = page.locator('[role="menuitem"][data-pronto]');
+    const aviso = page
+      .locator(`[data-task-id="${id}"]`)
+      .getByRole("alert")
+      .filter({ hasText: "Não foi possível excluir a tarefa. Tente de novo." });
+    const pedir = async () => {
+      await menu.click();
+      await page.getByRole("menuitem", { name: "Excluir tarefa" }).click();
+      await confirmar.waitFor();
+    };
+    await pedir();
+    await conferirLimite(`/tarefas/${id}`, "DELETE", confirmar, aviso, menu);
     assert.equal(
       (await lerBanco()).tarefas.some((tarefa) => tarefa.id === id),
       true,
     );
     await desligarApi();
-    await dialogo
-      .getByRole("button", { name: "Excluir tarefa", exact: true })
-      .click();
-    await dialogo
-      .getByRole("alert")
-      .filter({ hasText: "Não foi possível excluir a tarefa. Tente de novo." })
-      .waitFor();
+    await pedir();
+    await confirmar.click();
+    await aviso.waitFor();
     assert.equal(
       await page.locator(`[data-task-id="${id}"]`).count(),
       1,
       `${caminho}: cartão sumiu sem excluir`,
     );
+    await page.locator(".e-popover").waitFor({ state: "detached" });
     assert.equal(
-      await dialogo
-        .getByRole("button", { name: "Excluir tarefa", exact: true })
-        .evaluate((el) => el === document.activeElement),
+      await menu.evaluate((el) => el === document.activeElement),
       true,
-      `${caminho}: foco saiu do botão de confirmar`,
+      `${caminho}: foco saiu do menu da tarefa`,
     );
     await ligarApi();
-    await page.keyboard.press("Enter");
-    await dialogo.waitFor({ state: "detached" });
+    await pedir();
+    await confirmar.click();
     await page.locator(`[data-task-id="${id}"]`).waitFor({ state: "detached" });
     assert.equal(
       (await lerBanco()).tarefas.some((tarefa) => tarefa.id === id),

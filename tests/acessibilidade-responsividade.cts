@@ -129,7 +129,7 @@ async function executar() {
               ".e-read-meta p",
               ".fol-prazo",
               ".fol-quem",
-              ".e-confirm-dialog>p",
+              ".e-excluir-armado",
               ".e-panel-scroll",
             ];
             for (const seletor of seletores)
@@ -186,24 +186,14 @@ async function executar() {
           await page
             .getByRole("menuitem", { name: "Excluir tarefa", exact: true })
             .click();
-          await page.locator(".e-confirm-dialog").waitFor();
-          await page.waitForFunction(() =>
-            document
-              .getAnimations()
-              .every(
-                (a) =>
-                  a.effect?.getTiming().iterations === Infinity ||
-                  a.playState !== "running",
-              ),
-          );
+          await page.locator('[role="menuitem"][data-pronto]').waitFor();
           await conferirTexto();
           assert.equal(
-            await page.locator(".e-confirm-dialog>p").textContent(),
-            `Deseja excluir “${dadosLongos.tarefas[0].titulo}”? Esta ação não pode ser desfeita.`,
+            await page.locator(".e-popover [role=status]").textContent(),
+            `Pressione de novo para excluir ${dadosLongos.tarefas[0].titulo}. Esta ação não pode ser desfeita.`,
           );
-          await page
-            .getByRole("button", { name: "Cancelar", exact: true })
-            .click();
+          await page.keyboard.press("Escape");
+          await page.locator(".e-popover").waitFor({ state: "detached" });
         }
       }
     }
@@ -664,30 +654,20 @@ async function executar() {
     await page
       .getByRole("menuitem", { name: "Excluir tarefa", exact: true })
       .click();
-    await page.locator(".e-confirm-dialog").waitFor();
-    await page.waitForFunction(() =>
-      document
-        .getAnimations()
-        .every(
-          (a) =>
-            a.effect?.getTiming().iterations === Infinity ||
-            a.playState !== "running",
-        ),
+    const confirmar = page.locator('[role="menuitem"][data-pronto]');
+    await confirmar.waitFor();
+    const altura = await confirmar.evaluate((item) =>
+      Math.round(item.getBoundingClientRect().height),
     );
-    const alturas = await page
-      .locator(".e-confirm-actions button")
-      .evaluateAll((botoes) =>
-        botoes.map((b) => Math.round(b.getBoundingClientRect().height)),
-      );
-    assert.equal(alturas.length, 2, `${largura}px: botões da confirmação`);
     assert.ok(
-      alturas.every((altura) => altura >= 44),
-      `${largura}px: botões da confirmação com ${alturas.join(" e ")} px de altura`,
+      altura >= 44,
+      `${largura}px: confirmação da exclusão com ${altura} px de altura`,
     );
-    await page.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.keyboard.press("Escape");
+    await page.locator(".e-popover").waitFor({ state: "detached" });
   }
   console.log(
-    "OK: botões da confirmação de exclusão com pelo menos 44 px de altura em 375 e 320 px",
+    "OK: confirmação da exclusão no menu com pelo menos 44 px de altura em 375 e 320 px",
   );
 
   for (const [fonte, aba] of [
