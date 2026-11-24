@@ -856,6 +856,12 @@ async function executar() {
         cartao: true,
         visivel: true,
       });
+      const destacado = page.locator("[data-task-id][data-recem-criado]");
+      assert.equal(
+        await destacado.locator(".e-task-title").innerText(),
+        dados.titulo,
+      );
+      await destacado.waitFor({ state: "detached" });
       const escondida = { ...base, titulo: "Tarefa nova escondida pela busca" };
       await page.locator(".e-task-search input").fill(seed.tarefas[0].titulo);
       await page.locator("[data-task-id]").first().waitFor();
@@ -869,6 +875,7 @@ async function executar() {
       await page
         .getByText("Tarefa criada, mas escondida pela busca ou pelos filtros.")
         .waitFor();
+      assert.equal(await destacado.count(), 0);
       await ate("foco no aviso de tarefa escondida", () =>
         page.evaluate(
           () =>

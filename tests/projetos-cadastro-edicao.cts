@@ -385,6 +385,9 @@ async function executar() {
         ),
       );
       assert.equal(await focoNaTela(), true);
+      const destacado = page.locator("[data-project-id][data-recem-criado]");
+      assert.equal(await destacado.getAttribute("data-project-id"), criado.id);
+      await destacado.waitFor({ state: "detached" });
       await page.goto(`${origem}/tarefas/nova`);
       await page.locator("form").waitFor();
       await ate("novo projeto no seletor de tarefas", async () =>

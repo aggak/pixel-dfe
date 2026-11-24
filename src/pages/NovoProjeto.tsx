@@ -4,6 +4,7 @@ import { useFicha } from "../components/ficha-contexto";
 import { criarProjeto } from "../api";
 import { FormularioProjeto } from "../components/FormularioProjeto";
 import type { DadosProjeto } from "../components/FormularioProjeto";
+import { destacarAoVoltar } from "../hooks/useRetornoFoco";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovoProjeto() {
@@ -22,11 +23,13 @@ export function NovoProjeto() {
     const controller = controllerRef.current;
     if (!controller || controller.signal.aborted) return;
     const criado = await criarProjeto(dados, controller.signal);
-    if (!controller.signal.aborted)
-      navegar("/projetos", true, undefined, [
-        `[data-project-id="${CSS.escape(criado.id)}"] h2 a`,
-        '[data-action="new-project"]',
-      ]);
+    if (controller.signal.aborted) return;
+    const cartao = `[data-project-id="${CSS.escape(criado.id)}"]`;
+    destacarAoVoltar(cartao);
+    navegar("/projetos", true, undefined, [
+      `${cartao} h2 a`,
+      '[data-action="new-project"]',
+    ]);
   }
 
   return (

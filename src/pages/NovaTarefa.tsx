@@ -4,6 +4,7 @@ import { useFicha } from "../components/ficha-contexto";
 import { criarTarefa } from "../api";
 import { FormularioTarefa } from "../components/FormularioTarefa";
 import type { NovaTarefa as DadosNovaTarefa } from "../tipos";
+import { destacarAoVoltar } from "../hooks/useRetornoFoco";
 import { useTituloPagina } from "../hooks/useTituloPagina";
 
 export function NovaTarefa() {
@@ -23,17 +24,19 @@ export function NovaTarefa() {
   async function salvar(dados: DadosNovaTarefa) {
     const controller = controllerRef.current;
     const criada = await criarTarefa(dados, controller?.signal);
-    if (!controller?.signal.aborted)
-      navegar(
-        destinoFechar,
-        true,
-        { tarefaCriada: criada.id, projetoCriado: criada.projetoId },
-        [
-          `[data-task-id="${CSS.escape(criada.id)}"] .e-task-title`,
-          ".e-hidden-notice button, .e-hidden-notice a",
-          '[data-action="new-task"]',
-        ],
-      );
+    if (controller?.signal.aborted) return;
+    const cartao = `[data-task-id="${CSS.escape(criada.id)}"]`;
+    destacarAoVoltar(cartao);
+    navegar(
+      destinoFechar,
+      true,
+      { tarefaCriada: criada.id, projetoCriado: criada.projetoId },
+      [
+        `${cartao} .e-task-title`,
+        ".e-hidden-notice button, .e-hidden-notice a",
+        '[data-action="new-task"]',
+      ],
+    );
   }
 
   return (

@@ -16,6 +16,7 @@ type Retorno = {
 };
 let retorno: Retorno | null = null;
 let volta: { chave: string; y: number } | null = null;
+let destaque: string | null = null;
 
 export function marcarRetorno(
   alvos: string[],
@@ -29,6 +30,9 @@ export function descartarRetorno() {
 }
 export function retornoPendente() {
   return retorno !== null;
+}
+export function destacarAoVoltar(seletor: string) {
+  destaque = seletor;
 }
 export function marcarVolta(chave: string, y: number) {
   volta = { chave, y };
@@ -60,6 +64,15 @@ export function useRetornoFoco(pronto: boolean) {
       window.scrollTo({ top: atual.rolagem.y, behavior: "instant" });
     if (!ativa) return;
     retorno = null;
+    const criado = destaque && document.querySelector(destaque);
+    destaque = null;
+    if (criado) {
+      criado.setAttribute("data-recem-criado", "");
+      window.setTimeout(
+        () => criado.removeAttribute("data-recem-criado"),
+        1600,
+      );
+    }
     const foco = document.activeElement;
     const alvo = primeiroVisivel([...atual.alvos, ...ALVOS_RESERVA]);
     if (!alvo) return;

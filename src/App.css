@@ -3492,3 +3492,10 @@ textarea {
     background-position-x: -3456px;
   }
 }
+.e-list > .e-row[data-recem-criado],
+:is(.e-card, .e-project-card)[data-recem-criado] {
+  box-shadow: 0 0 0 2px var(--e-action);
+}
+.e-list > .e-row[data-recem-criado] {
+  border-radius: 9px;
+}
