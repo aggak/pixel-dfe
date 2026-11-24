@@ -273,11 +273,14 @@ export function DetalheTarefa() {
           )}
           <Button
             color={
-              exclusao.armado ? "primary-destructive" : "tertiary-destructive"
+              exclusao.armado || exclusao.excluindo
+                ? "primary-destructive"
+                : "tertiary-destructive"
             }
             size="sm"
             iconLeading={TrashIcon}
-            className={`e-read-delete${exclusao.armado ? " e-excluir-armado" : ""}`}
+            className={`e-read-delete${exclusao.armado ? " e-excluir-armado" : ""}${exclusao.excluindo ? " e-excluindo" : ""}`}
+            aria-busy={exclusao.excluindo || undefined}
             data-pronto={exclusao.pronto || undefined}
             onBlur={exclusao.desarmar}
             onKeyDown={(evento) => {
@@ -286,14 +289,17 @@ export function DetalheTarefa() {
               else evento.continuePropagation();
             }}
             onClick={() => void exclusao.tocar()}
-            isLoading={exclusao.excluindo}
-            showTextWhileLoading
           >
-            {exclusao.excluindo
-              ? "Excluindo…"
-              : exclusao.armado
-                ? "Confirmar exclusão"
-                : "Excluir tarefa"}
+            {exclusao.excluindo ? (
+              <span className="e-excluir-rotulo">
+                <span aria-hidden="true">Confirmar exclusão</span>
+                <span>Excluindo…</span>
+              </span>
+            ) : exclusao.armado ? (
+              "Confirmar exclusão"
+            ) : (
+              "Excluir tarefa"
+            )}
           </Button>
           <Button
             color="secondary"
