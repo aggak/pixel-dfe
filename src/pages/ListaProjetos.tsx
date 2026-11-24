@@ -15,6 +15,7 @@ import { AndamentoProjeto, IconeFelino } from "../components/CartaoProjeto";
 import { temasDosProjetos } from "../design/temas-felinos";
 import { EditIcon, PlusIcon } from "../design/icon";
 import { AcaoCabecalho } from "../components/Cabecalho";
+import { LIMITE_PROJETOS, MENSAGEM_LIMITE_PROJETOS } from "../limite-projetos";
 
 export function ListaProjetos() {
   useTituloPagina("Projetos");
@@ -35,6 +36,7 @@ export function ListaProjetos() {
     tentarDeNovo: tentarTarefas,
   } = useConsulta(listarTarefas);
   const temas = useMemo(() => temasDosProjetos(projetos ?? []), [projetos]);
+  const limiteAtingido = (projetos?.length ?? 0) >= LIMITE_PROJETOS;
   const location = useLocation();
   const navigate = useNavigate();
   useRetornoFoco(projetos !== undefined && !revalidando && !revalidandoTarefas);
@@ -45,22 +47,29 @@ export function ListaProjetos() {
           <h1 tabIndex={-1}>Projetos</h1>
           <p>Um lugar para cada frente de trabalho.</p>
         </div>
-        <AcaoCabecalho>
-          <Button
-            className="e-top-acao-botao"
-            color="primary"
-            size="sm"
-            iconLeading={PlusIcon}
-            aria-label="Novo projeto"
-            data-action="new-project"
-            onClick={() =>
-              navigate("/projetos/novo", { state: { fundo: location } })
-            }
-          >
-            Novo projeto
-          </Button>
-        </AcaoCabecalho>
+        {!limiteAtingido && (
+          <AcaoCabecalho>
+            <Button
+              className="e-top-acao-botao"
+              color="primary"
+              size="sm"
+              iconLeading={PlusIcon}
+              aria-label="Novo projeto"
+              data-action="new-project"
+              onClick={() =>
+                navigate("/projetos/novo", { state: { fundo: location } })
+              }
+            >
+              Novo projeto
+            </Button>
+          </AcaoCabecalho>
+        )}
       </header>
+      {limiteAtingido && (
+        <p className="e-projects-limite" role="status">
+          {MENSAGEM_LIMITE_PROJETOS}
+        </p>
+      )}
       {carregando && <Carregando>Carregando projetos…</Carregando>}
       {erro !== undefined && (
         <ErroCarregamento

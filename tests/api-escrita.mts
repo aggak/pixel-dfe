@@ -311,6 +311,57 @@ async function executar() {
     },
   );
 
+  await conferir(
+    "criações concorrentes respeitam o teto de dez projetos",
+    async () => {
+      const projetos = await api.listarProjetos();
+      for (let quantidade = projetos.length; quantidade < 9; quantidade++) {
+        await api.criarProjeto({
+          ...dadosProjeto,
+          nome: `Projeto ${quantidade + 1}`,
+        });
+      }
+
+      const respostas = await Promise.all(
+        ["Última vaga A", "Última vaga B"].map((nome) =>
+          fetch(`${apiUrl}/projetos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...dadosProjeto, nome }),
+          }),
+        ),
+      );
+      assert.deepEqual(
+        respostas.map((resposta) => resposta.status).sort(),
+        [201, 409],
+      );
+      const rejeitada = respostas.find((resposta) => resposta.status === 409);
+      assert.deepEqual(await rejeitada?.json(), {
+        error: "Limite de 10 projetos atingido.",
+      });
+      const criado = await respostas
+        .find((resposta) => resposta.status === 201)
+        ?.json();
+      assert.equal((await api.listarProjetos()).length, 10);
+      assert.equal(
+        JSON.parse(await readFile(caminhoDb, "utf8")).projetos.length,
+        10,
+      );
+      assert.equal(
+        (await api.atualizarProjeto(criado.id, { nome: "Projeto atualizado" }))
+          .nome,
+        "Projeto atualizado",
+      );
+
+      const removido = await fetch(`${apiUrl}/projetos/${criado.id}`, {
+        method: "DELETE",
+      });
+      assert.equal(removido.ok, true);
+      await api.criarProjeto({ ...dadosProjeto, nome: "Vaga liberada" });
+      assert.equal((await api.listarProjetos()).length, 10);
+    },
+  );
+
   await conferir("servidor parado rejeita escrita e leitura", async () => {
     await encerrarApi();
     await assert.rejects(api.criarTarefa(dadosTarefa));

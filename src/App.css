@@ -1448,6 +1448,11 @@ textarea {
 .e-projects-aviso {
   margin: -14px 0 14px;
 }
+.e-projects-limite {
+  margin: 0 0 16px;
+  color: var(--e-muted);
+  font-size: 13px;
+}
 .e-read-project .e-loading-compact {
   color: inherit;
 }

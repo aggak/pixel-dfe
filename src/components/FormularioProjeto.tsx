@@ -8,6 +8,7 @@ import { Tooltip } from "@/components/base/tooltip/tooltip";
 import { ErroApi } from "../api";
 import { dataValida } from "../design/formatos";
 import { Icon } from "../design/icon";
+import { MENSAGEM_LIMITE_PROJETOS } from "../limite-projetos";
 import type { Projeto } from "../tipos";
 import { PrazoNovaTarefa } from "./PrazoNovaTarefa";
 import "./FormularioTarefa.css";
@@ -16,6 +17,13 @@ export type DadosProjeto = Omit<Projeto, "id">;
 
 type CampoObrigatorio = "nome" | "disciplina" | "criadoEm";
 type ErrosCampos = Partial<Record<CampoObrigatorio, string>>;
+const mensagensEnvio = {
+  limite: MENSAGEM_LIMITE_PROJETOS,
+  inexistente:
+    "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos.",
+  falha:
+    "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo.",
+};
 
 const IconeDisciplina = (props: Omit<Parameters<typeof Icon>[0], "name">) => (
   <Icon {...props} name="book" />
@@ -59,9 +67,9 @@ export function FormularioProjeto({
   const [focarDescricao, setFocarDescricao] = useState(false);
 
   const [enviando, setEnviando] = useState(false);
-  const [erroEnvio, setErroEnvio] = useState<false | "falha" | "inexistente">(
-    false,
-  );
+  const [erroEnvio, setErroEnvio] = useState<
+    false | keyof typeof mensagensEnvio
+  >(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const enviandoRef = useRef(false);
 
@@ -145,9 +153,11 @@ export function FormularioProjeto({
       await onSalvar(dados);
     } catch (erro) {
       setErroEnvio(
-        edicao && erro instanceof ErroApi && erro.status === 404
-          ? "inexistente"
-          : "falha",
+        erro instanceof ErroApi && !edicao && erro.status === 409
+          ? "limite"
+          : erro instanceof ErroApi && edicao && erro.status === 404
+            ? "inexistente"
+            : "falha",
       );
     } finally {
       enviandoRef.current = false;
@@ -246,9 +256,7 @@ export function FormularioProjeto({
       {erroEnvio && (
         <div className="e-form-error" role="alert">
           <Icon name="exclamation" />
-          {erroEnvio === "inexistente"
-            ? "Este projeto não existe mais. Ele pode ter sido excluído; seus dados foram mantidos."
-            : "Não foi possível salvar o projeto. Seus dados foram mantidos; tente de novo."}
+          {mensagensEnvio[erroEnvio]}
         </div>
       )}
 
