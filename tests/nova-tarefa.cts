@@ -729,6 +729,20 @@ async function executar() {
         const corErro = await cor(
           page.getByText("Selecione um projeto.", { exact: true }),
         );
+        const tamanho = (texto) =>
+          page
+            .getByText(texto, { exact: true })
+            .evaluate((el) => getComputedStyle(el).fontSize);
+        assert.equal(
+          await tamanho("Informe o título."),
+          await tamanho("Informe o responsável."),
+        );
+        assert.equal(
+          await cor(
+            page.locator(".e-tarefa-responsavel .e-uicon").last(),
+          ),
+          corErro,
+        );
         const iconeProjeto = ui.seletor("Projeto").locator(".e-uicon").first();
         await ate("ícones de projeto e prazo na cor de erro", async () =>
           (await cor(iconeProjeto)) === corErro &&
