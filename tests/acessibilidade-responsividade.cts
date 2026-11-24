@@ -121,7 +121,7 @@ async function executar() {
               ".e-card-pessoa",
               ".e-card-prazo",
               ".e-tools h1:not(.e-task-page-title)",
-              ".e-resumo-titulo:focus",
+              ".e-resumo-titulo",
               ".e-resumo-rotulo > span:first-of-type",
               ".e-resumo-assunto",
               ".e-resumo-data",
