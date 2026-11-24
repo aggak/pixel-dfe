@@ -33,6 +33,9 @@ export function avisarTarefaExcluida(excluida: Tarefa, inexistente = false) {
     new CustomEvent(TAREFA_EXCLUIDA, { detail: { ...excluida, inexistente } }),
   );
 }
+export function avisoExclusao(titulo: string) {
+  return `Tarefa ${titulo} excluída.`;
+}
 export function avisoStatus(titulo: string, status: Status) {
   return `Status de ${titulo} alterado para ${statusTexto[status]}.`;
 }
@@ -77,7 +80,7 @@ export function useMudarStatus(
       setTarefas((atuais) => atuais.filter((t) => t.id !== excluida.id));
       avisoPendente.current = excluida.inexistente
         ? ""
-        : `Tarefa ${excluida.titulo} excluída.`;
+        : avisoExclusao(excluida.titulo);
     };
     window.addEventListener(TAREFA_GRAVADA, aplicar);
     window.addEventListener(ORDEM_GRAVADA, aplicarOrdem);
@@ -145,5 +148,9 @@ export function useMudarStatus(
     },
     [aoGravar],
   );
-  return { mudarStatus, aviso, inexistente, alertaInexistente };
+  const avisarExclusao = useCallback(
+    (tarefa: Tarefa) => setAviso(avisoExclusao(tarefa.titulo)),
+    [],
+  );
+  return { mudarStatus, avisarExclusao, aviso, inexistente, alertaInexistente };
 }
