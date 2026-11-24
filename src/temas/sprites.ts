@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useTema } from "../hooks/useTema";
 import { PALETA_PIXEL, type TemaDeCores } from "./catalogo";
 
@@ -79,7 +79,13 @@ export function useUrlDoSprite(nome: string, escolhido?: TemaDeCores) {
     pedidos.add(chave);
     void recolorir(chave, base, trocas);
   }, [precisa, chave, base, trocas]);
-  return proprio ?? (precisa ? pronto : base);
+  const url = proprio ?? (precisa ? pronto : base);
+  const [anterior, setAnterior] = useState({ nome, url: url ?? base });
+  useEffect(() => {
+    if (url && (anterior.nome !== nome || anterior.url !== url))
+      setAnterior({ nome, url });
+  }, [nome, url, anterior]);
+  return url ?? (anterior.nome === nome ? anterior.url : base);
 }
 
 export function useSprite(nome: string, escolhido?: TemaDeCores) {

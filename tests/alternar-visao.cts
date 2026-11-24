@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { criarUi, focoVisivel } = require("./ui.cts");
+const { criarEsperas, criarUi, focoVisivel } = require("./ui.cts");
 
 function gerarBuild(saida, api) {
   return apoio.rodar(
@@ -133,6 +133,39 @@ async function executar() {
   console.log(
     'OK: a lista mostra o controle com "Lista" marcada e "Tarefas" ativo no menu',
   );
+
+  const tema = await browser.newPage({ reducedMotion: "reduce" });
+  await tema.goto(web);
+  const mudarTema = async (nome) => {
+    await tema.getByRole("button", { name: "Configurações" }).click();
+    await tema.getByRole("dialog", { name: "Aparência" })
+      .getByText(nome, { exact: true }).click();
+  };
+  const desenhos = ".e-top-palavra, .e-top-gato";
+  const imagens = () => tema.locator(desenhos).evaluateAll((elementos) =>
+    elementos.map((el) => getComputedStyle(el).backgroundImage),
+  );
+  await mudarTema("Ameixa clara");
+  await tema.waitForFunction((seletor) => {
+    const elementos = [...document.querySelectorAll(seletor)];
+    return elementos.length === 2 &&
+      elementos.every((el) => getComputedStyle(el).backgroundImage.includes("blob:"));
+  }, desenhos);
+  const anteriores = await imagens();
+  const rede = await criarEsperas(tema).segurar(/cabecalho-(gato|logo)-escuro\.svg$/);
+  try {
+    await mudarTema("Floresta");
+    assert.equal(await tema.locator("html").getAttribute("data-tema"), "floresta");
+    assert.deepEqual(await imagens(), anteriores, "os desenhos continuam visíveis durante a troca");
+  } finally {
+    await rede.liberar();
+  }
+  await tema.waitForFunction(({ seletor, antes }) =>
+    [...document.querySelectorAll(seletor)].every((el, i) => {
+      const imagem = getComputedStyle(el).backgroundImage;
+      return imagem.includes("blob:") && imagem !== antes[i];
+    }), { seletor: desenhos, antes: anteriores });
+  await tema.close();
 
   await page.evaluate(() => {
     window.semRecarga = true;
