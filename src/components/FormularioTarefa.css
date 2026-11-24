@@ -254,6 +254,72 @@
   content: "";
 }
 
+/* Projeto e data escolhidos ficam escritos no próprio atalho. Abaixo de
+   341 px não há largura para o texto e os atalhos voltam a ser só ícones. */
+.e-task-form .e-tarefa-atalhos {
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.e-task-form .e-tarefa-atalhos > * {
+  flex-shrink: 0;
+}
+
+.e-tarefa-atalho[data-prazo-atalho] > span {
+  display: none;
+}
+
+@media (min-width: 341px) {
+  .e-tarefa-atalhos .e-tarefa-seletor[data-preenchido] {
+    flex-shrink: 1;
+    min-width: 36px;
+  }
+
+  .e-tarefa-atalhos :is(button[data-prazo-atalho][data-preenchido], .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"]) {
+    display: flex;
+    gap: 6px;
+    width: auto;
+    max-width: 100%;
+    padding-inline: 10px;
+    color: var(--e-ink);
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .e-tarefa-atalhos :is(button[data-prazo-atalho][data-preenchido], .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"])::after {
+    content: none;
+  }
+
+  .e-tarefa-atalho[data-prazo-atalho] > span {
+    display: inline;
+  }
+
+  .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"] > span {
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"]:not([aria-invalid="true"]) .e-uicon {
+    color: inherit;
+  }
+
+  .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"] :is(section, section > p) {
+    position: static;
+    display: block;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: hidden;
+    clip: auto;
+    color: inherit;
+    font: inherit;
+    text-overflow: ellipsis;
+  }
+}
+
 .e-tarefa-atalhos :is(button[data-invalido], .e-tarefa-seletor button[aria-invalid="true"]),
 .e-tarefa-atalhos :is(button[data-invalido], .e-tarefa-seletor button[aria-invalid="true"]):enabled:is([data-hovered], [aria-expanded="true"]) {
   color: var(--e-error);
@@ -285,6 +351,11 @@
   margin: 8px var(--nova-recuo) 0;
   padding: 5px 0 10px;
   border-top: 1px solid var(--e-line);
+}
+
+.e-tarefa-rodape > .e-form-error {
+  flex: 1 1 100%;
+  margin: 2px 0 4px;
 }
 
 .e-tarefa-envio {
@@ -446,8 +517,19 @@
     height: 44px;
   }
 
+  .e-tarefa-atalhos .e-tarefa-seletor[data-preenchido] {
+    min-width: 44px;
+  }
+
   .e-tarefa-envio > button,
   .e-nova-tarefa-opcoes [role="option"] > div {
     min-height: 44px;
+  }
+}
+
+@media (min-width: 341px) and (max-width: 650px), (min-width: 341px) and (pointer: coarse) {
+  .e-tarefa-atalhos :is(button[data-prazo-atalho][data-preenchido], .e-tarefa-seletor[data-preenchido] > button[aria-haspopup="listbox"]) {
+    width: auto;
+    min-width: 44px;
   }
 }
