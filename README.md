@@ -13,13 +13,14 @@
 
 <p align="center">
   <a href="https://pixel-dfe-project.up.railway.app/">
-    <img src="docs/images/visao-geral.png" width="1000" alt="Pixel no computador, com o quadro de tarefas, e no celular, com os detalhes de uma tarefa">
+    <img src="docs/images/visao-geral.png" width="1000" alt="Quadro de tarefas do Pixel no computador, com a barra de projetos e os filtros">
   </a>
 </p>
 
 ## Do projeto à próxima tarefa
 
 - **Projetos organizados:** acompanhe disciplinas, tarefas concluídas e o próximo prazo.
+- **Comando rápido** para buscar projetos pelo nome em **Ir para projeto** ou **Trocar projeto**. Use **Alt + P** no Windows e no Linux ou **⌥ P** no Mac.
 - **Lista ou kanban:** escolha sua visão e encontre tarefas com busca e filtros.
 - **Tudo à mão:** crie, edite e exclua tarefas; ajuste status, prioridade e responsável.
 - **Sem perder o contexto:** abra detalhes e formulários em fichas sobre a página.
@@ -74,6 +75,7 @@ O gatinho acompanha os estados da aplicação com animações em pixel art, do c
 </p>
 
 Navegação por teclado, foco visível e respeito à preferência por movimento reduzido.
+No computador, use **Tab** para chegar ao ícone no cabeçalho da ficha e as **setas** para movê-la.
 
 <sub>Desenvolvido com React e TypeScript.</sub>
 
