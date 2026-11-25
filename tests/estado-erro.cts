@@ -3,6 +3,7 @@ const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
 
 const { criarApoio } = require("./apoio.cts");
+const { comandoProjetos } = require("./ui.cts");
 const apoio = criarApoio();
 const { portaLivre, esperar, iniciar } = apoio;
 
@@ -47,6 +48,17 @@ async function executar() {
   const textoServidor =
     "O servidor encontrou um problema. Tente de novo em instantes.";
   const textoTempo = "O servidor demorou para responder. Tente de novo.";
+  async function conferirProjeto(nome) {
+    const comando = comandoProjetos(page);
+    await comando.abrir();
+    await comando.lista
+      .getByRole("option", {
+        name: new RegExp(`^${nome}(?: \\(atual\\))?$`),
+      })
+      .waitFor();
+    await page.keyboard.press("Escape");
+    await comando.dialogo.waitFor({ state: "detached" });
+  }
 
   await page.goto(`${web}/`);
   await alerta("Não foi possível carregar as tarefas").waitFor();
@@ -62,10 +74,7 @@ async function executar() {
   await esperar(`${api}/tarefas`);
   await tentar().click();
   await page.locator("[data-task-id]").first().waitFor();
-  await page
-    .getByRole("navigation", { name: "Projetos" })
-    .getByRole("link", { name: "Gerenciador de Tarefas" })
-    .waitFor();
+  await conferirProjeto("Gerenciador de Tarefas");
   assert.equal(await alerta("Não foi possível carregar").count(), 0);
   assert.equal(await page.locator(".e-task-project").first().isVisible(), true);
   console.log(
@@ -162,10 +171,7 @@ async function executar() {
         .first()
         .click();
       await carregado().waitFor();
-      if (comAbas)
-        await abas()
-          .getByRole("link", { name: "Gerenciador de Tarefas" })
-          .waitFor();
+      if (comAbas) await conferirProjeto("Gerenciador de Tarefas");
       assert.equal(
         await escopo().getByRole("alert").filter({ hasText: texto }).count(),
         0,
@@ -302,9 +308,7 @@ async function executar() {
         await ficha().locator(".e-form-header button").click();
         await ficha().waitFor({ state: "detached" });
         await page.getByRole("main").locator(fundoCarregado).first().waitFor();
-        await abas()
-          .getByRole("link", { name: "Gerenciador de Tarefas" })
-          .waitFor();
+        await conferirProjeto("Gerenciador de Tarefas");
         assert.equal(
           await page.getByRole("main").getByRole("alert").count(),
           0,
@@ -352,7 +356,7 @@ async function executar() {
       await ficha().getByRole("button", { name: tentar, exact: true }).click();
       await ficha().getByText(aviso).waitFor({ state: "detached" });
       await abas()
-        .getByRole("link", { name: "Gerenciador de Tarefas" })
+        .locator('[data-action="project-command"]')
         .waitFor({ state: "attached" });
       assert.equal(
         chamadasTarefas,
@@ -412,7 +416,7 @@ async function executar() {
   assert.equal(await page.locator(".e-task-project").count(), 0);
   falharAbas = false;
   await tentarAbas().click();
-  await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
+  await conferirProjeto("Gerenciador de Tarefas");
   await page.locator(".e-task-project").first().waitFor();
   assert.equal(await tentarAbas().count(), 0);
   await page.unroute(`${api}/projetos`, interceptarAbas);
@@ -634,8 +638,8 @@ async function executar() {
   await page.route(`${api}/projetos`, projetoSemNome);
   await page.goto(`${web}/`);
   await page.locator("[data-task-id]").first().waitFor();
-  await abas().getByRole("link", { name: "Gerenciador de Tarefas" }).waitFor();
-  assert.equal(await abas().locator('a[href="/projetos/sem-nome"]').count(), 1);
+  await conferirProjeto("Gerenciador de Tarefas");
+  await conferirProjeto("Projeto sem nome");
   await page.goto(`${web}/projetos`);
   await page.locator("[data-project-id]").first().waitFor();
   assert.equal(

@@ -198,6 +198,45 @@ function comTextos(dados, projetos) {
   };
 }
 
+function comandoProjetos(page) {
+  const nav = page.getByRole("navigation", { name: "Projetos", exact: true });
+  const todas = nav.getByRole("link", { name: "Todas", exact: true });
+  const gatilho = nav.locator('[data-action="project-command"]');
+  const dialogo = page.getByRole("dialog", {
+    name: /^(Ir para projeto|Trocar projeto)$/,
+  });
+  const busca = dialogo.getByLabel("Buscar projeto", { exact: true });
+  const lista = dialogo.getByRole("listbox", {
+    name: "Projetos",
+    exact: true,
+  });
+  const opcoes = lista.getByRole("option");
+  const opcao = (nome) =>
+    lista.getByRole("option", { name: nome, exact: true });
+
+  async function abrir() {
+    await gatilho.click();
+    await busca.waitFor();
+  }
+  async function ir(nome) {
+    await abrir();
+    await opcao(nome).click();
+    await dialogo.waitFor({ state: "detached" });
+  }
+  return {
+    nav,
+    todas,
+    gatilho,
+    dialogo,
+    busca,
+    lista,
+    opcoes,
+    opcao,
+    abrir,
+    ir,
+  };
+}
+
 async function focoVisivel(locator) {
   return locator.evaluate((el) => {
     const proprio = getComputedStyle(el);
@@ -284,6 +323,7 @@ function criarEsperas(page) {
 module.exports = {
   associacoes,
   lancarNavegador,
+  comandoProjetos,
   criarUi,
   criarEsperas,
   comTextos,

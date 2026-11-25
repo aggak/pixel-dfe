@@ -1,7 +1,12 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 const { join } = require("node:path");
-const { criarEsperas, criarUi, focoVisivel } = require("./ui.cts");
+const {
+  comandoProjetos,
+  criarEsperas,
+  criarUi,
+  focoVisivel,
+} = require("./ui.cts");
 
 function gerarBuild(saida, api) {
   return apoio.rodar(
@@ -110,7 +115,7 @@ async function executar() {
       assert.deepEqual(await ids(regiao), esperadas);
       assert.ok(await regiao.locator(".e-task-project").first().textContent());
       assert.equal(await page.evaluate(() => scrollY), 0);
-      for (const seletor of [".e-top", ".e-tabs", ".e-footer"])
+      for (const seletor of [".e-top", ".e-projetos-comando", ".e-footer"])
         assert.equal(
           await page.locator(seletor).evaluate((el) => el.marcaPersistente),
           true,
@@ -169,7 +174,7 @@ async function executar() {
 
   await page.evaluate(() => {
     window.semRecarga = true;
-    for (const seletor of [".e-top", ".e-tabs", ".e-footer"])
+    for (const seletor of [".e-top", ".e-projetos-comando", ".e-footer"])
       document.querySelector(seletor).marcaPersistente = true;
   });
   await busca.fill("a");
@@ -307,20 +312,20 @@ async function executar() {
   console.log(
     "OK: barra final e maiúsculas marcam a visão certa; fora das tarefas o controle some",
   );
-  const abas = page.getByRole("navigation", { name: "Projetos" });
+  const comando = comandoProjetos(page);
   await page.goto(`${web}/quadro`);
   await page.locator("[data-task-id]").first().waitFor();
-  await abas.getByRole("link", { name: "Todas" }).click();
+  await comando.todas.click();
   await page.waitForURL((url) => url.pathname === "/quadro");
-  await abas.getByRole("link").nth(1).click();
+  await comando.ir(seed.projetos[0].nome);
   await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
-  await abas.getByRole("link", { name: "Todas" }).click();
+  await comando.todas.click();
   await page.waitForURL((url) => url.pathname === "/quadro");
   await page.getByRole("link", { name: "Lista", exact: true }).click();
   await page.waitForURL((url) => url.pathname === "/");
-  await abas.getByRole("link").nth(1).click();
+  await comando.ir(seed.projetos[0].nome);
   await page.waitForURL((url) => /^\/projetos\/[^/]+$/.test(url.pathname));
-  await abas.getByRole("link", { name: "Todas" }).click();
+  await comando.todas.click();
   await page.waitForURL((url) => url.pathname === "/");
   console.log('OK: "Todas" volta para a visão em uso, lista ou quadro');
 
@@ -505,8 +510,10 @@ async function executar() {
     consultasProjeto.length > 0 &&
       consultasProjeto.every((consulta) => consulta === "?_embed=tarefas"),
   );
+  const comandoAnimado = comandoProjetos(animacao);
+  await comandoAnimado.gatilho.dispatchEvent("click");
   await navegarAnimado(
-    animacao.locator('.e-tabs a[href="/projetos/2"]'),
+    comandoAnimado.opcao(seed.projetos[1].nome),
     "/projetos/2",
   );
   await animacao.clock.fastForward(900);

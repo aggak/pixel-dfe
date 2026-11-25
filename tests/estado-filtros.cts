@@ -1,6 +1,11 @@
 const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
-const { comTextos, criarUi, criarEsperas } = require("./ui.cts");
+const {
+  comandoProjetos,
+  comTextos,
+  criarUi,
+  criarEsperas,
+} = require("./ui.cts");
 
 const { criarApoio } = require("./apoio.cts");
 const apoio = criarApoio();
@@ -130,19 +135,13 @@ async function executar() {
     assert.deepEqual(await titulos(), esperado);
     console.log("OK: busca e status continuam aplicados após trocar de rota");
 
-    await page
-      .getByRole("navigation", { name: "Projetos" })
-      .getByRole("link", { name: "Gerenciador de Tarefas" })
-      .click();
+    await comandoProjetos(page).ir("Gerenciador de Tarefas");
     await page
       .getByRole("region", { name: "Tarefas do projeto" })
       .getByRole("article")
       .first()
       .waitFor();
-    await page
-      .getByRole("navigation", { name: "Projetos" })
-      .getByRole("link", { name: "Todas" })
-      .click();
+    await comandoProjetos(page).todas.click();
     await lista.getByRole("article").first().waitFor();
     await selecionar("Prioridade", "Baixa");
     assert.deepEqual(
@@ -220,9 +219,7 @@ async function executar() {
           dados.projetos,
         ),
       );
-      await page
-        .getByRole("button", { name: "Salvar", exact: true })
-        .click();
+      await page.getByRole("button", { name: "Salvar", exact: true }).click();
       await page.getByRole("dialog").waitFor({ state: "detached" });
     };
     await selecionar("Status", "Concluída");

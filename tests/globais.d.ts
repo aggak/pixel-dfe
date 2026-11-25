@@ -9,6 +9,7 @@ declare global {
     __cancelamentos?: number;
     __liberarEnvio?: () => void;
     __semRecarga?: boolean;
+    tratar?: (evento: Event) => void;
   }
 
   interface Element {

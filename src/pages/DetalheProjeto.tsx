@@ -17,7 +17,7 @@ import { CartaoTarefa } from "../components/CartaoTarefa";
 import { AcaoCabecalho } from "../components/Cabecalho";
 import { GatinhoCochilando } from "../components/GatinhoCochilando";
 import {
-  AbasProjetos,
+  NavegacaoProjetos,
   AvisoTarefaEscondida,
   ErroCarregamento,
   EstadoVazio,
@@ -83,7 +83,7 @@ export function DetalheProjeto() {
   const novaTarefa = `/tarefas/nova?projetoId=${encodeURIComponent(id)}`;
   return (
     <>
-      <AbasProjetos
+      <NavegacaoProjetos
         atual={id}
         projetos={consultaProjetos}
         mostrarErro={erro === undefined}

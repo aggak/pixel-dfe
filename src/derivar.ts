@@ -12,7 +12,7 @@ export const FILTROS_INICIAIS: Filtros = {
   prioridade: "todas",
 };
 
-const comparavel = (texto: string) =>
+export const comparavel = (texto: string) =>
   texto
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
