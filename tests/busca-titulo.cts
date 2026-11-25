@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const { readFile } = require("node:fs/promises");
 
 const { criarApoio } = require("./apoio.cts");
+const { comandoProjetos } = require("./ui.cts");
 const apoio = criarApoio();
 
 async function executar() {
@@ -150,27 +151,21 @@ async function executar() {
       dados.tarefas.length,
     );
 
-    await page
-      .getByRole("navigation", { name: "Projetos" })
-      .getByRole("link", { name: "Gerenciador de Tarefas" })
-      .click();
+    await comandoProjetos(page).ir("Gerenciador de Tarefas");
     const projeto = page.getByRole("region", { name: "Tarefas do projeto" });
     await projeto.getByRole("article").first().waitFor();
     assert.equal(
       await projeto.getByRole("article").count(),
       dados.tarefas.filter((tarefa) => tarefa.projetoId === "1").length,
     );
-    await page
-      .getByRole("navigation", { name: "Projetos" })
-      .getByRole("link", { name: "Todas" })
-      .click();
+    await comandoProjetos(page).todas.click();
     await lista.getByRole("article").first().waitFor();
     assert.equal(
       await lista.getByRole("article").count(),
       dados.tarefas.length,
     );
     console.log(
-      "OK: busca sem acentos e com espaços repetidos, filtros combinados, limpeza e abas de projeto",
+      "OK: busca sem acentos e com espaços repetidos, filtros combinados, limpeza e comando de projetos",
     );
 
     const excluirPeloMenu = async (titulo) => {

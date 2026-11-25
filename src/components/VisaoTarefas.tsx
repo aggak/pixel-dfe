@@ -16,7 +16,7 @@ import { AcaoCabecalho } from "./Cabecalho";
 import { FiltrosTarefas } from "./FiltrosTarefas";
 import { useFiltros } from "./filtros-contexto";
 import {
-  AbasProjetos,
+  NavegacaoProjetos,
   AlternarVisao,
   AnuncioResultados,
   AvisoTarefaEscondida,
@@ -127,7 +127,7 @@ export function VisaoTarefas({
   );
   return (
     <>
-      <AbasProjetos projetos={consultaProjetos} mostrarErro={!erro} />
+      <NavegacaoProjetos projetos={consultaProjetos} mostrarErro={!erro} />
       <main className="e-sheet">
         <header className="e-tools e-task-tools">
           <h1 className="e-task-page-title" tabIndex={-1}>

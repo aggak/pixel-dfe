@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -11,6 +12,19 @@ import {
   type SetStateAction,
 } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
+import {
+  Autocomplete,
+  Button as BotaoAria,
+  Dialog,
+  DialogTrigger,
+  Input,
+  ListBox,
+  ListBoxItem,
+  Modal,
+  ModalOverlay,
+  RouterProvider,
+  TextField,
+} from "react-aria-components";
 import { useConsulta } from "../hooks/useConsulta";
 import { TituloPagina } from "../hooks/useTituloPagina";
 import { Button } from "@/components/base/buttons/button";
@@ -30,8 +44,8 @@ import {
   marcarVolta,
   primeiroVisivel,
 } from "../hooks/useRetornoFoco";
-import { FILTROS_INICIAIS, type Filtros } from "../derivar";
-import { movimentoReduzido } from "../hooks/useMovimento";
+import { comparavel, FILTROS_INICIAIS, type Filtros } from "../derivar";
+import "./ComandoProjetos.css";
 
 function caminhoNormalizado(pathname: string) {
   return pathname.replace(/\/+$/, "").toLowerCase() || "/";
@@ -83,17 +97,18 @@ class FalhaPagina extends Component<
     );
   }
 }
-type DadosAbas = {
+type DadosNavegacaoProjetos = {
   atual?: string;
   projetos: Omit<ReturnType<typeof useConsulta<Projeto[]>>, "refazer">;
   mostrarErro?: boolean;
 };
-const ContextoAbas = createContext<Dispatch<
-  SetStateAction<DadosAbas | null>
+const ContextoNavegacaoProjetos = createContext<Dispatch<
+  SetStateAction<DadosNavegacaoProjetos | null>
 > | null>(null);
 
 export function Layout() {
-  const [abas, setAbas] = useState<DadosAbas | null>(null);
+  const [navegacaoProjetos, setNavegacaoProjetos] =
+    useState<DadosNavegacaoProjetos | null>(null);
   const [areaAcao, setAreaAcao] = useState<HTMLDivElement | null>(null);
   const { pathname, key } = useLocation();
   const caminho = caminhoNormalizado(pathname);
@@ -118,13 +133,13 @@ export function Layout() {
         Pular para o conteúdo
       </a>
       <Cabecalho emTarefas={emTarefas} areaAcaoRef={setAreaAcao} />
-      {abas && <FaixaProjetos {...abas} />}
+      {navegacaoProjetos && <FaixaProjetos {...navegacaoProjetos} />}
       <ContextoAcaoCabecalho.Provider value={areaAcao}>
-        <ContextoAbas.Provider value={setAbas}>
+        <ContextoNavegacaoProjetos.Provider value={setNavegacaoProjetos}>
           <FalhaPagina key={caminho}>
             <Outlet />
           </FalhaPagina>
-        </ContextoAbas.Provider>
+        </ContextoNavegacaoProjetos.Provider>
       </ContextoAcaoCabecalho.Provider>
       <footer className="e-footer" aria-label="Informações da Pixel">
         <div className="e-footer-row">
@@ -182,22 +197,18 @@ function PixelArte({
 const GRADE_TODAS = [0, 3, 6]
   .flatMap((y) => [0, 3, 6].map((x) => `M${x} ${y}h2v2h-2z`))
   .join("");
-const SETAS = {
-  ini: "M3 0h1v1h-1zM2 1h1v1h-1zM1 2h1v1h-1zM0 3h1v1h-1zM1 4h1v1h-1zM2 5h1v1h-1zM3 6h1v1h-1z",
-  fim: "M0 0h1v1h-1zM1 1h1v1h-1zM2 2h1v1h-1zM3 3h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM0 6h1v1h-1z",
-};
 let ultimaLista: Projeto[] | undefined;
 let ultimaVisao = "/";
-export function AbasProjetos({
+export function NavegacaoProjetos({
   atual,
   projetos,
   mostrarErro = true,
-}: DadosAbas) {
-  const setAbas = useContext(ContextoAbas);
+}: DadosNavegacaoProjetos) {
+  const setNavegacaoProjetos = useContext(ContextoNavegacaoProjetos);
   const { dados, erro, carregando, revalidando, tentando, tentarDeNovo } =
     projetos;
   useLayoutEffect(() => {
-    setAbas?.({
+    setNavegacaoProjetos?.({
       atual,
       projetos: {
         dados,
@@ -209,9 +220,9 @@ export function AbasProjetos({
       },
       mostrarErro,
     });
-    return () => setAbas?.(null);
+    return () => setNavegacaoProjetos?.(null);
   }, [
-    setAbas,
+    setNavegacaoProjetos,
     atual,
     dados,
     erro,
@@ -223,106 +234,199 @@ export function AbasProjetos({
   ]);
   return null;
 }
-function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
-  const fileira = useRef<HTMLElement>(null);
-  const caminho = caminhoNormalizado(useLocation().pathname);
+function teclaDoComando(evento: KeyboardEvent, mac: boolean) {
+  if (
+    evento.defaultPrevented ||
+    evento.repeat ||
+    evento.isComposing ||
+    !evento.altKey ||
+    evento.ctrlKey ||
+    evento.metaKey ||
+    evento.shiftKey ||
+    (!mac && evento.getModifierState("AltGraph"))
+  ) {
+    return false;
+  }
+
+  return (
+    evento.key.toLowerCase() === "p" ||
+    (mac &&
+      evento.code === "KeyP" &&
+      evento.key.length === 1 &&
+      !/^[a-z]$/i.test(evento.key))
+  );
+}
+
+function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosNavegacaoProjetos) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const caminho = caminhoNormalizado(location.pathname);
   const naVisao = caminho === "/" || caminho === "/quadro";
+  const [abertoEm, setAbertoEm] = useState<string>();
+  const aberto = abertoEm === location.key;
+  if (abertoEm && !aberto) setAbertoEm(undefined);
+  const gatilho = useRef<HTMLButtonElement>(null);
+  const atalhoId = useId();
+  const mac = /^(Mac|iPad|iPhone|iPod)/.test(navigator.platform);
+
   useEffect(() => {
     if (naVisao) ultimaVisao = caminho;
   }, [naVisao, caminho]);
   useEffect(() => {
     if (projetos.dados) ultimaLista = projetos.dados;
   }, [projetos.dados]);
-  const lista =
-    projetos.dados ?? (projetos.carregando ? ultimaLista : undefined);
-  const total = lista?.length ?? 0;
+
+  const lista = projetos.dados ?? (projetos.carregando ? ultimaLista : undefined);
+  const disponivel = Boolean(lista?.length);
+  const rotulo = lista?.some((projeto) => projeto.id === atual)
+    ? "Trocar projeto"
+    : "Ir para projeto";
+  const destinoTodas = naVisao ? caminho : ultimaVisao;
+  const destinos = [
+    { id: destinoTodas, nome: "Todas", atual: !atual },
+    ...(lista ?? []).map((projeto) => ({
+      id: `/projetos/${encodeURIComponent(projeto.id)}`,
+      nome: projeto.nome || "Projeto sem nome",
+      atual: projeto.id === atual,
+    })),
+  ];
+
   useEffect(() => {
-    const nav = fileira.current;
-    const todas = nav?.querySelector<HTMLElement>("a");
-    if (!nav || !todas) return;
-    const medir = () => {
-      nav.style.setProperty("--aba-todas", `${todas.offsetWidth}px`);
-      const resto = nav.scrollWidth - nav.clientWidth - nav.scrollLeft;
-      nav.dataset.sobra =
-        `${nav.scrollLeft > 2 ? "ini" : ""} ${resto > 2 ? "fim" : ""}`.trim();
-    };
-    const trazer = (
-      aba: HTMLElement,
-      behavior: ScrollBehavior,
-      folga: number,
-    ) => {
-      if (aba === todas) return;
-      const inicio = aba.offsetLeft - todas.offsetWidth - folga;
-      const fim = aba.offsetLeft + aba.offsetWidth + folga - nav.clientWidth;
-      const alvo =
-        nav.scrollLeft > inicio
-          ? inicio
-          : nav.scrollLeft < fim
-            ? Math.min(fim, inicio)
-            : nav.scrollLeft;
-      const esquerda = Math.max(alvo, 0);
-      if (Math.abs(esquerda - nav.scrollLeft) > 1)
-        nav.scrollTo({ left: esquerda, behavior });
-      medir();
-    };
-    const folgaAtual = () =>
-      matchMedia("(max-width: 650px)").matches ? 26 : 60;
-    const folgaFoco = () =>
-      matchMedia("(max-width: 650px)").matches ? 20 : 56;
-    const mostrarAtual = () => {
-      medir();
-      const aba = nav.querySelector<HTMLElement>("a[aria-current]");
-      if (aba) trazer(aba, "auto", folgaAtual());
-    };
-    const aoFocar = (evento: FocusEvent) => {
-      const aba =
-        evento.target instanceof Element ? evento.target.closest("a") : null;
-      if (!aba || !nav.contains(aba)) return;
-      trazer(aba, movimentoReduzido() ? "auto" : "smooth", folgaFoco());
-    };
-    mostrarAtual();
-    document.fonts?.ready.then(mostrarAtual);
-    nav.addEventListener("scroll", medir, { passive: true });
-    nav.addEventListener("focusin", aoFocar);
-    const observador = new ResizeObserver(mostrarAtual);
-    observador.observe(nav);
-    return () => {
-      nav.removeEventListener("scroll", medir);
-      nav.removeEventListener("focusin", aoFocar);
-      observador.disconnect();
-    };
-  }, [atual, total]);
-  const rolar = (sentido: number) => {
-    const nav = fileira.current;
-    nav?.scrollBy({
-      left: sentido * Math.max(nav.clientWidth * 0.6, 160),
-      behavior: movimentoReduzido() ? "auto" : "smooth",
-    });
-  };
-  const seta = (lado: "ini" | "fim") => (
-    <button
-      type="button"
-      className="e-tabs-seta"
-      data-lado={lado}
-      aria-hidden="true"
-      tabIndex={-1}
-      onClick={() => rolar(lado === "ini" ? -1 : 1)}
-    >
-      <PixelArte largura={4} altura={7} desenho={SETAS[lado]} />
-    </button>
-  );
+    if (!disponivel) return;
+    function abrirComTecla(evento: KeyboardEvent) {
+      if (
+        !teclaDoComando(evento, mac) ||
+        document.querySelector(
+          "#root[inert], [role=dialog][aria-modal=true], dialog[open]",
+        ) ||
+        (evento.target instanceof HTMLElement &&
+          (evento.target.isContentEditable ||
+            evento.target.closest(
+              "input, textarea, select, [role=textbox], [role=combobox], [role=dialog]",
+            )))
+      ) {
+        return;
+      }
+
+      evento.preventDefault();
+      if (document.activeElement === document.body)
+        gatilho.current?.focus({ preventScroll: true });
+      setAbertoEm(location.key);
+    }
+    window.addEventListener("keydown", abrirComTecla);
+    return () => window.removeEventListener("keydown", abrirComTecla);
+  }, [disponivel, location.key, mac]);
+
   return (
-    <nav ref={fileira} className="e-tabs" aria-label="Projetos">
+    <nav className="e-projetos-comando" aria-label="Projetos">
       <Link
-        to={naVisao ? caminho : ultimaVisao}
+        className="e-projetos-comando-todas"
+        to={destinoTodas}
         aria-current={!atual ? "page" : undefined}
       >
-        <span className="e-tabs-icone" aria-hidden="true">
+        <span aria-hidden="true">
           <PixelArte largura={8} altura={8} desenho={GRADE_TODAS} />
         </span>
-        <span className="e-tabs-nome">Todas</span>
+        Todas
       </Link>
-      {seta("ini")}
+      {disponivel && (
+        <DialogTrigger
+          isOpen={aberto}
+          onOpenChange={(abrir) => {
+            if (abrir) gatilho.current?.focus({ preventScroll: true });
+            setAbertoEm(abrir ? location.key : undefined);
+          }}
+        >
+          <BotaoAria
+            ref={gatilho}
+            className="e-projetos-comando-gatilho"
+            data-action="project-command"
+            render={(props) => <button {...props} aria-keyshortcuts="Alt+P" />}
+            aria-describedby={atalhoId}
+          >
+            <span>{rotulo}</span>
+            <kbd aria-hidden="true">{mac ? "⌥ P" : "Alt + P"}</kbd>
+          </BotaoAria>
+          <ModalOverlay className="e-projetos-comando-veu" isDismissable>
+            <Modal className="e-projetos-comando-caixa">
+              <Dialog
+                className="e-projetos-comando-dialogo"
+                aria-label={rotulo}
+              >
+                <RouterProvider
+                  navigate={(href) => {
+                    setAbertoEm(undefined);
+                    const atual = destinos.some(
+                      (destino) => destino.id === href && destino.atual,
+                    );
+                    if (!atual) navigate(href);
+                  }}
+                >
+                  <Autocomplete
+                    filter={(nome, busca) =>
+                      comparavel(nome).includes(comparavel(busca.trim()))
+                    }
+                  >
+                    <TextField
+                      className="e-projetos-comando-busca"
+                      aria-label="Buscar projeto"
+                      autoFocus
+                    >
+                      <Input placeholder="Buscar projeto…" enterKeyHint="go" />
+                      <BotaoAria
+                        className="e-projetos-comando-fechar"
+                        aria-label="Fechar"
+                        onPress={() => setAbertoEm(undefined)}
+                      >
+                        <Icon name="cross-small" />
+                      </BotaoAria>
+                    </TextField>
+                    <ListBox
+                      aria-label="Projetos"
+                      className="e-projetos-comando-resultados"
+                      items={destinos}
+                      renderEmptyState={() => <p>Nenhum projeto encontrado.</p>}
+                    >
+                      {(destino) => (
+                        <ListBoxItem
+                          id={destino.id}
+                          textValue={destino.nome}
+                          className="e-projetos-comando-opcao"
+                          data-atual={destino.atual ? "" : undefined}
+                          aria-label={
+                            destino.atual ? `${destino.nome} (atual)` : destino.nome
+                          }
+                          href={destino.id}
+                        >
+                          <Icon
+                            name={destino.id === destinoTodas ? "list" : "folder"}
+                          />
+                          <span>{destino.nome}</span>
+                          {destino.atual && <Icon name="check" />}
+                        </ListBoxItem>
+                      )}
+                    </ListBox>
+                  </Autocomplete>
+                </RouterProvider>
+                <div className="e-projetos-comando-teclas" aria-hidden="true">
+                  <span>
+                    <kbd>↑</kbd> <kbd>↓</kbd> navegar
+                  </span>
+                  <span>
+                    <kbd>Enter</kbd> abrir
+                  </span>
+                  <span>
+                    <kbd>Esc</kbd> fechar
+                  </span>
+                </div>
+              </Dialog>
+            </Modal>
+          </ModalOverlay>
+        </DialogTrigger>
+      )}
+      <span id={atalhoId} hidden>
+        Atalho {mac ? "Option + P" : "Alt + P"}
+      </span>
       {projetos.carregando && !lista && (
         <Carregando compacto>Carregando projetos…</Carregando>
       )}
@@ -333,17 +437,6 @@ function FaixaProjetos({ atual, projetos, mostrarErro = true }: DadosAbas) {
           onTentarDeNovo={projetos.tentarDeNovo}
         />
       )}
-      {lista?.map((projeto) => (
-        <Link
-          key={projeto.id}
-          to={`/projetos/${encodeURIComponent(projeto.id)}`}
-          title={projeto.nome}
-          aria-current={atual === projeto.id ? "page" : undefined}
-        >
-          <span className="e-tabs-nome">{projeto.nome}</span>
-        </Link>
-      ))}
-      {seta("fim")}
     </nav>
   );
 }

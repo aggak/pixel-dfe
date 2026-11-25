@@ -376,10 +376,8 @@ async function executar() {
             document.documentElement.clientWidth
           )
             return `rolagem horizontal (${document.documentElement.scrollWidth} > ${document.documentElement.clientWidth})`;
-          const faixa = (el) => Boolean(el.closest(".e-tabs"));
           const transbordo = [...document.querySelectorAll("body *")].find(
             (el) =>
-              !faixa(el) &&
               /(auto|scroll)/.test(getComputedStyle(el).overflowX) &&
               el.scrollWidth > el.clientWidth + 1,
           );
